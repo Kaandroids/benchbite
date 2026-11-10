@@ -1,6 +1,7 @@
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { toIsoDate } from '@/i18n/dates';
+import type { SetKind } from '@/sets/fields';
 import { MAX_SETS } from '@/sets/values';
 import { act, renderHook } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
@@ -12,6 +13,7 @@ import {
   endSession,
   isLeftOpen,
   lastActivity,
+  markDone,
   MAX_WORKOUT_MS,
   resetSessionStore,
   sessionTotals,
@@ -228,6 +230,27 @@ describe('logging sets', () => {
     expect(changeRest(session, 15, NOW).rest?.endsAt).toBe(NOW + 105_000);
     expect(changeRest(session, -15, NOW).rest?.endsAt).toBe(NOW + 75_000);
     expect(changeRest(session, -90, NOW).rest).toBeNull();
+  });
+});
+
+describe('markDone', () => {
+  const lifted: SetKind = { fields: ['weightKg', 'reps'], timed: false, addedWeight: false };
+  const bench = (session: Session) => session.exercises[0]?.sets[0];
+
+  it('ticks and unticks a set as the phone’s tick does', () => {
+    const weighed = setValues(start(), 0, 0, { weightKg: 60 }, NOW);
+    const ticked = markDone(weighed, 0, 0, true, lifted, { at: NOW });
+    expect(bench(ticked)).toMatchObject({ done: true, doneAt: NOW });
+    expect(ticked.rest).toEqual({ endsAt: NOW + 90_000, seconds: 90 });
+    const unticked = markDone(ticked, 0, 0, false, lifted, { at: NOW + 1000 });
+    expect(bench(unticked)?.done).toBe(false);
+    expect(unticked.rest).toBeNull();
+  });
+
+  it('ticks no set without what it needs, and leaves one already so', () => {
+    const session = start();
+    expect(markDone(session, 0, 0, true, lifted, { at: NOW })).toBe(session);
+    expect(markDone(session, 0, 0, false, lifted, { at: NOW })).toBe(session);
   });
 });
 

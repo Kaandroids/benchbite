@@ -5,8 +5,8 @@ import { useSyncExternalStore } from 'react';
 
 import { toIsoDate } from '@/i18n/dates';
 import { readItem, writeItem } from '@/lib/device-storage';
-import { SET_LIMITS } from '@/sets/fields';
-import { MAX_SETS, pickSetValues, type SetValues } from '@/sets/values';
+import { SET_LIMITS, type SetKind } from '@/sets/fields';
+import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -398,6 +398,44 @@ export function restUntil(
   now = Date.now(),
 ): Session['rest'] {
   return rest && endsAt !== null && endsAt > now ? { ...rest, endsAt } : null;
+}
+
+/**
+ * Marks a set done or not done at `at`, as far as it may be, on the phone or from the watch (ADR
+ * 0109). A set is not done without what it needs. A set whose clock runs is done with the clock's
+ * time, or, done before the clock started, with its own, the clock stopping. A change older than
+ * the set's last tick or untick changes nothing, and one older than the latest set keeps the open
+ * exercise and the rest that set started. A rest that is over by `now` is none.
+ */
+export function markDone(
+  value: Session,
+  exercise: number,
+  index: number,
+  done: boolean,
+  kind: SetKind,
+  { at = Date.now(), now = at }: { at?: number; now?: number } = {},
+): Session {
+  const set = value.exercises[exercise]?.sets[index];
+  if (!set || set.done === done || (set.doneChangedAt ?? 0) > at) {
+    return value;
+  }
+  const { clock } = value;
+  const clocked = done && clock?.exercise === exercise && clock.set === index;
+  let next: Session;
+  if (clocked && at >= clock.startedAt) {
+    next = stopClock(value, at);
+  } else if (done && missingFields(set, kind).length > 0) {
+    return value;
+  } else {
+    next = toggleDone(clocked ? { ...value, clock: null } : value, exercise, index, at);
+  }
+  const older = lastActivity(value) > at;
+  const rest = older ? value.rest : next.rest;
+  return {
+    ...next,
+    current: older ? value.current : next.current,
+    rest: restUntil(rest, rest?.endsAt ?? null, now),
+  };
 }
 
 /** Lengthens or shortens the rest; a rest that is over ends. */
