@@ -22,12 +22,12 @@ The rest alert must come from one device only. A notification on the phone and a
 
   Each state has a growing `seq`, so the watch drops an older one.
 
-- **Commands say what should be, never what to toggle.** A command sets a set's values, sets it done or not done, adds a set, or changes or skips the rest the watch showed. It carries:
+- **Commands say what should be, never what to toggle.** A command sets a set's values, sets it done or not done, adds a set up to the number of sets the watch then showed, or changes or skips the rest the watch showed. It carries:
   - a unique `id`, so it applies once however often it arrives;
   - the time the user acted on the watch (`at`);
   - the workout's id, so a command for another workout is dropped.
 
-  The phone applies a command with the same functions its own screen uses.
+  The phone applies a command with the same functions its own screen uses: a tick goes through `markDone()` on both.
 
 - **On each value, the latest change wins.** The workout keeps, for each set, when each of its values last changed and when it was last ticked or unticked, on either device. A command changes only what was not changed after it: a weight typed later on the phone stays, while the reps the watch changed before still apply. It still counts as applied, so the watch stops waiting on it. A command's time is at most the time it arrives.
 - **The rest is an end time,** not seconds left, so both devices show the same second. A tick that arrives late starts no rest that is already over, and leaves the rest of a later set.
@@ -58,6 +58,6 @@ This first step adds the protocol, the interface without a watch, and the compon
 - Each change of the workout, such as each digit typed, sends a new state. Sending replaces what was not delivered, so this stays cheap.
 - The watch apps follow `src/watch/protocol.ts`. A change to the messages raises `PROTOCOL_VERSION`, and each side drops messages of another version.
 - Changes are ordered by the devices' clocks, which a paired watch keeps close to the phone's. A watch whose clock runs behind can lose a change against an older one made on the phone; one whose clock runs ahead cannot win over later ones, as a command's time is at most the time it arrives.
-- Commands that waited while the app was closed are held until the exercise library has loaded, as what a set needs depends on its exercise. Without the library, as offline, they apply as the phone's own screen then does.
+- Commands that waited while the app was closed are held until the exercise library has loaded, as what a set needs depends on its exercise. Once its first try fails, as offline, they apply as the phone's own screen then does, in the order they came.
 - A command applies only what the phone itself allows: values rounded as when typed, a set ticked only with what it needs, a set whose clock runs ticked with the clock's time.
 - The watch can only follow a workout started on the phone. Starting one on the watch, or doing one without the phone, is #472.
