@@ -9,7 +9,7 @@ import {
   MAX_WORKOUT_MS,
   resetSessionStore,
   startSession,
-  toggleDone,
+  toggleDoneUnchecked,
   updateSession,
 } from './session';
 
@@ -44,7 +44,7 @@ afterEach(() => jest.useRealTimers());
 
 describe('LeftOpenSaver', () => {
   it('saves a workout left open at its last set and says so', async () => {
-    updateSession((session) => toggleDone(session, 0, 0, NOW + 45 * 60_000));
+    updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW + 45 * 60_000));
     jest.setSystemTime(NOW + MAX_WORKOUT_MS + 60_000);
     await render(<LeftOpenSaver />);
     await act(async () => undefined);
@@ -61,7 +61,7 @@ describe('LeftOpenSaver', () => {
 
   it('leaves a workout alone while it can still be finished, or with nothing done', async () => {
     jest.setSystemTime(NOW + 60 * 60_000);
-    updateSession((session) => toggleDone(session, 0, 0, NOW + 10 * 60_000));
+    updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW + 10 * 60_000));
     await render(<LeftOpenSaver />);
     await act(async () => undefined);
     expect(logWorkout).not.toHaveBeenCalled();

@@ -17,7 +17,7 @@ import {
   setValues,
   startClock,
   startSession,
-  toggleDone,
+  toggleDoneUnchecked,
   updateSession,
   useActiveSession,
 } from './session';
@@ -299,7 +299,7 @@ describe('new records', () => {
   it('names one record with its value', async () => {
     startWithBests();
     updateSession((session) =>
-      toggleDone(setValues(session, 0, 0, { weightKg: 85, reps: 1 }), 0, 0),
+      toggleDoneUnchecked(setValues(session, 0, 0, { weightKg: 85, reps: 1 }), 0, 0),
     );
     await render(<SessionScreen />);
     expect(screen.getByText('New record: Heaviest, 85 kg')).toBeTruthy();
@@ -308,7 +308,7 @@ describe('new records', () => {
   it('lists the new records at the finish', async () => {
     startWithBests();
     updateSession((session) =>
-      toggleDone(setValues(session, 0, 0, { weightKg: 85, reps: 7 }), 0, 0),
+      toggleDoneUnchecked(setValues(session, 0, 0, { weightKg: 85, reps: 7 }), 0, 0),
     );
     await render(<FinishScreen />);
     expect(screen.getByText('2 new records')).toBeTruthy();
@@ -320,12 +320,12 @@ describe('new records', () => {
 });
 
 describe('FinishScreen', () => {
-  const doFirstSet = () => updateSession((session) => toggleDone(session, 0, 0));
+  const doFirstSet = () => updateSession((session) => toggleDoneUnchecked(session, 0, 0));
 
   it('names the best set, not the last one', async () => {
     updateSession((session) =>
-      toggleDone(
-        toggleDone(
+      toggleDoneUnchecked(
+        toggleDoneUnchecked(
           setValues(setValues(session, 0, 0, { weightKg: 85, reps: 5 }), 0, 1, {
             weightKg: 80,
             reps: 8,
@@ -437,7 +437,7 @@ describe('FinishScreen', () => {
   });
 
   it('ends a workout left open at its last set, and lets the end be changed', async () => {
-    updateSession((session) => toggleDone(session, 0, 0, NOW.getTime() + 40 * 60_000));
+    updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW.getTime() + 40 * 60_000));
     await act(async () => {
       jest.advanceTimersByTime(13 * 3600_000);
     });

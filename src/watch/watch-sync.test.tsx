@@ -1,5 +1,10 @@
 import { useExerciseLibrary } from '@/exercises/library';
-import { resetSessionStore, startSession, toggleDone, updateSession } from '@/sessions/session';
+import {
+  resetSessionStore,
+  startSession,
+  toggleDoneUnchecked,
+  updateSession,
+} from '@/sessions/session';
 import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
@@ -56,7 +61,7 @@ it('sends the workout to the watch, and each change of it', async () => {
   await render(<WatchSync />);
   expect(lastSent().workout?.exercises[0]?.name).toBe('Bench press');
 
-  await act(() => updateSession((current) => toggleDone(current, 0, 0, NOW)));
+  await act(() => updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW)));
   expect(lastSent().workout?.exercises[0]?.sets[0]?.done).toBe(true);
   // Each state is newer than the one before.
   const seqs = sent().map((state) => state.seq);

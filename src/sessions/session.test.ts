@@ -21,7 +21,7 @@ import {
   startClock,
   startSession,
   stopClock,
-  toggleDone,
+  toggleDoneUnchecked,
   toLog,
   type Session,
   updateSession,
@@ -107,8 +107,8 @@ describe('startSession', () => {
 describe('logging sets', () => {
   it('keeps when a set last changed, which a late change from the watch is checked against', () => {
     let session = setValues(start(), 0, 0, { weightKg: 60 }, NOW + 1000);
-    session = toggleDone(session, 0, 0, NOW + 2000);
-    session = toggleDone(session, 0, 0, NOW + 3000);
+    session = toggleDoneUnchecked(session, 0, 0, NOW + 2000);
+    session = toggleDoneUnchecked(session, 0, 0, NOW + 3000);
     expect(session.exercises[0]?.sets[0]).toMatchObject({
       valuesAt: { weightKg: NOW + 1000 },
       doneChangedAt: NOW + 3000,
@@ -118,33 +118,33 @@ describe('logging sets', () => {
   });
 
   it('marks a set done and starts the rest', () => {
-    const session = toggleDone(start(), 0, 0, NOW);
+    const session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(session.exercises[0]?.sets[0]?.done).toBe(true);
     expect(session.rest).toEqual({ endsAt: NOW + 90_000, seconds: 90 });
-    expect(toggleDone(session, 0, 0, NOW).exercises[0]?.sets[0]?.done).toBe(false);
+    expect(toggleDoneUnchecked(session, 0, 0, NOW).exercises[0]?.sets[0]?.done).toBe(false);
   });
 
   it('ends the running rest when a set is ticked, starting its own if its exercise has one', () => {
-    const benched = toggleDone(start(), 0, 0, NOW);
+    const benched = toggleDoneUnchecked(start(), 0, 0, NOW);
     // The plank has no rest, so the bench press's ends with nothing after it.
-    expect(toggleDone(benched, 1, 0, NOW + 60_000).rest).toBeNull();
-    expect(toggleDone(benched, 0, 1, NOW + 60_000).rest).toEqual({
+    expect(toggleDoneUnchecked(benched, 1, 0, NOW + 60_000).rest).toBeNull();
+    expect(toggleDoneUnchecked(benched, 0, 1, NOW + 60_000).rest).toEqual({
       endsAt: NOW + 150_000,
       seconds: 90,
     });
   });
 
   it('ends the running rest when a set is unticked', () => {
-    const first = toggleDone(start(), 0, 0, NOW);
-    expect(toggleDone(first, 0, 0, NOW + 1000).rest).toBeNull();
-    const second = toggleDone(first, 0, 1, NOW + 60_000);
-    expect(toggleDone(second, 0, 0, NOW + 61_000).rest).toBeNull();
+    const first = toggleDoneUnchecked(start(), 0, 0, NOW);
+    expect(toggleDoneUnchecked(first, 0, 0, NOW + 1000).rest).toBeNull();
+    const second = toggleDoneUnchecked(first, 0, 1, NOW + 60_000);
+    expect(toggleDoneUnchecked(second, 0, 0, NOW + 61_000).rest).toBeNull();
   });
 
   it('opens the next exercise after the last set', () => {
-    let session = toggleDone(start(), 0, 0, NOW);
+    let session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(session.current).toBe(0);
-    session = toggleDone(session, 0, 1, NOW);
+    session = toggleDoneUnchecked(session, 0, 1, NOW);
     expect(session.current).toBe(1);
   });
 
@@ -154,7 +154,7 @@ describe('logging sets', () => {
     session = setValues(session, 0, 0, { weightKg: 44 });
     expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([44, 60, 60]);
     session = setValues(session, 0, 1, { weightKg: null });
-    session = toggleDone(session, 0, 2, NOW);
+    session = toggleDoneUnchecked(session, 0, 2, NOW);
     session = setValues(session, 0, 0, { weightKg: 50 });
     // The emptied set takes it, the done one keeps its own.
     expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50, 60]);
@@ -226,7 +226,7 @@ describe('logging sets', () => {
   });
 
   it('lengthens, shortens and ends the rest', () => {
-    const session = toggleDone(start(), 0, 0, NOW);
+    const session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(changeRest(session, 15, NOW).rest?.endsAt).toBe(NOW + 105_000);
     expect(changeRest(session, -15, NOW).rest?.endsAt).toBe(NOW + 75_000);
     expect(changeRest(session, -90, NOW).rest).toBeNull();
@@ -245,6 +245,29 @@ describe('markDone', () => {
     const unticked = markDone(ticked, 0, 0, false, lifted, { at: NOW + 1000 });
     expect(bench(unticked)?.done).toBe(false);
     expect(unticked.rest).toBeNull();
+  });
+
+  it('leaves ended a rest the phone ended after a tick that arrives late', () => {
+    const weighed = setValues(start(), 0, 0, { weightKg: 60 }, NOW);
+    // Ticked on the watch at NOW; the plank's clock started on the phone 10 s later.
+    const clocked = startClock(weighed, 1, 0, NOW + 10_000);
+    const late = markDone(clocked, 0, 0, true, lifted, { at: NOW, now: NOW + 30_000 });
+    expect(bench(late)?.done).toBe(true);
+    expect(late.rest).toBeNull();
+  });
+
+  it('takes a change made on the phone as the latest, though its clock moved back', () => {
+    jest.useFakeTimers({ now: NOW });
+    try {
+      // Ticked and typed a minute later, as the clock then said.
+      let session = setValues(start(), 0, 0, { weightKg: 60 }, NOW + 60_000);
+      session = markDone(session, 0, 0, true, lifted, { at: NOW + 60_000 });
+      session = markDone(session, 0, 0, false, lifted);
+      session = setValues(session, 0, 0, { weightKg: 65 });
+      expect(bench(session)).toMatchObject({ done: false, weightKg: 65 });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('ticks no set without what it needs, and leaves one already so', () => {
@@ -279,13 +302,17 @@ describe('the clock of a timed set', () => {
 
 describe('a workout left open', () => {
   it('ends at its last done set, at most a workout length after the start', () => {
-    let session = toggleDone(start(), 0, 0, NOW + 10 * 60_000);
-    session = toggleDone(session, 0, 1, NOW + 20 * 60_000);
+    let session = toggleDoneUnchecked(start(), 0, 0, NOW + 10 * 60_000);
+    session = toggleDoneUnchecked(session, 0, 1, NOW + 20 * 60_000);
     expect(lastActivity(session)).toBe(NOW + 20 * 60_000);
     expect(lastActivity(start())).toBe(NOW);
-    expect(lastActivity(toggleDone(start(), 0, 0, NOW + 13 * 3600_000))).toBe(NOW + MAX_WORKOUT_MS);
+    expect(lastActivity(toggleDoneUnchecked(start(), 0, 0, NOW + 13 * 3600_000))).toBe(
+      NOW + MAX_WORKOUT_MS,
+    );
     // Undone sets do not count.
-    expect(lastActivity(toggleDone(session, 0, 1, NOW + 30 * 60_000))).toBe(NOW + 10 * 60_000);
+    expect(lastActivity(toggleDoneUnchecked(session, 0, 1, NOW + 30 * 60_000))).toBe(
+      NOW + 10 * 60_000,
+    );
   });
 
   it('is left open once it has run longer than a workout can be', () => {
@@ -318,7 +345,7 @@ describe('finishing', () => {
   });
 
   it('logs only the sets that were done, and adds them up', () => {
-    let session: Session = toggleDone(start(), 0, 0, NOW);
+    let session: Session = toggleDoneUnchecked(start(), 0, 0, NOW);
     session = setValues(session, 0, 0, { weightKg: 80, reps: 8 });
     expect(toLog(session, NOW + 3_600_000)).toEqual({
       clientId: session.id,
@@ -350,7 +377,7 @@ describe('finishing', () => {
 
   it('changes the stored session', () => {
     start();
-    updateSession((session) => toggleDone(session, 0, 0, NOW));
+    updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW));
     resetSessionStore();
     const stored = JSON.parse(Storage.getItemSync('session.current') ?? '{}') as {
       session: Session;

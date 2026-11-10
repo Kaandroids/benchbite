@@ -3,14 +3,7 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
-import {
-  addSet,
-  markDone,
-  restUntil,
-  setValues,
-  type Session,
-  type SessionSet,
-} from '@/sessions/session';
+import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
 import { setKindOf, setValueOf, type SetField } from '@/sets/fields';
 import { EMPTY_SET, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
@@ -162,10 +155,6 @@ export function parseCommand(message: unknown): WatchCommand | null {
   }
 }
 
-function setAt(session: Session, exercise: number, set: number): SessionSet | undefined {
-  return session.exercises[exercise]?.sets[set];
-}
-
 /** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
 export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
 
@@ -178,19 +167,9 @@ function change(
   metricsOf: MetricsOf,
 ): Session {
   switch (command.type) {
-    case 'setValues': {
-      const set = setAt(session, command.exercise, command.set);
-      if (!set) return session;
+    case 'setValues':
       // A value changed on the phone after this change on the watch stays; the others change.
-      const values = Object.fromEntries(
-        Object.entries(command.values).filter(
-          ([field]) => (set.valuesAt?.[field as SetField] ?? 0) <= at,
-        ),
-      );
-      return Object.keys(values).length > 0
-        ? setValues(session, command.exercise, command.set, values, at)
-        : session;
-    }
+      return setValues(session, command.exercise, command.set, command.values, at);
     case 'setDone': {
       const item = session.exercises[command.exercise];
       if (!item) return session;
@@ -220,7 +199,7 @@ function change(
 export function applyCommand(
   session: Session,
   command: WatchCommand,
-  { now = Date.now(), metricsOf = () => undefined }: { now?: number; metricsOf?: MetricsOf } = {},
+  { now = Date.now(), metricsOf }: { now?: number; metricsOf: MetricsOf },
 ): Session {
   const applied = session.watchCommands ?? [];
   if (command.workoutId !== workoutIdOf(session) || applied.includes(command.id)) {
