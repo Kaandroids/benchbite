@@ -111,7 +111,7 @@ it('keeps values as the phone keeps what is typed', () => {
 describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
-    const state = stateOf(session, (id) => `name of ${id}`, 7);
+    const state = stateOf(session, { name: (id) => `name of ${id}`, metricsOf: noLibrary }, 7);
     expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
     expect(state.workout).toMatchObject({
       id: 'workout-1',
@@ -127,11 +127,34 @@ describe('stateOf', () => {
       seconds: null,
       meters: null,
       done: true,
+      missing: [],
     });
   });
 
+  it('says what each exercise records and what each set still needs, as the phone does', () => {
+    const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
+    const state = stateOf(start(), { name: () => '', metricsOf: lifted }, 1);
+    const [bench, , plank] = state.workout!.exercises;
+    expect(bench?.fields).toEqual(['weightKg', 'reps']);
+    // A weight is needed before the bench press can be ticked, as on the phone.
+    expect(bench?.sets[0]?.missing).toEqual(['weightKg']);
+    // A timed set starts without a time, which the phone's clock measures.
+    expect(plank?.fields).toEqual(['seconds']);
+    expect(plank?.sets[0]?.missing).toEqual(['seconds']);
+  });
+
   it('says no workout runs', () => {
-    expect(stateOf(null, () => '', 1).workout).toBeNull();
+    expect(stateOf(null, { name: () => '', metricsOf: noLibrary }, 1).workout).toBeNull();
+  });
+
+  it('is of the version the watch app speaks', () => {
+    // targets/watch/Protocol.swift keeps the same version; a message of another one is dropped.
+    const { readFileSync } = jest.requireActual<{
+      readFileSync: (path: string, encoding: 'utf8') => string;
+    }>('fs');
+    // Read from the root of the repository, where Jest runs.
+    const swift = readFileSync('targets/watch/Protocol.swift', 'utf8');
+    expect(swift).toContain(`let protocolVersion = ${PROTOCOL_VERSION}\n`);
   });
 
   it('names a workout started before ids were kept by its start', () => {

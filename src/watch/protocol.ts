@@ -5,7 +5,7 @@
 import type { LibraryExercise } from '@/exercises/library';
 import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
 import { setKindOf, setValueOf, type SetField } from '@/sets/fields';
-import { EMPTY_SET, pickSetValues, type SetValues } from '@/sets/values';
+import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
 /** Raised when a message changes shape; each side drops a message of another version. */
@@ -16,13 +16,19 @@ const KEPT_COMMANDS = 50;
 /** The longest command id taken: a UUID is 36 characters. */
 const MAX_ID_LENGTH = 64;
 
-export type WatchSet = SetValues & { done: boolean };
+export type WatchSet = SetValues & {
+  done: boolean;
+  /** What it still needs before it can be ticked, as markDone() asks; none when it can be. */
+  missing: SetField[];
+};
 
 export type WatchExercise = {
   exerciseId: string;
   /** In the user's language, as the phone shows it. */
   name: string;
   target: WorkoutTarget;
+  /** What its sets record, as the phone shows them (setKindOf). */
+  fields: SetField[];
   restSeconds: number;
   sets: WatchSet[];
   last: SetValues[];
@@ -75,7 +81,7 @@ export function workoutIdOf(session: Session): string {
 /** The state for the watch, its exercises named by `names` (by exercise id). */
 export function stateOf(
   session: Session | null,
-  names: (exerciseId: string) => string,
+  { name, metricsOf }: { name: (exerciseId: string) => string; metricsOf: MetricsOf },
   seq: number,
 ): WatchState {
   return {
@@ -87,14 +93,22 @@ export function stateOf(
       startedAt: session.startedAt,
       current: session.current,
       rest: session.rest,
-      exercises: session.exercises.map((exercise) => ({
-        exerciseId: exercise.exerciseId,
-        name: names(exercise.exerciseId),
-        target: exercise.target,
-        restSeconds: exercise.restSeconds,
-        sets: exercise.sets.map((set) => ({ ...pickSetValues(set), done: set.done })),
-        last: exercise.last,
-      })),
+      exercises: session.exercises.map((exercise) => {
+        const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
+        return {
+          exerciseId: exercise.exerciseId,
+          name: name(exercise.exerciseId),
+          target: exercise.target,
+          fields: kind.fields,
+          restSeconds: exercise.restSeconds,
+          sets: exercise.sets.map((set) => ({
+            ...pickSetValues(set),
+            done: set.done,
+            missing: set.done ? [] : missingFields(set, kind),
+          })),
+          last: exercise.last,
+        };
+      }),
       applied: session.watchCommands ?? [],
     },
   };

@@ -25,7 +25,8 @@ export function WatchSync() {
 
   useEffect(() => {
     const name = (id: string) => findExercise(library.data, id)?.name ?? '';
-    link.sendState(stateOf(session, name, nextSeq()));
+    const metricsOf = (id: string) => findExercise(library.data, id)?.metrics;
+    link.sendState(stateOf(session, { name, metricsOf }, nextSeq()));
   }, [session, library.data]);
 
   // Commands are taken once the library has loaded, as what a set needs depends on its exercise,
