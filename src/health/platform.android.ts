@@ -58,6 +58,13 @@ const PLAY_STORE = `market://details?id=${HEALTH_CONNECT}`;
 /** Health Connect's own packages, as for an entry made in it: the store, which the screens name. */
 const STORE_PACKAGES = new Set([HEALTH_CONNECT, 'com.google.android.healthconnect.controller']);
 
+/** The time between two moments, as Health Connect's reads take it. */
+const between = (from: Date, to: Date) => ({
+  operator: 'between' as const,
+  startTime: from.toISOString(),
+  endTime: to.toISOString(),
+});
+
 /** The names already looked up, by package, misses too: a read holds a few apps' many records. */
 const namesByPackage = new Map<string, string | null>();
 
@@ -125,11 +132,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
   if (!(await initialize())) return NO_WORKOUT_STATS;
   const granted = await getGrantedPermissions();
   const allowed = (recordType: string) => readGranted(granted, recordType);
-  const timeRangeFilter = {
-    operator: 'between' as const,
-    startTime: from.toISOString(),
-    endTime: to.toISOString(),
-  };
+  const timeRangeFilter = between(from, to);
   if (!allowed('HeartRate')) return NO_WORKOUT_STATS;
   const heart = await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter });
   if (heart.MEASUREMENTS_COUNT === 0) return NO_WORKOUT_STATS;
@@ -202,11 +205,7 @@ const HEART_RATE_RECORD_LOOKBACK_MS = 3600 * 1000;
 
 /** Every heart rate sample of the records that may hold some between two times, page by page. */
 async function heartRatePoints(from: Date, to: Date): Promise<HeartRatePoint[]> {
-  const timeRangeFilter = {
-    operator: 'between' as const,
-    startTime: new Date(from.getTime() - HEART_RATE_RECORD_LOOKBACK_MS).toISOString(),
-    endTime: to.toISOString(),
-  };
+  const timeRangeFilter = between(new Date(from.getTime() - HEART_RATE_RECORD_LOOKBACK_MS), to);
   const points: HeartRatePoint[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < MOST_HEART_RATE_PAGES; page++) {
@@ -242,11 +241,7 @@ export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
   if (!(await initialize()) || !(await stepsAllowed())) return [];
   const days = await aggregateGroupByPeriod({
     recordType: 'Steps',
-    timeRangeFilter: {
-      operator: 'between',
-      startTime: from.toISOString(),
-      endTime: to.toISOString(),
-    },
+    timeRangeFilter: between(from, to),
     timeRangeSlicer: { period: 'DAYS', length: 1 },
   });
   return days.flatMap(({ result, startTime }) =>
@@ -291,11 +286,7 @@ const savedByBenchbite = (record: { metadata?: Metadata }) =>
 // reading exercise was not allowed; other apps' workouts are then simply not seen.
 export async function storedWorkouts(logId: number, from: Date, to: Date): Promise<StoredWorkouts> {
   if (!(await initialize())) return NO_STORED_WORKOUTS;
-  const timeRangeFilter = {
-    operator: 'between' as const,
-    startTime: from.toISOString(),
-    endTime: to.toISOString(),
-  };
+  const timeRangeFilter = between(from, to);
   const id = savedWorkoutId(logId);
   const isOurs = (record: { metadata?: Metadata }) =>
     savedByBenchbite(record) && record.metadata?.clientRecordId === id;
@@ -375,7 +366,7 @@ async function figuresOf(
   origin: string | undefined,
   allowed: (recordType: string) => boolean,
 ): Promise<WorkoutFigures> {
-  const during = { operator: 'between' as const, startTime, endTime };
+  const during = between(new Date(startTime), new Date(endTime));
   const kcal =
     allowed('ActiveCaloriesBurned') && origin
       ? (
@@ -416,11 +407,7 @@ export async function outsideWorkouts(
   let pageToken: string | undefined;
   for (let page = 0; page < MOST_SESSION_PAGES; page++) {
     const { records, pageToken: next } = await readRecords('ExerciseSession', {
-      timeRangeFilter: {
-        operator: 'between',
-        startTime: from.toISOString(),
-        endTime: to.toISOString(),
-      },
+      timeRangeFilter: between(from, to),
       pageSize: 1000,
       ...(pageToken ? { pageToken } : {}),
     });
