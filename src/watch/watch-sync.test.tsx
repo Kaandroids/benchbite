@@ -29,6 +29,11 @@ jest.mock('./link', () => ({
 const NOW = 1_800_000_000_000;
 const PUSH = testWorkout(7, { exercises: [testExercise('bench', { sets: 3, restSeconds: 90 })] });
 
+const LOADED = {
+  data: [{ id: 'bench', name: 'Bench press', metrics: ['weight', 'reps'] }],
+  isPending: false,
+} as never;
+
 let deliver: (message: unknown) => void = () => undefined;
 const stopListening = jest.fn();
 const sent = () => jest.mocked(link.sendState).mock.calls.map(([state]) => state);
@@ -37,9 +42,7 @@ const lastSent = (): WatchState => sent()[sent().length - 1]!;
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: NOW });
-  jest.mocked(useExerciseLibrary).mockReturnValue({
-    data: [{ id: 'bench', name: 'Bench press' }],
-  } as never);
+  jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
   jest.mocked(link.onCommand).mockImplementation((listener) => {
     deliver = listener;
     return stopListening;
@@ -67,7 +70,9 @@ it('tells the watch when no workout runs', async () => {
 });
 
 it('applies the watch’s commands to the workout, and sends it back', async () => {
-  startSession('user-a', PUSH, {}, { now: NOW });
+  // Last time's weight fills the sets, so that they can be ticked.
+  const last = { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] };
+  startSession('user-a', PUSH, last, { now: NOW });
   await render(<WatchSync />);
   await act(() =>
     deliver({
@@ -83,6 +88,30 @@ it('applies the watch’s commands to the workout, and sends it back', async () 
   );
   expect(lastSent().workout?.exercises[0]?.sets[1]?.done).toBe(true);
   expect(lastSent().workout?.applied).toEqual(['command-1']);
+});
+
+it('holds commands while the library loads, then applies them with its rules', async () => {
+  startSession('user-a', PUSH, {}, { now: NOW });
+  jest.mocked(useExerciseLibrary).mockReturnValue({ data: undefined, isPending: true } as never);
+  const { rerender } = await render(<WatchSync />);
+  const command = (id: string, body: Record<string, unknown>) => ({
+    v: PROTOCOL_VERSION,
+    id,
+    at: NOW,
+    workoutId: 'workout-1',
+    exercise: 0,
+    set: 0,
+    ...body,
+  });
+  // A tick without a weight, which the bench press needs, and then the weight.
+  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
+  await act(() => deliver(command('weight', { type: 'setValues', values: { weightKg: 60 } })));
+  expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, done: false });
+
+  jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
+  await rerender(<WatchSync />);
+  expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: 60, done: false });
+  expect(lastSent().workout?.applied).toEqual(['tick', 'weight']);
 });
 
 it('drops a message that is not a command', async () => {
