@@ -14,6 +14,8 @@ expo-env.d.ts
 # Build output of the app's own native modules
 modules/*/android/build/
 modules/*/android/.gradle/
+# The watch app's icon, made from assets/ at each prebuild
+targets/*/Assets.xcassets/
 *.orig.*
 
 # Metro
