@@ -5,16 +5,14 @@
 import type { LibraryExercise } from '@/exercises/library';
 import {
   addSet,
-  lastActivity,
+  markDone,
   restUntil,
   setValues,
-  stopClock,
-  toggleDone,
   type Session,
   type SessionSet,
 } from '@/sessions/session';
-import { SET_LIMITS, setKindOf, setValueOf, type SetField } from '@/sets/fields';
-import { missingFields, pickSetValues, type SetValues } from '@/sets/values';
+import { setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import { EMPTY_SET, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
 /** Raised when a message changes shape; each side drops a message of another version. */
@@ -70,7 +68,8 @@ export type WatchCommand = CommandBase &
   (
     | { type: 'setValues'; exercise: number; set: number; values: Partial<SetValues> }
     | { type: 'setDone'; exercise: number; set: number; done: boolean }
-    | { type: 'addSet'; exercise: number }
+    /** Adds a set while the exercise has fewer than `sets`, the number the watch then showed. */
+    | { type: 'addSet'; exercise: number; sets: number }
     /** The rest the watch showed, `of` its end, made to end at `endsAt`, or skipped with null. */
     | { type: 'setRest'; of: number; endsAt: number | null }
   );
@@ -125,7 +124,7 @@ function valuesOf(value: unknown): Partial<SetValues> | null {
   if (!isRecord(value)) return null;
   const values: Partial<SetValues> = {};
   for (const [field, given] of Object.entries(value)) {
-    if (!Object.hasOwn(SET_LIMITS, field)) return null;
+    if (!Object.hasOwn(EMPTY_SET, field)) return null;
     if (given !== null && typeof given !== 'number') return null;
     values[field as SetField] = given === null ? null : setValueOf(field as SetField, given);
   }
@@ -151,7 +150,9 @@ export function parseCommand(message: unknown): WatchCommand | null {
         ? { ...base, type, exercise: message.exercise, set: message.set, done: message.done }
         : null;
     case 'addSet':
-      return isIndex(message.exercise) ? { ...base, type, exercise: message.exercise } : null;
+      return isIndex(message.exercise) && isIndex(message.sets) && message.sets > 0
+        ? { ...base, type, exercise: message.exercise, sets: message.sets }
+        : null;
     case 'setRest':
       return isTime(message.of) && (message.endsAt === null || isTime(message.endsAt))
         ? { ...base, type, of: message.of, endsAt: message.endsAt }
@@ -191,34 +192,18 @@ function change(
         : session;
     }
     case 'setDone': {
-      const { exercise, set: index, done } = command;
-      const set = setAt(session, exercise, index);
-      const item = session.exercises[exercise];
-      if (!set || !item || set.done === done || (set.doneChangedAt ?? 0) > at) return session;
-      const { clock } = session;
-      const clocked = done && clock?.exercise === exercise && clock.set === index;
-      let next: Session;
-      if (clocked && at >= clock.startedAt) {
-        // Ticked on the watch while the phone's clock ran on it: the clock stops and gives its time.
-        next = stopClock(session, at);
-      } else {
-        // Not done without what it needs, as on the phone, since the log would refuse it.
-        const kind = setKindOf(metricsOf(item.exerciseId), item.target);
-        if (done && missingFields(set, kind).length > 0) return session;
-        // A tick from before the clock started keeps the time the watch gave, and the clock stops.
-        next = toggleDone(clocked ? { ...session, clock: null } : session, exercise, index, at);
-      }
-      // A tick older than the latest set leaves the open exercise and the rest that set started.
-      const older = lastActivity(session) > at;
-      const rest = older ? session.rest : next.rest;
-      return {
-        ...next,
-        current: older ? session.current : next.current,
-        rest: rest && rest.endsAt > now ? rest : null,
-      };
+      const item = session.exercises[command.exercise];
+      if (!item) return session;
+      const kind = setKindOf(metricsOf(item.exerciseId), item.target);
+      return markDone(session, command.exercise, command.set, command.done, kind, { at, now });
     }
-    case 'addSet':
-      return addSet(session, command.exercise);
+    case 'addSet': {
+      // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
+      const sets = session.exercises[command.exercise]?.sets.length;
+      return sets !== undefined && sets < command.sets
+        ? addSet(session, command.exercise)
+        : session;
+    }
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of

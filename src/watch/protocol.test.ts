@@ -1,4 +1,5 @@
 import {
+  addSet,
   setValues,
   startClock,
   startSession,
@@ -61,7 +62,7 @@ describe('parseCommand', () => {
   it('reads each kind of command', () => {
     expect(done(NOW, 0)).toMatchObject({ type: 'setDone', exercise: 0, set: 0, done: true });
     expect(weigh(NOW, 1, 80)).toMatchObject({ values: { weightKg: 80 } });
-    expect(command(NOW, { type: 'addSet', exercise: 1 })).toMatchObject({ exercise: 1 });
+    expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -72,18 +73,20 @@ describe('parseCommand', () => {
     for (const message of [
       null,
       'setDone',
-      { ...base, v: 2, type: 'addSet', exercise: 0 },
-      { ...base, id: '', type: 'addSet', exercise: 0 },
-      { ...base, at: 'now', type: 'addSet', exercise: 0 },
+      { ...base, v: 2, type: 'addSet', exercise: 0, sets: 3 },
+      { ...base, id: '', type: 'addSet', exercise: 0, sets: 3 },
+      { ...base, at: 'now', type: 'addSet', exercise: 0, sets: 3 },
       { ...base, type: 'finish' },
-      { ...base, type: 'addSet', exercise: -1 },
-      { ...base, type: 'addSet', exercise: 1.5 },
+      { ...base, type: 'addSet', exercise: -1, sets: 3 },
+      { ...base, type: 'addSet', exercise: 0 },
+      { ...base, type: 'addSet', exercise: 0, sets: 0 },
+      { ...base, type: 'addSet', exercise: 1.5, sets: 3 },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: 'yes' },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: {} },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: { notes: 'hi' } },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: { constructor: null } },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: { reps: '8' } },
-      { ...base, id: 'x'.repeat(65), type: 'addSet', exercise: 0 },
+      { ...base, id: 'x'.repeat(65), type: 'addSet', exercise: 0, sets: 3 },
       { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
     ]) {
       expect(parseCommand(message)).toBeNull();
@@ -222,14 +225,18 @@ describe('applyCommand', () => {
     expect(bench(session)[0]?.weightKg).toBe(72.5);
   });
 
-  it('adds a set once, and none past the most an exercise can have', () => {
-    const add = command(NOW, { type: 'addSet', exercise: 1 });
+  it('adds a set up to the number the watch showed, once', () => {
+    // The row has 2 sets; the watch adds a third.
+    const add = command(NOW, { type: 'addSet', exercise: 1, sets: 3 });
     let session = applyCommand(start(), add, { now: NOW });
     session = applyCommand(session, add, { now: NOW });
     expect(session.exercises[1]?.sets).toHaveLength(3);
-    expect(
-      applyCommand(start(), command(NOW, { type: 'addSet', exercise: 9 }), { now: NOW }).exercises,
-    ).toEqual(start().exercises);
+    // Added on the phone meanwhile, out of reach: the watch's adds none more.
+    const phoneAdded = addSet(start(), 1);
+    const late = command(NOW, { type: 'addSet', exercise: 1, sets: 3 });
+    expect(applyCommand(phoneAdded, late, { now: NOW }).exercises[1]?.sets).toHaveLength(3);
+    const nowhere = command(NOW, { type: 'addSet', exercise: 9, sets: 1 });
+    expect(applyCommand(start(), nowhere, { now: NOW }).exercises).toEqual(start().exercises);
   });
 
   it('changes or skips the rest the watch showed, and no other', () => {
