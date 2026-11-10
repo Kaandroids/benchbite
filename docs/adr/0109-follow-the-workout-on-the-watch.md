@@ -29,7 +29,7 @@ The rest alert must come from one device only. A notification on the phone and a
 
   The phone applies a command with the same functions its own screen uses.
 
-- **On each set, the latest change wins.** The workout keeps, for each set, when its values last changed and when it was last ticked or unticked, on either device. A command older than the set's last change of the same kind changes nothing. It still counts as applied, so the watch stops waiting on it. A command's time is at most the time it arrives.
+- **On each value, the latest change wins.** The workout keeps, for each set, when each of its values last changed and when it was last ticked or unticked, on either device. A command changes only what was not changed after it: a weight typed later on the phone stays, while the reps the watch changed before still apply. It still counts as applied, so the watch stops waiting on it. A command's time is at most the time it arrives.
 - **The rest is an end time,** not seconds left, so both devices show the same second. A tick that arrives late starts no rest that is already over, and leaves the rest of a later set.
 - **One interface, one implementation per platform.** `src/watch/types.ts` defines `WatchLink`: the watch's status, sending the state, and receiving commands. `link.ios.ts` implements it over WatchConnectivity, and later `link.android.ts` over the Wearable Data Layer. `link.ts` is the version without a watch. Native code only carries JSON. What the messages mean is decided once, in TypeScript, in `src/watch/protocol.ts`, which the watch apps follow.
   - On iOS, the state goes by application context, whose latest wins and which arrives in the background, and by message when the watch is reachable.
@@ -54,9 +54,10 @@ This first step adds the protocol, the interface without a watch, and the compon
 
 ## Consequences
 
-- The workout in progress keeps two times on each set and the ids of the latest 50 commands applied. A workout started before keeps working: missing times count as never.
+- The workout in progress keeps a time for each value of a set and one for its tick, and the ids of the latest 50 commands applied. A workout started before keeps working: missing times count as never.
 - Each change of the workout, such as each digit typed, sends a new state. Sending replaces what was not delivered, so this stays cheap.
 - The watch apps follow `src/watch/protocol.ts`. A change to the messages raises `PROTOCOL_VERSION`, and each side drops messages of another version.
 - Changes are ordered by the devices' clocks, which a paired watch keeps close to the phone's. A watch whose clock runs behind can lose a change against an older one made on the phone; one whose clock runs ahead cannot win over later ones, as a command's time is at most the time it arrives.
+- Commands that waited while the app was closed are held until the exercise library has loaded, as what a set needs depends on its exercise. Without the library, as offline, they apply as the phone's own screen then does.
 - A command applies only what the phone itself allows: values rounded as when typed, a set ticked only with what it needs, a set whose clock runs ticked with the clock's time.
 - The watch can only follow a workout started on the phone. Starting one on the watch, or doing one without the phone, is #472.
