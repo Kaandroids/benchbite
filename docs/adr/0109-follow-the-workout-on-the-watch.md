@@ -57,4 +57,6 @@ This first step adds the protocol, the interface without a watch, and the compon
 - The workout in progress keeps two times on each set and the ids of the latest 50 commands applied. A workout started before keeps working: missing times count as never.
 - Each change of the workout, such as each digit typed, sends a new state. Sending replaces what was not delivered, so this stays cheap.
 - The watch apps follow `src/watch/protocol.ts`. A change to the messages raises `PROTOCOL_VERSION`, and each side drops messages of another version.
+- Changes are ordered by the devices' clocks, which a paired watch keeps close to the phone's. A watch whose clock runs behind can lose a change against an older one made on the phone; one whose clock runs ahead cannot win over later ones, as a command's time is at most the time it arrives.
+- A command applies only what the phone itself allows: values rounded as when typed, a set ticked only with what it needs, a set whose clock runs ticked with the clock's time.
 - The watch can only follow a workout started on the phone. Starting one on the watch, or doing one without the phone, is #472.
