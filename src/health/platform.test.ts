@@ -29,6 +29,11 @@ import { NO_WORKOUT_STATS } from './types';
 jest.unmock('./platform.ios');
 jest.unmock('./platform.android');
 jest.mock('expo-application', () => ({ applicationId: 'com.benchbite.app' }));
+jest.mock('@/modules/app-names', () => ({
+  appName: jest.fn((packageName: string) =>
+    packageName === 'com.huami.watch.hmwatchmanager' ? 'Zepp' : null,
+  ),
+}));
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   AuthorizationStatus: { notDetermined: 0, sharingDenied: 1, sharingAuthorized: 2 },
   ComparisonPredicateOperator: { equalTo: 4 },
@@ -330,9 +335,29 @@ describe('Health Connect', () => {
     expect(await android.workoutStats(FROM, TO)).toEqual({
       heartRate: { average: 120, max: 150 },
       activeKcal: null,
-      source: 'com.example.tracker',
+      // An app the phone does not show is named by no package: the screens name the store.
+      source: null,
       samples: null,
     });
+  });
+
+  it('names an app that wrote data as the phone does, and Health Connect’s own entries by none', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'Weight' }] as never);
+    const weighing = (origin: string) => ({
+      time: '2026-11-09T07:00:00Z',
+      weight: { inKilograms: 78.4 },
+      metadata: { dataOrigin: origin },
+    });
+    jest.mocked(readRecords).mockResolvedValue({
+      records: [
+        weighing('com.huami.watch.hmwatchmanager'),
+        weighing('com.google.android.apps.healthdata'),
+      ],
+    } as never);
+    const weights = await android.weightsSince(FROM);
+    expect(weights.map((weight) => weight.source)).toEqual(['Zepp', null]);
   });
 
   it('reads nothing when heart rate may not be read', async () => {
