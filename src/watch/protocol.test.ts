@@ -188,15 +188,18 @@ describe('nextSetOf', () => {
   });
 });
 
+// Jest runs each test file as a module of Node's, which has it; the app's types leave Node out.
+declare const __dirname: string;
+
 describe('the protocol version', () => {
   it('is of the version the watch app speaks', () => {
     // targets/watch/Protocol.swift keeps the same version; a message of another one is dropped.
+    // This guards the number only: a change of a message's shape is made on both sides by hand.
     const { readFileSync } = jest.requireActual<{
       readFileSync: (path: string, encoding: 'utf8') => string;
     }>('fs');
-    // Read from the root of the repository, where Jest runs.
-    const swift = readFileSync('targets/watch/Protocol.swift', 'utf8');
-    expect(swift).toContain(`let protocolVersion = ${PROTOCOL_VERSION}\n`);
+    const swift = readFileSync(`${__dirname}/../../targets/watch/Protocol.swift`, 'utf8');
+    expect(Number(/let protocolVersion = (\d+)/.exec(swift)?.[1])).toBe(PROTOCOL_VERSION);
   });
 });
 
