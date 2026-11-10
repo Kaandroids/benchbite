@@ -7,12 +7,7 @@ struct WorkoutView: View {
 
   var body: some View {
     if let workout = phone.workout {
-      WorkoutSetView(
-        workout: workout, waiting: !phone.waiting.isEmpty,
-        setWaits: { phone.isWaiting(workoutId: workout.id, exercise: $0, set: $1) }
-      ) { exercise, set in
-        phone.send(.setDone(workoutId: workout.id, exercise: exercise, set: set, done: true))
-      }
+      WorkoutSetView(workout: workout)
     } else {
       VStack(spacing: 8) {
         Text("No workout yet").font(.headline)
@@ -26,11 +21,8 @@ struct WorkoutView: View {
 }
 
 private struct WorkoutSetView: View {
+  @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
-  let waiting: Bool
-  /// Whether a tick of this set waits for the phone, so that Done is not sent twice.
-  let setWaits: (_ exercise: Int, _ set: Int) -> Bool
-  let done: (_ exercise: Int, _ set: Int) -> Void
 
   var body: some View {
     // The set the phone says comes next, as one exercise can be left open while another is done.
@@ -48,16 +40,20 @@ private struct WorkoutSetView: View {
         // Only a set the phone takes a tick for: one without a weight or a time it needs is
         // finished on the phone, which fills it in or runs its clock.
         if set.missing.isEmpty {
-          Button("Done") { done(next.exercise, next.set) }
-            .tint(.orange)
-            .disabled(setWaits(next.exercise, next.set))
+          Button("Done") {
+            phone.send(
+              .setDone(workoutId: workout.id, exercise: next.exercise, set: next.set, done: true))
+          }
+          .tint(.orange)
+          // PhoneLink sends no second tick while one waits; this shows that it would not.
+          .disabled(phone.isWaiting(workoutId: workout.id, exercise: next.exercise, set: next.set))
         } else {
           Text("Finish this set on your iPhone").font(.footnote).foregroundStyle(.secondary)
         }
       } else {
         Text("All sets done").foregroundStyle(.secondary)
       }
-      if waiting {
+      if !phone.waiting.isEmpty {
         Text("Waiting for your iPhone").font(.footnote).foregroundStyle(.yellow)
       }
     }
