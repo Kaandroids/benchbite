@@ -11,6 +11,9 @@ expo-env.d.ts
 /ios
 /android
 .kotlin/
+# Build output of the app's own native modules
+modules/*/android/build/
+modules/*/android/.gradle/
 *.orig.*
 
 # Metro
