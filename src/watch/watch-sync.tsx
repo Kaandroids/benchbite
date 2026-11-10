@@ -32,14 +32,18 @@ export function WatchSync() {
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
 
-  useEffect(() => {
-    link.sendState(stateOf(session, lookups(library.data), nextSeq()));
-  }, [session, library.data]);
-
-  // Commands are taken once the library has loaded, as what a set needs depends on its exercise,
-  // or once its first try failed, as offline, when they apply as the phone's own screen then does.
-  // Until then they wait on the native side, which keeps them even when the app is ended.
+  // A set is judged, and commands are taken, once the library has loaded, as what a set needs
+  // depends on its exercise; or once its first try failed, as offline, when they apply as the
+  // phone's own screen then does. Until then commands wait on the native side, which keeps them
+  // even when the app is ended, and the watch keeps what it showed.
   const ready = session !== null && !(library.isPending && library.failureCount === 0);
+
+  useEffect(() => {
+    if (session === null || ready) {
+      link.sendState(stateOf(session, lookups(library.data), nextSeq()));
+    }
+  }, [session, ready, library.data]);
+
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);
     if (!command) {
