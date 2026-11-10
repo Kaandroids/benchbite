@@ -4,9 +4,9 @@
 //
 // Only kaan.demo@benchbite.local is touched. Data goes in the app's way where the server allows:
 // sign-up, generate-plan, complete_onboarding, log_workout and the logging of the last week as
-// the user over REST. What the server only accepts near today (older weights, meals and water)
-// is inserted as the user in SQL, with the day checks off inside that transaction only, and the
-// onboarding is backdated as postgres.
+// the user over REST. What the server only accepts near today (older meals and water) is inserted
+// as the user in SQL, with the day checks off inside that transaction only; older weights, which
+// users never write themselves, and the backdated onboarding are written as postgres.
 import { execFileSync } from 'node:child_process';
 
 import type { Database } from '../src/lib/database.types.ts';
@@ -560,7 +560,8 @@ for (let day = START; day <= TODAY; day = addDays(day, 1)) {
   if (weight !== undefined && isToday) {
     await rpc('log_weight', { weight_kg: weight, today: day });
   } else if (weight !== undefined && day !== START) {
-    asUser(`insert into public.weight_entries (user_id, weight_kg, measured_on)
+    // As postgres: log_weight() takes only today, and users may not write weights themselves.
+    sql(`insert into public.weight_entries (user_id, weight_kg, measured_on)
       values ('${uid}', ${weight}, '${day}');`);
   }
   const [targetKcal, targetProtein] = asUser(
