@@ -18,12 +18,42 @@ final class WatchSession: NSObject, WCSessionDelegate {
   /// The most commands kept for JavaScript: far more than wait at once.
   private static let maxCommands = 200
 
+  /// Guards the kept commands and the listeners.
   private let lock = NSLock()
+  /// Guards the last state across its delivery, so that an older state never replaces a newer one.
+  private let delivery = NSLock()
   /// The last state JavaScript sent, sent again once the watch can take it.
   private var lastState: String?
   /// Told when commands are waiting, and when the watch's status changes.
-  var onCommands: (() -> Void)?
-  var onStatus: (() -> Void)?
+  private var onCommands: (() -> Void)?
+  private var onStatus: (() -> Void)?
+
+  /// Listens for waiting commands and status changes, or stops with nil. Commands already waiting,
+  /// which arrived while nothing listened, are announced at once.
+  func observe(commands: (() -> Void)?, status: (() -> Void)?) {
+    lock.lock()
+    onCommands = commands
+    onStatus = status
+    let waiting = !(UserDefaults.standard.stringArray(forKey: Self.commandsKey) ?? []).isEmpty
+    lock.unlock()
+    if waiting {
+      commands?()
+    }
+  }
+
+  private func commandsWaiting() {
+    lock.lock()
+    let listener = onCommands
+    lock.unlock()
+    listener?()
+  }
+
+  private func statusChanged() {
+    lock.lock()
+    let listener = onStatus
+    lock.unlock()
+    listener?()
+  }
 
   func activate() {
     guard WCSession.isSupported(), WCSession.default.activationState == .notActivated else { return }
@@ -46,21 +76,23 @@ final class WatchSession: NSObject, WCSessionDelegate {
 
   /// Sends the latest state, and keeps it to send again when the session or the watch is not ready
   /// yet: the session starts after the app does, and the watch app may be installed later.
-  func sendState(_ json: String) {
-    lock.lock()
+  /// The workout's id comes with it, as only JavaScript reads the state.
+  func sendState(_ json: String, workoutId: String?) {
+    delivery.lock()
+    defer { delivery.unlock() }
     lastState = json
-    UserDefaults.standard.set(Self.workoutId(ofState: json), forKey: Self.workoutIdKey)
+    lock.lock()
+    UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey)
     lock.unlock()
     deliver(json)
   }
 
   /// Sends the last state again, as when the session became active or the watch app was installed.
   private func deliverLastState() {
-    lock.lock()
-    let json = lastState
-    lock.unlock()
-    if let json {
-      deliver(json)
+    delivery.lock()
+    defer { delivery.unlock() }
+    if let lastState {
+      deliver(lastState)
     }
   }
 
@@ -105,7 +137,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
     if let workoutId, Self.workoutId(ofCommand: command) == workoutId {
       silenceRestOnPhone()
     }
-    onCommands?()
+    commandsWaiting()
   }
 
   /// A command for the workout the phone runs shows that the watch follows it and signals the end of
@@ -116,16 +148,10 @@ final class WatchSession: NSObject, WCSessionDelegate {
       withIdentifiers: [Self.restNotificationId])
   }
 
-  private static func object(_ json: String) -> [String: Any]? {
-    (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
-  }
-
-  private static func workoutId(ofState json: String) -> String? {
-    (object(json)?["workout"] as? [String: Any])?["id"] as? String
-  }
-
+  /// The one field of a command read here: `workoutId` in src/watch/protocol.ts (CommandBase).
   private static func workoutId(ofCommand json: String) -> String? {
-    object(json)?["workoutId"] as? String
+    let command = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
+    return command?["workoutId"] as? String
   }
 
   // MARK: - WCSessionDelegate
@@ -138,7 +164,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
       NSLog("[WatchLink] Could not activate the session: %@", error.localizedDescription)
     }
     deliverLastState()
-    onStatus?()
+    statusChanged()
   }
 
   func sessionDidBecomeInactive(_ session: WCSession) {}
@@ -150,11 +176,11 @@ final class WatchSession: NSObject, WCSessionDelegate {
 
   func sessionWatchStateDidChange(_ session: WCSession) {
     deliverLastState()
-    onStatus?()
+    statusChanged()
   }
 
   func sessionReachabilityDidChange(_ session: WCSession) {
-    onStatus?()
+    statusChanged()
   }
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {

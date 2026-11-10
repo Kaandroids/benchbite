@@ -13,21 +13,21 @@ public class WatchLinkModule: Module {
     }
 
     OnStartObserving { [weak self] in
-      WatchSession.shared.onCommands = { self?.sendEvent("onCommands") }
-      WatchSession.shared.onStatus = { self?.sendEvent("onStatus") }
+      WatchSession.shared.observe(
+        commands: { self?.sendEvent("onCommands") },
+        status: { self?.sendEvent("onStatus") })
     }
 
     OnStopObserving {
-      WatchSession.shared.onCommands = nil
-      WatchSession.shared.onStatus = nil
+      WatchSession.shared.observe(commands: nil, status: nil)
     }
 
     Function("status") {
       WatchSession.shared.status
     }
 
-    Function("sendState") { (json: String) in
-      WatchSession.shared.sendState(json)
+    Function("sendState") { (json: String, workoutId: String?) in
+      WatchSession.shared.sendState(json, workoutId: workoutId)
     }
 
     Function("takeCommands") {
