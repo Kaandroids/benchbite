@@ -59,7 +59,10 @@ const PLAY_STORE = `market://details?id=${HEALTH_CONNECT}`;
 const STORE_PACKAGES = new Set([HEALTH_CONNECT, 'com.google.android.healthconnect.controller']);
 
 /** The names already looked up, by package, misses too: a read holds a few apps' many records. */
-const appNames = new Map<string, string | null>();
+const namesByPackage = new Map<string, string | null>();
+
+/** Forgets the names looked up, for a test that looks them up again. */
+export const forgetAppNames = () => namesByPackage.clear();
 
 /**
  * The name of the app that wrote data, as the phone shows it, or none: Health Connect gives only its
@@ -67,12 +70,8 @@ const appNames = new Map<string, string | null>();
  */
 function sourceName(origin: string | undefined): string | null {
   if (!origin || STORE_PACKAGES.has(origin)) return null;
-  if (!appNames.has(origin)) {
-    const name = appName(origin);
-    // An app without a label is named by its package, which is no name.
-    appNames.set(origin, name && name !== origin ? name : null);
-  }
-  return appNames.get(origin) ?? null;
+  if (!namesByPackage.has(origin)) namesByPackage.set(origin, appName(origin));
+  return namesByPackage.get(origin) ?? null;
 }
 
 export const store: HealthStore = 'healthConnect';

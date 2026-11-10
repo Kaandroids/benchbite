@@ -9,14 +9,17 @@ class AppNamesModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("AppNames")
 
-    // The name the app shows on the phone, or null for one the phone does not have or show.
+    // The name the app shows on the phone, or null for one the phone does not have or show. An app
+    // without a label is named by its package, which is no name.
     Function("appName") { packageName: String ->
       val packages = appContext.reactContext?.packageManager ?: return@Function null
-      try {
-        packages.getApplicationLabel(packages.getApplicationInfo(packageName, 0)).toString()
-      } catch (error: PackageManager.NameNotFoundException) {
-        null
-      }
+      val label =
+        try {
+          packages.getApplicationLabel(packages.getApplicationInfo(packageName, 0)).toString()
+        } catch (error: PackageManager.NameNotFoundException) {
+          null
+        }
+      label?.takeIf { it.isNotBlank() && it != packageName }
     }
   }
 }
