@@ -1,0 +1,233 @@
+import { setValues, startSession, toggleDone, type Session } from '@/sessions/session';
+import { testExercise, testWorkout } from '@/workouts/test-data';
+
+import {
+  applyCommand,
+  parseCommand,
+  PROTOCOL_VERSION,
+  stateOf,
+  workoutIdOf,
+  type WatchCommand,
+} from './protocol';
+
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'workout-1' }));
+jest.mock('expo-sqlite/kv-store', () => ({
+  Storage: { getItemSync: () => null, setItemSync: () => undefined },
+}));
+
+const NOW = 1_800_000_000_000;
+const MINUTE = 60_000;
+
+const PUSH = testWorkout(7, {
+  exercises: [
+    testExercise('bench', { sets: 4, restSeconds: 90 }),
+    testExercise('row', { sets: 2, restSeconds: 60 }),
+  ],
+});
+
+const start = () => startSession('user-a', PUSH, {}, { now: NOW });
+
+let count = 0;
+/** A command from the watch, made at `at`. */
+function command(at: number, body: Record<string, unknown>): WatchCommand {
+  count += 1;
+  const parsed = parseCommand({
+    v: PROTOCOL_VERSION,
+    id: `command-${count}`,
+    at,
+    workoutId: 'workout-1',
+    ...body,
+  });
+  if (!parsed) throw new Error('Not a command');
+  return parsed;
+}
+
+const done = (at: number, set: number, value = true) =>
+  command(at, { type: 'setDone', exercise: 0, set, done: value });
+const weigh = (at: number, set: number, weightKg: number) =>
+  command(at, { type: 'setValues', exercise: 0, set, values: { weightKg } });
+
+const bench = (session: Session) => session.exercises[0]!.sets;
+
+describe('parseCommand', () => {
+  it('reads each kind of command', () => {
+    expect(done(NOW, 0)).toMatchObject({ type: 'setDone', exercise: 0, set: 0, done: true });
+    expect(weigh(NOW, 1, 80)).toMatchObject({ values: { weightKg: 80 } });
+    expect(command(NOW, { type: 'addSet', exercise: 1 })).toMatchObject({ exercise: 1 });
+    expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
+      endsAt: null,
+    });
+  });
+
+  it('drops what is not a command of this version', () => {
+    const base = { v: PROTOCOL_VERSION, id: 'x', at: NOW, workoutId: 'workout-1' };
+    for (const message of [
+      null,
+      'setDone',
+      { ...base, v: 2, type: 'addSet', exercise: 0 },
+      { ...base, id: '', type: 'addSet', exercise: 0 },
+      { ...base, at: 'now', type: 'addSet', exercise: 0 },
+      { ...base, type: 'finish' },
+      { ...base, type: 'addSet', exercise: -1 },
+      { ...base, type: 'addSet', exercise: 1.5 },
+      { ...base, type: 'setDone', exercise: 0, set: 0, done: 'yes' },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: {} },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: { weightKg: -5 } },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: { weightKg: 5000 } },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: { notes: 'hi' } },
+      { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
+    ]) {
+      expect(parseCommand(message)).toBeNull();
+    }
+  });
+});
+
+describe('stateOf', () => {
+  it('gives the watch the workout with its exercises named', () => {
+    const session = toggleDone(start(), 0, 0, NOW + MINUTE);
+    const state = stateOf(session, (id) => `name of ${id}`, 7);
+    expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
+    expect(state.workout).toMatchObject({
+      id: 'workout-1',
+      current: 0,
+      rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
+      applied: [],
+    });
+    expect(state.workout?.exercises[0]).toMatchObject({ name: 'name of bench', restSeconds: 90 });
+    // Only what the watch shows: no times of the phone's own.
+    expect(state.workout?.exercises[0]?.sets[0]).toEqual({
+      weightKg: null,
+      reps: 12,
+      seconds: null,
+      meters: null,
+      done: true,
+    });
+  });
+
+  it('says no workout runs', () => {
+    expect(stateOf(null, () => '', 1).workout).toBeNull();
+  });
+
+  it('names a workout started before ids were kept by its start', () => {
+    const { id: _id, ...older } = start();
+    expect(workoutIdOf(older)).toBe(`started-${NOW}`);
+  });
+});
+
+describe('applyCommand', () => {
+  it('ticks a set the watch ticked, with the rest from then', () => {
+    const session = applyCommand(start(), done(NOW + MINUTE, 0), NOW + MINUTE + 1000);
+    expect(bench(session)[0]).toMatchObject({ done: true, doneAt: NOW + MINUTE });
+    expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90 });
+    expect(session.watchCommands).toHaveLength(1);
+  });
+
+  it('applies a command once, however often it arrives', () => {
+    const tick = done(NOW + MINUTE, 0);
+    const once = applyCommand(start(), tick, NOW + MINUTE);
+    // A second delivery would untick it, were the command a toggle.
+    expect(applyCommand(once, tick, NOW + MINUTE)).toBe(once);
+  });
+
+  it('drops a command for another workout', () => {
+    const session = start();
+    const other = { ...done(NOW + MINUTE, 0), workoutId: 'workout-0' };
+    expect(applyCommand(session, other, NOW + MINUTE)).toBe(session);
+  });
+
+  it('follows sets done in turn on the watch and the phone', () => {
+    // Set 1 on the watch, set 2 on the phone, set 3 on the watch again, set 4 on the phone.
+    let session = applyCommand(start(), done(NOW + MINUTE, 0), NOW + MINUTE);
+    session = toggleDone(session, 0, 1, NOW + 3 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 5 * MINUTE, 2, 82.5), NOW + 5 * MINUTE);
+    session = applyCommand(session, done(NOW + 6 * MINUTE, 2), NOW + 6 * MINUTE);
+    session = toggleDone(session, 0, 3, NOW + 9 * MINUTE);
+    expect(bench(session).map((set) => set.done)).toEqual([true, true, true, true]);
+    expect(bench(session)[2]?.weightKg).toBe(82.5);
+    // The bench press is done, so the row is open next.
+    expect(session.current).toBe(1);
+  });
+
+  it('keeps a value typed on the phone after one sent late from the watch', () => {
+    // Set on the watch at 10:02, out of reach; typed on the phone at 10:04; delivered at 10:05.
+    let session = setValues(start(), 0, 1, { weightKg: 85 }, NOW + 4 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 2 * MINUTE, 1, 80), NOW + 5 * MINUTE);
+    expect(bench(session)[1]?.weightKg).toBe(85);
+    // The command still counts as applied, so that the watch stops waiting on it.
+    expect(session.watchCommands).toHaveLength(1);
+  });
+
+  it('applies the watch’s ticks that waited, without undoing what the phone did since', () => {
+    // Ticked on the watch at 10:01 and 10:03 while out of reach; set 1 unticked on the phone at
+    // 10:04, as a mistake; both ticks delivered at 10:05.
+    let session = toggleDone(start(), 0, 0, NOW);
+    session = toggleDone(session, 0, 0, NOW + 4 * MINUTE);
+    session = applyCommand(session, done(NOW + MINUTE, 0), NOW + 5 * MINUTE);
+    session = applyCommand(session, done(NOW + 3 * MINUTE, 1), NOW + 5 * MINUTE);
+    expect(bench(session).map((set) => set.done)).toEqual([false, true, false, false]);
+  });
+
+  it('starts no rest that would already be over', () => {
+    const session = applyCommand(start(), done(NOW, 0), NOW + 5 * MINUTE);
+    expect(bench(session)[0]?.done).toBe(true);
+    expect(session.rest).toBeNull();
+  });
+
+  it('keeps the rest of a later set when an older tick arrives', () => {
+    let session = toggleDone(start(), 0, 1, NOW + 3 * MINUTE);
+    const rest = session.rest;
+    session = applyCommand(session, done(NOW + 2 * MINUTE, 0), NOW + 3 * MINUTE + 1000);
+    expect(bench(session)[0]?.done).toBe(true);
+    expect(session.rest).toEqual(rest);
+  });
+
+  it('keeps a time from the future as the time it arrived', () => {
+    // A command that says 10:10 arrives at 10:05; one made at 10:06 still applies after it.
+    let session = applyCommand(start(), weigh(NOW + 10 * MINUTE, 0, 70), NOW + 5 * MINUTE);
+    expect(bench(session)[0]?.valuesAt).toBe(NOW + 5 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 6 * MINUTE, 0, 72.5), NOW + 6 * MINUTE);
+    expect(bench(session)[0]?.weightKg).toBe(72.5);
+  });
+
+  it('adds a set once, and none past the most an exercise can have', () => {
+    const add = command(NOW, { type: 'addSet', exercise: 1 });
+    let session = applyCommand(start(), add, NOW);
+    session = applyCommand(session, add, NOW);
+    expect(session.exercises[1]?.sets).toHaveLength(3);
+    expect(
+      applyCommand(start(), command(NOW, { type: 'addSet', exercise: 9 }), NOW).exercises,
+    ).toEqual(start().exercises);
+  });
+
+  it('changes or skips the rest the watch showed, and no other', () => {
+    const resting = toggleDone(start(), 0, 0, NOW);
+    const endsAt = NOW + 90_000;
+    const longer = applyCommand(
+      resting,
+      command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: endsAt + 15_000 }),
+      NOW + 10_000,
+    );
+    expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90 });
+    const skipped = applyCommand(
+      resting,
+      command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: null }),
+      NOW + 10_000,
+    );
+    expect(skipped.rest).toBeNull();
+    // A rest that changed on the phone meanwhile stays as it is.
+    const stale = applyCommand(
+      resting,
+      command(NOW + 10_000, { type: 'setRest', of: endsAt - 5000, endsAt: null }),
+      NOW + 10_000,
+    );
+    expect(stale.rest).toEqual(resting.rest);
+  });
+
+  it('keeps only the latest command ids', () => {
+    let session = start();
+    for (let i = 0; i < 60; i++) {
+      session = applyCommand(session, weigh(NOW + i, 0, i), NOW + i);
+    }
+    expect(session.watchCommands).toHaveLength(50);
+  });
+});
