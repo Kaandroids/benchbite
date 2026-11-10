@@ -30,7 +30,6 @@ beforeEach(() => {
   jest.clearAllMocks();
   Storage.clearSync();
   jest.mocked(cancelReminders).mockResolvedValue();
-  jest.mocked(releaseHealthAccess).mockResolvedValue();
   saveReminderMinutes(1080);
   setHealthConnected(true);
 });
@@ -52,7 +51,8 @@ describe('claimDevice', () => {
     expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(loadReminderMinutes()).toBeNull();
     expect(isHealthConnected()).toBe(false);
-    expect(releaseHealthAccess).toHaveBeenCalledTimes(1);
+    // Health Connect would take it back only at the next start, with what the new user allowed.
+    expect(releaseHealthAccess).not.toHaveBeenCalled();
 
     claimDevice('user-2');
     expect(endSession).toHaveBeenCalledTimes(1);
