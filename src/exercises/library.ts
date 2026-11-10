@@ -100,12 +100,13 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
  * Every exercise of the library and the user's own, with names in the app language. It changes
  * only when the user creates, edits or archives one, which loads it again.
  */
-export function useExerciseLibrary() {
+export function useExerciseLibrary({ enabled = true }: { enabled?: boolean } = {}) {
   const { i18n } = useTranslation();
   return useQuery({
     queryKey: ['exercises', i18n.language],
     queryFn: () => fetchLibrary(i18n.language),
     staleTime: Infinity,
+    enabled,
   });
 }
 

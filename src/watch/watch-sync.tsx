@@ -20,7 +20,8 @@ function nextSeq(): number {
 /** Sends the workout to the watch and applies what the watch sends. */
 export function WatchSync() {
   const session = useActiveSession(useUserId());
-  const library = useExerciseLibrary();
+  // Loaded only while a workout runs, which is all the watch shows.
+  const library = useExerciseLibrary({ enabled: session !== null });
 
   useEffect(() => {
     const name = (id: string) => findExercise(library.data, id)?.name ?? '';
@@ -44,7 +45,8 @@ export function WatchSync() {
     const command = parseCommand(message);
     if (!command) {
       console.warn('Dropped a message from the watch that is not a command');
-    } else if (loading) {
+    } else if (session && loading) {
+      // Without a workout, there is nothing to wait for: the command changes nothing.
       waiting.current.push(command);
     } else {
       apply([command]);
