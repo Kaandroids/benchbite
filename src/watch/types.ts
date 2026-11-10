@@ -13,6 +13,9 @@ export type WatchStatus = {
   reachable: boolean;
 };
 
+/** No watch to talk to. */
+export const NO_WATCH: WatchStatus = { paired: false, installed: false, reachable: false };
+
 /**
  * How the app talks to a watch, which each platform implements over its own channel (ADR 0109).
  * It carries the protocol's messages and nothing else: what they mean is decided in protocol.ts.

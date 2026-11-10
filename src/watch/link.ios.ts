@@ -2,9 +2,7 @@
 // link.ts; without the native module, as in a build from before it, there is no watch.
 import { WatchLink } from '@/modules/watch-link';
 
-import type { WatchLink as Link, WatchStatus } from './types';
-
-const NO_WATCH: WatchStatus = { paired: false, installed: false, reachable: false };
+import { NO_WATCH, type WatchLink as Link, type WatchStatus } from './types';
 
 const status = (): WatchStatus => WatchLink?.status() ?? NO_WATCH;
 
