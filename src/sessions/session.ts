@@ -18,10 +18,10 @@ export type SessionSet = SetValues & {
   /** Whether the weight was filled in from an earlier set of the workout, not typed or from last time. */
   carried?: boolean;
   /**
-   * When its values were last changed, and when it was last ticked or unticked, on the phone or the
-   * watch: an older change that arrives late does not undo a newer one (ADR 0109).
+   * When each of its values was last changed, and when it was last ticked or unticked, on the phone
+   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109).
    */
-  valuesAt?: number;
+  valuesAt?: Partial<Record<keyof SetValues, number>>;
   doneChangedAt?: number;
 };
 
@@ -266,7 +266,10 @@ export function setValues(
                     ...s,
                     ...values,
                     ...(typedWeight ? { carried: undefined } : {}),
-                    valuesAt: now,
+                    valuesAt: {
+                      ...s.valuesAt,
+                      ...Object.fromEntries(Object.keys(values).map((field) => [field, now])),
+                    },
                   }
                 : j > index && typedWeight
                   ? follow(s)

@@ -179,24 +179,34 @@ function change(
   switch (command.type) {
     case 'setValues': {
       const set = setAt(session, command.exercise, command.set);
-      // A change made on the phone after this one on the watch stays.
-      if (!set || (set.valuesAt ?? 0) > at) return session;
-      return setValues(session, command.exercise, command.set, command.values, at);
+      if (!set) return session;
+      // A value changed on the phone after this change on the watch stays; the others change.
+      const values = Object.fromEntries(
+        Object.entries(command.values).filter(
+          ([field]) => (set.valuesAt?.[field as SetField] ?? 0) <= at,
+        ),
+      );
+      return Object.keys(values).length > 0
+        ? setValues(session, command.exercise, command.set, values, at)
+        : session;
     }
     case 'setDone': {
       const { exercise, set: index, done } = command;
       const set = setAt(session, exercise, index);
       const item = session.exercises[exercise];
       if (!set || !item || set.done === done || (set.doneChangedAt ?? 0) > at) return session;
+      const { clock } = session;
+      const clocked = done && clock?.exercise === exercise && clock.set === index;
       let next: Session;
-      if (done && session.clock?.exercise === exercise && session.clock.set === index) {
+      if (clocked && at >= clock.startedAt) {
         // Ticked on the watch while the phone's clock ran on it: the clock stops and gives its time.
         next = stopClock(session, at);
       } else {
         // Not done without what it needs, as on the phone, since the log would refuse it.
         const kind = setKindOf(metricsOf(item.exerciseId), item.target);
         if (done && missingFields(set, kind).length > 0) return session;
-        next = toggleDone(session, exercise, index, at);
+        // A tick from before the clock started keeps the time the watch gave, and the clock stops.
+        next = toggleDone(clocked ? { ...session, clock: null } : session, exercise, index, at);
       }
       // A tick older than the latest set leaves the open exercise and the rest that set started.
       const older = lastActivity(session) > at;
@@ -204,7 +214,7 @@ function change(
       return {
         ...next,
         current: older ? session.current : next.current,
-        rest: restUntil(rest, rest?.endsAt ?? null, now),
+        rest: rest && rest.endsAt > now ? rest : null,
       };
     }
     case 'addSet':

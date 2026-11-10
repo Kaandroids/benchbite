@@ -92,8 +92,10 @@ describe('parseCommand', () => {
 });
 
 it('keeps values as the phone keeps what is typed', () => {
-  const values = (sent: Record<string, unknown>) =>
-    command(NOW, { type: 'setValues', exercise: 0, set: 0, values: sent }).values;
+  const values = (sent: Record<string, unknown>) => {
+    const parsed = command(NOW, { type: 'setValues', exercise: 0, set: 0, values: sent });
+    return parsed.type === 'setValues' ? parsed.values : null;
+  };
   expect(values({ weightKg: 62.3, reps: 8.5 })).toEqual({ weightKg: 62.25, reps: 9 });
   // Nothing, or more than a set can hold, as when typed.
   expect(values({ reps: 0, seconds: -5 })).toEqual({ reps: null, seconds: null });
@@ -166,6 +168,19 @@ describe('applyCommand', () => {
     expect(session.current).toBe(1);
   });
 
+  it('keeps the values the phone changed later, and takes the others from the watch', () => {
+    // Reps changed on the watch at 10:00, out of reach; the weight typed on the phone at 10:01.
+    let session = setValues(start(), 0, 0, { weightKg: 60 }, NOW + MINUTE);
+    const both = command(NOW, {
+      type: 'setValues',
+      exercise: 0,
+      set: 0,
+      values: { weightKg: 50, reps: 6 },
+    });
+    session = applyCommand(session, both, { now: NOW + 2 * MINUTE });
+    expect(bench(session)[0]).toMatchObject({ weightKg: 60, reps: 6 });
+  });
+
   it('keeps a value typed on the phone after one sent late from the watch', () => {
     // Set on the watch at 10:02, out of reach; typed on the phone at 10:04; delivered at 10:05.
     let session = setValues(start(), 0, 1, { weightKg: 85 }, NOW + 4 * MINUTE);
@@ -202,7 +217,7 @@ describe('applyCommand', () => {
   it('keeps a time from the future as the time it arrived', () => {
     // A command that says 10:10 arrives at 10:05; one made at 10:06 still applies after it.
     let session = applyCommand(start(), weigh(NOW + 10 * MINUTE, 0, 70), { now: NOW + 5 * MINUTE });
-    expect(bench(session)[0]?.valuesAt).toBe(NOW + 5 * MINUTE);
+    expect(bench(session)[0]?.valuesAt?.weightKg).toBe(NOW + 5 * MINUTE);
     session = applyCommand(session, weigh(NOW + 6 * MINUTE, 0, 72.5), { now: NOW + 6 * MINUTE });
     expect(bench(session)[0]?.weightKg).toBe(72.5);
   });
@@ -249,6 +264,20 @@ describe('applyCommand', () => {
     expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 50 });
     // Finishing stops a running clock, which would otherwise untick the set.
     expect(stopClock(session, NOW + 60_000).exercises[2]?.sets[0]?.done).toBe(true);
+  });
+
+  it('keeps the watch’s time for a set ticked before the phone’s clock started on it', () => {
+    // 60 s given and ticked on the watch at 10:00, out of reach; the clock started at 10:01.
+    let session = startClock(start(), 2, 0, NOW + MINUTE);
+    const plank = { type: 'setDone', exercise: 2, set: 0, done: true };
+    session = applyCommand(
+      session,
+      command(NOW, { type: 'setValues', exercise: 2, set: 0, values: { seconds: 60 } }),
+      { now: NOW + 90_000 },
+    );
+    session = applyCommand(session, command(NOW, plank), { now: NOW + 90_000 });
+    expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 60 });
+    expect(session.clock).toBeNull();
   });
 
   it('ticks no set without what it needs, as the phone does not', () => {

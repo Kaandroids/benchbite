@@ -108,7 +108,7 @@ describe('logging sets', () => {
     session = toggleDone(session, 0, 0, NOW + 2000);
     session = toggleDone(session, 0, 0, NOW + 3000);
     expect(session.exercises[0]?.sets[0]).toMatchObject({
-      valuesAt: NOW + 1000,
+      valuesAt: { weightKg: NOW + 1000 },
       doneChangedAt: NOW + 3000,
     });
     // The weight it carried to the next set is no change made to that set.
