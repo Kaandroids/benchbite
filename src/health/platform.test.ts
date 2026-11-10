@@ -562,6 +562,7 @@ describe('saving workouts', () => {
 
   it('takes out the calories of a copy saved again without any', async () => {
     await android.saveWorkout({ ...workout, activeKcal: null });
+    expect(insertRecords).toHaveBeenCalledTimes(1);
     expect(insertRecords).toHaveBeenCalledWith([expect.objectContaining({ exerciseType: 70 })]);
     expect(deleteRecordsByUuids).toHaveBeenCalledWith(
       'ActiveCaloriesBurned',
