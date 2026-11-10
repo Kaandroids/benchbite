@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@expo/plist@0.0.18>@xmldom/xmldom': ^0.8.15
+  '@bacons/xcode>uuid': ^11.1.1
+
 importers:
 
   .:
@@ -2134,11 +2138,6 @@ packages:
     resolution: {integrity: sha512-nAB74NfSNKknqQ1RrYj6uz8FcXEomu/MATJZxh/x+BArzN2U3JbOYC0APYzUIGhVY3m5hRxA8VPNdPBoG8txlA==}
     cpu: [x64]
     os: [win32]
-
-  '@xmldom/xmldom@0.7.13':
-    resolution: {integrity: sha512-lm2GW5PkosIzccsaZIz7tp8cPADSIlIHWDFTR1N0SzfinhhYgeIQjFMz4rYzanCScr3DqQLeomUDArp6MWKm+g==}
-    engines: {node: '>=10.0.0'}
-    deprecated: this version has critical issues, please update to the latest version
 
   '@xmldom/xmldom@0.8.15':
     resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
@@ -5279,9 +5278,8 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   v8-to-istanbul@9.3.0:
@@ -6054,7 +6052,7 @@ snapshots:
     dependencies:
       '@expo/plist': 0.0.18
       debug: 4.4.3(supports-color@8.1.1)
-      uuid: 8.3.2
+      uuid: 11.1.1
     transitivePeerDependencies:
       - supports-color
 
@@ -6540,7 +6538,7 @@ snapshots:
 
   '@expo/plist@0.0.18':
     dependencies:
-      '@xmldom/xmldom': 0.7.13
+      '@xmldom/xmldom': 0.8.15
       base64-js: 1.5.1
       xmlbuilder: 14.0.0
 
@@ -7808,8 +7806,6 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
-
-  '@xmldom/xmldom@0.7.13': {}
 
   '@xmldom/xmldom@0.8.15': {}
 
@@ -11707,7 +11703,7 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uuid@8.3.2: {}
+  uuid@11.1.1: {}
 
   v8-to-istanbul@9.3.0:
     dependencies:

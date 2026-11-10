@@ -15,3 +15,10 @@ minimumReleaseAgeExclude:
 allowBuilds:
   '@parcel/watcher': false
   unrs-resolver: false
+
+# @bacons/apple-targets edits the Xcode project at prebuild through packages that pin old,
+# advised versions: @expo/plist parses plists with @xmldom/xmldom 0.7, whose DOMParser 0.8 keeps
+# (the rest of Expo's tools use 0.8), and @bacons/xcode lists uuid without requiring it.
+overrides:
+  '@expo/plist@0.0.18>@xmldom/xmldom': ^0.8.15
+  '@bacons/xcode>uuid': ^11.1.1
