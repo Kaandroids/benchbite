@@ -3,10 +3,11 @@
 // Edge Functions are running, on the day the screenshots are taken: the history ends today.
 //
 // Only kaan.demo@benchbite.local is touched. Data goes in the app's way where the server allows:
-// sign-up, generate-plan, complete_onboarding, log_workout and the logging of the last week as
-// the user over REST. What the server only accepts near today (older meals and water) is inserted
-// as the user in SQL, with the day checks off inside that transaction only; older weights, which
-// users never write themselves, and the backdated onboarding are written as postgres.
+// sign-up, generate-plan, complete_onboarding, log_workout, set_workout_health with what a watch
+// measured, and the logging of the last week as the user over REST. What the server only accepts
+// near today (older meals and water) is inserted as the user in SQL, with the day checks off inside
+// that transaction only; older weights, which users never write themselves, and the backdated
+// onboarding are written as postgres.
 import { execFileSync } from 'node:child_process';
 
 import type { Database } from '../src/lib/database.types.ts';
@@ -27,14 +28,19 @@ const HISTORY_DAYS = 44; // days before today; the plan starts then
 const START_WEIGHT = 100;
 const END_WEIGHT = 96.1; // today's, 3.9 kg down
 
-// A seeded generator, so that every run tells the same story.
-let state = 20261031;
-function random(): number {
-  state = (state + 0x6d2b79f5) | 0;
-  let t = Math.imul(state ^ (state >>> 15), 1 | state);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+// Seeded generators, so that every run tells the same story. The heart rate has one of its own,
+// so that the rest of the story stays as it was before the heart rate came.
+function seeded(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
+const random = seeded(20261031);
+const heartRandom = seeded(20261110);
 const randint = (min: number, max: number) => min + Math.floor(random() * (max - min + 1));
 const uniform = (min: number, max: number) => min + random() * (max - min);
 const gauss = (sd: number) =>
@@ -291,6 +297,30 @@ function setsFor(exercise: PlannedExercise, session: number): LoggedSet[] {
 
 const sessionCount: Partial<Record<SessionType, number>> = {};
 
+/**
+ * The heart rate a watch measures through a strength workout, one value every 10 seconds as the
+ * app keeps it (ADR 0104): a warm-up, then each set raising it towards a peak and each rest letting
+ * it fall back, with the sets spread evenly over the workout.
+ */
+function heartRateOf(minutes: number, sets: number): number[] {
+  const values = Math.ceil((minutes * 60) / 10) + 1;
+  const warmUpValues = 24; // 4 minutes before the first set
+  const setEvery = (values - warmUpValues) / Math.max(sets, 1);
+  const setLength = 5; // 50 seconds of work
+  const resting = 92 + heartRandom() * 10;
+  const peaks = Array.from({ length: Math.max(sets, 1) }, () => 128 + heartRandom() * 30);
+  let bpm = resting - 10;
+  return Array.from({ length: values }, (_, i) => {
+    const warmUp = Math.min(1, i / warmUpValues);
+    const sinceWarmUp = i - warmUpValues;
+    const inSet = sinceWarmUp >= 0 && sinceWarmUp % setEvery < setLength;
+    const target = inSet ? peaks[Math.floor(sinceWarmUp / setEvery)]! : resting + 8 * warmUp;
+    // The heart rate rises faster in a set than it falls in a rest.
+    bpm += (target - bpm) * (inSet ? 0.45 : 0.18);
+    return Math.round(bpm + (heartRandom() - 0.5) * 4);
+  });
+}
+
 async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) {
   const session: Session = sessions.get(type)!;
   const n = sessionCount[type] ?? 0;
@@ -308,7 +338,7 @@ async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) 
   if (startedAt.getTime() + minutes * 60_000 > Date.now()) {
     throw new Error("Today's workout would end in the future; run the seed later in the day.");
   }
-  await rpc('log_workout', {
+  const logId = await rpc<number>('log_workout', {
     log: {
       clientId: crypto.randomUUID(),
       workoutId: workoutIds.get(type)!,
@@ -320,6 +350,19 @@ async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) 
       exercises,
       ...(plannedOn !== doneOn ? { move: { from: plannedOn, to: doneOn } } : {}),
     },
+  });
+  // What the watch measured, as the app sends it after reading the phone's health store.
+  const heartRate = heartRateOf(
+    minutes,
+    exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0),
+  );
+  await rpc('set_workout_health', {
+    log_id: logId,
+    heart_rate_avg: heartRate.reduce((sum, bpm) => sum + bpm, 0) / heartRate.length,
+    heart_rate_max: Math.max(...heartRate),
+    active_kcal: Math.round(minutes * (5.5 + heartRandom() * 2)),
+    source: 'Apple Watch',
+    heart_rate_samples: heartRate,
   });
 }
 
