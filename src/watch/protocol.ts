@@ -54,10 +54,6 @@ type CommandBase = {
   id: string;
   /** When the user did it on the watch, in milliseconds since the epoch. */
   at: number;
-  /**
-   * The workout it is for. The iOS link reads this one field too, by this name
-   * (modules/watch-link/ios/WatchSession.swift), so it changes there too.
-   */
   workoutId: string;
 };
 

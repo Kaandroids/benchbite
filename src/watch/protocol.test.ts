@@ -108,11 +108,6 @@ it('keeps values as the phone keeps what is typed', () => {
   expect(values({ weightKg: 5000 })).toEqual({ weightKg: 999.75 });
 });
 
-it('names a command’s workout by the field the iOS link reads', () => {
-  // modules/watch-link/ios/WatchSession.swift reads "workoutId" from the JSON of a command.
-  expect(JSON.parse(JSON.stringify(done(NOW, 0)))).toHaveProperty('workoutId', 'workout-1');
-});
-
 describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);

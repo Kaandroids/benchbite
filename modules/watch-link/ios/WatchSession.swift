@@ -126,7 +126,9 @@ final class WatchSession: NSObject, WCSessionDelegate {
     return commands
   }
 
-  /// Keeps a command for JavaScript, which checks it before using it.
+  /// Keeps a command for JavaScript, which checks it before using it. The watch sends it as
+  /// `["command": json, "workoutId": id]`, the workout's id beside it as in sendState(), so that
+  /// nothing here reads the protocol's messages.
   private func keep(_ payload: [String: Any]) {
     guard let command = payload["command"] as? String else { return }
     lock.lock()
@@ -134,7 +136,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
     UserDefaults.standard.set(Array(commands.suffix(Self.maxCommands)), forKey: Self.commandsKey)
     let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
     lock.unlock()
-    if let workoutId, Self.workoutId(ofCommand: command) == workoutId {
+    if let workoutId, payload["workoutId"] as? String == workoutId {
       silenceRestOnPhone()
     }
     commandsWaiting()
@@ -146,12 +148,6 @@ final class WatchSession: NSObject, WCSessionDelegate {
   private func silenceRestOnPhone() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(
       withIdentifiers: [Self.restNotificationId])
-  }
-
-  /// The one field of a command read here: `workoutId` in src/watch/protocol.ts (CommandBase).
-  private static func workoutId(ofCommand json: String) -> String? {
-    let command = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
-    return command?["workoutId"] as? String
   }
 
   // MARK: - WCSessionDelegate
