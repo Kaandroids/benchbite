@@ -31,6 +31,8 @@ struct WatchRest: Decodable {
 struct WatchExercise: Decodable {
   let exerciseId: String
   let name: String
+  /// What its sets record, as the phone shows them: "weightKg", "reps", "seconds", "meters".
+  let fields: [String]
   let restSeconds: Int
   let sets: [WatchSet]
 }
@@ -41,6 +43,8 @@ struct WatchSet: Decodable {
   let seconds: Double?
   let meters: Double?
   let done: Bool
+  /// What it still needs before the phone takes a tick; none when it can be ticked.
+  let missing: [String]
 }
 
 /// A command for the phone, as JSON beside its workout's id, which the phone reads without

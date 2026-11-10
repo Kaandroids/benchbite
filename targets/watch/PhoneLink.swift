@@ -7,8 +7,8 @@ import WatchConnectivity
 final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The workout the phone runs, or none.
   @Published private(set) var workout: WatchWorkout?
-  /// The commands sent that the phone has not applied yet.
-  @Published private(set) var waiting: Set<String> = []
+  /// The commands sent that the phone has not applied yet, with their workout's id.
+  @Published private(set) var waiting: [String: String] = [:]
 
   private var lastSeq: Double = 0
 
@@ -21,7 +21,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   func send(_ command: WatchCommand) {
     guard let payload = command.payload else { return }
-    waiting.insert(command.id)
+    waiting[command.id] = command.workoutId
     let session = WCSession.default
     // Without a reply handler, as the phone takes messages without replying.
     if session.isReachable {
@@ -42,9 +42,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
       self.workout = state.workout
-      self.waiting.subtract(state.workout?.applied ?? [])
-      if state.workout == nil {
-        self.waiting.removeAll()
+      // Applied, or for a workout the phone no longer runs, which it drops without saying so.
+      let applied = Set(state.workout?.applied ?? [])
+      self.waiting = self.waiting.filter { id, workoutId in
+        !applied.contains(id) && workoutId == state.workout?.id
       }
     }
   }

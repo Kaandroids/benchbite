@@ -35,9 +35,15 @@ private struct WorkoutSetView: View {
       Text(exercise?.name ?? workout.name ?? "Workout").font(.headline)
       if let exercise, let next {
         Text("Set \(next + 1) of \(exercise.sets.count)").foregroundStyle(.secondary)
-        Text(describe(exercise.sets[next])).font(.title3.bold())
-        Button("Done") { done(workout.current, next) }
-          .tint(.orange)
+        Text(describe(exercise.sets[next], fields: exercise.fields)).font(.title3.bold())
+        // Only a set the phone takes a tick for: one without a weight or a time it needs is
+        // finished on the phone, which fills it in or runs its clock.
+        if exercise.sets[next].missing.isEmpty {
+          Button("Done") { done(workout.current, next) }
+            .tint(.orange)
+        } else {
+          Text("Finish this set on your iPhone").font(.footnote).foregroundStyle(.secondary)
+        }
       } else {
         Text("All sets done").foregroundStyle(.secondary)
       }
@@ -47,12 +53,18 @@ private struct WorkoutSetView: View {
     }
   }
 
-  /// "80 kg × 8" for a set of reps, else its time.
-  private func describe(_ set: WatchSet) -> String {
-    if set.reps != nil || set.weightKg != nil {
+  /// A set as the phone describes it (describeSet in src/sets/fields.ts): "80 kg × 8", "0:50" or
+  /// "2000 m · 8:12", by what its exercise records.
+  private func describe(_ set: WatchSet, fields: [String]) -> String {
+    if fields.contains("reps") {
       let weight = set.weightKg.map { "\($0.formatted()) kg" } ?? "—"
       return "\(weight) × \(set.reps.map { "\(Int($0))" } ?? "—")"
     }
-    return set.seconds.map { "\(Int($0)) s" } ?? "—"
+    let time = set.seconds.map { String(format: "%d:%02d", Int($0) / 60, Int($0) % 60) }
+    if fields.contains("meters") {
+      let parts = [set.meters.map { "\(Int($0)) m" }, time].compactMap { $0 }
+      return parts.isEmpty ? "—" : parts.joined(separator: " · ")
+    }
+    return time ?? "—"
   }
 }
