@@ -354,6 +354,7 @@ describe('Health Connect', () => {
         startTime: new Date(FROM.getTime() - 3600 * 1000).toISOString(),
         endTime: TO.toISOString(),
       },
+      ascendingOrder: false,
       pageSize: 1000,
     });
     expect(stats.samples?.slice(0, 2)).toEqual([125, null]);

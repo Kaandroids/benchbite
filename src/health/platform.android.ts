@@ -212,6 +212,8 @@ async function heartRatePoints(from: Date, to: Date): Promise<HeartRatePoint[]> 
   for (let page = 0; page < MOST_HEART_RATE_PAGES; page++) {
     const { records, pageToken: next } = await readRecords('HeartRate', {
       timeRangeFilter,
+      // Newest first, so pages that cannot hold them all leave out the hour before the workout.
+      ascendingOrder: false,
       pageSize: 1000,
       ...(pageToken ? { pageToken } : {}),
     });
