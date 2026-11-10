@@ -124,3 +124,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0106](0106-show-workouts-from-other-apps.md)                         | Show workouts from other apps                                                           | Accepted                                             |
 | [0107](0107-name-health-connect-apps-with-a-module-of-our-own.md)     | Name Health Connect's apps with a module of our own                                     | Accepted                                             |
 | [0108](0108-keep-health-access-when-another-user-signs-in.md)         | Keep the health store's access when another user signs in                               | Accepted                                             |
+| [0109](0109-follow-the-workout-on-the-watch.md)                       | Follow the workout in progress on the watch                                             | Accepted                                             |
