@@ -17,7 +17,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
-import { changeRest, sessionTotals, updateSession, useActiveSession } from './session';
+import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
 import { useNow } from '@/lib/use-now';
 
@@ -122,7 +122,7 @@ export function SessionScreen() {
           left={Math.ceil((session.rest.endsAt - now) / 1000)}
           total={session.rest.seconds}
           onChange={(seconds) => updateSession((current) => changeRest(current, seconds))}
-          onSkip={() => updateSession((current) => ({ ...current, rest: null }))}
+          onSkip={() => updateSession((current) => skipRest(current))}
           onTurnOnAlerts={
             permission && !permission.granted
               ? () =>

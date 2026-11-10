@@ -14,6 +14,11 @@ export const MAX_SETS = 20;
 /** A set with nothing filled in yet. */
 export const EMPTY_SET: SetValues = { weightKg: null, reps: null, seconds: null, meters: null };
 
+/** Only the values of a set, without what else it keeps. */
+export function pickSetValues({ weightKg, reps, seconds, meters }: SetValues): SetValues {
+  return { weightKg, reps, seconds, meters };
+}
+
 /** The values a set still needs before it can be saved, as its exercise records them. */
 export function missingFields(set: SetValues, kind: SetKind): SetField[] {
   if (kind.fields.includes('reps')) {

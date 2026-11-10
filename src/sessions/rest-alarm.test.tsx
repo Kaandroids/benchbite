@@ -20,7 +20,13 @@ import {
   RestAlarm,
   scheduleRestEnd,
 } from './rest-alarm';
-import { changeRest, resetSessionStore, startSession, toggleDone, updateSession } from './session';
+import {
+  changeRest,
+  resetSessionStore,
+  startSession,
+  toggleDoneUnchecked,
+  updateSession,
+} from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -135,7 +141,7 @@ describe('offerRestAlarm', () => {
 describe('RestAlarm', () => {
   it('schedules the end of a rest, and replaces it when the rest changes', async () => {
     await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     expect(schedule).toHaveBeenLastCalledWith(
       expect.objectContaining({
         content: { title: 'Rest is over', body: 'Next up: Bench press' },
@@ -150,7 +156,7 @@ describe('RestAlarm', () => {
 
   it('cancels it when the rest is skipped', async () => {
     await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     cancel.mockClear();
     await act(async () => updateSession((session) => ({ ...session, rest: null })));
     expect(cancel).toHaveBeenCalledWith('rest-end');
@@ -161,7 +167,7 @@ describe('RestAlarm', () => {
     let allow = (_permission: object) => {};
     await render(<RestAlarm />);
     getPermissions.mockImplementationOnce(() => new Promise((resolve) => (allow = resolve)));
-    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     await act(async () => updateSession((session) => ({ ...session, rest: null })));
     await act(async () => allow({ granted: true, canAskAgain: true }));
     expect(schedule).toHaveBeenCalledTimes(1);
@@ -172,7 +178,7 @@ describe('RestAlarm', () => {
 
   it('vibrates and ends the rest when it is over while the app is open', async () => {
     await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     await act(async () => {
       jest.advanceTimersByTime(90_000);
     });
@@ -220,7 +226,7 @@ describe('the rest alarm and the permission', () => {
   it('schedules the running rest once notifications are allowed', async () => {
     getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
     await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     expect(schedule).not.toHaveBeenCalled();
     getPermissions.mockResolvedValue({ granted: true, canAskAgain: true });
     await act(() => refreshPermission());

@@ -5,8 +5,8 @@ import { useSyncExternalStore } from 'react';
 
 import { toIsoDate } from '@/i18n/dates';
 import { readItem, writeItem } from '@/lib/device-storage';
-import { SET_LIMITS } from '@/sets/fields';
-import { MAX_SETS, type SetValues } from '@/sets/values';
+import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
+import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -17,6 +17,12 @@ export type SessionSet = SetValues & {
   doneAt?: number;
   /** Whether the weight was filled in from an earlier set of the workout, not typed or from last time. */
   carried?: boolean;
+  /**
+   * When each of its values was last changed, and when it was last ticked or unticked, on the phone
+   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109).
+   */
+  valuesAt?: Partial<Record<keyof SetValues, number>>;
+  doneChangedAt?: number;
 };
 
 /** The longest a workout can be, as log_workout() accepts it. */
@@ -68,6 +74,10 @@ export type Session = {
    * YYYY-MM-DD: from that day to the day it started.
    */
   move?: { from: string; to: string };
+  /** The ids of the latest commands from the watch it applied, so that each applies once (ADR 0109). */
+  watchCommands?: string[];
+  /** When the rest was last started, changed or ended by hand, which a late tick does not undo. */
+  restChangedAt?: number;
 };
 
 /** Sets of an exercise's latest log, in order. */
@@ -233,8 +243,19 @@ export function setValues(
   value: Session,
   exercise: number,
   index: number,
-  values: Partial<SetValues>,
+  given: Partial<SetValues>,
+  at?: number,
 ): Session {
+  const set = value.exercises[exercise]?.sets[index];
+  // A value changed after `at` stays (ADR 0109). A change made here is the latest, whatever the
+  // clock says.
+  const now = at ?? Math.max(Date.now(), ...Object.values(set?.valuesAt ?? {}));
+  const values = Object.fromEntries(
+    Object.entries(given).filter(([field]) => (set?.valuesAt?.[field as SetField] ?? 0) <= now),
+  ) as Partial<SetValues>;
+  if (Object.keys(values).length === 0) {
+    return value;
+  }
   const typedWeight = 'weightKg' in values;
   const weightKg = values.weightKg ?? null;
   const follow = (s: SessionSet): SessionSet => {
@@ -253,7 +274,15 @@ export function setValues(
             ...item,
             sets: item.sets.map((s, j) =>
               j === index
-                ? { ...s, ...values, ...(typedWeight ? { carried: undefined } : {}) }
+                ? {
+                    ...s,
+                    ...values,
+                    ...(typedWeight ? { carried: undefined } : {}),
+                    valuesAt: {
+                      ...s.valuesAt,
+                      ...Object.fromEntries(Object.keys(values).map((field) => [field, now])),
+                    },
+                  }
                 : j > index && typedWeight
                   ? follow(s)
                   : s,
@@ -270,10 +299,11 @@ export function isExerciseDone(exercise: SessionExercise): boolean {
 }
 
 /**
- * Marks a set done, or not done again. Done starts the exercise's rest, and when it was the last
- * set, opens the next exercise that is not done.
+ * Marks a set done, or not done again, without the checks of markDone(), which the screens and the
+ * watch use: for markDone(), stopClock() and tests. Done starts the exercise's rest, and when it
+ * was the last set, opens the next exercise that is not done.
  */
-export function toggleDone(
+export function toggleDoneUnchecked(
   value: Session,
   exercise: number,
   index: number,
@@ -284,15 +314,17 @@ export function toggleDone(
     ...s,
     done: !wasDone,
     doneAt: wasDone ? undefined : now,
+    doneChangedAt: now,
   }));
   // A set ticked or unticked ends the rest that was running: after a set there is only its own
   // rest, if its exercise has one, and a set unticked was most likely ticked by mistake.
   if (wasDone) {
-    return { ...next, rest: null };
+    return { ...next, rest: null, restChangedAt: now };
   }
   const item = next.exercises[exercise];
   next = {
     ...next,
+    restChangedAt: now,
     rest:
       item && item.restSeconds > 0
         ? { endsAt: now + item.restSeconds * 1000, seconds: item.restSeconds }
@@ -331,7 +363,12 @@ export function startClock(
   index: number,
   now = Date.now(),
 ): Session {
-  return { ...value, clock: { exercise, set: index, startedAt: now }, rest: null };
+  return {
+    ...value,
+    clock: { exercise, set: index, startedAt: now },
+    rest: null,
+    restChangedAt: now,
+  };
 }
 
 /** The seconds a clock has run; never below zero, as `now` may lag just behind its start. */
@@ -350,8 +387,8 @@ export function stopClock(value: Session, now = Date.now()): Session {
     SET_LIMITS.seconds,
     Math.max(1, Math.floor((now - clock.startedAt) / 1000)),
   );
-  const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
-  return toggleDone(next, clock.exercise, clock.set, now);
+  const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds }, now);
+  return toggleDoneUnchecked(next, clock.exercise, clock.set, now);
 }
 
 /**
@@ -373,13 +410,79 @@ export function isLeftOpen(value: Session, now = Date.now()): boolean {
   return now - value.startedAt > MAX_WORKOUT_MS;
 }
 
+/** A rest made to end at another time, or none: a rest that is over is no rest. */
+export function restUntil(
+  rest: Session['rest'],
+  endsAt: number | null,
+  now = Date.now(),
+): Session['rest'] {
+  return rest && endsAt !== null && endsAt > now ? { ...rest, endsAt } : null;
+}
+
+/**
+ * Marks a set done or not done at `at`, as far as it may be, on the phone or from the watch (ADR
+ * 0109). A set is not done without what it needs. A set whose clock runs is done with the clock's
+ * time, or, done before the clock started, with its own, the clock stopping. A change older than
+ * the set's last tick or untick changes nothing, and one older than the latest set keeps the open
+ * exercise and the rest that set started. A rest that is over by `now` is none.
+ */
+export function markDone(
+  value: Session,
+  exercise: number,
+  index: number,
+  done: boolean,
+  kind: SetKind,
+  options: { at?: number; now?: number } = {},
+): Session {
+  const set = value.exercises[exercise]?.sets[index];
+  if (!set) {
+    return value;
+  }
+  // A tick made here is the latest, whatever the clock says.
+  const at =
+    options.at ??
+    Math.max(Date.now(), set.doneChangedAt ?? 0, lastActivity(value), value.restChangedAt ?? 0);
+  const now = options.now ?? at;
+  if (set.done === done || (set.doneChangedAt ?? 0) > at) {
+    return value;
+  }
+  const { clock } = value;
+  const clocked = done && clock?.exercise === exercise && clock.set === index;
+  let next: Session;
+  if (clocked && at >= clock.startedAt) {
+    next = stopClock(value, at);
+  } else if (done && missingFields(set, kind).length > 0) {
+    return value;
+  } else {
+    next = toggleDoneUnchecked(clocked ? { ...value, clock: null } : value, exercise, index, at);
+  }
+  const older = lastActivity(value) > at;
+  // A rest started, changed or ended after the tick stays as it is.
+  const restOlder = older || (value.restChangedAt ?? 0) > at;
+  const rest = restOlder ? value.rest : next.rest;
+  return {
+    ...next,
+    current: older ? value.current : next.current,
+    rest: restUntil(rest, rest?.endsAt ?? null, now),
+    restChangedAt: restOlder ? value.restChangedAt : next.restChangedAt,
+  };
+}
+
 /** Lengthens or shortens the rest; a rest that is over ends. */
 export function changeRest(value: Session, seconds: number, now = Date.now()): Session {
   if (!value.rest) {
     return value;
   }
-  const endsAt = value.rest.endsAt + seconds * 1000;
-  return { ...value, rest: endsAt > now ? { ...value.rest, endsAt } : null };
+  return {
+    ...value,
+    rest: restUntil(value.rest, value.rest.endsAt + seconds * 1000, now),
+    restChangedAt: now,
+  };
+}
+
+/** Ends the rest before its time. */
+export function skipRest(value: Session, now = Date.now()): Session {
+  return { ...value, rest: null, restChangedAt: now };
 }
 
 /** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */
@@ -398,11 +501,8 @@ export function toLog(value: Session, finishedAt = Date.now()) {
       exerciseId: exercise.exerciseId,
       sets: exercise.sets
         .filter((s) => s.done)
-        .map(({ weightKg, reps, seconds, meters, doneAt }) => ({
-          weightKg,
-          reps,
-          seconds,
-          meters,
+        .map(({ doneAt, ...set }) => ({
+          ...pickSetValues(set),
           // When the set was done, which the heart rate chart marks (ADR 0104).
           ...(doneAt !== undefined ? { doneAt: new Date(doneAt).toISOString() } : {}),
         })),

@@ -22,7 +22,7 @@ import {
   setValues,
   startClock,
   stopClock,
-  toggleDone,
+  markDone,
   updateSession,
   type Session,
   type SessionExercise,
@@ -162,7 +162,15 @@ export function OpenExercise({
               // The set is finished with, so the keyboard used for it goes.
               Keyboard.dismiss();
               void Haptics.selectionAsync();
-              updateSession((current) => toggleDone(current, index, setIndex));
+              updateSession((current) =>
+                markDone(
+                  current,
+                  index,
+                  setIndex,
+                  !current.exercises[index]?.sets[setIndex]?.done,
+                  kind,
+                ),
+              );
             }}
             onClock={() => {
               void Haptics.selectionAsync();
