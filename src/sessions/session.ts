@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
 import { toIsoDate } from '@/i18n/dates';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { SET_LIMITS } from '@/sets/fields';
-import { MAX_SETS, type SetValues } from '@/sets/values';
+import { MAX_SETS, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -388,13 +388,21 @@ export function isLeftOpen(value: Session, now = Date.now()): boolean {
   return now - value.startedAt > MAX_WORKOUT_MS;
 }
 
+/** A rest made to end at another time, or none: a rest that is over is no rest. */
+export function restUntil(
+  rest: Session['rest'],
+  endsAt: number | null,
+  now = Date.now(),
+): Session['rest'] {
+  return rest && endsAt !== null && endsAt > now ? { ...rest, endsAt } : null;
+}
+
 /** Lengthens or shortens the rest; a rest that is over ends. */
 export function changeRest(value: Session, seconds: number, now = Date.now()): Session {
   if (!value.rest) {
     return value;
   }
-  const endsAt = value.rest.endsAt + seconds * 1000;
-  return { ...value, rest: endsAt > now ? { ...value.rest, endsAt } : null };
+  return { ...value, rest: restUntil(value.rest, value.rest.endsAt + seconds * 1000, now) };
 }
 
 /** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */
@@ -413,11 +421,8 @@ export function toLog(value: Session, finishedAt = Date.now()) {
       exerciseId: exercise.exerciseId,
       sets: exercise.sets
         .filter((s) => s.done)
-        .map(({ weightKg, reps, seconds, meters, doneAt }) => ({
-          weightKg,
-          reps,
-          seconds,
-          meters,
+        .map(({ doneAt, ...set }) => ({
+          ...pickSetValues(set),
           // When the set was done, which the heart rate chart marks (ADR 0104).
           ...(doneAt !== undefined ? { doneAt: new Date(doneAt).toISOString() } : {}),
         })),

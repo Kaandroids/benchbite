@@ -69,6 +69,18 @@ export const SET_LIMITS: Record<SetField, number> = {
  * seconds, and more are read as on a clock, the last two being the seconds: "130" is 1:30 and
  * "1111" is 11:11. A time is at most a day.
  */
+/**
+ * A value as a set keeps it, from what was typed or sent by the watch: the weight to a quarter
+ * kilogram and the rest whole, at most what a set can hold; none when it rounds to nothing.
+ */
+export function setValueOf(field: SetField, value: number): number | null {
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  const rounded = field === 'weightKg' ? Math.round(value * 4) / 4 : Math.round(value);
+  return rounded > 0 ? Math.min(rounded, SET_LIMITS[field]) : null;
+}
+
 export function parseTime(text: string): number | null {
   const match = /^(?:(\d+):)?(\d+)$/.exec(text.trim());
   if (!match) {

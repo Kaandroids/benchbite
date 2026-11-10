@@ -5,11 +5,11 @@ import { Pressable, StyleSheet, View, type TextInputInstance } from 'react-nativ
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import type { SetField, SetKind } from '@/sets/fields';
+import type { SetKind } from '@/sets/fields';
 import type { RecordKind } from '@/sets/records';
 import { useRecordFormat } from '@/sets/records';
 import { SetLine, setButtonStyle } from '@/sets/set-table';
-import type { SetValues } from '@/sets/values';
+import { missingFields, type SetValues } from '@/sets/values';
 import { useTheme } from '@/theme';
 
 import { recordValues } from './records';
@@ -49,12 +49,7 @@ export function SetRow({
   // A set is not done without what it needs: a weight where the exercise records one (#34), and
   // reps where it records reps, which the log would refuse without them.
   const [checked, setChecked] = useState(false);
-  const missing: SetField[] = [
-    ...(kind.fields.includes('weightKg') && !kind.addedWeight && set.weightKg === null
-      ? (['weightKg'] as const)
-      : []),
-    ...(kind.fields.includes('reps') && set.reps === null ? (['reps'] as const) : []),
-  ];
+  const missing = missingFields(set, kind);
   const toggle = () => {
     if (!set.done && missing.length > 0) {
       setChecked(true);

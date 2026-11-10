@@ -7,7 +7,7 @@ import { parseDecimal } from '@/lib/math';
 import { minutesAndSeconds } from '@/lib/time';
 import { typography, useTheme } from '@/theme';
 
-import { describeSet, parseTime, SET_LIMITS, type SetField, type SetKind } from './fields';
+import { describeSet, parseTime, setValueOf, type SetField, type SetKind } from './fields';
 import { MAX_SETS, type SetValues } from './values';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
@@ -35,12 +35,8 @@ export function readSetValue(field: SetField, text: string): number | null {
     return parseTime(text);
   }
   const value = parseDecimal(text);
-  if (value === null || value <= 0) {
-    return null;
-  }
   // Beyond what a set can hold, the value is the most it can be, so that the workout still saves.
-  const rounded = field === 'weightKg' ? Math.round(value * 4) / 4 : Math.round(value);
-  return rounded > 0 ? Math.min(rounded, SET_LIMITS[field]) : null;
+  return value === null ? null : setValueOf(field, value);
 }
 
 // The characters a value needs at most, such as "999.75", "999", "1440:00" or "1000000".
