@@ -1,0 +1,9 @@
+com.benchbite.appnames.app-names-pngs-0 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/generated/res/pngs/debug
+com.benchbite.appnames.app-names-updated_navigation_xml-1 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/generated/updated_navigation_xml/debug
+com.benchbite.appnames.app-names-mergeDebugResources-2 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+com.benchbite.appnames.app-names-mergeDebugResources-3 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+com.benchbite.appnames.app-names-debug-4 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/intermediates/merged_res/debug/mergeDebugResources
+com.benchbite.appnames.app-names-debug-5 /Users/kaan/Documents/benchbite-names/modules/app-names/android/build/intermediates/packaged_res/debug/packageDebugResources
+com.benchbite.appnames.app-names-debug-6 /Users/kaan/Documents/benchbite-names/modules/app-names/android/src/debug/res
+com.benchbite.appnames.app-names-main-7 /Users/kaan/Documents/benchbite-names/modules/app-names/android/src/main/res
+gradleHome-0 /Users/kaan/.gradle
