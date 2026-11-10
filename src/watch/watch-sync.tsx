@@ -2,7 +2,7 @@
 // it, and its commands are applied to the workout, wherever the app is in it.
 import { useEffect, useEffectEvent } from 'react';
 
-import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession } from '@/sessions/session';
 
@@ -17,28 +17,40 @@ function nextSeq(): number {
   return lastSeq;
 }
 
+/**
+ * The library's names and metrics by exercise id, which sending the state and applying commands
+ * both judge a set by, so that the watch offers no Done the phone then refuses.
+ */
+const lookups = (library: LibraryExercise[] | undefined) => ({
+  name: (id: string) => findExercise(library, id)?.name ?? null,
+  metricsOf: (id: string) => findExercise(library, id)?.metrics,
+});
+
 /** Sends the workout to the watch and applies what the watch sends. */
 export function WatchSync() {
   const session = useActiveSession(useUserId());
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
 
-  useEffect(() => {
-    const name = (id: string) => findExercise(library.data, id)?.name ?? '';
-    link.sendState(stateOf(session, name, nextSeq()));
-  }, [session, library.data]);
-
-  // Commands are taken once the library has loaded, as what a set needs depends on its exercise,
-  // or once its first try failed, as offline, when they apply as the phone's own screen then does.
-  // Until then they wait on the native side, which keeps them even when the app is ended.
+  // A set is judged, and commands are taken, once the library has loaded, as what a set needs
+  // depends on its exercise; or once its first try failed, as offline, when they apply as the
+  // phone's own screen then does. Until then commands wait on the native side, which keeps them
+  // even when the app is ended, and the watch keeps what it showed.
   const ready = session !== null && !(library.isPending && library.failureCount === 0);
+
+  useEffect(() => {
+    if (session === null || ready) {
+      link.sendState(stateOf(session, lookups(library.data), nextSeq()));
+    }
+  }, [session, ready, library.data]);
+
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);
     if (!command) {
       console.warn('Dropped a message from the watch that is not a command');
       return;
     }
-    const metricsOf = (id: string) => findExercise(library.data, id)?.metrics;
+    const { metricsOf } = lookups(library.data);
     updateSession((current) => applyCommand(current, command, { metricsOf }));
   });
 

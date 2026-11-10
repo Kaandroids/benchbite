@@ -186,6 +186,22 @@ pnpm ios                         # or pnpm android
   address on the local network, for example `http://192.168.1.20:54321`. The phone must be on
   the same network. On macOS, `ipconfig getifaddr en0` prints the address.
 
+### The Apple Watch app
+
+The Apple Watch app is built with the iPhone app, which carries it (`targets/watch`,
+[ADR 0110](adr/0110-build-the-apple-watch-app-as-a-target-beside-the-app.md)). On an iPhone, the
+Watch app on the phone installs it on the paired watch. In the simulators, pair an Apple Watch
+simulator with the iPhone one in Xcode (Window → Devices and Simulators), build with `pnpm ios`,
+then install the watch app on the watch simulator from the build's products:
+
+```bash
+xcrun simctl install <watch simulator id> \
+  ~/Library/Developer/Xcode/DerivedData/BenchbiteDev-*/Build/Products/Debug-watchsimulator/BenchbiteWatch.app
+```
+
+`xcrun simctl list pairs` shows the pair and the simulators' ids. Start a workout on the iPhone,
+and the watch shows it.
+
 ## Add a language
 
 The app's text is in `src/i18n/locales/`, one file per language (ADR 0007). iOS takes the sentence
@@ -252,6 +268,8 @@ src/app/               Expo Router screens and layouts only
 src/                   components, hooks and other app code, by feature
 modules/               Expo modules of the app's own, in native code; a change needs a new
                        development build
+targets/               Apple targets beside the app, such as the Apple Watch app in SwiftUI;
+                       a change needs a new development build
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/

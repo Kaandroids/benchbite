@@ -105,16 +105,19 @@ const command = (id: string, body: Record<string, unknown>) => ({
   ...body,
 });
 
-it('takes no commands until the library has loaded, then applies them with its rules', async () => {
+it('sends the workout and takes commands once the library has loaded, with its rules', async () => {
   startSession('user-a', PUSH, {}, { now: NOW });
   const loading = { data: undefined, isPending: true, failureCount: 0 } as never;
   jest.mocked(useExerciseLibrary).mockReturnValue(loading);
   const { rerender } = await render(<WatchSync />);
+  // Its sets are not judged without the library, which would offer a Done the phone refuses.
+  expect(link.sendState).not.toHaveBeenCalled();
   // They wait on the native side, which keeps them even when the app is ended meanwhile.
   expect(link.onCommand).not.toHaveBeenCalled();
 
   jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
   await rerender(<WatchSync />);
+  expect(lastSent().workout?.exercises[0]?.sets[0]?.missing).toEqual(['weightKg']);
   expect(link.onCommand).toHaveBeenCalledTimes(1);
   // A tick without a weight, which the bench press needs, is refused; with it, it applies.
   await act(() => deliver(command('early tick', { type: 'setDone', done: true })));

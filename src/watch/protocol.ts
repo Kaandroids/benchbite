@@ -4,8 +4,8 @@
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
 import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
-import { setKindOf, setValueOf, type SetField } from '@/sets/fields';
-import { EMPTY_SET, pickSetValues, type SetValues } from '@/sets/values';
+import { describeSet, setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
 /** Raised when a message changes shape; each side drops a message of another version. */
@@ -16,12 +16,18 @@ const KEPT_COMMANDS = 50;
 /** The longest command id taken: a UUID is 36 characters. */
 const MAX_ID_LENGTH = 64;
 
-export type WatchSet = SetValues & { done: boolean };
+export type WatchSet = SetValues & {
+  done: boolean;
+  /** What it still needs before it can be ticked, as markDone() asks; none when it can be. */
+  missing: SetField[];
+  /** As the phone describes it: "80 kg × 8", "0:50" or "2000 m · 8:12". */
+  text: string;
+};
 
 export type WatchExercise = {
   exerciseId: string;
-  /** In the user's language, as the phone shows it. */
-  name: string;
+  /** In the user's language, as the phone shows it; none when the library does not know it. */
+  name: string | null;
   target: WorkoutTarget;
   restSeconds: number;
   sets: WatchSet[];
@@ -34,6 +40,8 @@ export type WatchWorkout = {
   name: string | null;
   startedAt: number;
   current: number;
+  /** The set to do next, as nextSetOf() finds it; none when every set is done. */
+  next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
@@ -72,10 +80,29 @@ export function workoutIdOf(session: Session): string {
   return session.id ?? `started-${session.startedAt}`;
 }
 
-/** The state for the watch, its exercises named by `names` (by exercise id). */
+/**
+ * The set to do next: the open exercise's first set not done, else the first one of the
+ * exercises after it, then of those before it, as one can be left open while another is done.
+ */
+export function nextSetOf(session: Session): { exercise: number; set: number } | null {
+  const count = session.exercises.length;
+  for (let step = 0; step < count; step++) {
+    const exercise = (session.current + step) % count;
+    const set = session.exercises[exercise]!.sets.findIndex((s) => !s.done);
+    if (set >= 0) {
+      return { exercise, set };
+    }
+  }
+  return null;
+}
+
+/**
+ * The state for the watch: its exercises named by `name`, and each set judged by `metricsOf` as
+ * the phone judges it, with its text as the phone shows it.
+ */
 export function stateOf(
   session: Session | null,
-  names: (exerciseId: string) => string,
+  { name, metricsOf }: { name: (exerciseId: string) => string | null; metricsOf: MetricsOf },
   seq: number,
 ): WatchState {
   return {
@@ -86,15 +113,24 @@ export function stateOf(
       name: session.name,
       startedAt: session.startedAt,
       current: session.current,
+      next: nextSetOf(session),
       rest: session.rest,
-      exercises: session.exercises.map((exercise) => ({
-        exerciseId: exercise.exerciseId,
-        name: names(exercise.exerciseId),
-        target: exercise.target,
-        restSeconds: exercise.restSeconds,
-        sets: exercise.sets.map((set) => ({ ...pickSetValues(set), done: set.done })),
-        last: exercise.last,
-      })),
+      exercises: session.exercises.map((exercise) => {
+        const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
+        return {
+          exerciseId: exercise.exerciseId,
+          name: name(exercise.exerciseId),
+          target: exercise.target,
+          restSeconds: exercise.restSeconds,
+          sets: exercise.sets.map((set) => ({
+            ...pickSetValues(set),
+            done: set.done,
+            missing: set.done ? [] : missingFields(set, kind),
+            text: describeSet(set, kind),
+          })),
+          last: exercise.last,
+        };
+      }),
       applied: session.watchCommands ?? [],
     },
   };
