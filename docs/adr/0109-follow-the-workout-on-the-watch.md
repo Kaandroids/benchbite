@@ -30,7 +30,8 @@ The rest alert must come from one device only. A notification on the phone and a
   The phone applies a command with the same functions its own screen uses: a tick goes through `markDone()` on both.
 
 - **On each value, the latest change wins.** The workout keeps, for each set, when each of its values last changed and when it was last ticked or unticked, on either device. A command changes only what was not changed after it: a weight typed later on the phone stays, while the reps the watch changed before still apply. It still counts as applied, so the watch stops waiting on it. A command's time is at most the time it arrives.
-- **The rest is an end time,** not seconds left, so both devices show the same second. A tick that arrives late starts no rest that is already over, and leaves the rest of a later set.
+- **The rest is an end time,** not seconds left, so both devices show the same second. A tick that arrives late starts no rest that is already over, and leaves a rest that was started, changed or ended after it.
+- **A change made on the phone is the latest,** whatever its clock says, so a clock moved back cannot make the phone's own taps count as old.
 - **One interface, one implementation per platform.** `src/watch/types.ts` defines `WatchLink`: the watch's status, sending the state, and receiving commands. `link.ios.ts` implements it over WatchConnectivity, and later `link.android.ts` over the Wearable Data Layer. `link.ts` is the version without a watch. Native code only carries JSON. What the messages mean is decided once, in TypeScript, in `src/watch/protocol.ts`, which the watch apps follow.
   - On iOS, the state goes by application context, whose latest wins and which arrives in the background, and by message when the watch is reachable.
   - Commands go by message when the watch is reachable, else by user info transfer, which waits and arrives in order.
