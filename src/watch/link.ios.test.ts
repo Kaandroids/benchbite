@@ -21,7 +21,7 @@ function fakeModule() {
 function load(native: ReturnType<typeof fakeModule> | null) {
   let loaded: typeof import('./link.ios') | undefined;
   jest.isolateModules(() => {
-    jest.doMock('@/modules/watch-link', () => ({ WatchLink: native }));
+    jest.doMock('@/modules/watch-link', () => ({ NativeWatchLink: native }));
     loaded = jest.requireActual<typeof import('./link.ios')>('./link.ios');
   });
   return loaded!.link;
@@ -29,10 +29,14 @@ function load(native: ReturnType<typeof fakeModule> | null) {
 
 const STATE: WatchState = { v: PROTOCOL_VERSION, seq: 1, workout: null };
 
-it('sends the state as JSON', () => {
+it('sends the state as JSON, with its workout’s id', () => {
   const native = fakeModule();
-  load(native).sendState(STATE);
-  expect(native.sendState).toHaveBeenCalledWith(JSON.stringify(STATE));
+  const link = load(native);
+  link.sendState(STATE);
+  expect(native.sendState).toHaveBeenCalledWith(JSON.stringify(STATE), null);
+  const running = { ...STATE, workout: { id: 'workout-1' } } as unknown as WatchState;
+  link.sendState(running);
+  expect(native.sendState).toHaveBeenLastCalledWith(JSON.stringify(running), 'workout-1');
 });
 
 it('gives the commands that waited, and those that arrive later, in order', () => {

@@ -11,9 +11,10 @@ export type WatchLinkEvents = {
 
 declare class WatchLinkModule extends NativeModule<WatchLinkEvents> {
   status(): { paired: boolean; installed: boolean; reachable: boolean };
-  sendState(json: string): void;
+  /** Sends the state, with its workout's id, as only JavaScript reads the state. */
+  sendState(json: string, workoutId: string | null): void;
   /** The commands kept since the last call, oldest first, each as JSON. */
   takeCommands(): string[];
 }
 
-export const WatchLink = requireOptionalNativeModule<WatchLinkModule>('WatchLink');
+export const NativeWatchLink = requireOptionalNativeModule<WatchLinkModule>('WatchLink');

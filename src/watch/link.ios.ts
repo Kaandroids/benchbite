@@ -1,14 +1,14 @@
 // The Apple Watch, through the WatchConnectivity module (ADR 0109). It keeps the interface of
 // link.ts; without the native module, as in a build from before it, there is no watch.
-import { WatchLink } from '@/modules/watch-link';
+import { NativeWatchLink } from '@/modules/watch-link';
 
-import { NO_WATCH, type WatchLink as Link, type WatchStatus } from './types';
+import { NO_WATCH, type WatchLink, type WatchStatus } from './types';
 
-const status = (): WatchStatus => WatchLink?.status() ?? NO_WATCH;
+const status = (): WatchStatus => NativeWatchLink?.status() ?? NO_WATCH;
 
 /** Gives each command the native side kept to the listener; one that is not JSON is dropped. */
 function takeCommands(listener: (message: unknown) => void) {
-  for (const json of WatchLink?.takeCommands() ?? []) {
+  for (const json of NativeWatchLink?.takeCommands() ?? []) {
     let message: unknown;
     try {
       message = JSON.parse(json);
@@ -20,15 +20,16 @@ function takeCommands(listener: (message: unknown) => void) {
   }
 }
 
-export const link: Link = {
+export const link: WatchLink = {
   status: () => Promise.resolve(status()),
   onStatusChange: (listener) => {
-    const subscription = WatchLink?.addListener('onStatus', () => listener(status()));
+    const subscription = NativeWatchLink?.addListener('onStatus', () => listener(status()));
     return () => subscription?.remove();
   },
-  sendState: (state) => WatchLink?.sendState(JSON.stringify(state)),
+  sendState: (state) =>
+    NativeWatchLink?.sendState(JSON.stringify(state), state.workout?.id ?? null),
   onCommand: (listener) => {
-    const subscription = WatchLink?.addListener('onCommands', () => takeCommands(listener));
+    const subscription = NativeWatchLink?.addListener('onCommands', () => takeCommands(listener));
     // Those that arrived while nothing listened, as while the app was closed.
     takeCommands(listener);
     return () => subscription?.remove();
