@@ -21,6 +21,8 @@ import {
   revokeAllPermissions,
 } from 'react-native-health-connect';
 
+import { appName } from '@/modules/app-names';
+
 import * as android from './platform.android';
 import * as ios from './platform.ios';
 import { NO_WORKOUT_STATS } from './types';
@@ -339,6 +341,35 @@ describe('Health Connect', () => {
       source: null,
       samples: null,
     });
+  });
+
+  it('looks each app’s name up once, and names one without a label by none', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'Weight' }] as never);
+    jest
+      .mocked(appName)
+      .mockImplementation((packageName: string) =>
+        packageName === 'com.example.scale' ? 'Scale' : packageName,
+      );
+    const weighing = (origin: string) => ({
+      time: '2026-11-09T07:00:00Z',
+      weight: { inKilograms: 78.4 },
+      metadata: { dataOrigin: origin },
+    });
+    jest.mocked(readRecords).mockResolvedValue({
+      records: [
+        weighing('com.example.scale'),
+        weighing('com.example.scale'),
+        weighing('com.example.scale'),
+        weighing('com.example.unlabelled'),
+      ],
+    } as never);
+    const weights = await android.weightsSince(FROM);
+    expect(weights.map((weight) => weight.source)).toEqual(['Scale', 'Scale', 'Scale', null]);
+    expect(
+      jest.mocked(appName).mock.calls.filter(([name]) => name === 'com.example.scale'),
+    ).toHaveLength(1);
   });
 
   it('names an app that wrote data as the phone does, and Health Connect’s own entries by none', async () => {

@@ -50,13 +50,16 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'ExerciseSession' },
 ] as const;
 
-const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
+/** Health Connect's package, as an app of its own on Android 9 to 13. */
+const HEALTH_CONNECT = 'com.google.android.apps.healthdata';
+
+const PLAY_STORE = `market://details?id=${HEALTH_CONNECT}`;
 
 /** Health Connect's own packages, as for an entry made in it: the store, which the screens name. */
-const STORE_PACKAGES = new Set([
-  'com.google.android.apps.healthdata',
-  'com.google.android.healthconnect.controller',
-]);
+const STORE_PACKAGES = new Set([HEALTH_CONNECT, 'com.google.android.healthconnect.controller']);
+
+/** The names already looked up, by package, misses too: a read holds a few apps' many records. */
+const appNames = new Map<string, string | null>();
 
 /**
  * The name of the app that wrote data, as the phone shows it, or none: Health Connect gives only its
@@ -64,12 +67,12 @@ const STORE_PACKAGES = new Set([
  */
 function sourceName(origin: string | undefined): string | null {
   if (!origin || STORE_PACKAGES.has(origin)) return null;
-  try {
-    return appName(origin);
-  } catch (error) {
-    console.warn('Could not read the name of an app', error);
-    return null;
+  if (!appNames.has(origin)) {
+    const name = appName(origin);
+    // An app without a label is named by its package, which is no name.
+    appNames.set(origin, name && name !== origin ? name : null);
   }
+  return appNames.get(origin) ?? null;
 }
 
 export const store: HealthStore = 'healthConnect';
