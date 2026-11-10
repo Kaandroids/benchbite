@@ -8,11 +8,4 @@ version = '0.1.0'
 
 android {
   namespace "com.benchbite.appnames"
-  defaultConfig {
-    versionCode 1
-    versionName "0.1.0"
-  }
-  lintOptions {
-    abortOnError false
-  }
 }
