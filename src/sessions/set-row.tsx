@@ -46,8 +46,9 @@ export function SetRow({
   const formatRecord = useRecordFormat();
   const running = clock !== null;
   const weightInput = useRef<TextInputInstance>(null);
-  // A set is not done without what it needs: a weight where the exercise records one (#34), and
-  // reps where it records reps, which the log would refuse without them.
+  // A set is not done without what it needs: a weight where the exercise lifts one (#34), reps
+  // where it records reps, and a time or a distance where it records those, which the log would
+  // refuse without them. A timed set without a time shows its clock instead of a tick.
   const [checked, setChecked] = useState(false);
   const missing = missingFields(set, kind);
   const toggle = () => {
