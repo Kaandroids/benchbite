@@ -128,6 +128,7 @@ describe('stateOf', () => {
       meters: null,
       done: true,
       missing: [],
+      text: '— × 12',
     });
   });
 
@@ -147,6 +148,13 @@ describe('stateOf', () => {
     expect(stateOf(null, { name: () => '', metricsOf: noLibrary }, 1).workout).toBeNull();
   });
 
+  it('names a workout started before ids were kept by its start', () => {
+    const { id: _id, ...older } = start();
+    expect(workoutIdOf(older)).toBe(`started-${NOW}`);
+  });
+});
+
+describe('the protocol version', () => {
   it('is of the version the watch app speaks', () => {
     // targets/watch/Protocol.swift keeps the same version; a message of another one is dropped.
     const { readFileSync } = jest.requireActual<{
@@ -155,11 +163,6 @@ describe('stateOf', () => {
     // Read from the root of the repository, where Jest runs.
     const swift = readFileSync('targets/watch/Protocol.swift', 'utf8');
     expect(swift).toContain(`let protocolVersion = ${PROTOCOL_VERSION}\n`);
-  });
-
-  it('names a workout started before ids were kept by its start', () => {
-    const { id: _id, ...older } = start();
-    expect(workoutIdOf(older)).toBe(`started-${NOW}`);
   });
 });
 

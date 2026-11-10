@@ -2,7 +2,7 @@
 // it, and its commands are applied to the workout, wherever the app is in it.
 import { useEffect, useEffectEvent } from 'react';
 
-import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession } from '@/sessions/session';
 
@@ -17,6 +17,15 @@ function nextSeq(): number {
   return lastSeq;
 }
 
+/**
+ * The library's names and metrics by exercise id, which sending the state and applying commands
+ * both judge a set by, so that the watch offers no Done the phone then refuses.
+ */
+const lookups = (library: LibraryExercise[] | undefined) => ({
+  name: (id: string) => findExercise(library, id)?.name ?? '',
+  metricsOf: (id: string) => findExercise(library, id)?.metrics,
+});
+
 /** Sends the workout to the watch and applies what the watch sends. */
 export function WatchSync() {
   const session = useActiveSession(useUserId());
@@ -24,9 +33,7 @@ export function WatchSync() {
   const library = useExerciseLibrary({ enabled: session !== null });
 
   useEffect(() => {
-    const name = (id: string) => findExercise(library.data, id)?.name ?? '';
-    const metricsOf = (id: string) => findExercise(library.data, id)?.metrics;
-    link.sendState(stateOf(session, { name, metricsOf }, nextSeq()));
+    link.sendState(stateOf(session, lookups(library.data), nextSeq()));
   }, [session, library.data]);
 
   // Commands are taken once the library has loaded, as what a set needs depends on its exercise,
@@ -39,7 +46,7 @@ export function WatchSync() {
       console.warn('Dropped a message from the watch that is not a command');
       return;
     }
-    const metricsOf = (id: string) => findExercise(library.data, id)?.metrics;
+    const { metricsOf } = lookups(library.data);
     updateSession((current) => applyCommand(current, command, { metricsOf }));
   });
 

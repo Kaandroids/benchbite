@@ -4,7 +4,7 @@
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
 import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
-import { setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import { describeSet, setKindOf, setValueOf, type SetField } from '@/sets/fields';
 import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
@@ -20,6 +20,8 @@ export type WatchSet = SetValues & {
   done: boolean;
   /** What it still needs before it can be ticked, as markDone() asks; none when it can be. */
   missing: SetField[];
+  /** As the phone describes it: "80 kg × 8", "0:50" or "2000 m · 8:12". */
+  text: string;
 };
 
 export type WatchExercise = {
@@ -78,7 +80,10 @@ export function workoutIdOf(session: Session): string {
   return session.id ?? `started-${session.startedAt}`;
 }
 
-/** The state for the watch, its exercises named by `names` (by exercise id). */
+/**
+ * The state for the watch: its exercises named by `name`, and each set judged by `metricsOf` as
+ * the phone judges it, with its text as the phone shows it.
+ */
 export function stateOf(
   session: Session | null,
   { name, metricsOf }: { name: (exerciseId: string) => string; metricsOf: MetricsOf },
@@ -105,6 +110,7 @@ export function stateOf(
             ...pickSetValues(set),
             done: set.done,
             missing: set.done ? [] : missingFields(set, kind),
+            text: describeSet(set, kind),
           })),
           last: exercise.last,
         };
