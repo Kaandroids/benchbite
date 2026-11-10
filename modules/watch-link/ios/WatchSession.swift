@@ -3,19 +3,24 @@ import UserNotifications
 import WatchConnectivity
 
 /// The phone's side of the connection to Benchbite on the Apple Watch (ADR 0109). It carries the
-/// protocol's messages as JSON and nothing else. It is activated when the app launches, also in the
-/// background, so that commands the watch sends while JavaScript is not running are kept until it
-/// reads them.
+/// protocol's messages as JSON, and takes the phone's rest notification away when the watch takes
+/// over the workout, as JavaScript may not be running then. It is activated when the app launches,
+/// also in the background, so that commands the watch sends while JavaScript is not running are
+/// kept until it reads them.
 final class WatchSession: NSObject, WCSessionDelegate {
   static let shared = WatchSession()
 
-  /// The notification of the end of the rest, as rest-alarm.tsx schedules it.
+  /// The notification of the end of the rest: REST_NOTIFICATION_ID in src/sessions/rest-alarm.tsx.
   private static let restNotificationId = "rest-end"
   private static let commandsKey = "watchLink.commands"
+  /// The workout of the last state sent, kept for a launch in the background without JavaScript.
+  private static let workoutIdKey = "watchLink.workoutId"
   /// The most commands kept for JavaScript: far more than wait at once.
   private static let maxCommands = 200
 
   private let lock = NSLock()
+  /// The last state JavaScript sent, sent again once the watch can take it.
+  private var lastState: String?
   /// Told when commands are waiting, and when the watch's status changes.
   var onCommands: (() -> Void)?
   var onStatus: (() -> Void)?
@@ -39,9 +44,29 @@ final class WatchSession: NSObject, WCSessionDelegate {
     ]
   }
 
-  /// Sends the latest state: as the application context, which replaces one not delivered yet and
-  /// arrives in the background, and as a message too when the watch can take it now.
+  /// Sends the latest state, and keeps it to send again when the session or the watch is not ready
+  /// yet: the session starts after the app does, and the watch app may be installed later.
   func sendState(_ json: String) {
+    lock.lock()
+    lastState = json
+    UserDefaults.standard.set(Self.workoutId(ofState: json), forKey: Self.workoutIdKey)
+    lock.unlock()
+    deliver(json)
+  }
+
+  /// Sends the last state again, as when the session became active or the watch app was installed.
+  private func deliverLastState() {
+    lock.lock()
+    let json = lastState
+    lock.unlock()
+    if let json {
+      deliver(json)
+    }
+  }
+
+  /// As the application context, which replaces one not delivered yet and arrives in the
+  /// background, and as a message too when the watch can take it now.
+  private func deliver(_ json: String) {
     guard WCSession.isSupported() else { return }
     let session = WCSession.default
     guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else {
@@ -75,12 +100,32 @@ final class WatchSession: NSObject, WCSessionDelegate {
     lock.lock()
     let commands = (UserDefaults.standard.stringArray(forKey: Self.commandsKey) ?? []) + [command]
     UserDefaults.standard.set(Array(commands.suffix(Self.maxCommands)), forKey: Self.commandsKey)
+    let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
     lock.unlock()
-    // The watch follows the workout and signals the end of the rest itself, so the phone's
-    // notification would be a second alert (ADR 0109). Removed here, as JavaScript may be asleep.
+    if let workoutId, Self.workoutId(ofCommand: command) == workoutId {
+      silenceRestOnPhone()
+    }
+    onCommands?()
+  }
+
+  /// A command for the workout the phone runs shows that the watch follows it and signals the end of
+  /// the rest itself, so the phone's notification would be a second alert (ADR 0109). Removed here,
+  /// as JavaScript may be asleep. A command of an earlier workout, arriving late, leaves it.
+  private func silenceRestOnPhone() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(
       withIdentifiers: [Self.restNotificationId])
-    onCommands?()
+  }
+
+  private static func object(_ json: String) -> [String: Any]? {
+    (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
+  }
+
+  private static func workoutId(ofState json: String) -> String? {
+    (object(json)?["workout"] as? [String: Any])?["id"] as? String
+  }
+
+  private static func workoutId(ofCommand json: String) -> String? {
+    object(json)?["workoutId"] as? String
   }
 
   // MARK: - WCSessionDelegate
@@ -92,6 +137,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
     if let error {
       NSLog("[WatchLink] Could not activate the session: %@", error.localizedDescription)
     }
+    deliverLastState()
     onStatus?()
   }
 
@@ -103,6 +149,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   func sessionWatchStateDidChange(_ session: WCSession) {
+    deliverLastState()
     onStatus?()
   }
 
