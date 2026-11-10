@@ -17,6 +17,12 @@ export type SessionSet = SetValues & {
   doneAt?: number;
   /** Whether the weight was filled in from an earlier set of the workout, not typed or from last time. */
   carried?: boolean;
+  /**
+   * When its values were last changed, and when it was last ticked or unticked, on the phone or the
+   * watch: an older change that arrives late does not undo a newer one (ADR 0109).
+   */
+  valuesAt?: number;
+  doneChangedAt?: number;
 };
 
 /** The longest a workout can be, as log_workout() accepts it. */
@@ -68,6 +74,8 @@ export type Session = {
    * YYYY-MM-DD: from that day to the day it started.
    */
   move?: { from: string; to: string };
+  /** The ids of the latest commands from the watch it applied, so that each applies once (ADR 0109). */
+  watchCommands?: string[];
 };
 
 /** Sets of an exercise's latest log, in order. */
@@ -234,6 +242,7 @@ export function setValues(
   exercise: number,
   index: number,
   values: Partial<SetValues>,
+  now = Date.now(),
 ): Session {
   const typedWeight = 'weightKg' in values;
   const weightKg = values.weightKg ?? null;
@@ -253,7 +262,12 @@ export function setValues(
             ...item,
             sets: item.sets.map((s, j) =>
               j === index
-                ? { ...s, ...values, ...(typedWeight ? { carried: undefined } : {}) }
+                ? {
+                    ...s,
+                    ...values,
+                    ...(typedWeight ? { carried: undefined } : {}),
+                    valuesAt: now,
+                  }
                 : j > index && typedWeight
                   ? follow(s)
                   : s,
@@ -284,6 +298,7 @@ export function toggleDone(
     ...s,
     done: !wasDone,
     doneAt: wasDone ? undefined : now,
+    doneChangedAt: now,
   }));
   // A set ticked or unticked ends the rest that was running: after a set there is only its own
   // rest, if its exercise has one, and a set unticked was most likely ticked by mistake.
@@ -350,7 +365,7 @@ export function stopClock(value: Session, now = Date.now()): Session {
     SET_LIMITS.seconds,
     Math.max(1, Math.floor((now - clock.startedAt) / 1000)),
   );
-  const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
+  const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds }, now);
   return toggleDone(next, clock.exercise, clock.set, now);
 }
 

@@ -103,6 +103,18 @@ describe('startSession', () => {
 });
 
 describe('logging sets', () => {
+  it('keeps when a set last changed, which a late change from the watch is checked against', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 60 }, NOW + 1000);
+    session = toggleDone(session, 0, 0, NOW + 2000);
+    session = toggleDone(session, 0, 0, NOW + 3000);
+    expect(session.exercises[0]?.sets[0]).toMatchObject({
+      valuesAt: NOW + 1000,
+      doneChangedAt: NOW + 3000,
+    });
+    // The weight it carried to the next set is no change made to that set.
+    expect(session.exercises[0]?.sets[1]?.valuesAt).toBeUndefined();
+  });
+
   it('marks a set done and starts the rest', () => {
     const session = toggleDone(start(), 0, 0, NOW);
     expect(session.exercises[0]?.sets[0]?.done).toBe(true);
