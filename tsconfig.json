@@ -10,7 +10,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"],
-      // Expo modules of the app's own, in native code.
+      // Expo modules of the app's own, in native code; it goes before any src/modules.
       "@/modules/*": ["./modules/*"],
       // Code the app shares with the Edge Functions.
       "@shared/*": ["./supabase/functions/_shared/*"]
