@@ -90,8 +90,12 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style="auto" />
-      {status === 'ready' ? <RestAlarm /> : null}
-      {status === 'ready' ? <WatchSync /> : null}
+      {status === 'ready' ? (
+        <>
+          <RestAlarm />
+          <WatchSync />
+        </>
+      ) : null}
       {status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
