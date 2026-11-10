@@ -105,21 +105,28 @@ const command = (id: string, body: Record<string, unknown>) => ({
   ...body,
 });
 
-it('holds commands while the library loads, then applies them in order with its rules', async () => {
+it('takes no commands until the library has loaded, then applies them with its rules', async () => {
   startSession('user-a', PUSH, {}, { now: NOW });
   const loading = { data: undefined, isPending: true, failureCount: 0 } as never;
   jest.mocked(useExerciseLibrary).mockReturnValue(loading);
   const { rerender } = await render(<WatchSync />);
-  // A tick without a weight, which the bench press needs, is refused once the library says so.
-  await act(() => deliver(command('early tick', { type: 'setDone', done: true })));
-  await act(() => deliver(command('weight', { type: 'setValues', values: { weightKg: 60 } })));
-  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
-  expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, done: false });
+  // They wait on the native side, which keeps them even when the app is ended meanwhile.
+  expect(link.onCommand).not.toHaveBeenCalled();
 
   jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
   await rerender(<WatchSync />);
+  expect(link.onCommand).toHaveBeenCalledTimes(1);
+  // A tick without a weight, which the bench press needs, is refused; with it, it applies.
+  await act(() => deliver(command('early tick', { type: 'setDone', done: true })));
+  await act(() => deliver(command('weight', { type: 'setValues', values: { weightKg: 60 } })));
+  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
   expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: 60, done: true });
   expect(lastSent().workout?.applied).toEqual(['early tick', 'weight', 'tick']);
+});
+
+it('takes no commands without a workout', async () => {
+  await render(<WatchSync />);
+  expect(link.onCommand).not.toHaveBeenCalled();
 });
 
 it('applies commands at once when the library could not be read, as offline', async () => {
@@ -144,6 +151,7 @@ it('drops a message that is not a command', async () => {
 });
 
 it('stops listening when it goes', async () => {
+  startSession('user-a', PUSH, {}, { now: NOW });
   const { unmount } = await render(<WatchSync />);
   await unmount();
   expect(stopListening).toHaveBeenCalled();

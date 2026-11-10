@@ -22,7 +22,10 @@ import { useUserId } from '@/providers/session-provider';
 
 import { updateSession, useActiveSession } from './session';
 
-/** The one notification for the end of the rest; a new rest replaces it. */
+/**
+ * The one notification for the end of the rest; a new rest replaces it. The watch link removes it
+ * by this id on iOS (modules/watch-link/ios/WatchSession.swift), so it changes there too.
+ */
 export const REST_NOTIFICATION_ID = 'rest-end';
 const CHANNEL_ID = 'rest-timer';
 /** A rest that ended longer ago than this, as seen on coming back to the app, is not signalled. */
