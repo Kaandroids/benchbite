@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type Ref } from 'react';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
@@ -120,8 +120,14 @@ function SetInput({
   ref,
 }: SetInputProps) {
   const { colors, radii } = useTheme();
-  // Typed text is shown until editing ends, so that "1:" or "2." can be typed on the way.
+  // Typed text is shown until editing ends, so that "1:" or "2." can be typed on the way, unless
+  // the value changed meanwhile from elsewhere, as from the watch (ADR 0109).
   const [text, setText] = useState<string | null>(null);
+  // The value last saved from here, so that ending the edit sends only what was not saved yet.
+  const saved = useRef<number | null | undefined>(undefined);
+  const textValue = text === null ? null : readSetValue(field, text);
+  const shown =
+    text !== null && (textValue === null || textValue === value) ? text : show(field, value);
   const running = clock !== null;
   return (
     <TextInput
@@ -129,7 +135,7 @@ function SetInput({
       accessibilityLabel={label}
       accessibilityState={{ disabled: running }}
       aria-invalid={invalid}
-      value={running ? minutesAndSeconds(clock) : (text ?? show(field, value))}
+      value={running ? minutesAndSeconds(clock) : shown}
       placeholder={placeholder}
       placeholderTextColor={colors.placeholder}
       editable={!running}
@@ -148,14 +154,16 @@ function SetInput({
         // saved while the keyboard is still up; "1:" or "2." wait until editing ends.
         const value = readSetValue(field, typed);
         if (value !== null || typed.trim() === '') {
+          saved.current = value;
           onChange(value);
         }
       }}
       onEndEditing={() => {
-        if (text !== null) {
+        if (text !== null && readSetValue(field, text) !== saved.current) {
           onChange(readSetValue(field, text));
-          setText(null);
         }
+        saved.current = undefined;
+        setText(null);
       }}
       style={[
         styles.input,

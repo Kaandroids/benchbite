@@ -131,6 +131,19 @@ describe('SessionScreen', () => {
     expect(screen.getByText('1 × 45 s')).toBeTruthy();
   });
 
+  it('keeps a value the watch changed while the keyboard was up', async () => {
+    await render(<SessionScreen />);
+    const reps = () => screen.getByLabelText('Reps of set 1');
+    await fireEvent.changeText(reps(), '6');
+    // The watch sets 10 a second later, before editing ends on the phone.
+    await act(async () =>
+      updateSession((current) => setValues(current, 0, 0, { reps: 10 }, NOW.getTime() + 1000)),
+    );
+    expect(reps().props.value).toBe('10');
+    await fireEvent(reps(), 'endEditing');
+    expect(reps().props.value).toBe('10');
+  });
+
   it('logs a set, changes it and starts the rest', async () => {
     await render(<SessionScreen />);
     await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '82,5');
