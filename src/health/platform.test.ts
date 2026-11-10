@@ -59,7 +59,14 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
 }));
 jest.mock('react-native-health-connect', () => ({
   ExerciseType: { STRENGTH_TRAINING: 70, BIKING: 8, OTHER_WORKOUT: 0 },
-  insertRecords: jest.fn(() => Promise.resolve([])),
+  // As the library does, which takes records of one type a call.
+  insertRecords: jest.fn((records: { recordType: string }[]) =>
+    new Set(records.map((record) => record.recordType)).size > 1
+      ? Promise.reject(
+          new Error('HealthConnect.insertRecords: All records must have the same type'),
+        )
+      : Promise.resolve([]),
+  ),
   deleteRecordsByUuids: jest.fn(() => Promise.resolve()),
   SdkAvailabilityStatus: {
     SDK_UNAVAILABLE: 1,
@@ -525,27 +532,37 @@ describe('saving workouts', () => {
       clientRecordId: 'benchbite-log-11',
       clientRecordVersion: expect.any(Number),
     };
-    expect(insertRecords).toHaveBeenCalledWith([
-      {
-        recordType: 'ExerciseSession',
-        exerciseType: 70,
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-        metadata,
-      },
-      {
-        recordType: 'ActiveCaloriesBurned',
-        energy: { unit: 'kilocalories', value: 395 },
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-        metadata,
-      },
+    // Health Connect takes records of one type a call.
+    expect(jest.mocked(insertRecords).mock.calls).toEqual([
+      [
+        [
+          {
+            recordType: 'ExerciseSession',
+            exerciseType: 70,
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+            metadata,
+          },
+        ],
+      ],
+      [
+        [
+          {
+            recordType: 'ActiveCaloriesBurned',
+            energy: { unit: 'kilocalories', value: 395 },
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+            metadata,
+          },
+        ],
+      ],
     ]);
     expect(deleteRecordsByUuids).not.toHaveBeenCalled();
   });
 
   it('takes out the calories of a copy saved again without any', async () => {
     await android.saveWorkout({ ...workout, activeKcal: null });
+    expect(insertRecords).toHaveBeenCalledTimes(1);
     expect(insertRecords).toHaveBeenCalledWith([expect.objectContaining({ exerciseType: 70 })]);
     expect(deleteRecordsByUuids).toHaveBeenCalledWith(
       'ActiveCaloriesBurned',

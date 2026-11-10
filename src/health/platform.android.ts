@@ -303,7 +303,10 @@ export async function storedWorkouts(logId: number, from: Date, to: Date): Promi
   };
 }
 
-// A record with the same client id replaces the one before when its version is higher.
+// A record with the same client id replaces the one before when its version is higher. Health
+// Connect takes records of one type a call, so the session and its calories go in two; calories
+// that fail after the session are written again by the next catch-up, because the stored calories
+// then differ from the log's.
 export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSave): Promise<void> {
   if (!(await initialize())) return;
   const metadata = { clientRecordId: savedWorkoutId(logId), clientRecordVersion: Date.now() };
@@ -315,19 +318,18 @@ export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSa
       ...times,
       metadata,
     },
-    ...(activeKcal === null
-      ? []
-      : [
-          {
-            recordType: 'ActiveCaloriesBurned' as const,
-            energy: { unit: 'kilocalories' as const, value: activeKcal },
-            ...times,
-            metadata,
-          },
-        ]),
   ]);
   if (activeKcal === null) {
     await deleteRecordsByUuids('ActiveCaloriesBurned', [], [savedWorkoutId(logId)]);
+  } else {
+    await insertRecords([
+      {
+        recordType: 'ActiveCaloriesBurned',
+        energy: { unit: 'kilocalories', value: activeKcal },
+        ...times,
+        metadata,
+      },
+    ]);
   }
 }
 
