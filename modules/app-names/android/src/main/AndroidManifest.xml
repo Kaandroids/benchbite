@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- The apps that write to Health Connect, whose names appName() reads: Android 11 and later hide
+       other apps from an app that does not say which it looks for. -->
+  <queries>
+    <intent>
+      <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+      <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+    </intent>
+  </queries>
+</manifest>

@@ -250,6 +250,8 @@ checks.
 ```
 src/app/               Expo Router screens and layouts only
 src/                   components, hooks and other app code, by feature
+modules/               Expo modules of the app's own, in native code; a change needs a new
+                       development build
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/

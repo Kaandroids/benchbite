@@ -18,6 +18,8 @@ import {
 import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
+import { appName } from '@/modules/app-names';
+
 import { HEALTH_CONNECT_ACTIVITIES } from './activities';
 import { inBatches } from './batches';
 import { heartRateSamples, type HeartRatePoint } from './samples';
@@ -48,21 +50,29 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'ExerciseSession' },
 ] as const;
 
-const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
+/** Health Connect's package, as an app of its own on Android 9 to 13. */
+const HEALTH_CONNECT = 'com.google.android.apps.healthdata';
 
-/** The names of the apps that most often write to Health Connect, by their package. */
-const APP_NAMES: Record<string, string> = {
-  'com.google.android.apps.fitness': 'Google Fit',
-  'com.huami.watch.hmwatchmanager': 'Zepp',
-  'com.garmin.android.apps.connectmobile': 'Garmin Connect',
-  'com.sec.android.app.shealth': 'Samsung Health',
-  'com.fitbit.FitbitMobile': 'Fitbit',
-  'com.google.android.apps.healthdata': 'Health Connect',
-};
+const PLAY_STORE = `market://details?id=${HEALTH_CONNECT}`;
 
-/** The app's name for a package that wrote data, or the package itself. */
-const sourceName = (origin: string | undefined): string | null =>
-  origin ? (APP_NAMES[origin] ?? origin) : null;
+/** Health Connect's own packages, as for an entry made in it: the store, which the screens name. */
+const STORE_PACKAGES = new Set([HEALTH_CONNECT, 'com.google.android.healthconnect.controller']);
+
+/** The names already looked up, by package, misses too: a read holds a few apps' many records. */
+const namesByPackage = new Map<string, string | null>();
+
+/** Forgets the names looked up, for a test that looks them up again. */
+export const forgetAppNames = () => namesByPackage.clear();
+
+/**
+ * The name of the app that wrote data, as the phone shows it, or none: Health Connect gives only its
+ * package, which no one should read. Without a name, the screens name the store alone.
+ */
+function sourceName(origin: string | undefined): string | null {
+  if (!origin || STORE_PACKAGES.has(origin)) return null;
+  if (!namesByPackage.has(origin)) namesByPackage.set(origin, appName(origin));
+  return namesByPackage.get(origin) ?? null;
+}
 
 export const store: HealthStore = 'healthConnect';
 

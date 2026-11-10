@@ -8,6 +8,7 @@ module.exports = {
   // Metro resolves the tsconfig paths in the app; Jest needs them spelled out.
   moduleNameMapper: {
     '^@/assets/(.*)$': '<rootDir>/assets/$1',
+    '^@/modules/(.*)$': '<rootDir>/modules/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@shared/(.*)$': '<rootDir>/supabase/functions/_shared/$1',
   },

@@ -21,6 +21,8 @@ import {
   revokeAllPermissions,
 } from 'react-native-health-connect';
 
+import { appName } from '@/modules/app-names';
+
 import * as android from './platform.android';
 import * as ios from './platform.ios';
 import { NO_WORKOUT_STATS } from './types';
@@ -29,6 +31,11 @@ import { NO_WORKOUT_STATS } from './types';
 jest.unmock('./platform.ios');
 jest.unmock('./platform.android');
 jest.mock('expo-application', () => ({ applicationId: 'com.benchbite.app' }));
+jest.mock('@/modules/app-names', () => ({
+  appName: jest.fn((packageName: string) =>
+    packageName === 'com.huami.watch.hmwatchmanager' ? 'Zepp' : null,
+  ),
+}));
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   AuthorizationStatus: { notDetermined: 0, sharingDenied: 1, sharingAuthorized: 2 },
   ComparisonPredicateOperator: { equalTo: 4 },
@@ -330,7 +337,8 @@ describe('Health Connect', () => {
     expect(await android.workoutStats(FROM, TO)).toEqual({
       heartRate: { average: 120, max: 150 },
       activeKcal: null,
-      source: 'com.example.tracker',
+      // An app the phone does not show is named by no package: the screens name the store.
+      source: null,
       samples: null,
     });
   });
@@ -761,5 +769,42 @@ describe('workouts from other apps', () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([] as never);
     expect(await android.outsideWorkouts(from, to)).toBeNull();
     expect(readRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe('the names of the apps that wrote to Health Connect', () => {
+  const weighing = (origin: string) => ({
+    time: '2026-11-09T07:00:00Z',
+    weight: { inKilograms: 78.4 },
+    metadata: { dataOrigin: origin },
+  });
+  const sourcesOf = async (...origins: string[]) => {
+    jest.mocked(readRecords).mockResolvedValue({ records: origins.map(weighing) } as never);
+    return (await android.weightsSince(new Date('2026-11-01T00:00:00Z'))).map(
+      (weight) => weight.source,
+    );
+  };
+
+  beforeEach(() => {
+    android.forgetAppNames();
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'Weight' }] as never);
+  });
+
+  it('looks each app’s name up once for its many records', async () => {
+    const scale = 'com.huami.watch.hmwatchmanager';
+    expect(await sourcesOf(scale, scale, scale)).toEqual(['Zepp', 'Zepp', 'Zepp']);
+    expect(appName).toHaveBeenCalledTimes(1);
+  });
+
+  it('names Health Connect’s own entries by none, the store naming them', async () => {
+    expect(
+      await sourcesOf(
+        'com.google.android.apps.healthdata',
+        'com.google.android.healthconnect.controller',
+      ),
+    ).toEqual([null, null]);
+    expect(appName).not.toHaveBeenCalled();
   });
 });
