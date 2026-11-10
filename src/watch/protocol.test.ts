@@ -15,7 +15,9 @@ import {
   parseCommand,
   PROTOCOL_VERSION,
   stateOf,
+  weightStepOf,
   workoutIdOf,
+  type Lookups,
   type MetricsOf,
   type WatchCommand,
 } from './protocol';
@@ -28,6 +30,13 @@ jest.mock('expo-sqlite/kv-store', () => ({
 const NOW = 1_800_000_000_000;
 /** The exercises' metrics as before the library loads: what a set needs is read from its target. */
 const noLibrary: MetricsOf = () => undefined;
+/** What the library says of the exercises: nothing, as before it loads, unless given. */
+const lookups = (given: Partial<Lookups> = {}): Lookups => ({
+  name: () => null,
+  metricsOf: noLibrary,
+  equipmentOf: () => undefined,
+  ...given,
+});
 const MINUTE = 60_000;
 
 const PUSH = testWorkout(7, {
@@ -66,6 +75,9 @@ describe('parseCommand', () => {
   it('reads each kind of command', () => {
     expect(done(NOW, 0)).toMatchObject({ type: 'setDone', exercise: 0, set: 0, done: true });
     expect(weigh(NOW, 1, 80)).toMatchObject({ values: { weightKg: 80 } });
+    expect(
+      command(NOW, { type: 'setDone', exercise: 0, set: 1, done: true, values: { weightKg: 80 } }),
+    ).toMatchObject({ values: { weightKg: 80 } });
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
@@ -92,6 +104,8 @@ describe('parseCommand', () => {
       { ...base, type: 'setValues', exercise: 0, set: 0, values: { reps: '8' } },
       { ...base, id: 'x'.repeat(65), type: 'addSet', exercise: 0, sets: 3 },
       { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
+      { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: { kg: 80 } },
+      { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: {} },
     ]) {
       expect(parseCommand(message)).toBeNull();
     }
@@ -112,7 +126,7 @@ it('keeps values as the phone keeps what is typed', () => {
 describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
-    const state = stateOf(session, { name: (id) => `name of ${id}`, metricsOf: noLibrary }, 7);
+    const state = stateOf(session, lookups({ name: (id) => `name of ${id}` }), 7);
     expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
     expect(state.workout).toMatchObject({
       id: 'workout-1',
@@ -130,12 +144,28 @@ describe('stateOf', () => {
       done: true,
       missing: [],
       text: '— × 12',
+      lastText: null,
     });
+  });
+
+  it('gives each exercise its fields and weight step, and each set last time’s', () => {
+    const last = { bench: [{ weightKg: 77.5, reps: 7, seconds: null, meters: null }] };
+    const session = startSession('user-a', PUSH, last, { now: NOW });
+    const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
+    const state = stateOf(session, lookups({ metricsOf: lifted, equipmentOf: () => 'barbell' }), 1);
+    const [bench, , plank] = state.workout!.exercises;
+    expect(bench).toMatchObject({
+      fields: ['weightKg', 'reps'],
+      weightStepKg: 2.5,
+      addedWeight: false,
+    });
+    expect(bench?.sets.map((set) => set.lastText)).toEqual(['77.5 kg × 7', null, null, null]);
+    expect(plank?.fields).toEqual(['seconds']);
   });
 
   it('says what each set still needs, as the phone does', () => {
     const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
-    const state = stateOf(start(), { name: () => '', metricsOf: lifted }, 1);
+    const state = stateOf(start(), lookups({ metricsOf: lifted }), 1);
     const [bench, , plank] = state.workout!.exercises;
     // A weight is needed before the bench press can be ticked, as on the phone.
     expect(bench?.sets[0]?.missing).toEqual(['weightKg']);
@@ -144,12 +174,12 @@ describe('stateOf', () => {
   });
 
   it('names no exercise the library does not know', () => {
-    const state = stateOf(start(), { name: () => null, metricsOf: noLibrary }, 1);
+    const state = stateOf(start(), lookups(), 1);
     expect(state.workout?.exercises[0]?.name).toBeNull();
   });
 
   it('says no workout runs', () => {
-    expect(stateOf(null, { name: () => '', metricsOf: noLibrary }, 1).workout).toBeNull();
+    expect(stateOf(null, lookups(), 1).workout).toBeNull();
   });
 
   it('names a workout started before ids were kept by its start', () => {
@@ -158,11 +188,18 @@ describe('stateOf', () => {
   });
 });
 
+it('steps a weight as its equipment goes up', () => {
+  expect(weightStepOf('dumbbell')).toBe(2);
+  expect(weightStepOf('kettlebells')).toBe(4);
+  expect(weightStepOf('barbell')).toBe(2.5);
+  expect(weightStepOf(undefined)).toBe(2.5);
+});
+
 describe('nextSetOf', () => {
   it('is the open exercise’s first set not done', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(nextSetOf(session)).toEqual({ exercise: 0, set: 1 });
-    expect(stateOf(session, { name: () => null, metricsOf: noLibrary }, 1).workout?.next).toEqual({
+    expect(stateOf(session, lookups(), 1).workout?.next).toEqual({
       exercise: 0,
       set: 1,
     });
@@ -411,6 +448,38 @@ describe('applyCommand', () => {
     expect(
       applyCommand(start(), plank, { metricsOf: noLibrary, now: NOW }).exercises[2]?.sets[0]?.done,
     ).toBe(false);
+  });
+
+  it('ticks a set with the values the watch edited for it', () => {
+    const lifted = { metricsOf: () => ['weight', 'reps'] as ('weight' | 'reps')[], now: NOW };
+    const edited = command(NOW, {
+      type: 'setDone',
+      exercise: 0,
+      set: 0,
+      done: true,
+      values: { weightKg: 82.5, reps: 8 },
+    });
+    expect(bench(applyCommand(start(), edited, lifted))[0]).toMatchObject({
+      weightKg: 82.5,
+      reps: 8,
+      done: true,
+    });
+  });
+
+  it('starts no rest again for an older tick once the watch changed the rest', () => {
+    let session = toggleDoneUnchecked(start(), 0, 1, NOW + MINUTE);
+    const endsAt = session.rest!.endsAt;
+    session = applyCommand(
+      session,
+      command(NOW + 2 * MINUTE, { type: 'setRest', of: endsAt, endsAt: null }),
+      { metricsOf: noLibrary, now: NOW + 2 * MINUTE },
+    );
+    session = applyCommand(session, done(NOW + MINUTE + 30_000, 0), {
+      metricsOf: noLibrary,
+      now: NOW + 2 * MINUTE,
+    });
+    expect(bench(session)[0]?.done).toBe(true);
+    expect(session.rest).toBeNull();
   });
 
   it('keeps the open exercise when an older tick completes an earlier one', () => {

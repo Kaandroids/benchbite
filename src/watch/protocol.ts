@@ -22,6 +22,8 @@ export type WatchSet = SetValues & {
   missing: SetField[];
   /** As the phone describes it: "80 kg × 8", "0:50" or "2000 m · 8:12". */
   text: string;
+  /** Last time's set of the same number, described the same way; none when there was none. */
+  lastText: string | null;
 };
 
 export type WatchExercise = {
@@ -29,6 +31,12 @@ export type WatchExercise = {
   /** In the user's language, as the phone shows it; none when the library does not know it. */
   name: string | null;
   target: WorkoutTarget;
+  /** What its sets record, as the phone shows them (setKindOf). */
+  fields: SetField[];
+  /** What the Crown turns a weight by, from the exercise's equipment. */
+  weightStepKg: number;
+  /** The weight is added to the body, and none is a value it can have. */
+  addedWeight: boolean;
   restSeconds: number;
   sets: WatchSet[];
   last: SetValues[];
@@ -68,7 +76,14 @@ type CommandBase = {
 export type WatchCommand = CommandBase &
   (
     | { type: 'setValues'; exercise: number; set: number; values: Partial<SetValues> }
-    | { type: 'setDone'; exercise: number; set: number; done: boolean }
+    /** With the values the watch showed for the set, which are set first, when it was edited there. */
+    | {
+        type: 'setDone';
+        exercise: number;
+        set: number;
+        done: boolean;
+        values?: Partial<SetValues>;
+      }
     /** Adds a set while the exercise has fewer than `sets`, the number the watch then showed. */
     | { type: 'addSet'; exercise: number; sets: number }
     /** The rest the watch showed, `of` its end, made to end at `endsAt`, or skipped with null. */
@@ -78,6 +93,21 @@ export type WatchCommand = CommandBase &
 /** The workout's id; one started before ids were kept is named by its start. */
 export function workoutIdOf(session: Session): string {
   return session.id ?? `started-${session.startedAt}`;
+}
+
+/**
+ * What a weight usually goes up by with the equipment: dumbbells in pairs of a kilogram each,
+ * kettlebells by 4 kg, and plates by 1.25 kg a side.
+ */
+export function weightStepOf(equipment: LibraryExercise['equipment'] | undefined): number {
+  switch (equipment) {
+    case 'dumbbell':
+      return 2;
+    case 'kettlebells':
+      return 4;
+    default:
+      return 2.5;
+  }
 }
 
 /**
@@ -96,13 +126,20 @@ export function nextSetOf(session: Session): { exercise: number; set: number } |
   return null;
 }
 
+/** What the phone's library says of an exercise; none of it where the library is not loaded. */
+export type Lookups = {
+  name: (exerciseId: string) => string | null;
+  metricsOf: MetricsOf;
+  equipmentOf: (exerciseId: string) => LibraryExercise['equipment'] | undefined;
+};
+
 /**
- * The state for the watch: its exercises named by `name`, and each set judged by `metricsOf` as
- * the phone judges it, with its text as the phone shows it.
+ * The state for the watch: its exercises named and each set judged by `lookups` as the phone
+ * judges it, with its text as the phone shows it.
  */
 export function stateOf(
   session: Session | null,
-  { name, metricsOf }: { name: (exerciseId: string) => string | null; metricsOf: MetricsOf },
+  { name, metricsOf, equipmentOf }: Lookups,
   seq: number,
 ): WatchState {
   return {
@@ -121,13 +158,20 @@ export function stateOf(
           exerciseId: exercise.exerciseId,
           name: name(exercise.exerciseId),
           target: exercise.target,
+          fields: kind.fields,
+          weightStepKg: weightStepOf(equipmentOf(exercise.exerciseId)),
+          addedWeight: kind.addedWeight,
           restSeconds: exercise.restSeconds,
-          sets: exercise.sets.map((set) => ({
-            ...pickSetValues(set),
-            done: set.done,
-            missing: set.done ? [] : missingFields(set, kind),
-            text: describeSet(set, kind),
-          })),
+          sets: exercise.sets.map((set, index) => {
+            const last = exercise.last[index];
+            return {
+              ...pickSetValues(set),
+              done: set.done,
+              missing: set.done ? [] : missingFields(set, kind),
+              text: describeSet(set, kind),
+              lastText: last ? describeSet(last, kind) : null,
+            };
+          }),
           last: exercise.last,
         };
       }),
@@ -174,10 +218,13 @@ export function parseCommand(message: unknown): WatchCommand | null {
         ? { ...base, type, exercise: message.exercise, set: message.set, values }
         : null;
     }
-    case 'setDone':
-      return isIndex(message.exercise) && isIndex(message.set) && typeof message.done === 'boolean'
-        ? { ...base, type, exercise: message.exercise, set: message.set, done: message.done }
-        : null;
+    case 'setDone': {
+      const { exercise, set, done } = message;
+      if (!isIndex(exercise) || !isIndex(set) || typeof done !== 'boolean') return null;
+      if (message.values === undefined) return { ...base, type, exercise, set, done };
+      const values = valuesOf(message.values);
+      return values ? { ...base, type, exercise, set, done, values } : null;
+    }
     case 'addSet':
       return isIndex(message.exercise) && isIndex(message.sets) && message.sets > 0
         ? { ...base, type, exercise: message.exercise, sets: message.sets }
@@ -210,7 +257,10 @@ function change(
       const item = session.exercises[command.exercise];
       if (!item) return session;
       const kind = setKindOf(metricsOf(item.exerciseId), item.target);
-      return markDone(session, command.exercise, command.set, command.done, kind, { at, now });
+      const edited = command.values
+        ? setValues(session, command.exercise, command.set, command.values, at)
+        : session;
+      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
@@ -221,8 +271,9 @@ function change(
     }
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
+      // Changed at `at`, so that a tick made before it on the watch starts no rest again.
       return session.rest?.endsAt === command.of
-        ? { ...session, rest: restUntil(session.rest, command.endsAt, now) }
+        ? { ...session, rest: restUntil(session.rest, command.endsAt, now), restChangedAt: at }
         : session;
   }
 }
