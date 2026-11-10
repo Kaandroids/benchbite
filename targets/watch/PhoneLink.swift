@@ -7,8 +7,8 @@ import WatchConnectivity
 final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The workout the phone runs, or none.
   @Published private(set) var workout: WatchWorkout?
-  /// The commands sent that the phone has not applied yet, with their workout's id.
-  @Published private(set) var waiting: [String: String] = [:]
+  /// The commands sent that the phone has not applied yet, by their id.
+  @Published private(set) var waiting: [String: WatchCommand] = [:]
 
   private var lastSeq: Double = 0
 
@@ -19,9 +19,19 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     WCSession.default.activate()
   }
 
-  func send(_ command: WatchCommand) {
-    guard let payload = command.payload else { return }
-    waiting[command.id] = command.workoutId
+  /// Whether a command for this set waits for the phone, which a second one would only repeat.
+  func isWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
+    waiting.values.contains {
+      $0.workoutId == workoutId && $0.exercise == exercise && $0.set == set
+    }
+  }
+
+  func send(_ command: WatchCommand?) {
+    guard let command,
+      !isWaiting(workoutId: command.workoutId, exercise: command.exercise, set: command.set)
+    else { return }
+    let payload = command.payload
+    waiting[command.id] = command
     let session = WCSession.default
     // Without a reply handler, as the phone takes messages without replying.
     if session.isReachable {
@@ -44,8 +54,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       self.workout = state.workout
       // Applied, or for a workout the phone no longer runs, which it drops without saying so.
       let applied = Set(state.workout?.applied ?? [])
-      self.waiting = self.waiting.filter { id, workoutId in
-        !applied.contains(id) && workoutId == state.workout?.id
+      self.waiting = self.waiting.filter { id, command in
+        !applied.contains(id) && command.workoutId == state.workout?.id
       }
     }
   }
@@ -65,5 +75,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
     receive(message)
+  }
+
+  /// A transfer that failed never reaches the phone: its command waits no more, and can be sent
+  /// again.
+  func session(
+    _ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?
+  ) {
+    guard error != nil, let json = userInfoTransfer.userInfo["command"] as? String else { return }
+    DispatchQueue.main.async {
+      self.waiting = self.waiting.filter { _, command in command.json != json }
+    }
   }
 }
