@@ -297,26 +297,33 @@ function setsFor(exercise: PlannedExercise, session: number): LoggedSet[] {
 
 const sessionCount: Partial<Record<SessionType, number>> = {};
 
+/** How many 10-second values (ADR 0104) the warm-up before the first set and each set take. */
+const WARM_UP_VALUES = 24;
+const SET_VALUES = 5;
+
+/** The 10-second value each set starts at: after the warm-up, spread evenly over the workout. */
+function setStarts(minutes: number, sets: number): number[] {
+  const values = Math.ceil((minutes * 60) / 10) + 1;
+  const every = (values - WARM_UP_VALUES) / Math.max(sets, 1);
+  return Array.from({ length: sets }, (_, k) => WARM_UP_VALUES + Math.floor(k * every));
+}
+
 /**
  * The heart rate a watch measures through a strength workout, one value every 10 seconds as the
- * app keeps it (ADR 0104): a warm-up, then each set raising it towards a peak and each rest letting
- * it fall back, with the sets spread evenly over the workout.
+ * app keeps it: a warm-up, then each set raising it towards a peak and each rest letting it fall
+ * back.
  */
-function heartRateOf(minutes: number, sets: number): number[] {
+function heartRateOf(minutes: number, starts: number[]): number[] {
   const values = Math.ceil((minutes * 60) / 10) + 1;
-  const warmUpValues = 24; // 4 minutes before the first set
-  const setEvery = (values - warmUpValues) / Math.max(sets, 1);
-  const setLength = 5; // 50 seconds of work
   const resting = 92 + heartRandom() * 10;
-  const peaks = Array.from({ length: Math.max(sets, 1) }, () => 128 + heartRandom() * 30);
+  const peaks = starts.map(() => 128 + heartRandom() * 30);
   let bpm = resting - 10;
   return Array.from({ length: values }, (_, i) => {
-    const warmUp = Math.min(1, i / warmUpValues);
-    const sinceWarmUp = i - warmUpValues;
-    const inSet = sinceWarmUp >= 0 && sinceWarmUp % setEvery < setLength;
-    const target = inSet ? peaks[Math.floor(sinceWarmUp / setEvery)]! : resting + 8 * warmUp;
+    const warmUp = Math.min(1, i / WARM_UP_VALUES);
+    const set = starts.findIndex((start) => i >= start && i < start + SET_VALUES);
+    const target = set >= 0 ? peaks[set]! : resting + 8 * warmUp;
     // The heart rate rises faster in a set than it falls in a rest.
-    bpm += (target - bpm) * (inSet ? 0.45 : 0.18);
+    bpm += (target - bpm) * (set >= 0 ? 0.45 : 0.18);
     return Math.round(bpm + (heartRandom() - 0.5) * 4);
   });
 }
@@ -338,6 +345,21 @@ async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) 
   if (startedAt.getTime() + minutes * 60_000 > Date.now()) {
     throw new Error("Today's workout would end in the future; run the seed later in the day.");
   }
+  // Each set is ticked at the end of its effort, which the heart rate chart marks.
+  const starts = setStarts(
+    minutes,
+    exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0),
+  );
+  let setIndex = 0;
+  const loggedExercises = exercises.map((exercise) => ({
+    ...exercise,
+    sets: exercise.sets.map((set) => ({
+      ...set,
+      doneAt: new Date(
+        startedAt.getTime() + (starts[setIndex++]! + SET_VALUES) * 10_000,
+      ).toISOString(),
+    })),
+  }));
   const logId = await rpc<number>('log_workout', {
     log: {
       clientId: crypto.randomUUID(),
@@ -347,15 +369,12 @@ async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) 
       startedAt: startedAt.toISOString(),
       startedOn: doneOn,
       finishedAt: new Date(startedAt.getTime() + minutes * 60_000).toISOString(),
-      exercises,
+      exercises: loggedExercises,
       ...(plannedOn !== doneOn ? { move: { from: plannedOn, to: doneOn } } : {}),
     },
   });
   // What the watch measured, as the app sends it after reading the phone's health store.
-  const heartRate = heartRateOf(
-    minutes,
-    exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0),
-  );
+  const heartRate = heartRateOf(minutes, starts);
   await rpc('set_workout_health', {
     log_id: logId,
     heart_rate_avg: heartRate.reduce((sum, bpm) => sum + bpm, 0) / heartRate.length,
