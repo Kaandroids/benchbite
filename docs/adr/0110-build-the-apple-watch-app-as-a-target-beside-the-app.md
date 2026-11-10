@@ -21,7 +21,7 @@ Following the workout on the Apple Watch (#470, ADR 0109) needs an app on the wa
 - **The watch speaks the protocol of ADR 0109 in Swift.**
   - `Protocol.swift` decodes the phone's state and builds commands as `src/watch/protocol.ts` defines them. A command goes as JSON with the workout's id beside it, which the phone's module reads without reading the JSON.
   - `PhoneLink.swift` receives the state and sends commands: by message while the phone is reachable, without a reply handler, else by user info transfer.
-- **This first app only shows that the two talk to each other:** the open exercise's next set and a Done button. The screens of the approved design, the workout session that measures the heart rate, the texts in the user's language and the phone's own screens follow in their own pull requests.
+- **This first app only shows that the two talk to each other:** the set to do next, which the phone finds, and a Done button. The screens of the approved design, the workout session that measures the heart rate, the texts in the user's language and the phone's own screens follow in their own pull requests.
 
 ## Alternatives considered
 

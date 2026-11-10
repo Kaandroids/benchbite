@@ -26,11 +26,9 @@ export type WatchSet = SetValues & {
 
 export type WatchExercise = {
   exerciseId: string;
-  /** In the user's language, as the phone shows it. */
-  name: string;
+  /** In the user's language, as the phone shows it; none when the library does not know it. */
+  name: string | null;
   target: WorkoutTarget;
-  /** What its sets record, as the phone shows them (setKindOf). */
-  fields: SetField[];
   restSeconds: number;
   sets: WatchSet[];
   last: SetValues[];
@@ -42,6 +40,8 @@ export type WatchWorkout = {
   name: string | null;
   startedAt: number;
   current: number;
+  /** The set to do next, as nextSetOf() finds it; none when every set is done. */
+  next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
@@ -81,12 +81,28 @@ export function workoutIdOf(session: Session): string {
 }
 
 /**
+ * The set to do next: the open exercise's first set not done, else the first one of the
+ * exercises after it, then of those before it, as one can be left open while another is done.
+ */
+export function nextSetOf(session: Session): { exercise: number; set: number } | null {
+  const count = session.exercises.length;
+  for (let step = 0; step < count; step++) {
+    const exercise = (session.current + step) % count;
+    const set = session.exercises[exercise]!.sets.findIndex((s) => !s.done);
+    if (set >= 0) {
+      return { exercise, set };
+    }
+  }
+  return null;
+}
+
+/**
  * The state for the watch: its exercises named by `name`, and each set judged by `metricsOf` as
  * the phone judges it, with its text as the phone shows it.
  */
 export function stateOf(
   session: Session | null,
-  { name, metricsOf }: { name: (exerciseId: string) => string; metricsOf: MetricsOf },
+  { name, metricsOf }: { name: (exerciseId: string) => string | null; metricsOf: MetricsOf },
   seq: number,
 ): WatchState {
   return {
@@ -97,6 +113,7 @@ export function stateOf(
       name: session.name,
       startedAt: session.startedAt,
       current: session.current,
+      next: nextSetOf(session),
       rest: session.rest,
       exercises: session.exercises.map((exercise) => {
         const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
@@ -104,7 +121,6 @@ export function stateOf(
           exerciseId: exercise.exerciseId,
           name: name(exercise.exerciseId),
           target: exercise.target,
-          fields: kind.fields,
           restSeconds: exercise.restSeconds,
           sets: exercise.sets.map((set) => ({
             ...pickSetValues(set),

@@ -22,7 +22,7 @@ function nextSeq(): number {
  * both judge a set by, so that the watch offers no Done the phone then refuses.
  */
 const lookups = (library: LibraryExercise[] | undefined) => ({
-  name: (id: string) => findExercise(library, id)?.name ?? '',
+  name: (id: string) => findExercise(library, id)?.name ?? null,
   metricsOf: (id: string) => findExercise(library, id)?.metrics,
 });
 

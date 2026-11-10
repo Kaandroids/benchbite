@@ -18,9 +18,16 @@ struct WatchWorkout: Decodable {
   let name: String?
   let startedAt: Double
   let current: Int
+  /// The set to do next; none when every set is done.
+  let next: WatchNext?
   let rest: WatchRest?
   let exercises: [WatchExercise]
   let applied: [String]
+}
+
+struct WatchNext: Decodable {
+  let exercise: Int
+  let set: Int
 }
 
 struct WatchRest: Decodable {
@@ -30,7 +37,8 @@ struct WatchRest: Decodable {
 
 struct WatchExercise: Decodable {
   let exerciseId: String
-  let name: String
+  /// None when the phone's library does not know it.
+  let name: String?
   let restSeconds: Int
   let sets: [WatchSet]
 }

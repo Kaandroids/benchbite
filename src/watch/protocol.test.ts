@@ -11,6 +11,7 @@ import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
   applyCommand,
+  nextSetOf,
   parseCommand,
   PROTOCOL_VERSION,
   stateOf,
@@ -132,16 +133,19 @@ describe('stateOf', () => {
     });
   });
 
-  it('says what each exercise records and what each set still needs, as the phone does', () => {
+  it('says what each set still needs, as the phone does', () => {
     const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
     const state = stateOf(start(), { name: () => '', metricsOf: lifted }, 1);
     const [bench, , plank] = state.workout!.exercises;
-    expect(bench?.fields).toEqual(['weightKg', 'reps']);
     // A weight is needed before the bench press can be ticked, as on the phone.
     expect(bench?.sets[0]?.missing).toEqual(['weightKg']);
     // A timed set starts without a time, which the phone's clock measures.
-    expect(plank?.fields).toEqual(['seconds']);
     expect(plank?.sets[0]?.missing).toEqual(['seconds']);
+  });
+
+  it('names no exercise the library does not know', () => {
+    const state = stateOf(start(), { name: () => null, metricsOf: noLibrary }, 1);
+    expect(state.workout?.exercises[0]?.name).toBeNull();
   });
 
   it('says no workout runs', () => {
@@ -151,6 +155,36 @@ describe('stateOf', () => {
   it('names a workout started before ids were kept by its start', () => {
     const { id: _id, ...older } = start();
     expect(workoutIdOf(older)).toBe(`started-${NOW}`);
+  });
+});
+
+describe('nextSetOf', () => {
+  it('is the open exercise’s first set not done', () => {
+    const session = toggleDoneUnchecked(start(), 0, 0, NOW);
+    expect(nextSetOf(session)).toEqual({ exercise: 0, set: 1 });
+    expect(stateOf(session, { name: () => null, metricsOf: noLibrary }, 1).workout?.next).toEqual({
+      exercise: 0,
+      set: 1,
+    });
+  });
+
+  it('goes on after the open exercise, then before it, when it is done', () => {
+    // The rows are done while the bench press was left open, and the plank comes after them.
+    let session = { ...start(), current: 1 };
+    session = toggleDoneUnchecked(toggleDoneUnchecked(session, 1, 0, NOW), 1, 1, NOW);
+    expect(nextSetOf(session)).toEqual({ exercise: 2, set: 0 });
+    session = toggleDoneUnchecked(session, 2, 0, NOW);
+    expect(nextSetOf(session)).toEqual({ exercise: 0, set: 0 });
+  });
+
+  it('is none when every set is done', () => {
+    let session = start();
+    session.exercises.forEach((exercise, e) =>
+      exercise.sets.forEach((_, s) => {
+        session = toggleDoneUnchecked(session, e, s, NOW);
+      }),
+    );
+    expect(nextSetOf(session)).toBeNull();
   });
 });
 
