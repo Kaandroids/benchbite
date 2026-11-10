@@ -154,7 +154,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     source: sourceName(heart.dataOrigins[0]),
     // The samples only draw the chart: without them the read keeps its average and highest.
     samples: heartRateSamples(
-      await heartRatePoints(timeRangeFilter).catch((error: unknown) => {
+      await heartRatePoints(from, to).catch((error: unknown) => {
         console.warn('Could not read the heart rate samples', error);
         return [];
       }),
@@ -193,11 +193,20 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
  */
 const MOST_HEART_RATE_PAGES = 20;
 
-/** A range of time as Health Connect's reads take it, which the library does not export. */
-type TimeRangeFilter = Parameters<typeof readRecords>[1]['timeRangeFilter'];
+/**
+ * How long before a workout a heart rate record may start and still hold its samples. Health
+ * Connect reads only the records that start in the range, while a watch's app writes the heart rate
+ * in records of many samples, which can start before the workout.
+ */
+const HEART_RATE_RECORD_LOOKBACK_MS = 3600 * 1000;
 
-/** Every heart rate sample between two times, page by page. */
-async function heartRatePoints(timeRangeFilter: TimeRangeFilter): Promise<HeartRatePoint[]> {
+/** Every heart rate sample of the records that may hold some between two times, page by page. */
+async function heartRatePoints(from: Date, to: Date): Promise<HeartRatePoint[]> {
+  const timeRangeFilter = {
+    operator: 'between' as const,
+    startTime: new Date(from.getTime() - HEART_RATE_RECORD_LOOKBACK_MS).toISOString(),
+    endTime: to.toISOString(),
+  };
   const points: HeartRatePoint[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < MOST_HEART_RATE_PAGES; page++) {
