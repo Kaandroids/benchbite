@@ -29,6 +29,7 @@ import { StartMoveSheet } from '@/sessions/start-move';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
 import { applyStoredPreferences } from '@/settings/preferences';
 import { fonts, useTheme } from '@/theme';
+import { WatchSync } from '@/watch/watch-sync';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
@@ -90,6 +91,7 @@ function RootNavigator() {
     <>
       <StatusBar style="auto" />
       {status === 'ready' ? <RestAlarm /> : null}
+      {status === 'ready' ? <WatchSync /> : null}
       {status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
