@@ -323,6 +323,43 @@ describe('Health Connect', () => {
     });
   });
 
+  it('reads the heart rate records that start before the workout, and keeps its samples only', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'HeartRate' }]);
+    jest.mocked(aggregateRecord).mockResolvedValueOnce({
+      BPM_AVG: 120,
+      BPM_MAX: 150,
+      BPM_MIN: 90,
+      MEASUREMENTS_COUNT: 10,
+      dataOrigins: ['com.example.tracker'],
+    } as never);
+    // A watch's record of many samples, which started before the workout.
+    jest.mocked(readRecords).mockResolvedValue({
+      records: [
+        {
+          samples: [
+            { time: new Date(FROM.getTime() - 60_000).toISOString(), beatsPerMinute: 90 },
+            { time: new Date(FROM.getTime() + 3_000).toISOString(), beatsPerMinute: 125 },
+          ],
+        },
+      ],
+    } as never);
+
+    const stats = await android.workoutStats(FROM, TO);
+    // Health Connect reads only the records that start in the range.
+    expect(readRecords).toHaveBeenCalledWith('HeartRate', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: new Date(FROM.getTime() - 3600 * 1000).toISOString(),
+        endTime: TO.toISOString(),
+      },
+      ascendingOrder: false,
+      pageSize: 1000,
+    });
+    expect(stats.samples?.slice(0, 2)).toEqual([125, null]);
+  });
+
   it('keeps the heart rate when the calories cannot be read', async () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([
       { accessType: 'read', recordType: 'HeartRate' },
