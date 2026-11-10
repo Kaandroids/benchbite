@@ -27,14 +27,17 @@ export function WatchSync() {
     link.sendState(stateOf(session, name, nextSeq()));
   }, [session, library.data]);
 
-  // Commands wait while the library loads, as what a set needs depends on its exercise; without a
-  // library, as offline, they apply as the phone's own screen then does.
+  // Commands wait while the library loads, as what a set needs depends on its exercise. Once its
+  // first try fails, as offline, they apply as the phone's own screen then does.
   const waiting = useRef<WatchCommand[]>([]);
-  const loading = library.isPending;
+  const loading = library.isPending && library.failureCount === 0;
+  // Those that waited first, in the order they came.
   const apply = useEffectEvent((commands: WatchCommand[]) => {
+    const all = [...waiting.current, ...commands];
+    waiting.current = [];
     const metricsOf = (id: string) => findExercise(library.data, id)?.metrics;
     updateSession((current) =>
-      commands.reduce((next, command) => applyCommand(next, command, { metricsOf }), current),
+      all.reduce((next, command) => applyCommand(next, command, { metricsOf }), current),
     );
   });
   const receive = useEffectEvent((message: unknown) => {
@@ -52,8 +55,7 @@ export function WatchSync() {
 
   useEffect(() => {
     if (!loading && waiting.current.length > 0) {
-      apply(waiting.current);
-      waiting.current = [];
+      apply([]);
     }
   }, [loading]);
 

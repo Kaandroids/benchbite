@@ -90,28 +90,41 @@ it('applies the watch’s commands to the workout, and sends it back', async () 
   expect(lastSent().workout?.applied).toEqual(['command-1']);
 });
 
-it('holds commands while the library loads, then applies them with its rules', async () => {
+const command = (id: string, body: Record<string, unknown>) => ({
+  v: PROTOCOL_VERSION,
+  id,
+  at: NOW,
+  workoutId: 'workout-1',
+  exercise: 0,
+  set: 0,
+  ...body,
+});
+
+it('holds commands while the library loads, then applies them in order with its rules', async () => {
   startSession('user-a', PUSH, {}, { now: NOW });
-  jest.mocked(useExerciseLibrary).mockReturnValue({ data: undefined, isPending: true } as never);
+  const loading = { data: undefined, isPending: true, failureCount: 0 } as never;
+  jest.mocked(useExerciseLibrary).mockReturnValue(loading);
   const { rerender } = await render(<WatchSync />);
-  const command = (id: string, body: Record<string, unknown>) => ({
-    v: PROTOCOL_VERSION,
-    id,
-    at: NOW,
-    workoutId: 'workout-1',
-    exercise: 0,
-    set: 0,
-    ...body,
-  });
-  // A tick without a weight, which the bench press needs, and then the weight.
-  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
+  // A tick without a weight, which the bench press needs, is refused once the library says so.
+  await act(() => deliver(command('early tick', { type: 'setDone', done: true })));
   await act(() => deliver(command('weight', { type: 'setValues', values: { weightKg: 60 } })));
+  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
   expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, done: false });
 
   jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
   await rerender(<WatchSync />);
-  expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: 60, done: false });
-  expect(lastSent().workout?.applied).toEqual(['tick', 'weight']);
+  expect(lastSent().workout?.exercises[0]?.sets[0]).toMatchObject({ weightKg: 60, done: true });
+  expect(lastSent().workout?.applied).toEqual(['early tick', 'weight', 'tick']);
+});
+
+it('applies commands at once when the library could not be read, as offline', async () => {
+  startSession('user-a', PUSH, {}, { now: NOW });
+  const offline = { data: undefined, isPending: true, failureCount: 1 } as never;
+  jest.mocked(useExerciseLibrary).mockReturnValue(offline);
+  await render(<WatchSync />);
+  await act(() => deliver(command('tick', { type: 'setDone', done: true })));
+  // Without the library, a weight is not asked for, as on the phone's own screen.
+  expect(lastSent().workout?.exercises[0]?.sets[0]?.done).toBe(true);
 });
 
 it('drops a message that is not a command', async () => {
