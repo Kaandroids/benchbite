@@ -32,8 +32,8 @@ struct WorkoutView: View {
           Image(systemName: "dumbbell")
             .font(.system(size: 32, weight: .semibold))
             .foregroundStyle(Theme.secondary)
-          Text("No workout yet").font(.rounded(17, .heavy))
-          Text("Start one on your iPhone and it shows here.")
+          Text(L10n.t("noWorkout")).font(.rounded(17, .heavy))
+          Text(L10n.t("startOnPhone"))
             .font(.rounded(14))
             .foregroundStyle(Theme.secondary)
             .multilineTextAlignment(.center)
@@ -61,7 +61,7 @@ private struct JoinView: View {
   var body: some View {
     let total = workout.setsDone
     VStack(spacing: 6) {
-      Text("ON YOUR IPHONE")
+      Text(L10n.t("onPhone"))
         .font(.rounded(13, .heavy))
         .foregroundStyle(Theme.secondary)
       Text(workout.title)
@@ -70,11 +70,11 @@ private struct JoinView: View {
       HStack(spacing: 0) {
         Text(Date(timeIntervalSince1970: workout.startedAt / 1000), style: .timer)
           .monospacedDigit()
-        Text(" · \(total.done) of \(total.count) sets")
+        Text(" · " + L10n.t("progress", ["done": total.done, "total": total.count]))
       }
       .font(.rounded(14))
       .foregroundStyle(Theme.secondary)
-      Button("Join") {
+      Button(L10n.t("join")) {
         restAlert.requestPermission { granted in
           refused = !granted
           // The workout session then asks for the health store, which joining goes on without.
@@ -86,7 +86,7 @@ private struct JoinView: View {
       .padding(.top, 8)
       if refused {
         // Joined without them, the phone would leave rests to a watch that cannot signal them.
-        Text("Allow notifications for Benchbite in the Watch app on your iPhone to join.")
+        Text(L10n.t("allowNotifications"))
           .font(.rounded(12))
           .foregroundStyle(Theme.warning)
       }
@@ -98,6 +98,8 @@ private struct JoinView: View {
 
 /// The end of a rest, signalled while the app was open.
 private struct RestOverView: View {
+  /// Observed so that its texts follow the language (ADR 0123).
+  @EnvironmentObject private var phone: PhoneLink
   let next: String?
   let go: () -> Void
 
@@ -114,7 +116,7 @@ private struct RestOverView: View {
           .lineLimit(1)
           .minimumScaleFactor(0.8)
       }
-      Button("Go", action: go)
+      Button(L10n.t("go"), action: go)
         .buttonStyle(PillButtonStyle())
         .padding(.top, 8)
     }

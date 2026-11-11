@@ -52,7 +52,7 @@ struct SetView: View {
                   workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
                   done: true, values: draft, rest: restStarted(by: next)))
             } label: {
-              Label("Done", systemImage: "checkmark")
+              Label(L10n.t("done"), systemImage: "checkmark")
             }
             .buttonStyle(PillButtonStyle())
             // Until the tiles fill in what the set needs; and PhoneLink sends no second tick
@@ -64,13 +64,13 @@ struct SetView: View {
             .padding(.top, 4)
           } else {
             // A time is measured by the phone's clock.
-            Text("Finish this set on your iPhone")
+            Text(L10n.t("finishOnPhone"))
               .font(.rounded(13))
               .foregroundStyle(Theme.secondary)
           }
           // Unless the line at the top says what waits.
           if !phone.waiting.isEmpty, phone.setsWaitingOutOfReach(of: workout) == 0 {
-            Text("Waiting for your iPhone")
+            Text(L10n.t("waiting"))
               .font(.rounded(12))
               .foregroundStyle(Theme.warning)
           }
@@ -93,7 +93,7 @@ struct SetView: View {
         drafts = drafts.filter { $0.key == key }
       }
     } else {
-      Text("All sets done")
+      Text(L10n.t("allDone"))
         .font(.rounded(17, .heavy))
         .foregroundStyle(Theme.secondary)
     }
@@ -114,8 +114,10 @@ struct SetView: View {
   }
 
   private func subtitle(_ next: NextSet) -> String {
-    let position = "Set \(next.setIndex + 1) of \(next.exercise.sets.count)"
-    return next.set.lastText.map { "\(position) · last \($0)" } ?? position
+    let position = L10n.t(
+      "position", ["number": next.setIndex + 1, "total": next.exercise.sets.count])
+    return next.set.lastText.map { L10n.t("lastTime", ["position": position, "values": $0]) }
+      ?? position
   }
 }
 

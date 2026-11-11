@@ -1,0 +1,61 @@
+{
+  "workout": "Workout",
+  "noWorkout": "No workout yet",
+  "startOnPhone": "Start one on your iPhone and it shows here.",
+  "onPhone": "ON YOUR IPHONE",
+  "progress": "{{done}} of {{total}} sets",
+  "join": "Join",
+  "allowNotifications": "Allow notifications for Benchbite in the Watch app on your iPhone to join.",
+  "heartRate": "Heart rate {{bpm}}",
+  "setsWaiting_one": "{{count}} set waits for your iPhone",
+  "setsWaiting_other": "{{count}} sets wait for your iPhone",
+  "position": "Set {{number}} of {{total}}",
+  "lastTime": "{{position}} · last {{values}}",
+  "setLabel": "Set {{number}} · {{values}}",
+  "done": "Done",
+  "finishOnPhone": "Finish this set on your iPhone",
+  "waiting": "Waiting for your iPhone",
+  "allDone": "All sets done",
+  "turnCrown": "Turn the Crown",
+  "turnCrownSteps": "Turn the Crown · {{step}} {{unit}} steps",
+  "units": {
+    "weightKg": "KG",
+    "reps": "REPS",
+    "seconds": "TIME",
+    "meters": "M"
+  },
+  "fields": {
+    "weightKg": "WEIGHT",
+    "reps": "REPS",
+    "seconds": "TIME",
+    "meters": "DISTANCE"
+  },
+  "rest": "REST",
+  "skip": "Skip",
+  "next": "Next: {{set}}",
+  "restOver": "Rest is over",
+  "go": "Go",
+  "list": {
+    "now": "NOW",
+    "finishWorkout": "Finish workout"
+  },
+  "finish": {
+    "title": "Finish workout?",
+    "noSets": "No sets done yet",
+    "sets": "{{done}} of {{total}} sets done",
+    "unsaved": "Your iPhone could not save it. Try again, or finish it there.",
+    "finish": "Finish",
+    "keepGoing": "Keep going",
+    "saving": "Saving on your iPhone",
+    "savingHint": "If it takes long, open Benchbite on your iPhone."
+  },
+  "summary": {
+    "title": "{{name}} done",
+    "time": "TIME",
+    "sets": "SETS",
+    "averageBpm": "AVG BPM",
+    "kcal": "KCAL",
+    "records_one": "{{count}} new record · see your iPhone",
+    "records_other": "{{count}} new records · see your iPhone"
+  }
+}

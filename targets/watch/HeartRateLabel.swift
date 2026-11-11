@@ -10,7 +10,7 @@ struct HeartRateLabel: View {
         .font(.rounded(13))
         .monospacedDigit()
         .foregroundStyle(Theme.heart)
-        .accessibilityLabel("Heart rate \(heartRate)")
+        .accessibilityLabel(L10n.t("heartRate", ["bpm": heartRate]))
     }
   }
 }

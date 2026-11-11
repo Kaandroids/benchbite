@@ -10,7 +10,7 @@ struct StatusLine: View {
     let waiting = phone.setsWaitingOutOfReach(of: workout)
     if waiting > 0 {
       Label(
-        waiting == 1 ? "1 set waits for your iPhone" : "\(waiting) sets wait for your iPhone",
+        L10n.t("setsWaiting", count: waiting),
         systemImage: "iphone.slash"
       )
       .font(.rounded(12, .heavy))

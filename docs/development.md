@@ -213,6 +213,8 @@ new language needs all of these:
 2. `src/i18n/permissions/<code>.json`, with the keys of `en.json`.
 3. `"<code>": "./src/i18n/permissions/<code>.json"` in `expo.locales` in `app.json`, then a new
    development build.
+4. `src/i18n/watch/<code>.json`, the Apple Watch app's text, then `pnpm watch:strings` and a new
+   development build.
 
 `pnpm check:locales` checks that the files and `expo.locales` hold the same languages and keys, and
 that the English permission texts are those the config plugins in `app.json` write to Info.plist
@@ -222,6 +224,11 @@ even when the plugin has a default text: the check sees only the texts `app.json
 
 iOS picks a permission text by the phone's language, or the per-app language in iOS Settings, not by
 the language chosen in Benchbite.
+
+The Apple Watch app's text is in `src/i18n/watch/`, and `pnpm watch:strings` writes it to
+`targets/watch/Strings.swift`, which `pnpm check:locales` checks is up to date. The watch shows it in
+the language chosen in Benchbite, which the phone sends it (ADR 0123). A text with a count has a
+`_one` and an `_other` form, as in the app's files.
 
 ## Run the website
 
@@ -249,6 +256,7 @@ file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md
 | `pnpm format:check`     | Check formatting without changing it                  |
 | `pnpm test`             | Run the app's tests with Jest                         |
 | `pnpm check:locales`    | Check that translations and permission texts match    |
+| `pnpm watch:strings`    | Write the watch app's text to Swift                   |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |

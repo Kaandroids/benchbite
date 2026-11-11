@@ -1,0 +1,61 @@
+{
+  "workout": "Training",
+  "noWorkout": "Noch kein Training",
+  "startOnPhone": "Starte eins auf deinem iPhone, dann erscheint es hier.",
+  "onPhone": "AUF DEINEM IPHONE",
+  "progress": "{{done}} von {{total}} Sätzen",
+  "join": "Beitreten",
+  "allowNotifications": "Erlaube in der Watch-App auf deinem iPhone Mitteilungen für Benchbite, um beizutreten.",
+  "heartRate": "Puls {{bpm}}",
+  "setsWaiting_one": "{{count}} Satz wartet auf dein iPhone",
+  "setsWaiting_other": "{{count}} Sätze warten auf dein iPhone",
+  "position": "Satz {{number}} von {{total}}",
+  "lastTime": "{{position}} · zuletzt {{values}}",
+  "setLabel": "Satz {{number}} · {{values}}",
+  "done": "Fertig",
+  "finishOnPhone": "Beende diesen Satz auf deinem iPhone",
+  "waiting": "Wartet auf dein iPhone",
+  "allDone": "Alle Sätze erledigt",
+  "turnCrown": "Drehe die Krone",
+  "turnCrownSteps": "Drehe die Krone · Schritte von {{step}} {{unit}}",
+  "units": {
+    "weightKg": "KG",
+    "reps": "WDH.",
+    "seconds": "ZEIT",
+    "meters": "M"
+  },
+  "fields": {
+    "weightKg": "GEWICHT",
+    "reps": "WDH.",
+    "seconds": "ZEIT",
+    "meters": "DISTANZ"
+  },
+  "rest": "PAUSE",
+  "skip": "Überspringen",
+  "next": "Weiter mit: {{set}}",
+  "restOver": "Pause vorbei",
+  "go": "Los",
+  "list": {
+    "now": "JETZT",
+    "finishWorkout": "Training beenden"
+  },
+  "finish": {
+    "title": "Training beenden?",
+    "noSets": "Noch kein Satz erledigt",
+    "sets": "{{done}} von {{total}} Sätzen erledigt",
+    "unsaved": "Dein iPhone konnte es nicht speichern. Versuch es noch mal oder beende es dort.",
+    "finish": "Beenden",
+    "keepGoing": "Weitermachen",
+    "saving": "Wird auf deinem iPhone gespeichert",
+    "savingHint": "Dauert es lange, öffne Benchbite auf deinem iPhone."
+  },
+  "summary": {
+    "title": "{{name}} geschafft",
+    "time": "ZEIT",
+    "sets": "SÄTZE",
+    "averageBpm": "Ø PULS",
+    "kcal": "KCAL",
+    "records_one": "{{count}} neuer Rekord · sieh auf dein iPhone",
+    "records_other": "{{count}} neue Rekorde · sieh auf dein iPhone"
+  }
+}

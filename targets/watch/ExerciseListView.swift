@@ -38,7 +38,7 @@ struct ExerciseListView: View {
           // One whose sets are all done has none to come next.
           .disabled(!isCurrent && isDone)
         }
-        Button("Finish workout", action: finish)
+        Button(L10n.t("list.finishWorkout"), action: finish)
           .buttonStyle(PillButtonStyle(prominent: false))
           .padding(.top, 4)
       }
@@ -50,6 +50,8 @@ struct ExerciseListView: View {
 /// An exercise in the list: its name and sets done, marked when its set comes next or when all are
 /// done.
 private struct ExerciseRow: View {
+  /// Observed so that its texts follow the language (ADR 0123).
+  @EnvironmentObject private var phone: PhoneLink
   let name: String
   let done: Int
   let count: Int
@@ -66,12 +68,12 @@ private struct ExerciseRow: View {
       }
       Spacer(minLength: 0)
       if isCurrent {
-        Text("NOW").font(.rounded(13, .heavy)).foregroundStyle(Theme.accent)
+        Text(L10n.t("list.now")).font(.rounded(13, .heavy)).foregroundStyle(Theme.accent)
       } else if isDone {
         Image(systemName: "checkmark")
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.success)
-          .accessibilityLabel("Done")
+          .accessibilityLabel(L10n.t("done"))
       }
     }
     .padding(.horizontal, 10)
