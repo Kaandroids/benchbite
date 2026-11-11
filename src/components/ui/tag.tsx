@@ -27,7 +27,7 @@ type TagProps = {
 
 /**
  * A small label that cannot be pressed, such as a week's total or where a workout moved from, in
- * orange, or in amber for something to check.
+ * one of the TONES.
  */
 export function Tag({ label, icon, tone = 'primary', accessibilityLabel }: TagProps) {
   const { colors, radii } = useTheme();
