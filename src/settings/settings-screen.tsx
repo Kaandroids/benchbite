@@ -9,6 +9,9 @@ import { healthStore } from '@/health/health';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
 import { useTheme } from '@/theme';
+import { hasWatch } from '@/watch/types';
+import { WatchSection } from '@/watch/watch-section';
+import { useWatchStatus } from '@/watch/watch-status';
 
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
@@ -19,6 +22,7 @@ import { WaterGoalSection } from './water-goal-section';
 /** The app's settings: the user's plan, then one section per topic. */
 export function SettingsScreen() {
   const { t } = useTranslation();
+  const watch = hasWatch(useWatchStatus());
   return (
     <Screen onBack={() => router.back()} title={t('settings.title')}>
       <PlanSection />
@@ -31,6 +35,11 @@ export function SettingsScreen() {
       {healthStore ? (
         <Section title={t('settings.health')}>
           <HealthSection />
+        </Section>
+      ) : null}
+      {watch ? (
+        <Section title={t('settings.watch')}>
+          <WatchSection />
         </Section>
       ) : null}
       <Section title={t('settings.waterGoal')}>

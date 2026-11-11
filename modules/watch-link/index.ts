@@ -29,6 +29,8 @@ declare class WatchLinkModule extends NativeModule<WatchLinkEvents> {
    * rest (ADR 0114).
    */
   signalRest(endsAt: number | null, title: string, body: string): void;
+  /** Opens Benchbite on the watch for a workout started on the phone too (ADR 0115). */
+  startWatchApp(): void;
 }
 
 export const NativeWatchLink = requireOptionalNativeModule<WatchLinkModule>('WatchLink');

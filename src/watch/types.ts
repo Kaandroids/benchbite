@@ -29,6 +29,11 @@ export const NO_WATCH: WatchStatus = {
   heardRest: null,
 };
 
+/** Whether there is a watch to follow a workout: paired, with Benchbite on it. */
+export function hasWatch(status: WatchStatus): boolean {
+  return status.paired && status.installed;
+}
+
 /**
  * How the app talks to a watch, which each platform implements over its own channel (ADR 0109).
  * It carries the protocol's messages and nothing else: what they mean is decided in protocol.ts.
@@ -49,4 +54,6 @@ export type WatchLink = {
    * through it, or none with null, as it puts it off while the watch signals the rest (ADR 0114).
    */
   signalRest?: (rest: { endsAt: number; title: string; body: string } | null) => void;
+  /** Where the watch can be opened from the phone, on iOS, opens Benchbite on it (ADR 0115). */
+  startWatchApp?: () => void;
 };

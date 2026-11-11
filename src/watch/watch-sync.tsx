@@ -9,6 +9,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
 import { applyCommand, parseCommand, stateOf, type ExerciseOf } from './protocol';
+import { sentToWatch } from './open-on-watch';
 
 let lastSeq = 0;
 
@@ -47,9 +48,15 @@ export function WatchSync() {
 
   useEffect(() => {
     if (signedIn && (session === null || ready)) {
-      link.sendState(
-        stateOf(session, { exerciseOf: exerciseIn(library.data), name }, nextSeq(), ended),
+      const state = stateOf(
+        session,
+        { exerciseOf: exerciseIn(library.data), name },
+        nextSeq(),
+        ended,
       );
+      link.sendState(state);
+      // A workout started on the watch too opens Benchbite there only now that it is sent.
+      sentToWatch(state);
     }
   }, [signedIn, session, ready, library.data, name, ended]);
 

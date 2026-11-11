@@ -6,6 +6,8 @@ import { Alert } from 'react-native';
 import { toIsoDate } from '@/i18n/dates';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
+import { openOnWatch } from '@/watch/open-on-watch';
+import { startsOnWatch } from '@/watch/start-on-watch';
 import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
@@ -68,6 +70,10 @@ export function useStartWorkout() {
     if (!choice) {
       return;
     }
+    const onWatch = await startsOnWatch();
+    if (onWatch === null) {
+      return;
+    }
     beforeStart?.();
     const ids = workout.exercises.map((exercise) => exercise.exerciseId);
     const [last, bests] = await Promise.all([
@@ -94,7 +100,16 @@ export function useStartWorkout() {
     ]);
     const now = Date.now();
     const move = choice.fromOn ? { from: choice.fromOn, to: toIsoDate(new Date(now)) } : undefined;
-    startSession(userId, workout, last, { bests, now, move });
+    const session = startSession(userId, workout, last, {
+      bests,
+      now,
+      move,
+      watchFollows: onWatch,
+    });
+    if (onWatch) {
+      // Opens Benchbite on the watch, which then follows the workout without joining it.
+      openOnWatch(session);
+    }
     router.push('/session');
     await offerRestAlarm({
       title: t('session.restAlarm.title'),

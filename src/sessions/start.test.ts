@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
 import { act, createTestQueryClient, renderHook } from '@/test/render';
+import { openOnWatch } from '@/watch/open-on-watch';
+import { startsOnWatch } from '@/watch/start-on-watch';
 import { testExercise } from '@/workouts/test-data';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
@@ -19,6 +21,8 @@ jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(u
 jest.mock('./session', () => ({ startSession: jest.fn() }));
 jest.mock('./start-move', () => ({ useStartMove: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/watch/start-on-watch', () => ({ startsOnWatch: jest.fn() }));
+jest.mock('@/watch/open-on-watch', () => ({ openOnWatch: jest.fn() }));
 jest.mock('@/workouts/workouts', () => ({
   fetchWorkoutHeld: jest.fn(),
   reloadPlan: jest.fn(),
@@ -39,6 +43,7 @@ const PUSH: Workout = {
 };
 
 const askMove = jest.fn();
+const SESSION = { id: 'session-a', startedAt: WEDNESDAY.getTime() };
 
 async function start(options?: { beforeStart?: () => void }, workout = PUSH) {
   jest.mocked(useStartMove).mockReturnValue(askMove);
@@ -52,6 +57,8 @@ describe('useStartWorkout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(fetchWorkoutHeld).mockResolvedValue(false);
+    jest.mocked(startsOnWatch).mockResolvedValue(false);
+    jest.mocked(startSession).mockReturnValue(SESSION as ReturnType<typeof startSession>);
     jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   });
   afterEach(() => jest.useRealTimers());
@@ -68,9 +75,40 @@ describe('useStartWorkout', () => {
         bests: {},
         now: WEDNESDAY.getTime(),
         move: { from: '2026-10-19', to: '2026-10-21' },
+        watchFollows: false,
       },
     );
     expect(router.push).toHaveBeenCalledWith('/session');
+    expect(openOnWatch).not.toHaveBeenCalled();
+  });
+
+  it('starts on the watch too when the user chose it, and opens Benchbite there', async () => {
+    askMove.mockResolvedValue({});
+    jest.mocked(startsOnWatch).mockResolvedValue(true);
+    await start();
+    expect(startSession).toHaveBeenCalledWith(
+      'user-a',
+      PUSH,
+      {},
+      expect.objectContaining({ watchFollows: true }),
+    );
+    expect(openOnWatch).toHaveBeenCalledWith(SESSION);
+  });
+
+  it('asks about the watch only once the workout is sure to start', async () => {
+    askMove.mockResolvedValue(null);
+    await start();
+    expect(startsOnWatch).not.toHaveBeenCalled();
+  });
+
+  it('does not start when the question about the watch is closed', async () => {
+    const beforeStart = jest.fn();
+    askMove.mockResolvedValue({});
+    jest.mocked(startsOnWatch).mockResolvedValue(null);
+    await start({ beforeStart });
+    expect(beforeStart).not.toHaveBeenCalled();
+    expect(startSession).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it('starts an extra workout without a move', async () => {

@@ -1,4 +1,3 @@
-import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
+import { createQuestion } from '@/components/ui/question';
 import { useTheme } from '@/theme';
 import { useCachedWeekSchedule } from '@/week/use-week-schedule';
 import { useWorkoutName } from '@/workouts/format';
@@ -19,39 +19,13 @@ export type StartMoveQuestion = StartMove & { name: string };
 /** Moved to today, kept as an extra workout, or not started. */
 export type StartMoveAnswer = 'move' | 'extra' | null;
 
-let pending: { question: StartMoveQuestion; answer: (value: StartMoveAnswer) => void } | null =
-  null;
-const listeners = new Set<() => void>();
-
-function setPending(value: typeof pending) {
-  pending = value;
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const moveQuestion = createQuestion<StartMoveQuestion, StartMoveAnswer>(null);
 
 /**
  * Asks whether a workout started today counts for its planned day (ADR 0028), in the sheet of
- * `StartMoveSheet`, and resolves with the answer.
+ * `StartMoveSheet`, and resolves with the answer. A question still open is cancelled by a new one.
  */
-export function askStartMove(question: StartMoveQuestion): Promise<StartMoveAnswer> {
-  // A question still open is cancelled by a new one.
-  pending?.answer(null);
-  return new Promise((resolve) => {
-    setPending({
-      question,
-      answer: (value) => {
-        setPending(null);
-        resolve(value);
-      },
-    });
-  });
-}
+export const askStartMove = moveQuestion.ask;
 
 /**
  * For a workout about to start on `today`, asks whether it counts for a planned day this week, as
@@ -82,9 +56,7 @@ export function StartMoveSheet() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
-  const current = useSyncExternalStore(subscribe, () => pending);
-  // A question left open when the sheet goes, as on signing out, is not answered later.
-  useEffect(() => () => pending?.answer(null), []);
+  const current = moveQuestion.useQuestion();
   if (!current) {
     return null;
   }

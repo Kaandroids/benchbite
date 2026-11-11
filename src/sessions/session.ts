@@ -218,7 +218,14 @@ export function startSession(
     bests = {},
     now = Date.now(),
     move,
-  }: { bests?: ExerciseBests; now?: number; move?: Session['move'] } = {},
+    watchFollows = false,
+  }: {
+    bests?: ExerciseBests;
+    now?: number;
+    move?: Session['move'];
+    /** Started on the watch too, which then follows it without joining (ADR 0115). */
+    watchFollows?: boolean;
+  } = {},
 ): Session {
   const { exercises } = workout;
   const value: Session = {
@@ -247,6 +254,7 @@ export function startSession(
       sets: exercises.reduce((total, exercise) => total + exercise.sets, 0),
     },
     ...(move ? { move } : {}),
+    ...(watchFollows ? { watchFollows } : {}),
   };
   set(value);
   return value;

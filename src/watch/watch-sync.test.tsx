@@ -10,6 +10,7 @@ import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import { link } from './link';
+import { openOnWatch } from './open-on-watch';
 import { PROTOCOL_VERSION, type WatchState } from './protocol';
 import { WatchSync } from './watch-sync';
 
@@ -33,6 +34,7 @@ jest.mock('./link', () => ({
     onStatusChange: jest.fn(() => () => undefined),
     sendState: jest.fn(),
     onCommand: jest.fn(),
+    startWatchApp: jest.fn(),
   },
 }));
 
@@ -75,6 +77,23 @@ it('sends the workout to the watch, and each change of it', async () => {
   const seqs = sent().map((state) => state.seq);
   expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
   expect(new Set(seqs).size).toBe(seqs.length);
+});
+
+it('opens Benchbite on the watch for a workout started there too, once it is sent', async () => {
+  await render(<WatchSync />);
+  await act(() => {
+    const session = startSession('user-a', PUSH, {}, { now: NOW, watchFollows: true });
+    openOnWatch(session);
+  });
+  expect(link.startWatchApp).toHaveBeenCalledTimes(1);
+  const opened = jest.mocked(link.startWatchApp!).mock.invocationCallOrder[0]!;
+  const sentFollowing = jest
+    .mocked(link.sendState)
+    .mock.calls.findIndex(([state]) => state.workout?.follows);
+  expect(jest.mocked(link.sendState).mock.invocationCallOrder[sentFollowing]).toBeLessThan(opened);
+
+  await act(() => updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW)));
+  expect(link.startWatchApp).toHaveBeenCalledTimes(1);
 });
 
 it('tells the watch when no workout runs', async () => {

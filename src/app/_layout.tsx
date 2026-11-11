@@ -26,6 +26,7 @@ import { showRemindersInForeground } from '@/reminders/reminders';
 import { HealthCatchUp } from '@/health/health-catch-up';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
+import { StartOnWatchSheet } from '@/watch/start-on-watch-sheet';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
 import { applyStoredPreferences } from '@/settings/preferences';
 import { fonts, useTheme } from '@/theme';
@@ -150,6 +151,7 @@ function RootNavigator() {
       {/* Over every screen, as the app may open on any of them. */}
       {status === 'ready' ? <LeftOpenSaver /> : null}
       {status === 'ready' ? <StartMoveSheet /> : null}
+      {status === 'ready' ? <StartOnWatchSheet /> : null}
       {status === 'ready' && completed ? <ReminderSync /> : null}
       {status === 'ready' && completed ? <HealthCatchUp /> : null}
       {/* Drawn in the same frame the native splash screen hides, over the first screen. */}

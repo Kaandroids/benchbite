@@ -153,7 +153,8 @@
       "tryFree_other": "Premium'u {{count}} gün ücretsiz dene",
       "more": "Bite ile sohbet ve fazlası",
       "hint": "Planını ve premium'un sunduklarını açar"
-    }
+    },
+    "watch": "Saat"
   },
   "loadError": {
     "title": "Yüklenemedi",
@@ -2545,5 +2546,31 @@
     "weekLabel": "Bu haftanın adımları: {{days}}",
     "dayLabel": "{{day}} {{steps}}",
     "error": "Adımların yüklenemedi."
+  },
+  "watch": {
+    "startOnWatch": {
+      "title": "Apple Watch’ta da başlatılsın mı?",
+      "body": "Setleri bileğinden kaydet. Saatin nabzını ölçer ve dinlenme bitince bileğine dokunur.",
+      "both": "Birinde kaydettiğin setler ikisinde de görünür",
+      "alerts": "Dinlenme uyarıları yalnızca saatten gelir",
+      "onWatch": "Saatte de başlat",
+      "onPhone": "Yalnızca bu telefonda",
+      "keep": "Bir daha sorma"
+    },
+    "settings": {
+      "name": "Apple Watch",
+      "installed": "Benchbite saatinde yüklü",
+      "start": "Antrenmanları saatte de başlat",
+      "choices": {
+        "ask": "Sor",
+        "always": "Her zaman",
+        "never": "Asla"
+      },
+      "notes": {
+        "ask": "Benchbite her başlangıçta sorar. Saat bir antrenmanı takip ederken dinlenmenin bittiğini yalnızca saat haber verir.",
+        "always": "Her antrenman saatinde de başlar. Saat bir antrenmanı takip ederken dinlenmenin bittiğini yalnızca saat haber verir.",
+        "never": "Antrenmanlar bu telefonda kalır; dinlenmenin bittiğini telefon haber verir. Yine de saatte Benchbite’ı açıp bir antrenmana katılabilirsin."
+      }
+    }
   }
 }

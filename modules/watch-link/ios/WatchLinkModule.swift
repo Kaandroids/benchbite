@@ -37,5 +37,9 @@ public class WatchLinkModule: Module {
     Function("signalRest") { (endsAt: Double?, title: String, body: String) in
       RestSignal.shared.signal(endsAt: endsAt, title: title, body: body)
     }
+
+    Function("startWatchApp") {
+      WatchApp.start()
+    }
   }
 }

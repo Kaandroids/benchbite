@@ -17,6 +17,9 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
 
   /// A rest that ended while the app was open, until Go.
   @Published var over: Rest?
+  /// Whether the user lets the app notify, without which a rest's end is not signalled with the
+  /// app closed; as last read.
+  @Published private(set) var allowed = false
 
   /// What the notification and the rest-over screen say.
   static let title = "Rest is over"
@@ -30,13 +33,33 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
   override init() {
     super.init()
     UNUserNotificationCenter.current().delegate = self
+    readPermission()
   }
 
-  /// Asks to signal rests, once the user joins a workout; tells whether it may.
-  func requestPermission(_ answer: @escaping @MainActor (Bool) -> Void) {
+  /// Asks to signal rests, once the user joins a workout or the phone starts one on the watch;
+  /// tells whether it may.
+  func requestPermission(_ answer: @escaping @MainActor (Bool) -> Void = { _ in }) {
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
       granted, _ in
-      Task { @MainActor in answer(granted) }
+      Task { @MainActor in
+        self.allowed = granted
+        answer(granted)
+      }
+    }
+  }
+
+  /// Reads again whether the user lets the app notify, as they may change it in the settings;
+  /// asks when they have not been asked yet and `asking`, as for a workout the watch measures.
+  func readPermission(asking: Bool = false) {
+    UNUserNotificationCenter.current().getNotificationSettings { settings in
+      let status = settings.authorizationStatus
+      Task { @MainActor in
+        if asking && status == .notDetermined {
+          self.requestPermission()
+        } else {
+          self.allowed = status == .authorized
+        }
+      }
     }
   }
 

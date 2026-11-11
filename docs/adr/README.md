@@ -130,3 +130,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0112](0112-signal-the-rest-on-the-watch-that-follows-the-workout.md) | Signal the rest on the watch that follows the workout                                   | Accepted, amended by ADR-0114                        |
 | [0113](0113-run-a-workout-session-on-the-watch.md)                    | Run a workout session on the watch                                                      | Accepted                                             |
 | [0114](0114-signal-the-rest-on-the-watch-while-it-is-heard.md)        | Signal the rest on the watch while it is heard                                          | Accepted                                             |
+| [0115](0115-ask-to-start-the-workout-on-the-watch-too.md)             | Ask to start the workout on the watch too                                               | Accepted                                             |
