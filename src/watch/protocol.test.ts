@@ -34,7 +34,7 @@ const noLibrary: MetricsOf = () => undefined;
 /** The library's exercises: none known, as before it loads. */
 const noExercises: ExerciseOf = () => undefined;
 /** The workout named as the phone names it, and its exercises by the library. */
-const names = (exerciseOf: ExerciseOf) => ({ exerciseOf, name: 'Full body' });
+const names = (exerciseOf: ExerciseOf) => ({ exerciseOf, name: 'Full body', language: 'en' });
 /** The bench press as the library has it: lifted, with a barbell. */
 const withBench: ExerciseOf = (id) =>
   id === 'bench'
@@ -137,7 +137,7 @@ describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
     const state = stateOf(session, names(withBench), 7, []);
-    expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
+    expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7, language: 'en' });
     expect(state.workout).toMatchObject({
       id: 'workout-1',
       current: 0,

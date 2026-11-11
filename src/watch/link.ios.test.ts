@@ -41,7 +41,7 @@ function load(native: ReturnType<typeof fakeModule> | null) {
   return loaded!.link;
 }
 
-const STATE: WatchState = { v: PROTOCOL_VERSION, seq: 1, workout: null, ended: [] };
+const STATE: WatchState = { v: PROTOCOL_VERSION, seq: 1, workout: null, ended: [], language: 'en' };
 
 it('sends the state as JSON, with its workout’s id', () => {
   const native = fakeModule();

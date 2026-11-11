@@ -101,6 +101,8 @@ export type WatchState = {
   workout: WatchWorkout | null;
   /** How the latest workouts ended, latest first, so that a watch that missed one finds it. */
   ended: WatchEnded[];
+  /** The language chosen in Benchbite, which the watch shows its texts in (ADR 0123). */
+  language: string;
 };
 
 type CommandBase = {
@@ -182,13 +184,14 @@ export type ExerciseOf = (
  */
 export function stateOf(
   session: Session | null,
-  { exerciseOf, name }: { exerciseOf: ExerciseOf; name: string | null },
+  { exerciseOf, name, language }: { exerciseOf: ExerciseOf; name: string | null; language: string },
   seq: number,
   ended: EndedSession[],
 ): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
+    language,
     ended: ended.map(({ id, startedAt, ...how }) => ({
       id: workoutIdOf({ id, startedAt }),
       ...how,

@@ -1,6 +1,7 @@
 // Keeps the watch on the workout in progress (ADR 0109): every change of the workout is sent to
 // it, and its commands are applied to the workout, wherever the app is in it.
 import { useEffect, useEffectEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useSession, useUserId } from '@/providers/session-provider';
@@ -41,6 +42,8 @@ export function WatchSync() {
   const nameOf = useWorkoutName();
   // As the phone names it: a planned workout without a name of its own by its type.
   const name = session ? nameOf(session) || null : null;
+  // The language the watch shows its texts in, as the exercises' names are in it (ADR 0123).
+  const language = useTranslation().i18n.language;
   const exerciseOf = exerciseIn(library.data);
   const metricsOf: MetricsOf = (id) => exerciseOf(id)?.metrics;
   useFinishFromWatch(session, metricsOf);
@@ -55,7 +58,7 @@ export function WatchSync() {
     if (signedIn && (session === null || ready)) {
       const state = stateOf(
         session,
-        { exerciseOf: exerciseIn(library.data), name },
+        { exerciseOf: exerciseIn(library.data), name, language },
         nextSeq(),
         ended,
       );
@@ -63,7 +66,7 @@ export function WatchSync() {
       // A workout started on the watch too opens Benchbite there only now that it is sent.
       sentToWatch(state);
     }
-  }, [signedIn, session, ready, library.data, name, ended]);
+  }, [signedIn, session, ready, library.data, name, language, ended]);
 
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);
