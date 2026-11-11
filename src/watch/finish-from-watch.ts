@@ -1,9 +1,9 @@
 // Saving a workout finished on the watch, which the phone does at once, as its own Save does
 // (ADR 0118). The finish is kept in the workout until it is saved, so that one the app was ended
 // on before it was saved is saved once the app runs again, rather than lost to the watch.
-import { router, usePathname } from 'expo-router';
-import { useEffect, useEffectEvent, useRef } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
+import { useCloseSessionScreens } from '@/sessions/close-screens';
 import { useSaveWorkout } from '@/sessions/save-workout';
 import {
   activeSession,
@@ -39,12 +39,7 @@ function giveUpFinish(session: Session): Session {
  */
 export function useFinishFromWatch(session: Session | null) {
   const { save } = useSaveWorkout();
-  const pathname = usePathname();
-  // Where the app is once the save is done, which it may have left meanwhile.
-  const path = useRef(pathname);
-  useEffect(() => {
-    path.current = pathname;
-  }, [pathname]);
+  const closeScreens = useCloseSessionScreens();
 
   const finish = useEffectEvent(async (id: string) => {
     const current = activeSession();
@@ -58,7 +53,7 @@ export function useFinishFromWatch(session: Session | null) {
         return;
       }
       await save(current, endedAt);
-      if (activeSession() === null && path.current.startsWith('/session')) router.dismissAll();
+      if (activeSession() === null) closeScreens();
     } catch (error) {
       console.warn('Could not save the workout finished on the watch', error);
       updateSession(giveUpFinish);
