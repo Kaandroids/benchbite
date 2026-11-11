@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
-import { createQuestion } from '@/lib/question';
+import { createQuestion } from '@/components/ui/question';
 import { useTheme } from '@/theme';
 import { useCachedWeekSchedule } from '@/week/use-week-schedule';
 import { useWorkoutName } from '@/workouts/format';

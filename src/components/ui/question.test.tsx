@@ -1,6 +1,6 @@
 import { Text } from 'react-native';
 
-import { Sheet } from '@/components/ui/sheet';
+import { Sheet } from './sheet';
 import { act, render, screen } from '@/test/render';
 
 import { createQuestion } from './question';

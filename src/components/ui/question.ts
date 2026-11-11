@@ -2,7 +2,7 @@
 // and resolves with the answer, which the sheet gives through `useQuestion`.
 import { useEffect, useSyncExternalStore } from 'react';
 
-import { whenSheetClosed } from '@/components/ui/sheet';
+import { whenSheetClosed } from './sheet';
 
 type Pending<Q, A> = { question: Q; answer: (value: A) => void; shown: boolean };
 

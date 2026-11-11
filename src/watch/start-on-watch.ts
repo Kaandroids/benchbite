@@ -4,7 +4,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from '@/lib/device-storage';
-import { createQuestion } from '@/lib/question';
+import { createQuestion } from '@/components/ui/question';
 
 import { hasWatch } from './types';
 import { readWatchStatus } from './watch-status';
