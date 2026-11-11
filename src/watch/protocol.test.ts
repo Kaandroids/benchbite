@@ -143,6 +143,7 @@ describe('stateOf', () => {
       current: 0,
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
       setsToSave: 1,
+      records: 0,
       applied: [],
       follows: false,
     });
@@ -158,6 +159,22 @@ describe('stateOf', () => {
       text: '— × 12',
       lastText: null,
     });
+  });
+
+  it('counts the records the workout’s sets have set', () => {
+    const session = startSession(
+      'user-a',
+      PUSH,
+      {},
+      {
+        now: NOW,
+        bests: { bench: { heaviest: 60 } },
+      },
+    );
+    const heavy = setValues(session, 0, 0, { weightKg: 80, reps: 5 }, NOW);
+    expect(stateOf(heavy, names(withBench), 1, []).workout?.records).toBe(0);
+    const done = toggleDoneUnchecked(heavy, 0, 0, NOW + MINUTE);
+    expect(stateOf(done, names(withBench), 1, []).workout?.records).toBe(1);
   });
 
   it('counts the set the phone’s clock times among those finishing saves', () => {
