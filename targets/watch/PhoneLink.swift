@@ -84,12 +84,20 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isTick(exercise: exercise, set: set) } != nil
   }
 
+  /// Whether a start of the set's clock waits for the phone.
+  func isClockWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
+    startWaiting(workoutId, exercise: exercise, set: set) != nil
+  }
+
+  private func startWaiting(_ workoutId: String, exercise: Int, set: Int) -> WatchCommand? {
+    firstWaiting(workoutId) { $0.startsClock(exercise: exercise, set: set) }
+  }
+
   /// When the clock of a set started, as the watch shows it: a start made here the phone has not
   /// taken, else the phone's clock; none once a tick of the set waits, which stops it (ADR 0124).
   func clockStart(of workout: WatchWorkout, exercise: Int, set: Int) -> Double? {
     if isTickWaiting(workoutId: workout.id, exercise: exercise, set: set) { return nil }
-    if let started = firstWaiting(workout.id, where: { $0.startsClock(exercise: exercise, set: set) })
-    {
+    if let started = startWaiting(workout.id, exercise: exercise, set: set) {
       return started.at
     }
     guard let clock = workout.clock, clock.exercise == exercise, clock.set == set else { return nil }
@@ -213,11 +221,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
     case .clock(let exercise, let set):
-      if firstWaiting(command.workoutId, where: { $0.startsClock(exercise: exercise, set: set) })
-        != nil
-      {
-        return
-      }
+      if isClockWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
     case .finish:
       if isFinishWaiting(workoutId: command.workoutId) { return }
       unsaved = nil
@@ -233,14 +237,23 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let session = WCSession.default
     // Without a reply handler, as the phone takes messages without replying. Behind a transfer
     // still on its way, a command goes as a transfer too, as transfers arrive in order and a
-    // message could overtake them: a tick before the pick it follows (ADR 0121).
-    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty {
+    // message could overtake them: a tick before the pick it follows (ADR 0121). So does a tick
+    // behind its set's start that waits, which may yet be sent again as a transfer (ADR 0124).
+    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty,
+      !followsStart(command)
+    {
       session.sendMessage(payload, replyHandler: nil) { _ in
         session.transferUserInfo(payload)
       }
     } else {
       session.transferUserInfo(payload)
     }
+  }
+
+  /// Whether the command ticks a set whose clock's start waits for the phone.
+  private func followsStart(_ command: WatchCommand) -> Bool {
+    guard case .tick(let exercise, let set, _) = command.change else { return false }
+    return isClockWaiting(workoutId: command.workoutId, exercise: exercise, set: set)
   }
 
   /// Tells the phone the watch is there to signal the workout's rests, now and every half a minute
