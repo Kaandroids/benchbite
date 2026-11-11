@@ -11,16 +11,8 @@ import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
-import { useLogWorkout } from './logs';
-import {
-  endSession,
-  isLeftOpen,
-  lastActivity,
-  sessionTotals,
-  stopClock,
-  toLog,
-  useActiveSession,
-} from './session';
+import { useSaveWorkout } from './save-workout';
+import { isLeftOpen, lastActivity, sessionTotals, useActiveSession } from './session';
 
 type Saved = { logId: number; name: string; endedAt: number };
 
@@ -34,7 +26,7 @@ export function LeftOpenSaver() {
   const { colors, radii, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const session = useActiveSession(useUserId());
-  const { mutateAsync: logWorkout } = useLogWorkout();
+  const { save: saveWorkout } = useSaveWorkout();
   const workoutName = useWorkoutName();
   const [saved, setSaved] = useState<Saved | null>(null);
   const saving = useRef(false);
@@ -49,9 +41,8 @@ export function LeftOpenSaver() {
       }
       saving.current = true;
       const endedAt = lastActivity(session);
-      logWorkout(toLog(stopClock(session, endedAt), endedAt))
+      saveWorkout(session, endedAt)
         .then((logId) => {
-          endSession({ saved: true, endedAt });
           setSaved({ logId, name: workoutName(session), endedAt });
         })
         .catch((error: unknown) => console.warn('Could not save the workout left open', error))
@@ -66,7 +57,7 @@ export function LeftOpenSaver() {
       }
     });
     return () => subscription.remove();
-  }, [session, logWorkout, workoutName]);
+  }, [session, saveWorkout, workoutName]);
 
   if (!saved) {
     return null;

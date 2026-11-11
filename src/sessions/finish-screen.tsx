@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,18 +11,16 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { WatchCard } from '@/health/watch-card';
-import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { hasHeartRate, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
-import { dbErrorMessage, isDbError } from '@/lib/errors';
+import { dbErrorMessage } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
-import { reloadPlan, useWorkouts, findWorkout } from '@/workouts/workouts';
+import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
 import { EndTime, ExerciseSummary, FinishStats, NewRecords } from './finish-sections';
-import { useLogWorkout } from './logs';
 import {
   endSession,
   isLeftOpen,
@@ -31,10 +28,10 @@ import {
   MAX_WORKOUT_MS,
   sessionTotals,
   stopClock,
-  toLog,
   useActiveSession,
   type Session,
 } from './session';
+import { useSaveWorkout } from './save-workout';
 import { useStartWorkout } from './start';
 
 /**
@@ -55,8 +52,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const { colors, spacing } = useTheme();
   const active = useActiveSession(useUserId());
   const library = useExerciseLibrary();
-  const logWorkout = useLogWorkout();
-  const queryClient = useQueryClient();
+  const saveWorkout = useSaveWorkout();
   const workouts = useWorkouts();
   const startWorkout = useStartWorkout();
   const workoutName = useWorkoutName();
@@ -106,14 +102,7 @@ export function FinishScreen({ next }: { next?: number }) {
     }
     saving.current = true;
     try {
-      const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
-      // What the watch measured goes with it, and it is saved to the health store (ADR 0105).
-      if (logId !== null) {
-        void afterWorkoutLogged(queryClient, logId, health.data, {
-          followedOnWatch: !!session.watchFollows,
-        });
-      }
-      endSession({ saved: true, endedAt: finishedAt });
+      await saveWorkout.save(active, finishedAt, health.data);
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
       if (following) {
@@ -122,11 +111,6 @@ export function FinishScreen({ next }: { next?: number }) {
     } catch (error) {
       saving.current = false;
       console.warn('Could not save the workout', error);
-      // The workout already waited for premium when this session started, as from a list cached
-      // before the plan changed: the list is loaded again to show it locked.
-      if (isDbError(error, 'waitsForPremium')) {
-        void reloadPlan(queryClient);
-      }
       Alert.alert(
         t('common.notSaved'),
         dbErrorMessage(
@@ -195,7 +179,7 @@ export function FinishScreen({ next }: { next?: number }) {
         ) : null}
         <Button
           label={t('session.summary.save')}
-          disabled={totals.done === 0 || logWorkout.isPending}
+          disabled={totals.done === 0 || saveWorkout.isPending}
           onPress={() => void save()}
         />
         {choosingEnd ? (

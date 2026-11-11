@@ -27,6 +27,7 @@ jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('./logs', () => ({ useLogWorkout: jest.fn() }));
+jest.mock('@/health/health-catch-up', () => ({ afterWorkoutLogged: jest.fn() }));
 
 const NOW = new Date(2026, 9, 23, 18, 0).getTime();
 const PUSH = testWorkout(4, { type: 'push', exercises: [testExercise('bench', { sets: 2 })] });

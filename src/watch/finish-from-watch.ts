@@ -14,7 +14,6 @@ import {
   stopClock,
   toLog,
   updateSession,
-  type Session,
 } from '@/sessions/session';
 
 import { applyCommand, isFor, type WatchCommand } from './protocol';
