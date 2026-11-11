@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -58,8 +57,6 @@ export function StartMoveSheet() {
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const current = moveQuestion.useQuestion();
-  // A question left open when the sheet goes, as on signing out, is not answered later.
-  useEffect(() => moveQuestion.cancel, []);
   if (!current) {
     return null;
   }

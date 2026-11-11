@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -11,17 +11,12 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import {
-  cancelStartOnWatch,
-  useStartOnWatchQuestion,
-  type StartOnWatchAnswer,
-} from './start-on-watch';
+import { useStartOnWatchQuestion, type StartOnWatchAnswer } from './start-on-watch';
 
 /** The sheet that asks `askStartOnWatch`'s question, over every screen. */
 export function StartOnWatchSheet() {
-  const current = useStartOnWatchQuestion();
   // A question left open when the sheet goes, as on signing out, does not start the workout.
-  useEffect(() => cancelStartOnWatch, []);
+  const current = useStartOnWatchQuestion();
   return current ? <Question answer={current.answer} /> : null;
 }
 

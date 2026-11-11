@@ -1,6 +1,6 @@
 // A question asked in a sheet over every screen, such as at the start of a workout: `ask` opens it
 // and resolves with the answer, which the sheet gives through `useQuestion`.
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { whenSheetClosed } from '@/components/ui/sheet';
 
@@ -28,6 +28,11 @@ export function createQuestion<Q, A>(cancelled: A) {
 
   const shown = () => (pending?.shown ? pending : null);
 
+  /** Answers the question still open, if any, with `cancelled`. */
+  function cancel() {
+    pending?.answer(cancelled);
+  }
+
   return {
     /**
      * Asks `question`, once a sheet that just closed has closed, as iOS would not show the next
@@ -51,13 +56,14 @@ export function createQuestion<Q, A>(cancelled: A) {
       });
     },
 
-    /** Answers the question still open, if any, with `cancelled`. */
-    cancel() {
-      pending?.answer(cancelled);
-    },
+    cancel,
 
-    /** The question shown, with its answer; none when none is. */
+    /**
+     * For the sheet that asks it: the question shown, with its answer, none when none is. A
+     * question left open when the sheet goes, as on signing out, is cancelled.
+     */
     useQuestion() {
+      useEffect(() => cancel, []);
       return useSyncExternalStore(subscribe, shown);
     },
   };
