@@ -63,18 +63,18 @@ private struct JoinView: View {
   @State private var refused = false
 
   var body: some View {
-    let sets = workout.exercises.flatMap(\.sets)
+    let total = workout.setsDone
     VStack(spacing: 6) {
       Text("ON YOUR IPHONE")
         .font(.rounded(13, .heavy))
         .foregroundStyle(Theme.secondary)
-      Text(workout.name ?? "Workout")
+      Text(workout.title)
         .font(.rounded(19, .heavy))
         .lineLimit(2)
       HStack(spacing: 0) {
         Text(Date(timeIntervalSince1970: workout.startedAt / 1000), style: .timer)
           .monospacedDigit()
-        Text(" · \(sets.filter(\.done).count) of \(sets.count) sets")
+        Text(" · \(total.done) of \(total.count) sets")
       }
       .font(.rounded(14))
       .foregroundStyle(Theme.secondary)

@@ -9,13 +9,11 @@ struct ExerciseListView: View {
   let picked: () -> Void
 
   var body: some View {
-    let sets = workout.exercises.flatMap(\.sets)
-    // The pick the phone has not applied yet, which goes before the phone's: picking the phone's
-    // again undoes it.
-    let current = phone.picked(workoutId: workout.id) ?? workout.nextSet?.exerciseIndex
+    let current = phone.openExercise(of: workout)
+    let total = workout.setsDone
     ScrollView {
       VStack(alignment: .leading, spacing: 6) {
-        Text("\(workout.name ?? "Workout") · \(sets.filter(\.done).count) / \(sets.count)")
+        Text("\(workout.title) · \(total.done) / \(total.count)")
           .textCase(.uppercase)
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.secondary)
@@ -26,7 +24,7 @@ struct ExerciseListView: View {
           let isDone = done == exercise.sets.count
           let isCurrent = index == current
           Button {
-            if !isCurrent { phone.send(.open(workoutId: workout.id, exercise: index)) }
+            phone.send(.open(workoutId: workout.id, exercise: index))
             picked()
           } label: {
             ExerciseRow(

@@ -67,6 +67,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       .max { $0.at < $1.at }?.change.opens
   }
 
+  /// The exercise whose sets come next as the watch shows it: the one picked last, while the
+  /// phone has not applied the pick, else the phone's.
+  func openExercise(of workout: WatchWorkout) -> Int? {
+    picked(workoutId: workout.id) ?? workout.nextSet?.exerciseIndex
+  }
+
   /// The workout's rest as the watch shows it: the phone's, or one a tick here starts, as changed
   /// by a change made here that the phone has not applied yet.
   func rest(of workout: WatchWorkout) -> ShownRest? {
@@ -102,9 +108,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isRestWaiting(workoutId: command.workoutId) { return }
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
-    case .open:
-      // Each pick goes, as the phone applies them in order and the last one counts.
-      break
+    case .open(let exercise):
+      // Only a pick of another exercise than the one shown: picking the phone's again undoes a
+      // pick that waits, as the phone applies picks in the order made (ADR 0117).
+      if let workout, workout.id == command.workoutId, exercise == openExercise(of: workout) {
+        return
+      }
     }
     let payload = command.payload
     waiting[command.id] = command

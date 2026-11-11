@@ -272,9 +272,18 @@ extension WatchWorkout {
     return nil
   }
 
+  /// The workout's name, or a plain one where it has none.
+  var title: String { name ?? "Workout" }
+
   /// An exercise's name, or the workout's where the phone's library does not know it.
   func name(of exercise: WatchExercise) -> String {
-    exercise.name ?? name ?? "Workout"
+    exercise.name ?? title
+  }
+
+  /// How many of its sets are done, of how many.
+  var setsDone: (done: Int, count: Int) {
+    let sets = exercises.flatMap(\.sets)
+    return (sets.filter(\.done).count, sets.count)
   }
 
   var nextSet: NextSet? {
