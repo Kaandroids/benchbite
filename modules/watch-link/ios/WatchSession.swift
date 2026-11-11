@@ -20,12 +20,13 @@ final class WatchSession: NSObject, WCSessionDelegate {
   /// When the watch was last heard from about the workout the phone runs, in milliseconds.
   private static let heardAtKey = "watchLink.heardAt"
   /// How long the watch is taken to be there after it was heard, over twice what the watch takes
-  /// between its signs (ADR 0114). JavaScript reads it from the module.
-  static let heardFor: TimeInterval = 75
+  /// between its signs (ADR 0114).
+  private static let heardFor: TimeInterval = 75
   /// When the rest ends, in milliseconds, which JavaScript puts in the notification's data: a time
   /// interval's trigger tells only how long it was set for, not when it fires.
   private static let endsAtKey = "restEndsAt"
-  /// When the notification fires once it was put off, kept in it.
+  /// When the notification fires, in seconds, once it was put off, kept in it; JavaScript sets it
+  /// too when it schedules the notification while the watch is heard.
   private static let firesKey = "watchLinkFires"
 
   /// Guards the kept commands and the listeners.
@@ -71,8 +72,8 @@ final class WatchSession: NSObject, WCSessionDelegate {
     WCSession.default.activate()
   }
 
-  /// Whether a watch is paired, has Benchbite, and can be talked to now, and when it was last
-  /// heard from about the workout the phone runs.
+  /// Whether a watch is paired, has Benchbite, and can be talked to now, and until when it is taken
+  /// to be there, as it was heard from about the workout the phone runs.
   var status: [String: Any] {
     var status: [String: Any] = ["paired": false, "installed": false, "reachable": false]
     if WCSession.isSupported(), WCSession.default.activationState == .activated {
@@ -82,7 +83,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
       status["reachable"] = session.isReachable
     }
     if let heardAt = UserDefaults.standard.object(forKey: Self.heardAtKey) as? Double {
-      status["heardAt"] = heardAt
+      status["heardUntil"] = heardAt + Self.heardFor * 1000
     }
     return status
   }
@@ -144,8 +145,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   /// Keeps a command for JavaScript, which checks it before using it. The watch sends it as
-  /// `["command": json, "workoutId": id]`, the workout's id beside it as in sendState(), so that
-  /// nothing here reads the protocol's messages.
+  /// `["command": json]`: nothing here reads the protocol's messages.
   private func keep(_ payload: [String: Any]) {
     guard let command = payload["command"] as? String else { return }
     lock.lock()
@@ -170,8 +170,8 @@ final class WatchSession: NSObject, WCSessionDelegate {
 
   /// Puts the phone's rest notification off while the watch is heard, as the watch signals the
   /// rest: one that fires within the time the watch is taken to be there is moved to its end, and
-  /// one whose rest ended that long ago, which the watch signalled, goes. Should the watch stop
-  /// being heard, it comes at most that long after the rest ended.
+  /// one whose rest has ended goes, as the watch was there across its end and signalled it. Should
+  /// the watch stop being heard, it comes at most that long after the watch was last heard.
   private func putRestOff() {
     let center = UNUserNotificationCenter.current()
     center.getPendingNotificationRequests { requests in
@@ -182,7 +182,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
       let ends = Date(timeIntervalSince1970: endsAt / 1000)
       let fires = (request.content.userInfo[Self.firesKey] as? Double)
         .map { Date(timeIntervalSince1970: $0) } ?? ends
-      if now.timeIntervalSince(ends) > Self.heardFor {
+      if now >= ends {
         center.removePendingNotificationRequests(withIdentifiers: [Self.restNotificationId])
         return
       }
