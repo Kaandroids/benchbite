@@ -15,7 +15,7 @@ type RestBarProps = {
   onSkip: () => void;
   /** Shows a muted bell that turns rest alerts on, while they cannot be delivered. */
   onTurnOnAlerts?: () => void;
-  /** The watch follows the workout and alone signals the end of the rest (ADR 0112). */
+  /** The watch signals the end of the rest, while it is heard (ADR 0114). */
   onWatch?: boolean;
 };
 

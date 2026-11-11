@@ -1,6 +1,5 @@
 import {
   addSet,
-  changeRest,
   setValues,
   startClock,
   startSession,
@@ -262,8 +261,7 @@ describe('applyCommand', () => {
       now: NOW + MINUTE + 1000,
     });
     expect(bench(session)[0]).toMatchObject({ done: true, doneAt: NOW + MINUTE });
-    // The watch's to signal, as it started it.
-    expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90, byWatch: true });
+    expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90 });
     expect(session.watchCommands).toHaveLength(1);
   });
 
@@ -403,12 +401,7 @@ describe('applyCommand', () => {
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: endsAt + 15_000 }),
       { metricsOf: noLibrary, now: NOW + 10_000 },
     );
-    // Changed on the watch, it is the watch's to signal, though the phone started it.
-    expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90, byWatch: true });
-    expect(changeRest(longer, 15, NOW + 20_000).rest).toEqual({
-      endsAt: endsAt + 30_000,
-      seconds: 90,
-    });
+    expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90 });
     const skipped = applyCommand(
       resting,
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: null }),

@@ -78,8 +78,7 @@ export type WatchWorkout = {
   current: number;
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
-  /** `byWatch` when the watch started or last changed it, and so signals its end (ADR 0112). */
-  rest: { endsAt: number; seconds: number; byWatch: boolean } | null;
+  rest: { endsAt: number; seconds: number } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -196,11 +195,7 @@ export function stateOf(
       startedAt: session.startedAt,
       current: session.current,
       next: nextSetOf(session),
-      rest: session.rest && {
-        endsAt: session.rest.endsAt,
-        seconds: session.rest.seconds,
-        byWatch: !!session.rest.byWatch,
-      },
+      rest: session.rest,
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -314,11 +309,7 @@ function change(
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      return markDone(edited, command.exercise, command.set, command.done, kind, {
-        at,
-        now,
-        byWatch: true,
-      });
+      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
@@ -332,7 +323,7 @@ function change(
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
-        ? setRestEnd(session, command.endsAt, at, { now, byWatch: true })
+        ? setRestEnd(session, command.endsAt, at, now)
         : session;
   }
 }
