@@ -6,7 +6,6 @@ import type { LibraryExercise } from '@/exercises/library';
 import {
   addSet,
   markDone,
-  restBy,
   setRestEnd,
   setValues,
   tickedSince,
@@ -292,14 +291,11 @@ function change(
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      const ticked = markDone(edited, command.exercise, command.set, command.done, kind, {
+      return markDone(edited, command.exercise, command.set, command.done, kind, {
         at,
         now,
+        byWatch: true,
       });
-      // A rest the tick started is the watch's to signal.
-      return ticked.rest && ticked.rest.endsAt !== edited.rest?.endsAt
-        ? { ...ticked, rest: restBy(ticked.rest, true) }
-        : ticked;
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.

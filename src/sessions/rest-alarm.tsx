@@ -19,8 +19,8 @@ import { Alert, AppState, Linking, Platform } from 'react-native';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
-import { useWatchSignalsRest } from '@/watch/watch-status';
 
+import { useRestOnWatch } from './rest-owner';
 import { updateSession, useActiveSession } from './session';
 
 /**
@@ -205,7 +205,11 @@ export function RestAlarm() {
   const name = findExercise(library.data, exerciseId)?.name;
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
-  const onWatch = useWatchSignalsRest(session);
+  const onWatch = useRestOnWatch(session);
+  // The phone's module removes the notification when a command from the watch takes the rest,
+  // before it is applied here: each applied command checks it again, so that a rest the phone
+  // still owns, as when the command was refused, is signalled after all.
+  const lastCommand = session?.watchCommands?.at(-1);
 
   useEffect(() => {
     if (endsAt === undefined || endsAt <= Date.now()) {
@@ -234,7 +238,7 @@ export function RestAlarm() {
       );
     }, endsAt - Date.now());
     return () => clearTimeout(timer);
-  }, [endsAt, name, t, granted, onWatch]);
+  }, [endsAt, name, t, granted, onWatch, lastCommand]);
 
   return null;
 }

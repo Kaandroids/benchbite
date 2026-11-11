@@ -17,10 +17,10 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
+import { useRestOnWatch } from './rest-owner';
 import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
 import { useNow } from '@/lib/use-now';
-import { useWatchSignalsRest } from '@/watch/watch-status';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
 export function SessionScreen() {
@@ -31,7 +31,7 @@ export function SessionScreen() {
   const workoutName = useWorkoutName();
   const now = useNow(!!session, session?.clock?.startedAt);
   const permission = useNotificationPermission();
-  const onWatch = useWatchSignalsRest(session);
+  const onWatch = useRestOnWatch(session);
 
   if (!session) {
     return (

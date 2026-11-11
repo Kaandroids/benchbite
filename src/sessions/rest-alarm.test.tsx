@@ -10,7 +10,9 @@ import { Alert, Linking, type AlertButton } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 import { link } from '@/watch/link';
+import { applyCommand, parseCommand, PROTOCOL_VERSION, workoutIdOf } from '@/watch/protocol';
 import { NO_WATCH } from '@/watch/types';
+import { resetWatchStatus } from '@/watch/watch-status';
 import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
@@ -75,6 +77,7 @@ beforeEach(() => {
     data: [{ id: 'bench', name: 'Bench press' }],
   } as never);
   jest.mocked(link.status).mockResolvedValue(NO_WATCH);
+  resetWatchStatus();
   resetSessionStore();
   startSession('user-a', PUSH, {}, { now: NOW });
   Storage.removeItemSync('rest-alarm.asked');
@@ -230,6 +233,31 @@ describe('RestAlarm while the watch follows the workout', () => {
     jest.mocked(link.status).mockResolvedValue(paired);
     await render(<RestAlarm />);
     await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    expect(schedule).toHaveBeenCalled();
+  });
+
+  it('signals a rest the phone still owns after a refused command from the watch', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
+    await render(<RestAlarm />);
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    schedule.mockClear();
+    // A tick of a set already done, which the phone's module took as taking the rest.
+    const tick = (session: Session) =>
+      parseCommand({
+        v: PROTOCOL_VERSION,
+        id: 'late tick',
+        at: NOW,
+        workoutId: workoutIdOf(session),
+        type: 'setDone',
+        exercise: 0,
+        set: 0,
+        done: true,
+      })!;
+    await act(async () =>
+      updateSession((session) =>
+        applyCommand(session, tick(session), { metricsOf: () => undefined }),
+      ),
+    );
     expect(schedule).toHaveBeenCalled();
   });
 

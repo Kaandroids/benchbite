@@ -445,7 +445,7 @@ export function markDone(
   index: number,
   done: boolean,
   kind: SetKind,
-  options: { at?: number; now?: number } = {},
+  options: { at?: number; now?: number; byWatch?: boolean } = {},
 ): Session {
   const set = value.exercises[exercise]?.sets[index];
   if (!set) {
@@ -472,7 +472,8 @@ export function markDone(
   const older = lastActivity(value) > at;
   // A rest started, changed or ended after the tick stays as it is.
   const restOlder = older || (value.restChangedAt ?? 0) > at;
-  const rest = restOlder ? value.rest : next.rest;
+  // A rest the tick starts is the watch's to signal when the tick was made there (ADR 0112).
+  const rest = restOlder ? value.rest : next.rest && restBy(next.rest, options.byWatch ?? false);
   return {
     ...next,
     current: older ? value.current : next.current,
