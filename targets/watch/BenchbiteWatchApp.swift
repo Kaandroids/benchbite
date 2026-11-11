@@ -66,13 +66,16 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
   }
 
   /// The phone started a workout on the watch too (ADR 0115), which launches the app: the session
-  /// starts with the phone's state, which says the watch follows it, and the app asks to signal
-  /// its rests, as joining does.
+  /// starts now, as the system allows it only here with the app in the background, and takes the
+  /// workout once the phone's state says the watch follows it; the app asks to signal its rests,
+  /// as joining does.
   @MainActor func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
+    workoutSession.startForPhone()
     restAlert.requestPermission()
   }
 
   @MainActor func applicationDidBecomeActive() {
     restAlert.readPermission()
+    workoutSession.becameActive()
   }
 }
