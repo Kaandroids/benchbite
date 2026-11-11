@@ -18,6 +18,8 @@ export type WatchStatus = {
   heardUntil: number | null;
   /** The end of the rest it then signalled, in milliseconds. */
   heardRest: number | null;
+  /** The heart rate it then measured, in beats per minute, shown while it is heard (ADR 0116). */
+  heartRate: number | null;
 };
 
 /** No watch to talk to. */
@@ -27,6 +29,7 @@ export const NO_WATCH: WatchStatus = {
   reachable: false,
   heardUntil: null,
   heardRest: null,
+  heartRate: null,
 };
 
 /** Whether there is a watch to follow a workout: paired, with Benchbite on it. */

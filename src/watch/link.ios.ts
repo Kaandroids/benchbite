@@ -7,7 +7,12 @@ import { NO_WATCH, type WatchLink, type WatchStatus } from './types';
 function status(): WatchStatus {
   const native = NativeWatchLink?.status();
   return native
-    ? { ...native, heardUntil: native.heardUntil ?? null, heardRest: native.heardRest ?? null }
+    ? {
+        ...native,
+        heardUntil: native.heardUntil ?? null,
+        heardRest: native.heardRest ?? null,
+        heartRate: native.heartRate ?? null,
+      }
     : NO_WATCH;
 }
 
