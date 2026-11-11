@@ -84,6 +84,18 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isTick(exercise: exercise, set: set) } != nil
   }
 
+  /// When the clock of a set started, as the watch shows it: a start made here the phone has not
+  /// taken, else the phone's clock; none once a tick of the set waits, which stops it (ADR 0124).
+  func clockStart(of workout: WatchWorkout, exercise: Int, set: Int) -> Double? {
+    if isTickWaiting(workoutId: workout.id, exercise: exercise, set: set) { return nil }
+    if let started = firstWaiting(workout.id, where: { $0.startsClock(exercise: exercise, set: set) })
+    {
+      return started.at
+    }
+    guard let clock = workout.clock, clock.exercise == exercise, clock.set == set else { return nil }
+    return clock.startedAt
+  }
+
   /// Whether a change of the workout's rest waits for the phone. Another waits until it is
   /// applied, as the phone takes a change only of the rest it has, and the two could arrive in
   /// either order.
@@ -200,6 +212,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isRestWaiting(workoutId: command.workoutId) { return }
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
+    case .clock(let exercise, let set):
+      if firstWaiting(command.workoutId, where: { $0.startsClock(exercise: exercise, set: set) })
+        != nil
+      {
+        return
+      }
     case .finish:
       if isFinishWaiting(workoutId: command.workoutId) { return }
       unsaved = nil

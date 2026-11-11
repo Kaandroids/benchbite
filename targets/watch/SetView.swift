@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The set to do next: its values, which the Crown changes, and Done, which ticks it with them.
+/// The set to do next: its values, which the Crown changes, and Done, which ticks it with them; for
+/// a timed set its clock, with Start and Stop.
 struct SetView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
@@ -26,10 +27,20 @@ struct SetView: View {
           Text(subtitle(next))
             .font(.rounded(13))
             .foregroundStyle(Theme.secondary)
-          if editable.isEmpty {
+          // A timed set's time is its clock's, started and stopped here or on the phone (ADR 0124).
+          let timed = next.exercise.fields.contains(.seconds)
+          let started =
+            timed
+            ? phone.clockStart(of: workout, exercise: next.exerciseIndex, set: next.setIndex) : nil
+          let tickWaiting = phone.isTickWaiting(
+            workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
+          if editable.isEmpty && !timed {
             Text(set.text).font(.rounded(22, .heavy))
           } else {
             HStack(spacing: 6) {
+              if timed {
+                ClockTile(startedAt: started, target: next.exercise.target.seconds)
+              }
               ForEach(editable, id: \.self) { field in
                 Button {
                   let fields = Array(editable.drop { $0 != field })
@@ -45,28 +56,32 @@ struct SetView: View {
               }
             }
           }
-          if missing.isEmpty || !editable.isEmpty {
+          if timed && started == nil {
+            Button {
+              phone.send(
+                .startClock(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
+            } label: {
+              Label(L10n.t("start"), systemImage: "play.fill")
+            }
+            .buttonStyle(PillButtonStyle())
+            .padding(.top, 4)
+          } else {
+            // Done, or Stop for a timed set: its tick stops the clock with the time it ran, as on
+            // the phone.
             Button {
               phone.send(
                 .setDone(
                   workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
                   done: true, values: draft, rest: restStarted(by: next)))
             } label: {
-              Label(L10n.t("done"), systemImage: "checkmark")
+              Label(
+                L10n.t(timed ? "stop" : "done"), systemImage: timed ? "stop.fill" : "checkmark")
             }
             .buttonStyle(PillButtonStyle())
             // Until the tiles fill in what the set needs; and PhoneLink sends no second tick
             // while one waits, which this shows.
-            .disabled(
-              !missing.isEmpty
-                || phone.isTickWaiting(
-                  workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
+            .disabled((!timed && !missing.isEmpty) || tickWaiting)
             .padding(.top, 4)
-          } else {
-            // A time is measured by the phone's clock.
-            Text(L10n.t("finishOnPhone"))
-              .font(.rounded(13))
-              .foregroundStyle(Theme.secondary)
           }
           // Unless the line at the top says what waits.
           if !phone.waiting.isEmpty, phone.setsWaitingOutOfReach(of: workout) == 0 {
@@ -164,5 +179,45 @@ private struct ValueTile: View {
     .padding(.vertical, 6)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
+  }
+}
+
+/// The clock of a timed set: 0:00 until it starts, then the time it runs, counted from its start,
+/// with the plan's target beside it (ADR 0124).
+private struct ClockTile: View {
+  let startedAt: Double?
+  let target: Double?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Group {
+        if let startedAt {
+          Text(Date(timeIntervalSince1970: startedAt / 1000), style: .timer)
+            .foregroundStyle(Theme.accent)
+        } else {
+          Text(Duration.seconds(0).formatted(.time(pattern: .minuteSecond)))
+        }
+      }
+      .font(.rounded(26, .heavy))
+      .monospacedDigit()
+      .lineLimit(1)
+      .minimumScaleFactor(0.6)
+      Text(label)
+        .font(.rounded(12))
+        .foregroundStyle(Theme.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+    }
+    .padding(.horizontal, 8)
+    .padding(.vertical, 6)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
+  }
+
+  /// "TIME", or "TIME · TARGET 0:40" when the plan has a target time.
+  private var label: String {
+    guard let target, target > 0 else { return SetField.seconds.unit }
+    let time = Duration.seconds(target).formatted(.time(pattern: .minuteSecond))
+    return "\(SetField.seconds.unit) · " + L10n.t("target", ["time": time])
   }
 }

@@ -61,6 +61,8 @@ struct WatchWorkout: Decodable {
   /// The set to do next; none when every set is done.
   let next: WatchNext?
   let rest: WatchRest?
+  /// The clock of the timed set it measures (ADR 0124).
+  let clock: WatchClock?
   /// How many sets finishing the workout saves: those done, and the one the phone's clock times.
   let setsToSave: Int
   let exercises: [WatchExercise]
@@ -73,6 +75,12 @@ struct WatchWorkout: Decodable {
 struct WatchNext: Decodable {
   let exercise: Int
   let set: Int
+}
+
+struct WatchClock: Decodable {
+  let exercise: Int
+  let set: Int
+  let startedAt: Double
 }
 
 struct WatchRest: Decodable {
@@ -95,10 +103,17 @@ struct WatchExercise: Decodable {
   let name: String?
   /// What its sets record: the weight and the reps, or a time with or without a distance.
   let fields: [SetField]
-  /// The values the Crown changes, and how; none for sets measured by time.
+  /// What the plan aims at; for a timed set, its time, shown beside the clock.
+  let target: WatchTarget
+  /// The values the Crown changes, and how: never the time, which the clock measures.
   let crown: [SetField: CrownRange]
   let restSeconds: Int
   let sets: [WatchSet]
+}
+
+/// What the plan aims at; only the time is read, the rest of it being the phone's.
+struct WatchTarget: Decodable {
+  let seconds: Double?
 }
 
 /// How the Crown turns a value: from `min` to `max`, by `step`.
@@ -170,6 +185,8 @@ struct WatchCommand {
     case open(exercise: Int)
     /// The workout finished here, which the phone saves (ADR 0118).
     case finish
+    /// The clock of a timed set started here, which a tick of the set stops (ADR 0124).
+    case clock(exercise: Int, set: Int)
   }
 
   let id: String
@@ -233,6 +250,13 @@ struct WatchCommand {
       body: ["type": "open", "exercise": exercise])
   }
 
+  /// Starts the clock of a timed set, as of now (ADR 0124).
+  static func startClock(workoutId: String, exercise: Int, set: Int) -> WatchCommand? {
+    WatchCommand(
+      workoutId: workoutId, change: .clock(exercise: exercise, set: set),
+      body: ["type": "startClock", "exercise": exercise, "set": set])
+  }
+
   /// Finishes the workout, which the phone then saves and ends (ADR 0118).
   static func finish(workoutId: String) -> WatchCommand? {
     WatchCommand(workoutId: workoutId, change: .finish, body: ["type": "finish"])
@@ -252,6 +276,12 @@ struct WatchCommand {
 }
 
 extension WatchCommand.Change {
+  /// Whether it starts the clock of this set.
+  func startsClock(exercise: Int, set: Int) -> Bool {
+    guard case .clock(exercise, set) = self else { return false }
+    return true
+  }
+
   /// The exercise a pick opens, or a tick stays on, which the next set is found from.
   var leads: Int? {
     switch self {
