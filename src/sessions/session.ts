@@ -78,6 +78,11 @@ export type Session = {
   watchCommands?: string[];
   /** When the rest was last started, changed or ended by hand, which a late tick does not undo. */
   restChangedAt?: number;
+  /**
+   * The watch follows the workout, started there too or joined from it: it alone signals the end
+   * of a rest (ADR 0112).
+   */
+  watchFollows?: boolean;
 };
 
 /** Sets of an exercise's latest log, in order. */

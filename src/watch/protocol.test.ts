@@ -80,6 +80,7 @@ describe('parseCommand', () => {
       command(NOW, { type: 'setDone', exercise: 0, set: 1, done: true, values: { weightKg: 80 } }),
     ).toMatchObject({ values: { weightKg: 80 } });
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
+    expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -134,6 +135,7 @@ describe('stateOf', () => {
       current: 0,
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
       applied: [],
+      follows: false,
     });
     expect(state.workout?.exercises[0]).toMatchObject({ name: 'Bench press', restSeconds: 90 });
     // Only what the watch shows: no times of the phone's own.
@@ -546,6 +548,16 @@ describe('applyCommand', () => {
     });
     expect(bench(session)[3]?.done).toBe(true);
     expect(session.current).toBe(2);
+  });
+
+  it('lets the watch follow the workout once it joins, however often it asks', () => {
+    const join = command(NOW, { type: 'join' });
+    const joined = applyCommand(start(), join, { metricsOf: noLibrary, now: NOW });
+    expect(joined.watchFollows).toBe(true);
+    expect(stateOf(joined, noExercises, 1).workout?.follows).toBe(true);
+    expect(
+      applyCommand(joined, command(NOW, { type: 'join' }), { metricsOf: noLibrary }).watchFollows,
+    ).toBe(true);
   });
 
   it('keeps only the latest command ids', () => {

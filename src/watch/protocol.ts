@@ -72,6 +72,8 @@ export type WatchWorkout = {
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
+  /** The watch follows it, and so signals the end of a rest; else it offers to join (ADR 0112). */
+  follows: boolean;
 };
 
 /** The phone's state for the watch; none when no workout runs. */
@@ -106,6 +108,8 @@ export type WatchCommand = CommandBase &
     | { type: 'addSet'; exercise: number; sets: number }
     /** The rest the watch showed, `of` its end, made to end at `endsAt`, or skipped with null. */
     | { type: 'setRest'; of: number; endsAt: number | null }
+    /** The watch follows the workout from now on. */
+    | { type: 'join' }
   );
 
 /** The workout's id; one started before ids were kept is named by its start. */
@@ -188,6 +192,7 @@ export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: nu
         };
       }),
       applied: session.watchCommands ?? [],
+      follows: session.watchFollows ?? false,
     },
   };
 }
@@ -245,6 +250,8 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return isTime(message.of) && (message.endsAt === null || isTime(message.endsAt))
         ? { ...base, type, of: message.of, endsAt: message.endsAt }
         : null;
+    case 'join':
+      return { ...base, type };
     default:
       return null;
   }
@@ -284,6 +291,8 @@ function change(
         ? addSet(session, command.exercise)
         : session;
     }
+    case 'join':
+      return { ...session, watchFollows: true };
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
