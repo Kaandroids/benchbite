@@ -1,10 +1,16 @@
 import SwiftUI
 
 /// The workout the phone runs: an offer to join it, until the watch follows it; then its rest while
-/// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks.
+/// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks, with
+/// the list of its exercises beside them.
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
+  @State private var page = Page.set
+
+  private enum Page {
+    case list, set
+  }
 
   var body: some View {
     Group {
@@ -14,15 +20,22 @@ struct WorkoutView: View {
         } else if let over = restAlert.over, over.workoutId == workout.id {
           RestOverView(next: over.next) { restAlert.over = nil }
         } else {
-          // Each second, so that the rest counts down and gives way to the set when it is over.
-          TimelineView(.periodic(from: .now, by: 1)) { context in
-            let now = context.date.timeIntervalSince1970 * 1000
-            if let rest = phone.rest(of: workout), rest.endsAt > now {
-              RestView(workout: workout, rest: rest, now: now)
-            } else {
-              SetView(workout: workout)
+          // The list beside the set, a swipe away (ADR 0117).
+          TabView(selection: $page) {
+            ExerciseListView(workout: workout) { page = .set }
+              .tag(Page.list)
+            // Each second, so that the rest counts down and gives way to the set when it is over.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+              let now = context.date.timeIntervalSince1970 * 1000
+              if let rest = phone.rest(of: workout), rest.endsAt > now {
+                RestView(workout: workout, rest: rest, now: now)
+              } else {
+                SetView(workout: workout)
+              }
             }
+            .tag(Page.set)
           }
+          .tabViewStyle(.page(indexDisplayMode: .never))
         }
       } else {
         VStack(spacing: 10) {
