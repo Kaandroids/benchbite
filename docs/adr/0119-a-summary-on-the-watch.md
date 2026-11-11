@@ -1,6 +1,6 @@
 # 0119. A summary on the watch
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0120
 - **Date:** 2026-11-11
 
 ## Context
