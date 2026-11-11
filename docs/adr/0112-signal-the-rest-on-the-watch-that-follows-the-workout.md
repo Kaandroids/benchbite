@@ -1,6 +1,6 @@
 # 0112. Signal the rest on the watch that follows the workout
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0114
 - **Date:** 2026-11-11
 
 ## Context
