@@ -5,7 +5,7 @@ import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
 import { saveReminderMinutes } from '@/reminders/settings';
-import { endSession } from '@/sessions/session';
+import { endSession, forgetEndedSessions } from '@/sessions/session';
 
 /** The user whose workout in progress, reminders and health connection the device keeps. */
 const OWNER_KEY = 'device.owner';
@@ -27,6 +27,8 @@ export function claimDevice(userId: string) {
     return;
   }
   endSession({ saved: false });
+  // How the previous user's workouts ended is theirs, and no watch of the next user's needs it.
+  forgetEndedSessions();
   saveReminderMinutes(null);
   void cancelReminders().catch((error: unknown) =>
     console.warn('Could not cancel the reminders', error),

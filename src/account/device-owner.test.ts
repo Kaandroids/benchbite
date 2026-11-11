@@ -2,7 +2,7 @@ import { isHealthConnected, setHealthConnected } from '@/health/connection';
 import { releaseHealthAccess } from '@/health/health';
 import { cancelReminders } from '@/reminders/reminders';
 import { loadReminderMinutes, saveReminderMinutes } from '@/reminders/settings';
-import { endSession } from '@/sessions/session';
+import { endSession, forgetEndedSessions } from '@/sessions/session';
 
 import { claimDevice } from './device-owner';
 
@@ -19,7 +19,7 @@ jest.mock('expo-sqlite/kv-store', () => {
 });
 jest.mock('@/providers/session-provider', () => ({ useUserId: jest.fn() }));
 jest.mock('@/reminders/reminders', () => ({ cancelReminders: jest.fn() }));
-jest.mock('@/sessions/session', () => ({ endSession: jest.fn() }));
+jest.mock('@/sessions/session', () => ({ endSession: jest.fn(), forgetEndedSessions: jest.fn() }));
 jest.mock('@/health/health', () => ({ releaseHealthAccess: jest.fn() }));
 
 const { Storage } = jest.requireMock<{ Storage: { clearSync: () => void } }>(
@@ -47,7 +47,9 @@ describe('claimDevice', () => {
   it('drops the previous user’s workout in progress, reminders and health connection for another user', () => {
     claimDevice('user-1');
     claimDevice('user-2');
-    expect(endSession).toHaveBeenCalledTimes(1);
+    expect(endSession).toHaveBeenCalledWith({ saved: false });
+    // How the previous user's workouts ended goes too, as it would reach the next user's watch.
+    expect(forgetEndedSessions).toHaveBeenCalledTimes(1);
     expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(loadReminderMinutes()).toBeNull();
     expect(isHealthConnected()).toBe(false);
