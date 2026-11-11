@@ -47,8 +47,14 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
   @MainActor private func signalRest() {
     guard let workout = phone.workout, workoutSession.measuring == workout.id,
       let rest = phone.rest(of: workout)
-    else { return restAlert.signal(nil) }
+    else {
+      restAlert.signal(nil)
+      phone.signalling = nil
+      return
+    }
     restAlert.signal(RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: rest.next))
+    // The phone puts its own notification off only for the rest the watch says it signals.
+    phone.signalling = rest.endsAt
   }
 
   @MainActor func handleActiveWorkoutRecovery() {

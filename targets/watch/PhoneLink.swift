@@ -16,7 +16,17 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   private var lastSeq: Double = 0
   private var here: Timer?
-  /// Less than half the time the phone takes the watch to be there after its sign (ADR 0114).
+  /// The workout the watch measures, which its sign is about.
+  private var measuring: String?
+  /// The end of the rest the watch signals, which its sign tells, and which it tells at once when
+  /// it changes, so that the phone puts its own notification off for it in time.
+  var signalling: Double? {
+    didSet {
+      if signalling != oldValue, let measuring { sendHere(measuring) }
+    }
+  }
+  /// Less than half the time the phone takes the watch to be there after its sign: `heardFor` in
+  /// modules/watch-link/ios/RestSignal.swift (ADR 0114).
   private static let hereEvery: TimeInterval = 30
 
   override init() {
@@ -98,19 +108,23 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   func sayHere(while workoutId: String?) {
     here?.invalidate()
     here = nil
+    measuring = workoutId
     guard let workoutId else { return }
-    sayHere(workoutId)
+    sendHere(workoutId)
     here = Timer.scheduledTimer(withTimeInterval: Self.hereEvery, repeats: true) {
       [weak self] _ in
-      self?.sayHere(workoutId)
+      self?.sendHere(workoutId)
     }
   }
 
-  /// Only while the phone can be reached: a sign that waited would say nothing of now.
-  private func sayHere(_ workoutId: String) {
+  /// One sign, with the rest the watch signals; only while the phone can be reached, as a sign that
+  /// waited would say nothing of now.
+  private func sendHere(_ workoutId: String) {
     let session = WCSession.default
     guard session.activationState == .activated, session.isReachable else { return }
-    session.sendMessage(["here": workoutId], replyHandler: nil) { error in
+    var sign: [String: Any] = ["here": workoutId]
+    if let signalling { sign["rest"] = signalling }
+    session.sendMessage(sign, replyHandler: nil) { error in
       NSLog("[PhoneLink] Could not say the watch is there: %@", error.localizedDescription)
     }
   }
