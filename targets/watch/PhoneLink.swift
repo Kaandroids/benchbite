@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import WatchKit
 
 /// The watch's side of the connection to Benchbite on the iPhone (ADR 0109). It shows the latest
 /// state the phone sent, and sends commands: as a message while the phone is reachable, else as a
@@ -19,7 +20,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   @Published private(set) var unsaved: String?
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
   /// once another workout runs, or once the summary is closed (ADR 0120).
-  @Published private(set) var finished: FinishedWorkout?
+  @Published private(set) var finished: FinishedWorkout? {
+    didSet { summarySeen = false }
+  }
+  /// The summary showed with the app active, so that the app going to the background closes it;
+  /// one that came while the app was not active waits to be seen (ADR 0120).
+  private var summarySeen = false
 
   private var lastSeq: Double = 0
   private var here: Timer?
@@ -53,6 +59,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// Closes the summary of the workout saved last, which then shows "No workout yet".
   func closeSummary() {
     finished = nil
+  }
+
+  /// The app is active: a summary shows, and is seen.
+  func appBecameActive() {
+    if finished != nil { summarySeen = true }
+  }
+
+  /// The app went to the background, as when the watch returns to its face: a summary seen closes.
+  func appWentToBackground() {
+    if summarySeen { closeSummary() }
   }
 
   /// Whether a tick of this set waits for the phone, which a second one would only repeat.
@@ -201,11 +217,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     DispatchQueue.main.async {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
-      // The workout shown is saved: its summary shows until the next runs.
+      // The workout shown is saved: its summary shows until the next runs or it is closed.
       if state.workout != nil {
         self.finished = nil
       } else if let finished = FinishedWorkout.saved(self.workout, in: state) {
         self.finished = finished
+        self.summarySeen = WKApplication.shared().applicationState == .active
       }
       self.workout = state.workout
       self.ended = state.ended
