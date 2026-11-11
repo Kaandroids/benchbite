@@ -132,3 +132,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0114](0114-signal-the-rest-on-the-watch-while-it-is-heard.md)        | Signal the rest on the watch while it is heard                                          | Accepted, amended by ADR-0116                        |
 | [0115](0115-ask-to-start-the-workout-on-the-watch-too.md)             | Ask to start the workout on the watch too                                               | Accepted                                             |
 | [0116](0116-show-the-watch-and-its-heart-rate-on-the-phone.md)        | Show the watch and its heart rate on the phone                                          | Accepted                                             |
+| [0117](0117-pick-the-exercise-on-the-watch.md)                        | Pick the exercise on the watch                                                          | Accepted                                             |
