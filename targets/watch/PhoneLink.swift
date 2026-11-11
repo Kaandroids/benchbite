@@ -21,7 +21,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
   /// once another workout runs, or once the summary is closed (ADR 0120).
   @Published private(set) var finished: FinishedWorkout? {
-    didSet { summarySeen = false }
+    didSet { summarySeen = finished != nil && WKApplication.shared().applicationState == .active }
   }
   /// The summary showed with the app active, so that the app going to the background closes it;
   /// one that came while the app was not active waits to be seen (ADR 0120).
@@ -62,12 +62,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   /// The app is active: a summary shows, and is seen.
-  func appBecameActive() {
+  func becameActive() {
     if finished != nil { summarySeen = true }
   }
 
   /// The app went to the background, as when the watch returns to its face: a summary seen closes.
-  func appWentToBackground() {
+  func wentToBackground() {
     if summarySeen { closeSummary() }
   }
 
@@ -222,7 +222,6 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
         self.finished = nil
       } else if let finished = FinishedWorkout.saved(self.workout, in: state) {
         self.finished = finished
-        self.summarySeen = WKApplication.shared().applicationState == .active
       }
       self.workout = state.workout
       self.ended = state.ended

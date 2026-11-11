@@ -82,7 +82,7 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
   /// Once the watch returns to its face, the summary of the workout saved last closes if it was
   /// seen, so that the app opens on what comes next (ADR 0120).
   @MainActor func applicationDidEnterBackground() {
-    phone.appWentToBackground()
+    phone.wentToBackground()
   }
 
   /// The app may have been launched in the background, where the user could not be asked to let
@@ -90,6 +90,6 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
   @MainActor func applicationDidBecomeActive() {
     workoutSession.becameActive()
     restAlert.readPermission(asking: workoutSession.measuring != nil)
-    phone.appBecameActive()
+    phone.becameActive()
   }
 }
