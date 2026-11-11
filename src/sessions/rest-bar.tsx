@@ -15,10 +15,19 @@ type RestBarProps = {
   onSkip: () => void;
   /** Shows a muted bell that turns rest alerts on, while they cannot be delivered. */
   onTurnOnAlerts?: () => void;
+  /** The watch follows the workout and alone signals the end of the rest (ADR 0112). */
+  onWatch?: boolean;
 };
 
 /** The rest between sets, counting down at the bottom of the screen. */
-export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestBarProps) {
+export function RestBar({
+  left,
+  total,
+  onChange,
+  onSkip,
+  onTurnOnAlerts,
+  onWatch = false,
+}: RestBarProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const insets = useSafeAreaInsets();
@@ -54,7 +63,23 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
               {minutesAndSeconds(left)}
             </Text>
           </View>
-          {onTurnOnAlerts ? (
+          {onWatch ? (
+            <View
+              accessible
+              accessibilityLabel={t('session.restAlerts.onWatchLabel')}
+              style={styles.onWatch}
+            >
+              <Icon name="watch" size={15} color="onInverseMuted" />
+              <Text
+                variant="caption"
+                color="onInverseMuted"
+                numberOfLines={1}
+                style={styles.shrink}
+              >
+                {t('session.restAlerts.onWatch')}
+              </Text>
+            </View>
+          ) : onTurnOnAlerts ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('session.restAlerts.turnOn')}
@@ -130,6 +155,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 8,
+  },
+  onWatch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+  },
+  shrink: {
+    flexShrink: 1,
   },
   bell: {
     width: 28,

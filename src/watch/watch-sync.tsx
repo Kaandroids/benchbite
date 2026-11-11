@@ -5,6 +5,7 @@ import { useEffect, useEffectEvent } from 'react';
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession } from '@/sessions/session';
+import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
 import { applyCommand, parseCommand, stateOf, type ExerciseOf } from './protocol';
@@ -31,6 +32,9 @@ export function WatchSync() {
   const session = useActiveSession(useUserId());
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
+  const nameOf = useWorkoutName();
+  // As the phone names it: a planned workout without a name of its own by its type.
+  const name = session ? nameOf(session) || null : null;
 
   // A set is judged, and commands are taken, once the library has loaded, as what a set needs
   // depends on its exercise; or once its first try failed, as offline, when they apply as the
@@ -40,9 +44,9 @@ export function WatchSync() {
 
   useEffect(() => {
     if (session === null || ready) {
-      link.sendState(stateOf(session, exerciseIn(library.data), nextSeq()));
+      link.sendState(stateOf(session, { exerciseOf: exerciseIn(library.data), name }, nextSeq()));
     }
-  }, [session, ready, library.data]);
+  }, [session, ready, library.data, name]);
 
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);

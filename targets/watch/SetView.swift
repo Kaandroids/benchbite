@@ -49,7 +49,7 @@ struct SetView: View {
               phone.send(
                 .setDone(
                   workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
-                  done: true, values: draft))
+                  done: true, values: draft, rest: restStarted(by: next)))
             } label: {
               Label("Done", systemImage: "checkmark")
             }
@@ -100,6 +100,15 @@ struct SetView: View {
   /// The values changed here for a set, but none the phone has changed since.
   private func values(of key: SetKey, set: WatchSet) -> [SetField: Double] {
     (drafts[key] ?? [:]).filter { $0.value.over == set.value($0.key) }.mapValues(\.value)
+  }
+
+  /// The rest a tick of the set starts, as the phone starts it (toggleDoneUnchecked in
+  /// src/sessions/session.ts), with the set after it, so that the watch shows and signals it
+  /// before the phone says, as with the wrist down at once.
+  private func restStarted(by next: NextSet) -> (seconds: Int, next: String?)? {
+    let seconds = next.exercise.restSeconds
+    guard seconds > 0 else { return nil }
+    return (seconds, workout.nextSet(after: next.exerciseIndex, set: next.setIndex)?.label)
   }
 
   private func subtitle(_ next: NextSet) -> String {

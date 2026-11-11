@@ -127,8 +127,8 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   /// Keeps a command for JavaScript, which checks it before using it. The watch sends it as
-  /// `["command": json, "workoutId": id]`, the workout's id beside it as in sendState(), so that
-  /// nothing here reads the protocol's messages.
+  /// `["command": json, "workoutId": id, "takesRest": bool]`, what the phone needs here beside it
+  /// as in sendState(), so that nothing here reads the protocol's messages.
   private func keep(_ payload: [String: Any]) {
     guard let command = payload["command"] as? String else { return }
     lock.lock()
@@ -136,15 +136,17 @@ final class WatchSession: NSObject, WCSessionDelegate {
     UserDefaults.standard.set(Array(commands.suffix(Self.maxCommands)), forKey: Self.commandsKey)
     let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
     lock.unlock()
-    if let workoutId, payload["workoutId"] as? String == workoutId {
+    if let workoutId, payload["workoutId"] as? String == workoutId,
+      payload["takesRest"] as? Bool == true
+    {
       silenceRestOnPhone()
     }
     commandsWaiting()
   }
 
-  /// A command for the workout the phone runs shows that the watch follows it and signals the end of
-  /// the rest itself, so the phone's notification would be a second alert (ADR 0109). Removed here,
-  /// as JavaScript may be asleep. A command of an earlier workout, arriving late, leaves it.
+  /// A command that starts or changes the rest of the workout the phone runs makes the rest the
+  /// watch's to signal, so the phone's notification would be a second alert (ADR 0112). Removed
+  /// here, as JavaScript may be asleep. A command of an earlier workout, arriving late, leaves it.
   private func silenceRestOnPhone() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(
       withIdentifiers: [Self.restNotificationId])

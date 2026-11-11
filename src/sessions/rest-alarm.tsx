@@ -20,6 +20,7 @@ import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
 
+import { useRestOnWatch } from './rest-owner';
 import { updateSession, useActiveSession } from './session';
 
 /**
@@ -191,7 +192,9 @@ export function cancelRestEnd() {
 
 /**
  * Keeps the end of the workout's rest signalled, whatever screen is open: schedules its
- * notification, and when the rest ends with the app open, vibrates and ends it.
+ * notification, and when the rest ends with the app open, vibrates and ends it. While the watch
+ * follows the workout, the watch alone signals it (ADR 0112): the phone schedules nothing and does
+ * not vibrate, and only ends the rest.
  */
 export function RestAlarm() {
   const { t } = useTranslation();
@@ -202,6 +205,11 @@ export function RestAlarm() {
   const name = findExercise(library.data, exerciseId)?.name;
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
+  const onWatch = useRestOnWatch(session);
+  // The phone's module removes the notification when a command from the watch takes the rest,
+  // before it is applied here: each applied command checks it again, so that a rest the phone
+  // still owns, as when the command was refused, is signalled after all.
+  const lastCommand = session?.watchCommands?.at(-1);
 
   useEffect(() => {
     if (endsAt === undefined || endsAt <= Date.now()) {
@@ -210,13 +218,19 @@ export function RestAlarm() {
       );
       return;
     }
-    void scheduleRestEnd(endsAt, {
-      title: t('session.restOver.title'),
-      body: name ? t('session.restOver.next', { name }) : t('session.restOver.body'),
-      channelName: t('session.restOver.channel'),
-    }).catch((error: unknown) => console.warn('Could not schedule the rest notification', error));
+    if (onWatch) {
+      void cancelRestEnd().catch((error: unknown) =>
+        console.warn('Could not cancel the rest notification', error),
+      );
+    } else {
+      void scheduleRestEnd(endsAt, {
+        title: t('session.restOver.title'),
+        body: name ? t('session.restOver.next', { name }) : t('session.restOver.body'),
+        channelName: t('session.restOver.channel'),
+      }).catch((error: unknown) => console.warn('Could not schedule the rest notification', error));
+    }
     const timer = setTimeout(() => {
-      if (Date.now() - endsAt < LATE_MS) {
+      if (!onWatch && Date.now() - endsAt < LATE_MS) {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       updateSession((current) =>
@@ -224,7 +238,7 @@ export function RestAlarm() {
       );
     }, endsAt - Date.now());
     return () => clearTimeout(timer);
-  }, [endsAt, name, t, granted]);
+  }, [endsAt, name, t, granted, onWatch, lastCommand]);
 
   return null;
 }

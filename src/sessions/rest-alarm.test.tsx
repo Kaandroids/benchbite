@@ -9,6 +9,10 @@ import { Storage } from 'expo-sqlite/kv-store';
 import { Alert, Linking, type AlertButton } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
+import { link } from '@/watch/link';
+import { applyCommand, parseCommand, PROTOCOL_VERSION, workoutIdOf } from '@/watch/protocol';
+import { NO_WATCH } from '@/watch/types';
+import { resetWatchStatus } from '@/watch/watch-status';
 import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
@@ -27,6 +31,7 @@ import {
   startSession,
   toggleDoneUnchecked,
   updateSession,
+  type Session,
 } from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -49,6 +54,9 @@ jest.mock('@/exercises/library', () => ({
   useExerciseLibrary: jest.fn(),
 }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
+jest.mock('@/watch/link', () => ({
+  link: { status: jest.fn(), onStatusChange: jest.fn(() => () => undefined) },
+}));
 
 const schedule = jest.mocked(scheduleNotificationAsync);
 const cancel = jest.mocked(cancelScheduledNotificationAsync);
@@ -68,6 +76,8 @@ beforeEach(() => {
   jest.mocked(useExerciseLibrary).mockReturnValue({
     data: [{ id: 'bench', name: 'Bench press' }],
   } as never);
+  jest.mocked(link.status).mockResolvedValue(NO_WATCH);
+  resetWatchStatus();
   resetSessionStore();
   startSession('user-a', PUSH, {}, { now: NOW });
   Storage.removeItemSync('rest-alarm.asked');
@@ -192,6 +202,70 @@ describe('RestAlarm', () => {
       Haptics.NotificationFeedbackType.Success,
     );
     expect(cancel).toHaveBeenCalledWith('rest-end');
+  });
+});
+
+describe('RestAlarm while the watch follows the workout', () => {
+  const paired = { paired: true, installed: true, reachable: true };
+  /** A rest the watch started, as a tick there does. */
+  const watchRest = (session: Session): Session => {
+    const ticked = toggleDoneUnchecked(session, 0, 0, NOW);
+    return { ...ticked, rest: ticked.rest && { ...ticked.rest, byWatch: true } };
+  };
+
+  beforeEach(() => {
+    updateSession((session) => ({ ...session, watchFollows: true }));
+  });
+
+  it('leaves the end of a rest the watch started to the watch, and only ends it', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
+    await render(<RestAlarm />);
+    await act(async () => updateSession(watchRest));
+    expect(schedule).not.toHaveBeenCalled();
+    await act(async () => {
+      jest.advanceTimersByTime(90_000);
+    });
+    expect(Haptics.notificationAsync).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledWith('rest-end');
+  });
+
+  it('signals a rest started on the phone, which the watch may not hear of', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
+    await render(<RestAlarm />);
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    expect(schedule).toHaveBeenCalled();
+  });
+
+  it('signals a rest the phone still owns after a refused command from the watch', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
+    await render(<RestAlarm />);
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    schedule.mockClear();
+    // A tick of a set already done, which the phone's module took as taking the rest.
+    const tick = (session: Session) =>
+      parseCommand({
+        v: PROTOCOL_VERSION,
+        id: 'late tick',
+        at: NOW,
+        workoutId: workoutIdOf(session),
+        type: 'setDone',
+        exercise: 0,
+        set: 0,
+        done: true,
+      })!;
+    await act(async () =>
+      updateSession((session) =>
+        applyCommand(session, tick(session), { metricsOf: () => undefined }),
+      ),
+    );
+    expect(schedule).toHaveBeenCalled();
+  });
+
+  it('takes the alerts back once the watch app is gone', async () => {
+    jest.mocked(link.status).mockResolvedValue({ ...paired, installed: false });
+    await render(<RestAlarm />);
+    await act(async () => updateSession(watchRest));
+    expect(schedule).toHaveBeenCalled();
   });
 });
 

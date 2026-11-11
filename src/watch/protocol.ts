@@ -68,10 +68,13 @@ export type WatchWorkout = {
   current: number;
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
-  rest: { endsAt: number; seconds: number } | null;
+  /** `byWatch` when the watch started or last changed it, and so signals its end (ADR 0112). */
+  rest: { endsAt: number; seconds: number; byWatch: boolean } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
+  /** The watch follows it, and so signals the end of a rest; else it offers to join (ADR 0112). */
+  follows: boolean;
 };
 
 /** The phone's state for the watch; none when no workout runs. */
@@ -106,6 +109,8 @@ export type WatchCommand = CommandBase &
     | { type: 'addSet'; exercise: number; sets: number }
     /** The rest the watch showed, `of` its end, made to end at `endsAt`, or skipped with null. */
     | { type: 'setRest'; of: number; endsAt: number | null }
+    /** The watch follows the workout from now on. */
+    | { type: 'join' }
   );
 
 /** The workout's id; one started before ids were kept is named by its start. */
@@ -151,20 +156,28 @@ export type ExerciseOf = (
 ) => Pick<LibraryExercise, 'name' | 'metrics' | 'equipment'> | undefined;
 
 /**
- * The state for the watch: its exercises named and each set judged by the library's exercise as
- * the phone judges it, with its text as the phone shows it.
+ * The state for the watch: the workout named as the phone names it, its exercises named and each
+ * set judged by the library's exercise as the phone judges it, with its text as the phone shows it.
  */
-export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: number): WatchState {
+export function stateOf(
+  session: Session | null,
+  { exerciseOf, name }: { exerciseOf: ExerciseOf; name: string | null },
+  seq: number,
+): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
     workout: session && {
       id: workoutIdOf(session),
-      name: session.name,
+      name,
       startedAt: session.startedAt,
       current: session.current,
       next: nextSetOf(session),
-      rest: session.rest,
+      rest: session.rest && {
+        endsAt: session.rest.endsAt,
+        seconds: session.rest.seconds,
+        byWatch: !!session.rest.byWatch,
+      },
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -188,6 +201,7 @@ export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: nu
         };
       }),
       applied: session.watchCommands ?? [],
+      follows: session.watchFollows ?? false,
     },
   };
 }
@@ -245,6 +259,8 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return isTime(message.of) && (message.endsAt === null || isTime(message.endsAt))
         ? { ...base, type, of: message.of, endsAt: message.endsAt }
         : null;
+    case 'join':
+      return { ...base, type };
     default:
       return null;
   }
@@ -275,7 +291,11 @@ function change(
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
+      return markDone(edited, command.exercise, command.set, command.done, kind, {
+        at,
+        now,
+        byWatch: true,
+      });
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
@@ -284,10 +304,12 @@ function change(
         ? addSet(session, command.exercise)
         : session;
     }
+    case 'join':
+      return { ...session, watchFollows: true };
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
-        ? setRestEnd(session, command.endsAt, at, now)
+        ? setRestEnd(session, command.endsAt, at, { now, byWatch: true })
         : session;
   }
 }

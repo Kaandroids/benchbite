@@ -64,8 +64,11 @@ export type Session = {
   exercises: SessionExercise[];
   /** The exercise that is open. */
   current: number;
-  /** The rest after a set, until the time it ends. */
-  rest: { endsAt: number; seconds: number } | null;
+  /**
+   * The rest after a set, until the time it ends; `byWatch` when the watch started or last changed
+   * it, and so signals its end (ADR 0112).
+   */
+  rest: { endsAt: number; seconds: number; byWatch?: true } | null;
   clock: SetClock | null;
   /** What the workout had when it started; sets added on the way do not count. */
   planned: { exercises: number; sets: number };
@@ -78,6 +81,11 @@ export type Session = {
   watchCommands?: string[];
   /** When the rest was last started, changed or ended by hand, which a late tick does not undo. */
   restChangedAt?: number;
+  /**
+   * The watch follows the workout, started there too or joined from it: it alone signals the end
+   * of a rest (ADR 0112).
+   */
+  watchFollows?: boolean;
 };
 
 /** Sets of an exercise's latest log, in order. */
@@ -322,6 +330,7 @@ export function toggleDoneUnchecked(
     return { ...next, rest: null, restChangedAt: now };
   }
   const item = next.exercises[exercise];
+  // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
   next = {
     ...next,
     restChangedAt: now,
@@ -437,7 +446,7 @@ export function markDone(
   index: number,
   done: boolean,
   kind: SetKind,
-  options: { at?: number; now?: number } = {},
+  options: { at?: number; now?: number; byWatch?: boolean } = {},
 ): Session {
   const set = value.exercises[exercise]?.sets[index];
   if (!set) {
@@ -464,7 +473,8 @@ export function markDone(
   const older = lastActivity(value) > at;
   // A rest started, changed or ended after the tick stays as it is.
   const restOlder = older || (value.restChangedAt ?? 0) > at;
-  const rest = restOlder ? value.rest : next.rest;
+  // A rest the tick starts is the watch's to signal when the tick was made there (ADR 0112).
+  const rest = restOlder ? value.rest : next.rest && restBy(next.rest, options.byWatch ?? false);
   return {
     ...next,
     current: older ? value.current : next.current,
@@ -473,14 +483,27 @@ export function markDone(
   };
 }
 
+/** The rest as started or last changed by the watch, or by the phone. */
+export function restBy(rest: NonNullable<Session['rest']>, byWatch: boolean): Session['rest'] {
+  const { byWatch: _, ...phone } = rest;
+  return byWatch ? { ...phone, byWatch: true } : phone;
+}
+
 /**
- * Makes the rest end at another time, or ends it with null, as changed at `at`, so that a tick
- * made before then starts no rest again. A rest that is over by `now` ends.
+ * Makes the rest end at another time, or ends it with null, as changed at `at` on the phone or
+ * the watch, so that a tick made before then starts no rest again. A rest that is over by `now`
+ * ends.
  */
-export function setRestEnd(value: Session, endsAt: number | null, at: number, now = at): Session {
+export function setRestEnd(
+  value: Session,
+  endsAt: number | null,
+  at: number,
+  { now = at, byWatch = false }: { now?: number; byWatch?: boolean } = {},
+): Session {
+  const rest = restUntil(value.rest, endsAt, now);
   return {
     ...value,
-    rest: restUntil(value.rest, endsAt, now),
+    rest: rest && restBy(rest, byWatch),
     // Never back in time, as a watch's clock can run behind the phone's.
     restChangedAt: Math.max(value.restChangedAt ?? 0, at),
   };

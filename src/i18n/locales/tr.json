@@ -1627,7 +1627,9 @@
       "turnOn": "Dinlenme bildirimlerini aç",
       "offTitle": "Bildirimler kapalı",
       "offMessage": "Dinlenmenin bittiğini duymak için telefonunun ayarlarından Benchbite bildirimlerini aç.",
-      "openSettings": "Ayarları aç"
+      "openSettings": "Ayarları aç",
+      "onWatch": "Saatte",
+      "onWatchLabel": "Dinlenme bitince saatin uyarır"
     },
     "end": {
       "title": "Ne zaman bitirdin?",
