@@ -18,7 +18,7 @@ import {
   PROTOCOL_VERSION,
   stateOf,
   workoutIdOf,
-  type Lookups,
+  type ExerciseOf,
   type MetricsOf,
   type WatchCommand,
 } from './protocol';
@@ -31,13 +31,13 @@ jest.mock('expo-sqlite/kv-store', () => ({
 const NOW = 1_800_000_000_000;
 /** The exercises' metrics as before the library loads: what a set needs is read from its target. */
 const noLibrary: MetricsOf = () => undefined;
-/** What the library says of the exercises: nothing, as before it loads, unless given. */
-const lookups = (given: Partial<Lookups> = {}): Lookups => ({
-  name: () => null,
-  metricsOf: noLibrary,
-  equipmentOf: () => undefined,
-  ...given,
-});
+/** The library's exercises: none known, as before it loads. */
+const noExercises: ExerciseOf = () => undefined;
+/** The bench press as the library has it: lifted, with a barbell. */
+const withBench: ExerciseOf = (id) =>
+  id === 'bench'
+    ? { name: 'Bench press', metrics: ['weight', 'reps'], equipment: 'barbell' }
+    : undefined;
 const MINUTE = 60_000;
 
 const PUSH = testWorkout(7, {
@@ -127,7 +127,7 @@ it('keeps values as the phone keeps what is typed', () => {
 describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
-    const state = stateOf(session, lookups({ name: (id) => `name of ${id}` }), 7);
+    const state = stateOf(session, withBench, 7);
     expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
     expect(state.workout).toMatchObject({
       id: 'workout-1',
@@ -135,7 +135,7 @@ describe('stateOf', () => {
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
       applied: [],
     });
-    expect(state.workout?.exercises[0]).toMatchObject({ name: 'name of bench', restSeconds: 90 });
+    expect(state.workout?.exercises[0]).toMatchObject({ name: 'Bench press', restSeconds: 90 });
     // Only what the watch shows: no times of the phone's own.
     expect(state.workout?.exercises[0]?.sets[0]).toEqual({
       weightKg: null,
@@ -152,8 +152,7 @@ describe('stateOf', () => {
   it('gives each exercise its fields and how the Crown turns them, and each set last time’s', () => {
     const last = { bench: [{ weightKg: 77.5, reps: 7, seconds: null, meters: null }] };
     const session = startSession('user-a', PUSH, last, { now: NOW });
-    const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
-    const state = stateOf(session, lookups({ metricsOf: lifted, equipmentOf: () => 'barbell' }), 1);
+    const state = stateOf(session, withBench, 1);
     const [bench, , plank] = state.workout!.exercises;
     expect(bench).toMatchObject({
       fields: ['weightKg', 'reps'],
@@ -172,8 +171,7 @@ describe('stateOf', () => {
   });
 
   it('says what each set still needs, as the phone does', () => {
-    const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
-    const state = stateOf(start(), lookups({ metricsOf: lifted }), 1);
+    const state = stateOf(start(), withBench, 1);
     const [bench, , plank] = state.workout!.exercises;
     // A weight is needed before the bench press can be ticked, as on the phone.
     expect(bench?.sets[0]?.missing).toEqual(['weightKg']);
@@ -182,12 +180,12 @@ describe('stateOf', () => {
   });
 
   it('names no exercise the library does not know', () => {
-    const state = stateOf(start(), lookups(), 1);
+    const state = stateOf(start(), noExercises, 1);
     expect(state.workout?.exercises[0]?.name).toBeNull();
   });
 
   it('says no workout runs', () => {
-    expect(stateOf(null, lookups(), 1).workout).toBeNull();
+    expect(stateOf(null, noExercises, 1).workout).toBeNull();
   });
 
   it('names a workout started before ids were kept by its start', () => {
@@ -200,7 +198,7 @@ describe('nextSetOf', () => {
   it('is the open exercise’s first set not done', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(nextSetOf(session)).toEqual({ exercise: 0, set: 1 });
-    expect(stateOf(session, lookups(), 1).workout?.next).toEqual({
+    expect(stateOf(session, noExercises, 1).workout?.next).toEqual({
       exercise: 0,
       set: 1,
     });

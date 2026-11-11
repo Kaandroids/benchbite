@@ -145,22 +145,16 @@ export function nextSetOf(session: Session): { exercise: number; set: number } |
   return null;
 }
 
-/** What the phone's library says of an exercise; none of it where the library is not loaded. */
-export type Lookups = {
-  name: (exerciseId: string) => string | null;
-  metricsOf: MetricsOf;
-  equipmentOf: (exerciseId: string) => LibraryExercise['equipment'] | undefined;
-};
+/** The library's exercise of an id, as far as the watch needs it; none where it is not loaded. */
+export type ExerciseOf = (
+  exerciseId: string,
+) => Pick<LibraryExercise, 'name' | 'metrics' | 'equipment'> | undefined;
 
 /**
- * The state for the watch: its exercises named and each set judged by `lookups` as the phone
- * judges it, with its text as the phone shows it.
+ * The state for the watch: its exercises named and each set judged by the library's exercise as
+ * the phone judges it, with its text as the phone shows it.
  */
-export function stateOf(
-  session: Session | null,
-  { name, metricsOf, equipmentOf }: Lookups,
-  seq: number,
-): WatchState {
+export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: number): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
@@ -172,13 +166,14 @@ export function stateOf(
       next: nextSetOf(session),
       rest: session.rest,
       exercises: session.exercises.map((exercise) => {
-        const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
+        const known = exerciseOf(exercise.exerciseId);
+        const kind = setKindOf(known?.metrics, exercise.target);
         return {
           exerciseId: exercise.exerciseId,
-          name: name(exercise.exerciseId),
+          name: known?.name ?? null,
           target: exercise.target,
           fields: kind.fields,
-          crown: crownOf(kind, equipmentOf(exercise.exerciseId)),
+          crown: crownOf(kind, known?.equipment),
           restSeconds: exercise.restSeconds,
           sets: exercise.sets.map((set, index) => {
             const last = exercise.last[index];
