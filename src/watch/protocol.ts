@@ -4,7 +4,15 @@
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
 import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
-import { describeSet, setKindOf, setValueOf, weightStepOf, type SetField } from '@/sets/fields';
+import {
+  describeSet,
+  SET_LIMITS,
+  setKindOf,
+  setValueOf,
+  weightStepOf,
+  type SetField,
+  type SetKind,
+} from '@/sets/fields';
 import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
@@ -26,6 +34,9 @@ export type WatchSet = SetValues & {
   lastText: string | null;
 };
 
+/** How the Crown turns a value: from `min` to `max`, by `step`. */
+export type CrownRange = { min: number; max: number; step: number };
+
 export type WatchExercise = {
   exerciseId: string;
   /** In the user's language, as the phone shows it; none when the library does not know it. */
@@ -33,10 +44,11 @@ export type WatchExercise = {
   target: WorkoutTarget;
   /** What its sets record, as the phone shows them (setKindOf). */
   fields: SetField[];
-  /** What the Crown turns a weight by, from the exercise's equipment. */
-  weightStepKg: number;
-  /** The weight is added to the body, and none is a value it can have. */
-  addedWeight: boolean;
+  /**
+   * The values the watch changes with the Crown, and how; none for sets measured by time, which
+   * the phone's clock measures.
+   */
+  crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
   sets: WatchSet[];
   last: SetValues[];
@@ -96,6 +108,22 @@ export function workoutIdOf(session: Session): string {
 }
 
 /**
+ * How the Crown turns a lifted set's values: the weight by what its equipment goes up by, down to
+ * none only when it is added to the body, and the reps by one; each up to what a set can hold.
+ */
+export function crownOf(
+  kind: SetKind,
+  equipment: LibraryExercise['equipment'] | undefined,
+): Partial<Record<SetField, CrownRange>> {
+  if (kind.timed) return {};
+  const step = weightStepOf(equipment);
+  return {
+    weightKg: { min: kind.addedWeight ? 0 : step, max: SET_LIMITS.weightKg, step },
+    reps: { min: 1, max: SET_LIMITS.reps, step: 1 },
+  };
+}
+
+/**
  * The set to do next: the open exercise's first set not done, else the first one of the
  * exercises after it, then of those before it, as one can be left open while another is done.
  */
@@ -144,8 +172,7 @@ export function stateOf(
           name: name(exercise.exerciseId),
           target: exercise.target,
           fields: kind.fields,
-          weightStepKg: weightStepOf(equipmentOf(exercise.exerciseId)),
-          addedWeight: kind.addedWeight,
+          crown: crownOf(kind, equipmentOf(exercise.exerciseId)),
           restSeconds: exercise.restSeconds,
           sets: exercise.sets.map((set, index) => {
             const last = exercise.last[index];

@@ -7,10 +7,12 @@ import {
   toggleDoneUnchecked,
   type Session,
 } from '@/sessions/session';
+import { setKindOf } from '@/sets/fields';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
   applyCommand,
+  crownOf,
   nextSetOf,
   parseCommand,
   PROTOCOL_VERSION,
@@ -155,11 +157,18 @@ describe('stateOf', () => {
     const [bench, , plank] = state.workout!.exercises;
     expect(bench).toMatchObject({
       fields: ['weightKg', 'reps'],
-      weightStepKg: 2.5,
-      addedWeight: false,
+      crown: {
+        weightKg: { min: 2.5, max: 999.75, step: 2.5 },
+        reps: { min: 1, max: 999, step: 1 },
+      },
     });
     expect(bench?.sets.map((set) => set.lastText)).toEqual(['77.5 kg × 7', null, null, null]);
-    expect(plank?.fields).toEqual(['seconds']);
+    expect(plank).toMatchObject({ fields: ['seconds'], crown: {} });
+  });
+
+  it('turns a weight added to the body down to none, and by the equipment’s step', () => {
+    const pullUp = setKindOf(['reps'], { reps: { min: 8, max: 12 } });
+    expect(crownOf(pullUp, 'dumbbell').weightKg).toEqual({ min: 0, max: 999.75, step: 2 });
   });
 
   it('says what each set still needs, as the phone does', () => {
