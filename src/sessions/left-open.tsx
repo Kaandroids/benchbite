@@ -51,7 +51,7 @@ export function LeftOpenSaver() {
       const endedAt = lastActivity(session);
       logWorkout(toLog(stopClock(session, endedAt), endedAt))
         .then((logId) => {
-          endSession();
+          endSession({ saved: true, endedAt });
           setSaved({ logId, name: workoutName(session), endedAt });
         })
         .catch((error: unknown) => console.warn('Could not save the workout left open', error))

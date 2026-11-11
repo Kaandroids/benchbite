@@ -26,7 +26,7 @@ export function claimDevice(userId: string) {
   if (owner === null) {
     return;
   }
-  endSession();
+  endSession({ saved: false });
   saveReminderMinutes(null);
   void cancelReminders().catch((error: unknown) =>
     console.warn('Could not cancel the reminders', error),

@@ -111,7 +111,7 @@ export function FinishScreen({ next }: { next?: number }) {
       if (logId !== null) {
         void afterWorkoutLogged(queryClient, logId, health.data);
       }
-      endSession();
+      endSession({ saved: true, endedAt: finishedAt });
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
       if (following) {
@@ -143,7 +143,7 @@ export function FinishScreen({ next }: { next?: number }) {
         text: t('common.discard'),
         style: 'destructive',
         onPress: () => {
-          endSession();
+          endSession({ saved: false });
           router.dismissAll();
         },
       },

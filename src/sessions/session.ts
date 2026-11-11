@@ -156,8 +156,42 @@ export function updateSession(change: (current: Session) => Session) {
   }
 }
 
-/** Ends the workout in progress without saving it, or after it was saved. */
-export function endSession() {
+/**
+ * How the latest workout ended: saved as a log, at the time it ended, or let go. A watch that
+ * followed it saves its own workout to the health store, or leaves it out, by it (ADR 0113).
+ */
+export type EndedSession = Pick<Session, 'id' | 'startedAt'> & { saved: boolean; endedAt: number };
+
+const ENDED_KEY = 'session.ended';
+let ended: EndedSession | null | undefined;
+
+function lastEnded(): EndedSession | null {
+  if (ended === undefined) {
+    try {
+      const stored = readItem(ENDED_KEY);
+      ended = stored ? (JSON.parse(stored) as EndedSession) : null;
+    } catch (error) {
+      console.warn('Could not read how the last workout ended', error);
+      ended = null;
+    }
+  }
+  return ended;
+}
+
+/** How the latest workout ended, or nothing yet. */
+export function useEndedSession(): EndedSession | null {
+  return useSyncExternalStore(subscribe, lastEnded);
+}
+
+/**
+ * Ends the workout in progress: after it was saved, at the time it ended, or without saving it.
+ */
+export function endSession({ saved, endedAt = Date.now() }: { saved: boolean; endedAt?: number }) {
+  const value = current();
+  if (value) {
+    ended = { id: value.id, startedAt: value.startedAt, saved, endedAt };
+    writeItem(ENDED_KEY, JSON.stringify(ended));
+  }
   set(null);
 }
 
@@ -165,6 +199,7 @@ export function endSession() {
 export function resetSessionStore() {
   loaded = false;
   session = null;
+  ended = undefined;
 }
 
 /**
