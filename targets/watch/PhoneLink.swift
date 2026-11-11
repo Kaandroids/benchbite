@@ -64,6 +64,23 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isFinish } != nil
   }
 
+  /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
+  /// sets ticked done here that the phone has not applied yet, as it applies them before the
+  /// finish (ADR 0118).
+  func setsToSave(of workout: WatchWorkout) -> Int {
+    let ticked = Set(
+      waiting.values.compactMap { command -> [Int]? in
+        guard command.workoutId == workout.id,
+          case .tick(let exercise, let set, _) = command.change,
+          workout.exercises.indices.contains(exercise),
+          workout.exercises[exercise].sets.indices.contains(set),
+          !workout.exercises[exercise].sets[set].done
+        else { return nil }
+        return [exercise, set]
+      })
+    return workout.setsToSave + ticked.count
+  }
+
   /// Whether joining the workout waits for the phone.
   func isJoinWaiting(workoutId: String) -> Bool {
     firstWaiting(workoutId) { $0.isJoin } != nil

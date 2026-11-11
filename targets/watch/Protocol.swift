@@ -30,8 +30,8 @@ struct WatchWorkout: Decodable {
   /// The set to do next; none when every set is done.
   let next: WatchNext?
   let rest: WatchRest?
-  /// The set the phone's clock times, which finishing the workout logs as done.
-  let running: WatchNext?
+  /// How many sets finishing the workout saves: those done, and the one the phone's clock times.
+  let setsToSave: Int
   let exercises: [WatchExercise]
   let applied: [String]
   /// The watch follows it, measuring it and signalling its rests while it can; else it offers to
@@ -298,15 +298,6 @@ extension WatchWorkout {
   var setsDone: (done: Int, count: Int) {
     let sets = exercises.flatMap(\.sets)
     return (sets.filter(\.done).count, sets.count)
-  }
-
-  /// How many sets finishing the workout saves: those done, and the one the phone's clock times.
-  var setsToSave: Int {
-    guard let running, exercises.indices.contains(running.exercise),
-      exercises[running.exercise].sets.indices.contains(running.set),
-      !exercises[running.exercise].sets[running.set].done
-    else { return setsDone.done }
-    return setsDone.done + 1
   }
 
   var nextSet: NextSet? {

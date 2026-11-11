@@ -8,8 +8,7 @@ struct FinishView: View {
   let workout: WatchWorkout
 
   var body: some View {
-    let total = workout.setsDone
-    let saved = workout.setsToSave
+    let saved = phone.setsToSave(of: workout)
     ScrollView {
       VStack(spacing: 8) {
         if phone.isFinishWaiting(workoutId: workout.id) {
@@ -24,7 +23,7 @@ struct FinishView: View {
           Text("Finish workout?")
             .font(.rounded(18, .heavy))
             .padding(.top, 10)
-          Text(saved == 0 ? "No sets done yet" : "\(saved) of \(total.count) sets done")
+          Text(saved == 0 ? "No sets done yet" : "\(saved) of \(workout.setsDone.count) sets done")
             .font(.rounded(14))
             .foregroundStyle(Theme.secondary)
           if phone.unsaved == workout.id {
