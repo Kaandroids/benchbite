@@ -1,0 +1,61 @@
+{
+  "workout": "Antrenman",
+  "noWorkout": "Henüz antrenman yok",
+  "startOnPhone": "iPhone'unda bir antrenman başlat, burada görünür.",
+  "onPhone": "IPHONE'UNDA",
+  "progress": "{{count}} setten {{done}} tanesi",
+  "join": "Katıl",
+  "allowNotifications": "Katılmak için iPhone'undaki Watch uygulamasında Benchbite bildirimlerine izin ver.",
+  "heartRate": "Nabız {{bpm}}",
+  "setsWaiting_one": "{{count}} set iPhone'unu bekliyor",
+  "setsWaiting_other": "{{count}} set iPhone'unu bekliyor",
+  "position": "Set {{number}} / {{count}}",
+  "lastTime": "{{position}} · geçen sefer {{values}}",
+  "setLabel": "Set {{number}} · {{values}}",
+  "done": "Tamam",
+  "finishOnPhone": "Bu seti iPhone'unda bitir",
+  "waiting": "iPhone'un bekleniyor",
+  "allDone": "Tüm setler tamam",
+  "turnCrown": "Kronu çevir",
+  "turnCrownSteps": "Kronu çevir · {{step}} {{unit}} adımlarla",
+  "units": {
+    "weightKg": "KG",
+    "reps": "TEKRAR",
+    "seconds": "SÜRE",
+    "meters": "M"
+  },
+  "fields": {
+    "weightKg": "AĞIRLIK",
+    "reps": "TEKRAR",
+    "seconds": "SÜRE",
+    "meters": "MESAFE"
+  },
+  "rest": "DİNLENME",
+  "skip": "Geç",
+  "next": "Sıradaki: {{set}}",
+  "restOver": "Dinlenme bitti",
+  "go": "Başla",
+  "list": {
+    "now": "ŞİMDİ",
+    "finishWorkout": "Antrenmanı bitir"
+  },
+  "finish": {
+    "title": "Antrenman bitsin mi?",
+    "noSets": "Henüz set yapılmadı",
+    "sets": "{{count}} setten {{done}} tanesi tamam",
+    "unsaved": "iPhone'un kaydedemedi. Tekrar dene ya da orada bitir.",
+    "finish": "Bitir",
+    "keepGoing": "Devam et",
+    "saving": "iPhone'unda kaydediliyor",
+    "savingHint": "Uzun sürerse iPhone'unda Benchbite'ı aç."
+  },
+  "summary": {
+    "title": "{{name}} tamam",
+    "time": "SÜRE",
+    "sets": "SET",
+    "averageBpm": "ORT. NABIZ",
+    "kcal": "KCAL",
+    "records_one": "{{count}} yeni rekor · iPhone'una bak",
+    "records_other": "{{count}} yeni rekor · iPhone'una bak"
+  }
+}
