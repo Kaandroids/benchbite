@@ -8,7 +8,10 @@ import { workoutIdOf, type WatchState } from './protocol';
 /** The workout to open Benchbite on the watch for, once the watch is told that it follows it. */
 let opening: string | null = null;
 
-/** Opens Benchbite on the watch for this workout once `WatchSync` has sent it. */
+/**
+ * Opens Benchbite on the watch for this workout once `WatchSync` has sent it: it needs `WatchSync`
+ * mounted, as it is while signed in, which calls `sentToWatch` with each state it sends.
+ */
 export function openOnWatch(session: Pick<Session, 'id' | 'startedAt'>) {
   opening = workoutIdOf(session);
 }
