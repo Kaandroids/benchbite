@@ -84,6 +84,7 @@ describe('parseCommand', () => {
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
     expect(command(NOW, { type: 'open', exercise: 1 })).toMatchObject({ exercise: 1 });
+    expect(command(NOW, { type: 'finish' })).toMatchObject({ type: 'finish' });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -97,7 +98,7 @@ describe('parseCommand', () => {
       { ...base, v: 2, type: 'addSet', exercise: 0, sets: 3 },
       { ...base, id: '', type: 'addSet', exercise: 0, sets: 3 },
       { ...base, at: 'now', type: 'addSet', exercise: 0, sets: 3 },
-      { ...base, type: 'finish' },
+      { ...base, type: 'end' },
       { ...base, type: 'addSet', exercise: -1, sets: 3 },
       { ...base, type: 'addSet', exercise: 0 },
       { ...base, type: 'addSet', exercise: 0, sets: 0 },

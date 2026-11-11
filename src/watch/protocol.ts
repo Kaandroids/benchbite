@@ -126,6 +126,8 @@ export type WatchCommand = CommandBase &
     | { type: 'join' }
     /** Opens the exercise, picked from the watch's list, whose sets come next (ADR 0117). */
     | { type: 'open'; exercise: number }
+    /** Finishes the workout, which the phone then saves (ADR 0118). */
+    | { type: 'finish' }
   );
 
 /** The workout's id; one started before ids were kept is named by its start. */
@@ -279,6 +281,8 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return { ...base, type };
     case 'open':
       return isIndex(message.exercise) ? { ...base, type, exercise: message.exercise } : null;
+    case 'finish':
+      return { ...base, type };
     default:
       return null;
   }
@@ -322,12 +326,24 @@ function change(
       return { ...session, watchFollows: true };
     case 'open':
       return openExercise(session, command.exercise, at);
+    case 'finish':
+      // Saving it ends the workout (finish-from-watch.ts); applied, it only tells the watch that
+      // the save failed.
+      return session;
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
         ? setRestEnd(session, command.endsAt, at, now)
         : session;
   }
+}
+
+/** Whether a command is for the workout, and not applied to it yet. */
+export function isFor(session: Session, command: WatchCommand): boolean {
+  return (
+    command.workoutId === workoutIdOf(session) &&
+    !(session.watchCommands ?? []).includes(command.id)
+  );
 }
 
 /**
@@ -340,10 +356,10 @@ export function applyCommand(
   command: WatchCommand,
   { now = Date.now(), metricsOf }: { now?: number; metricsOf: MetricsOf },
 ): Session {
-  const applied = session.watchCommands ?? [];
-  if (command.workoutId !== workoutIdOf(session) || applied.includes(command.id)) {
+  if (!isFor(session, command)) {
     return session;
   }
+  const applied = session.watchCommands ?? [];
   const next = change(session, command, Math.min(command.at, now), now, metricsOf);
   return { ...next, watchCommands: [...applied, command.id].slice(-KEPT_COMMANDS) };
 }

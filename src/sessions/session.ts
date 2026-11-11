@@ -128,6 +128,11 @@ function set(value: Session | null) {
   listeners.notify();
 }
 
+/** The workout in progress as it is now, for what reads it outside a screen. */
+export function activeSession(): Session | null {
+  return current();
+}
+
 /** The signed-in user's workout in progress, if there is one. */
 export function useActiveSession(userId: string | undefined): Session | null {
   const value = useSyncExternalStore(listeners.subscribe, current);
