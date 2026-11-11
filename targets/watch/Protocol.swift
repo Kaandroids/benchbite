@@ -20,7 +20,10 @@ struct WatchEnded: Decodable, Equatable {
   let id: String
   let saved: Bool
   let endedAt: Double?
-  /// How many records a saved workout set, for the summary (ADR 0119).
+  /// The sets a saved workout saved, of all its sets, and the records it set, for the summary
+  /// (ADR 0119).
+  let setsSaved: Int?
+  let setCount: Int?
   let records: Int?
 }
 
@@ -34,16 +37,17 @@ struct FinishedWorkout {
   let setCount: Int
   let records: Int
 
-  /// The workout shown, if the state says the phone saved it: as it was last sent, with the end and
-  /// the records it was saved with. Only a workout the watch followed.
+  /// The workout shown, if the state says the phone saved it: with the end, the sets and the
+  /// records it was saved with, else as it was last sent. Only a workout the watch followed.
   static func saved(_ shown: WatchWorkout?, in state: WatchState) -> FinishedWorkout? {
-    guard let shown, shown.follows, state.workout?.id != shown.id,
+    guard let shown, shown.follows,
       let end = state.ended.first(where: { $0.id == shown.id }), end.saved,
       let endedAt = end.endedAt
     else { return nil }
     return FinishedWorkout(
       id: shown.id, title: shown.title, startedAt: shown.startedAt, endedAt: endedAt,
-      setsSaved: shown.setsToSave, setCount: shown.setsDone.count, records: end.records ?? 0)
+      setsSaved: end.setsSaved ?? shown.setsToSave, setCount: end.setCount ?? shown.setsDone.count,
+      records: end.records ?? 0)
   }
 }
 
