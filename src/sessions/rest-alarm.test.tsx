@@ -53,7 +53,7 @@ jest.mock('@/exercises/library', () => ({
 }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('@/watch/link', () => ({
-  link: { status: jest.fn(), onStatusChange: jest.fn(() => () => undefined) },
+  link: { heardForMs: 75_000, status: jest.fn(), onStatusChange: jest.fn(() => () => undefined) },
 }));
 
 const schedule = jest.mocked(scheduleNotificationAsync);
@@ -93,7 +93,12 @@ describe('scheduleRestEnd', () => {
     await scheduleRestEnd(NOW + 90_000, content);
     expect(schedule).toHaveBeenCalledWith({
       identifier: 'rest-end',
-      content: { title: 'Rest is over', body: 'Next up: Bench press' },
+      // With its end, by which the watch link's module puts it off.
+      content: {
+        title: 'Rest is over',
+        body: 'Next up: Bench press',
+        data: { restEndsAt: NOW + 90_000 },
+      },
       trigger: { type: 'date', date: NOW + 90_000, channelId: 'rest-timer' },
     });
   });
@@ -158,7 +163,7 @@ describe('RestAlarm', () => {
     await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     expect(schedule).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        content: { title: 'Rest is over', body: 'Next up: Bench press' },
+        content: expect.objectContaining({ title: 'Rest is over', body: 'Next up: Bench press' }),
         trigger: expect.objectContaining({ date: NOW + 90_000 }),
       }),
     );

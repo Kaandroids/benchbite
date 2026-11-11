@@ -1,7 +1,7 @@
 // Which device signals the end of the workout's rest (ADR 0114).
 import { useEffect, useState } from 'react';
 
-import { WATCH_HEARD_FOR_MS } from '@/watch/protocol';
+import { link } from '@/watch/link';
 import type { WatchStatus } from '@/watch/types';
 import { useWatchStatus } from '@/watch/watch-status';
 
@@ -19,7 +19,7 @@ export function restOnWatch(session: Session | null, status: WatchStatus, now: n
     status.paired &&
     status.installed &&
     status.heardAt !== null &&
-    now - status.heardAt < WATCH_HEARD_FOR_MS
+    now - status.heardAt < link.heardForMs
   );
 }
 
@@ -35,10 +35,10 @@ export function useRestOnWatch(session: Session | null): boolean {
     if (!onWatch || status.heardAt === null) return;
     const timer = setTimeout(
       () => setNow(Date.now()),
-      status.heardAt + WATCH_HEARD_FOR_MS - Date.now(),
+      status.heardAt + link.heardForMs - Date.now(),
     );
     return () => clearTimeout(timer);
   }, [onWatch, status.heardAt]);
-  // A sign heard after the time last read is surely recent.
-  return restOnWatch(session, status, Math.max(now, status.heardAt ?? 0));
+  // A sign heard after the time last read counts too, its time being later than that.
+  return onWatch;
 }

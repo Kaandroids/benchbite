@@ -28,6 +28,8 @@ export const NO_WATCH: WatchStatus = {
  * It carries the protocol's messages and nothing else: what they mean is decided in protocol.ts.
  */
 export type WatchLink = {
+  /** How long the watch is taken to be there after it was heard, in milliseconds (ADR 0114). */
+  heardForMs: number;
   status(): Promise<WatchStatus>;
   /** Listens for the status changing; returns what stops listening. */
   onStatusChange(listener: (status: WatchStatus) => void): () => void;

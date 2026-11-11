@@ -179,7 +179,9 @@ export function scheduleRestEnd(endsAt: number, content: RestNotification) {
     await createChannel(content.channelName);
     await scheduleNotificationAsync({
       identifier: REST_NOTIFICATION_ID,
-      content: { title: content.title, body: content.body },
+      // The end goes with it, as the watch link's module puts it off by it while the watch is
+      // heard (modules/watch-link/ios/WatchSession.swift): its trigger does not tell it.
+      content: { title: content.title, body: content.body, data: { restEndsAt: endsAt } },
       trigger: { type: SchedulableTriggerInputTypes.DATE, date: endsAt, channelId: CHANNEL_ID },
     });
   });
@@ -206,8 +208,9 @@ export function RestAlarm() {
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
   const onWatch = useRestOnWatch(session);
-  // Whether the watch signals it is read when the rest ends, and schedules nothing again, which
-  // would undo the module's putting it off.
+  // Whether the watch signals it is read when the rest ends: its changing schedules nothing
+  // again, which would undo the module's putting the notification off until the watch's next sign.
+  // A change of the texts or the permission does, which that next sign puts off again.
   const ended = useEffectEvent((endsAt: number) => {
     if (!onWatch && Date.now() - endsAt < LATE_MS) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

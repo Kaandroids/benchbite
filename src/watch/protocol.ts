@@ -30,9 +30,8 @@ export const PROTOCOL_VERSION = 1;
 
 /**
  * How long the watch is taken to be there after it was heard from about the workout, signalling
- * its rests: over twice what it takes between the signs it sends while it measures the workout
- * (ADR 0114). The phone's module puts its own rest notification off by as much
- * (modules/watch-link/ios/WatchSession.swift).
+ * its rests (ADR 0114): the phone's module gives it, as it puts its own rest notification off by
+ * as much; this is for a build without the module.
  */
 export const WATCH_HEARD_FOR_MS = 75_000;
 
