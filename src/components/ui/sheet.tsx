@@ -14,7 +14,10 @@ const CLOSE_MS = 400;
 /** When a sheet last closed, which a sheet opening right after waits for on iOS. */
 let closedAt = -Infinity;
 
-/** Resolves once the sheet that closed last has closed, at once when none is closing. */
+/**
+ * Resolves once the sheet that closed last has closed, at once when none is closing: for code that
+ * runs after the sheet has gone, such as a question asked once another was answered.
+ */
 export function whenSheetClosed(): Promise<void> {
   const left = closedAt + CLOSE_MS - Date.now();
   if (Platform.OS !== 'ios' || left <= 0) {
@@ -25,7 +28,8 @@ export function whenSheetClosed(): Promise<void> {
 
 /**
  * Runs `action` once a sheet closing now has closed, for an action that may open another sheet,
- * which iOS would otherwise not show.
+ * which iOS would otherwise not show: for code that runs as the sheet is closed, before it has
+ * gone, which `whenSheetClosed` cannot tell yet.
  */
 export function afterSheetCloses(action: () => void) {
   if (Platform.OS === 'ios') {
