@@ -134,7 +134,7 @@ export function SessionScreen() {
           total={session.rest.seconds}
           onChange={(seconds) => updateSession((current) => changeRest(current, seconds))}
           onSkip={() => updateSession((current) => skipRest(current))}
-          onWatch={watch !== null && signalsRest(session, watch)}
+          onWatch={signalsRest(session, watch)}
           onTurnOnAlerts={
             permission && !permission.granted
               ? () =>

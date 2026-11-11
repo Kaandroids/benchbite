@@ -4,9 +4,12 @@ import type { WatchStatus } from '@/watch/types';
 import type { Session } from './session';
 import { useHeardWatch, watchHeard } from './watch-heard';
 
-/** Whether the watch, heard from, signals this very rest of the workout. */
-export function signalsRest(session: Session | null, heard: WatchStatus): boolean {
-  return heard.heardRest === session?.rest?.endsAt;
+/**
+ * Whether the watch signals this very rest of the workout, given its status while it is heard from
+ * about the workout, or null while it is not.
+ */
+export function signalsRest(session: Session | null, heard: WatchStatus | null): boolean {
+  return heard !== null && heard.heardRest === session?.rest?.endsAt;
 }
 
 /**
@@ -15,7 +18,7 @@ export function signalsRest(session: Session | null, heard: WatchStatus): boolea
  * there for the workout, signalling this very rest.
  */
 export function restOnWatch(session: Session | null, status: WatchStatus, now: number): boolean {
-  return watchHeard(session, status, now) && signalsRest(session, status);
+  return signalsRest(session, watchHeard(session, status, now) ? status : null);
 }
 
 /**
@@ -23,6 +26,5 @@ export function restOnWatch(session: Session | null, status: WatchStatus, now: n
  * stops once the watch has not been heard from for that long.
  */
 export function useRestOnWatch(session: Session | null): boolean {
-  const heard = useHeardWatch(session);
-  return heard !== null && signalsRest(session, heard);
+  return signalsRest(session, useHeardWatch(session));
 }
