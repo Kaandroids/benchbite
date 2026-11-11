@@ -3,8 +3,8 @@ import UserNotifications
 import WatchConnectivity
 
 /// The phone's side of the connection to Benchbite on the Apple Watch (ADR 0109). It carries the
-/// protocol's messages as JSON, and takes the phone's rest notification away when the watch takes
-/// over the workout, as JavaScript may not be running then. It is activated when the app launches,
+/// protocol's messages as JSON, and puts the phone's rest notification off while the watch is
+/// heard, which then signals the rest itself (ADR 0114), as JavaScript may not be running then. It is activated when the app launches,
 /// also in the background, so that commands the watch sends while JavaScript is not running are
 /// kept until it reads them.
 final class WatchSession: NSObject, WCSessionDelegate {
@@ -17,6 +17,13 @@ final class WatchSession: NSObject, WCSessionDelegate {
   private static let workoutIdKey = "watchLink.workoutId"
   /// The most commands kept for JavaScript: far more than wait at once.
   private static let maxCommands = 200
+  /// When the watch was last heard from about the workout the phone runs, in milliseconds.
+  private static let heardAtKey = "watchLink.heardAt"
+  /// How long the watch is taken to be there after it was heard: WATCH_HEARD_FOR_MS in
+  /// src/watch/protocol.ts, over twice what the watch takes between its signs (ADR 0114).
+  private static let heardFor: TimeInterval = 75
+  /// When the rest notification was first due, kept in it once it is put off.
+  private static let dueKey = "watchLinkDue"
 
   /// Guards the kept commands and the listeners.
   private let lock = NSLock()
@@ -61,17 +68,20 @@ final class WatchSession: NSObject, WCSessionDelegate {
     WCSession.default.activate()
   }
 
-  /// Whether a watch is paired, has Benchbite, and can be talked to now.
-  var status: [String: Bool] {
-    guard WCSession.isSupported(), WCSession.default.activationState == .activated else {
-      return ["paired": false, "installed": false, "reachable": false]
+  /// Whether a watch is paired, has Benchbite, and can be talked to now, and when it was last
+  /// heard from about the workout the phone runs.
+  var status: [String: Any] {
+    var status: [String: Any] = ["paired": false, "installed": false, "reachable": false]
+    if WCSession.isSupported(), WCSession.default.activationState == .activated {
+      let session = WCSession.default
+      status["paired"] = session.isPaired
+      status["installed"] = session.isWatchAppInstalled
+      status["reachable"] = session.isReachable
     }
-    let session = WCSession.default
-    return [
-      "paired": session.isPaired,
-      "installed": session.isWatchAppInstalled,
-      "reachable": session.isReachable,
-    ]
+    if let heardAt = UserDefaults.standard.object(forKey: Self.heardAtKey) as? Double {
+      status["heardAt"] = heardAt
+    }
+    return status
   }
 
   /// Sends the latest state, and keeps it to send again when the session or the watch is not ready
@@ -127,29 +137,64 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   /// Keeps a command for JavaScript, which checks it before using it. The watch sends it as
-  /// `["command": json, "workoutId": id, "takesRest": bool]`, what the phone needs here beside it
-  /// as in sendState(), so that nothing here reads the protocol's messages.
+  /// `["command": json, "workoutId": id]`, the workout's id beside it as in sendState(), so that
+  /// nothing here reads the protocol's messages.
   private func keep(_ payload: [String: Any]) {
     guard let command = payload["command"] as? String else { return }
     lock.lock()
     let commands = (UserDefaults.standard.stringArray(forKey: Self.commandsKey) ?? []) + [command]
     UserDefaults.standard.set(Array(commands.suffix(Self.maxCommands)), forKey: Self.commandsKey)
-    let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
     lock.unlock()
-    if let workoutId, payload["workoutId"] as? String == workoutId,
-      payload["takesRest"] as? Bool == true
-    {
-      silenceRestOnPhone()
-    }
+    heard(payload["workoutId"] as? String)
     commandsWaiting()
   }
 
-  /// A command that starts or changes the rest of the workout the phone runs makes the rest the
-  /// watch's to signal, so the phone's notification would be a second alert (ADR 0112). Removed
-  /// here, as JavaScript may be asleep. A command of an earlier workout, arriving late, leaves it.
-  private func silenceRestOnPhone() {
-    UNUserNotificationCenter.current().removePendingNotificationRequests(
-      withIdentifiers: [Self.restNotificationId])
+  /// The watch was heard from, by a command or by the sign it sends while it measures the workout
+  /// (`["here": workoutId]`). About the workout the phone runs, it is there to signal the rest.
+  private func heard(_ workoutId: String?) {
+    lock.lock()
+    let running = UserDefaults.standard.string(forKey: Self.workoutIdKey)
+    lock.unlock()
+    guard let workoutId, workoutId == running else { return }
+    UserDefaults.standard.set(Date().timeIntervalSince1970 * 1000, forKey: Self.heardAtKey)
+    putRestOff()
+    statusChanged()
+  }
+
+  /// Puts the phone's rest notification off while the watch is heard, as the watch signals the
+  /// rest: one due within the time the watch is taken to be there is moved to its end, and one due
+  /// that long ago, which the watch signalled, goes. Should the watch stop being heard, it comes
+  /// at most that long after it was due.
+  private func putRestOff() {
+    let center = UNUserNotificationCenter.current()
+    center.getPendingNotificationRequests { requests in
+      guard let request = requests.first(where: { $0.identifier == Self.restNotificationId }),
+        let next = Self.nextDate(of: request.trigger)
+      else { return }
+      let now = Date()
+      let due = (request.content.userInfo[Self.dueKey] as? Double)
+        .map { Date(timeIntervalSince1970: $0) } ?? next
+      if now.timeIntervalSince(due) > Self.heardFor {
+        center.removePendingNotificationRequests(withIdentifiers: [Self.restNotificationId])
+        return
+      }
+      guard next.timeIntervalSince(now) < Self.heardFor,
+        let content = request.content.mutableCopy() as? UNMutableNotificationContent
+      else { return }
+      content.userInfo[Self.dueKey] = due.timeIntervalSince1970
+      center.add(
+        UNNotificationRequest(
+          identifier: Self.restNotificationId, content: content,
+          trigger: UNTimeIntervalNotificationTrigger(timeInterval: Self.heardFor, repeats: false)))
+    }
+  }
+
+  private static func nextDate(of trigger: UNNotificationTrigger?) -> Date? {
+    if let trigger = trigger as? UNCalendarNotificationTrigger { return trigger.nextTriggerDate() }
+    if let trigger = trigger as? UNTimeIntervalNotificationTrigger {
+      return trigger.nextTriggerDate()
+    }
+    return nil
   }
 
   // MARK: - WCSessionDelegate
@@ -182,7 +227,11 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-    keep(message)
+    if let workoutId = message["here"] as? String {
+      heard(workoutId)
+    } else {
+      keep(message)
+    }
   }
 
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {

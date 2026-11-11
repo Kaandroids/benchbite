@@ -5,12 +5,18 @@ import { requireOptionalNativeModule, type NativeModule } from 'expo';
 export type WatchLinkEvents = {
   /** Commands from the watch are waiting to be taken. */
   onCommands: () => void;
-  /** The watch was paired, installed, or came in or out of reach. */
+  /** The watch was paired, installed, came in or out of reach, or was heard from. */
   onStatus: () => void;
 };
 
 declare class WatchLinkModule extends NativeModule<WatchLinkEvents> {
-  status(): { paired: boolean; installed: boolean; reachable: boolean };
+  status(): {
+    paired: boolean;
+    installed: boolean;
+    reachable: boolean;
+    /** When the watch was last heard from about the workout the phone runs, in milliseconds. */
+    heardAt?: number | null;
+  };
   /** Sends the state, with its workout's id, as only JavaScript reads the state. */
   sendState(json: string, workoutId: string | null): void;
   /** The commands kept since the last call, oldest first, each as JSON. */
