@@ -181,6 +181,12 @@ describe('stateOf', () => {
     expect(plank).toMatchObject({ fields: ['seconds'], crown: {} });
   });
 
+  it('turns only the distance of a timed set, as the clock measures its time', () => {
+    const rowing = setKindOf(['distance', 'duration'], { seconds: null, meters: 2000 });
+    expect(crownOf(rowing, undefined)).toEqual({ meters: { min: 50, max: 1_000_000, step: 50 } });
+    expect(crownOf(setKindOf(['duration'], { seconds: 45, meters: null }), undefined)).toEqual({});
+  });
+
   it('turns a weight added to the body down to none, and by the equipment’s step', () => {
     const pullUp = setKindOf(['reps'], { reps: { min: 8, max: 12 } });
     expect(crownOf(pullUp, 'dumbbell').weightKg).toEqual({ min: 0, max: 999.75, step: 2 });
@@ -474,6 +480,37 @@ describe('applyCommand', () => {
     expect(
       applyCommand(start(), plank, { metricsOf: noLibrary, now: NOW }).exercises[2]?.sets[0]?.done,
     ).toBe(false);
+  });
+
+  it('starts the clock of a timed set, which a tick then stops with the time it ran', () => {
+    const start2 = command(NOW + MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    let session = applyCommand(start(), start2, { metricsOf: noLibrary, now: NOW + MINUTE });
+    expect(session.clock).toEqual({ exercise: 2, set: 0, startedAt: NOW + MINUTE });
+    expect(stateOf(session, names(withBench), 1, []).workout?.clock).toEqual(session.clock);
+    const stop = command(NOW + MINUTE + 50_000, {
+      type: 'setDone',
+      exercise: 2,
+      set: 0,
+      done: true,
+    });
+    session = applyCommand(session, stop, { metricsOf: noLibrary, now: NOW + 2 * MINUTE });
+    expect(session.clock).toBeNull();
+    expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 50 });
+  });
+
+  it('starts no clock for a set done, nor over one started later', () => {
+    const done2 = toggleDoneUnchecked(startClock(start(), 2, 0, NOW), 2, 0, NOW);
+    const late = command(NOW - MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    expect(applyCommand(done2, late, { metricsOf: noLibrary, now: NOW })).toMatchObject({
+      clock: { exercise: 2, set: 0, startedAt: NOW },
+    });
+    const running = startClock(start(), 1, 0, NOW);
+    const older = command(NOW - MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    expect(applyCommand(running, older, { metricsOf: noLibrary, now: NOW }).clock).toEqual({
+      exercise: 1,
+      set: 0,
+      startedAt: NOW,
+    });
   });
 
   it('ticks a set with the values the watch edited for it', () => {
