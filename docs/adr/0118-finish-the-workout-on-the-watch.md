@@ -25,4 +25,5 @@ A workout followed by the watch could be finished only on the phone, whose finis
 - A workout can be finished from the wrist; with the phone's app running, it is saved within a moment.
 - With the phone locked and its app not running, the workout is saved only once the app runs again, until then the watch waits.
 - A set ticked on the phone in the moment the save runs is not in the log: the log is the workout as it was when the finish arrived, and `log_workout` keeps the first log of a workout however often it is sent, so keeping the workout open for it would only lose it later.
+- A finish the phone has no set to save for, as when it refused a tick the watch counted, shows on the watch as a save that failed. The watch offers Done only for a set with what it needs, so this is rare, and the workout goes on, to be finished there or on the phone.
 - No end time is chosen on the watch: a workout left open is finished on the phone, whose finish screen offers it.
