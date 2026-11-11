@@ -51,7 +51,6 @@ export type WatchExercise = {
   crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
   sets: WatchSet[];
-  last: SetValues[];
 };
 
 export type WatchWorkout = {
@@ -184,7 +183,6 @@ export function stateOf(
               lastText: last ? describeSet(last, kind) : null,
             };
           }),
-          last: exercise.last,
         };
       }),
       applied: session.watchCommands ?? [],
@@ -272,7 +270,12 @@ function change(
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
+      const ticked = markDone(edited, command.exercise, command.set, command.done, kind, {
+        at,
+        now,
+      });
+      // The values go with the tick: a tick refused, as one older than the set's, sets none.
+      return ticked === edited ? session : ticked;
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.

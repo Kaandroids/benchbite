@@ -149,7 +149,7 @@ describe('stateOf', () => {
     });
   });
 
-  it('gives each exercise its fields and weight step, and each set last time’s', () => {
+  it('gives each exercise its fields and how the Crown turns them, and each set last time’s', () => {
     const last = { bench: [{ weightKg: 77.5, reps: 7, seconds: null, meters: null }] };
     const session = startSession('user-a', PUSH, last, { now: NOW });
     const lifted: MetricsOf = (id) => (id === 'bench' ? ['weight', 'reps'] : undefined);
@@ -463,6 +463,25 @@ describe('applyCommand', () => {
     expect(bench(applyCommand(start(), edited, lifted))[0]).toMatchObject({
       weightKg: 82.5,
       reps: 8,
+      done: true,
+    });
+  });
+
+  it('sets no values with a tick it refuses', () => {
+    const lifted = {
+      metricsOf: () => ['weight', 'reps'] as ('weight' | 'reps')[],
+      now: NOW + MINUTE,
+    };
+    const ticked = toggleDoneUnchecked(setValues(start(), 0, 0, { weightKg: 80 }, NOW), 0, 0, NOW);
+    const stale = command(NOW + MINUTE, {
+      type: 'setDone',
+      exercise: 0,
+      set: 0,
+      done: true,
+      values: { weightKg: 85 },
+    });
+    expect(bench(applyCommand(ticked, stale, lifted))[0]).toMatchObject({
+      weightKg: 80,
       done: true,
     });
   });
