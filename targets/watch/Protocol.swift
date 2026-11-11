@@ -35,6 +35,16 @@ struct WatchNext: Decodable {
 struct WatchRest: Decodable {
   let endsAt: Double
   let seconds: Int
+  /// The watch started or last changed it, and so signals its end.
+  let byWatch: Bool
+}
+
+/// The rest as the watch shows it: the phone's, or one a change made here, not applied yet, starts
+/// or changes.
+struct ShownRest: Equatable {
+  let endsAt: Double
+  let seconds: Int
+  let byWatch: Bool
 }
 
 struct WatchExercise: Decodable {
@@ -109,7 +119,8 @@ struct WatchSet: Decodable {
 struct WatchCommand {
   /// What a command changes, which the watch shows until the phone has applied it.
   enum Change {
-    case tick(exercise: Int, set: Int)
+    /// With the rest it starts, as the watch reckons it until the phone says.
+    case tick(exercise: Int, set: Int, startsRest: ShownRest?)
     /// The rest ending at `endsAt`, or skipped.
     case rest(endsAt: Double?)
     case join
@@ -139,14 +150,16 @@ struct WatchCommand {
 
   /// Sets a set done or not done, as of now, with the values edited on the watch set first.
   static func setDone(
-    workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double]
+    workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double],
+    startsRest: ShownRest?
   ) -> WatchCommand? {
     var body: [String: Any] = ["type": "setDone", "exercise": exercise, "set": set, "done": done]
     if !values.isEmpty {
       body["values"] = Dictionary(uniqueKeysWithValues: values.map { ($0.key.rawValue, $0.value) })
     }
     return WatchCommand(
-      workoutId: workoutId, change: .tick(exercise: exercise, set: set), body: body)
+      workoutId: workoutId, change: .tick(exercise: exercise, set: set, startsRest: startsRest),
+      body: body)
   }
 
   /// Follows the workout from now on.
@@ -161,8 +174,18 @@ struct WatchCommand {
       body: ["type": "setRest", "of": of, "endsAt": endsAt ?? NSNull()])
   }
 
+  /// The JSON with what the phone's module reads without reading it: the workout it is for, and
+  /// whether it makes the rest the watch's to signal, so that the phone's notification goes.
   var payload: [String: Any] {
-    ["command": json, "workoutId": workoutId]
+    ["command": json, "workoutId": workoutId, "takesRest": takesRest]
+  }
+
+  private var takesRest: Bool {
+    switch change {
+    case .tick(_, _, let startsRest): startsRest != nil
+    case .rest: true
+    case .join: false
+    }
   }
 }
 
@@ -178,6 +201,8 @@ struct NextSet {
   let setIndex: Int
   let exercise: WatchExercise
   var set: WatchSet { exercise.sets[setIndex] }
+  /// As "Set 4 · 80 kg × 8".
+  var label: String { "Set \(setIndex + 1) · \(set.text)" }
 }
 
 extension WatchWorkout {

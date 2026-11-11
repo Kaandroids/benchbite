@@ -2,25 +2,21 @@ import SwiftUI
 import UserNotifications
 import WatchKit
 
-/// Signals the end of the rest while the watch follows the workout, and the phone does not (ADR
-/// 0112): a local notification, which taps the wrist with the app closed or the wrist down, and,
-/// with the app open, a tap and the rest-over screen instead.
+/// Signals the end of the rests the watch started or last changed, while it follows the workout
+/// (ADR 0112): a local notification, which taps the wrist with the app closed or the wrist down,
+/// and, with the app open, a tap and the rest-over screen instead.
 @MainActor
 final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
-  /// A rest that ended while the app was open, until Go.
-  struct Over: Equatable {
-    let endsAt: Double
-    /// The set after it, as "Set 4 · 80 kg × 8".
-    let next: String?
-  }
-
-  /// The rest a signal is set for: when it ends, and the set after it.
+  /// The rest a signal is set for: its workout, when it ends, and the set after it.
   struct Rest: Equatable {
+    let workoutId: String
     let endsAt: Double
+    /// As "Set 4 · 80 kg × 8".
     let next: String?
   }
 
-  @Published var over: Over?
+  /// A rest that ended while the app was open, until Go.
+  @Published var over: Rest?
 
   private static let id = "rest-end"
   /// A rest that ended longer ago than this, when the app comes back, is not signalled again.
@@ -33,14 +29,22 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
     UNUserNotificationCenter.current().delegate = self
   }
 
-  /// Asks to signal rests, once the user joins a workout.
-  func requestPermission() {
-    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+  /// Asks to signal rests, once the user joins a workout; tells whether it may.
+  func requestPermission(_ answer: @escaping @MainActor (Bool) -> Void) {
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
+      granted, _ in
+      Task { @MainActor in answer(granted) }
+    }
   }
 
   /// Signals the end of this rest, or of none, in place of the one before.
   func follow(_ rest: Rest?) {
     guard rest != self.rest else { return }
+    if rest == nil, let current = self.rest {
+      // The phone ends a rest by its own clock, which may run ahead of the watch's: one about to
+      // end is still signalled.
+      if current.endsAt / 1000 - Date().timeIntervalSince1970 < Self.late { return }
+    }
     self.rest = rest
     timer?.invalidate()
     timer = nil
@@ -69,7 +73,7 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
       return
     }
     WKInterfaceDevice.current().play(.notification)
-    over = Over(endsAt: rest.endsAt, next: rest.next)
+    over = rest
   }
 
   /// With the app open, the rest-over screen shows instead of the notification.

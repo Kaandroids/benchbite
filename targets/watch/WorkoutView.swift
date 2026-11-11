@@ -11,14 +11,14 @@ struct WorkoutView: View {
       if let workout = phone.workout {
         if !workout.follows {
           JoinView(workout: workout)
-        } else if let over = restAlert.over {
+        } else if let over = restAlert.over, over.workoutId == workout.id {
           RestOverView(next: over.next) { restAlert.over = nil }
         } else {
           // Each second, so that the rest counts down and gives way to the set when it is over.
           TimelineView(.periodic(from: .now, by: 1)) { context in
             let now = context.date.timeIntervalSince1970 * 1000
-            if let endsAt = phone.restEndsAt(workout), endsAt > now, let rest = workout.rest {
-              RestView(workout: workout, seconds: rest.seconds, endsAt: endsAt, now: now)
+            if let rest = phone.rest(of: workout), rest.endsAt > now {
+              RestView(workout: workout, rest: rest, now: now)
             } else {
               SetView(workout: workout)
             }
@@ -38,16 +38,17 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
-    // Only a workout the watch follows has its rests signalled here; the phone signals the others.
+    // Only the rests the watch started or last changed, of a workout it follows, are signalled
+    // here; the phone signals the others.
     .onChange(of: signalled, initial: true) { restAlert.follow(signalled) }
   }
 
-  /// The rest whose end the watch signals, and the set after it.
+  /// The rest whose end the watch signals, one it started or last changed, and the set after it.
   private var signalled: RestAlert.Rest? {
-    guard let workout = phone.workout, workout.follows, let endsAt = phone.restEndsAt(workout)
+    guard let workout = phone.workout, workout.follows, let rest = phone.rest(of: workout),
+      rest.byWatch
     else { return nil }
-    return RestAlert.Rest(
-      endsAt: endsAt, next: workout.nextSet.map { "Set \($0.setIndex + 1) · \($0.set.text)" })
+    return RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: workout.nextSet?.label)
   }
 }
 
@@ -56,6 +57,8 @@ private struct JoinView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
   let workout: WatchWorkout
+  /// Notifications were refused, without which the watch cannot signal a rest.
+  @State private var refused = false
 
   var body: some View {
     let sets = workout.exercises.flatMap(\.sets)
@@ -74,12 +77,20 @@ private struct JoinView: View {
       .font(.rounded(14))
       .foregroundStyle(Theme.secondary)
       Button("Join") {
-        restAlert.requestPermission()
-        phone.send(.join(workoutId: workout.id))
+        restAlert.requestPermission { granted in
+          refused = !granted
+          if granted { phone.send(.join(workoutId: workout.id)) }
+        }
       }
       .buttonStyle(PillButtonStyle())
       .disabled(phone.isJoinWaiting(workoutId: workout.id))
       .padding(.top, 8)
+      if refused {
+        // Joined without them, the phone would leave rests to a watch that cannot signal them.
+        Text("Allow notifications for Benchbite in the Watch app on your iPhone to join.")
+          .font(.rounded(12))
+          .foregroundStyle(Theme.warning)
+      }
     }
     .multilineTextAlignment(.center)
     .foregroundStyle(Theme.text)

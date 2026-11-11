@@ -21,47 +21,68 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   /// Whether a tick of this set waits for the phone, which a second one would only repeat.
   func isTickWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
-    waiting.values.contains {
-      guard $0.workoutId == workoutId, case .tick(exercise, set) = $0.change else { return false }
+    firstWaiting(workoutId) {
+      guard case .tick(exercise, set, _) = $0 else { return false }
       return true
-    }
+    } != nil
   }
 
   /// Whether a change of the workout's rest waits for the phone. Another waits until it is
   /// applied, as the phone takes a change only of the rest it has, and the two could arrive in
   /// either order.
   func isRestWaiting(workoutId: String) -> Bool {
-    waitingRest(workoutId: workoutId) != nil
-  }
-
-  /// When the workout's rest ends as the watch shows it: as the change made here that the phone
-  /// has not applied yet says, else as the phone says.
-  func restEndsAt(_ workout: WatchWorkout) -> Double? {
-    if case .rest(let endsAt) = waitingRest(workoutId: workout.id)?.change {
-      return endsAt
-    }
-    return workout.rest?.endsAt
+    firstWaiting(workoutId) {
+      guard case .rest = $0 else { return false }
+      return true
+    } != nil
   }
 
   /// Whether joining the workout waits for the phone.
   func isJoinWaiting(workoutId: String) -> Bool {
-    waiting.values.contains {
-      guard $0.workoutId == workoutId, case .join = $0.change else { return false }
+    firstWaiting(workoutId) {
+      guard case .join = $0 else { return false }
       return true
+    } != nil
+  }
+
+  /// Whether anything done here for the workout waits for the phone.
+  func isWaiting(workoutId: String) -> Bool {
+    firstWaiting(workoutId) { _ in true } != nil
+  }
+
+  /// The workout's rest as the watch shows it: as a change made here that the phone has not
+  /// applied yet says, a rest change before a tick, else as the phone says.
+  func rest(of workout: WatchWorkout) -> ShownRest? {
+    if let change = firstWaiting(workout.id, where: {
+      guard case .rest = $0 else { return false }
+      return true
+    })?.change, case .rest(let endsAt) = change {
+      return endsAt.map {
+        ShownRest(endsAt: $0, seconds: workout.rest?.seconds ?? 0, byWatch: true)
+      }
+    }
+    let ticked = waiting.values.lazy.filter { $0.workoutId == workout.id }
+      .compactMap { command -> ShownRest? in
+        guard case .tick(_, _, let startsRest) = command.change else { return nil }
+        return startsRest
+      }
+      .max { $0.endsAt < $1.endsAt }
+    if let ticked { return ticked }
+    return workout.rest.map {
+      ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, byWatch: $0.byWatch)
     }
   }
 
-  private func waitingRest(workoutId: String) -> WatchCommand? {
-    waiting.values.first {
-      guard $0.workoutId == workoutId, case .rest = $0.change else { return false }
-      return true
-    }
+  private func firstWaiting(
+    _ workoutId: String, where matches: (WatchCommand.Change) -> Bool
+  ) -> WatchCommand? {
+    waiting.values.first { $0.workoutId == workoutId && matches($0.change) }
   }
 
   func send(_ command: WatchCommand?) {
     guard let command else { return }
     switch command.change {
-    case .tick(let exercise, let set):
+    case .tick(let exercise, let set, _):
       if isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
     case .rest:
       if isRestWaiting(workoutId: command.workoutId) { return }

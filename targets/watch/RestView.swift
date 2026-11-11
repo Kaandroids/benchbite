@@ -5,13 +5,14 @@ import SwiftUI
 struct RestView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
-  /// How long the rest is, which the ring is the whole of.
-  let seconds: Int
-  /// When it ends, as the watch shows it, and now, in milliseconds since the epoch.
-  let endsAt: Double
+  /// As the watch shows it: how long, which the ring is the whole of, and when it ends.
+  let rest: ShownRest
+  /// In milliseconds since the epoch.
   let now: Double
 
   var body: some View {
+    let seconds = rest.seconds
+    let endsAt = rest.endsAt
     let left = max(0, Int(((endsAt - now) / 1000).rounded(.up)))
     VStack(spacing: 6) {
       ZStack {
@@ -48,15 +49,16 @@ struct RestView: View {
 
   /// The set after the rest, as "Next: set 4 · 80 kg × 8".
   private var next: String? {
-    workout.nextSet.map { "Next: set \($0.setIndex + 1) · \($0.set.text)" }
+    workout.nextSet.map { "Next: \($0.label)" }
   }
 
   private func change(_ title: String, to newEnd: Double?) -> some View {
     Button(title) {
-      phone.send(.setRest(workoutId: workout.id, of: endsAt, endsAt: newEnd))
+      phone.send(.setRest(workoutId: workout.id, of: rest.endsAt, endsAt: newEnd))
     }
     .buttonStyle(PillButtonStyle(prominent: false, height: 38, fontSize: 14))
-    // The phone takes a change only of the rest it has, so one waits for the one before.
-    .disabled(phone.isRestWaiting(workoutId: workout.id))
+    // The phone takes a change only of the rest it has, so one waits for what was done before,
+    // as the tick that starts the rest.
+    .disabled(phone.isWaiting(workoutId: workout.id))
   }
 }
