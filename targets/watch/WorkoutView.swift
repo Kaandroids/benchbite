@@ -5,7 +5,6 @@ import SwiftUI
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
-  @EnvironmentObject private var workoutSession: WorkoutSession
 
   var body: some View {
     Group {
@@ -42,18 +41,6 @@ struct WorkoutView: View {
     // Only the rests the watch started or last changed, of a workout it follows, are signalled
     // here; the phone signals the others.
     .onChange(of: signalled, initial: true) { restAlert.signal(signalled) }
-    // The session measures the workout the watch follows, and ends as the phone ended it.
-    .onChange(of: followed, initial: true) {
-      workoutSession.sync(followed: followed, ended: phone.ended)
-    }
-    .onChange(of: phone.ended) { workoutSession.sync(followed: followed, ended: phone.ended) }
-  }
-
-  /// The workout the watch follows.
-  private var followed: WorkoutSession.Followed? {
-    phone.workout.flatMap {
-      $0.follows ? WorkoutSession.Followed(workoutId: $0.id, startedAt: $0.startedAt) : nil
-    }
   }
 
   /// The rest whose end the watch signals, one it started or last changed, and the set after it.

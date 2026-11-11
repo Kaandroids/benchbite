@@ -6,17 +6,12 @@ import HealthKit
 /// saves the watch's workout to the health store with them, as a watch's workout app does. A
 /// workout the phone lets go of is left out.
 ///
-/// What the phone last said decides, whatever order things happen in: `sync` keeps it, and each
-/// step that ends, whether taking up a session after a relaunch, asking the user or a session
-/// ending, looks at it again.
+/// What the phone last said decides, whatever order things happen in: `sync` keeps each state it
+/// sends, and each step that ends, whether taking up a session after a relaunch, asking the user
+/// or a session ending, looks at it again. Before the phone has said anything since launch, nothing
+/// starts or ends.
 @MainActor
 final class WorkoutSession: NSObject, ObservableObject {
-  /// The workout the watch follows, as the phone said.
-  struct Followed: Equatable {
-    let workoutId: String
-    let startedAt: Double
-  }
-
   /// The latest heart rate, in beats a minute, while a session runs.
   @Published private(set) var heartRate: Int?
 
@@ -24,9 +19,12 @@ final class WorkoutSession: NSObject, ObservableObject {
   private nonisolated static let calories = HKQuantityType(.activeEnergyBurned)
   private static let workoutIdKey = "workoutSession.workoutId"
 
+  /// As long as a workout can be on the phone: one older is let go of, as left open there.
+  private static let longest: TimeInterval = 12 * 3600
+
   private let store = HKHealthStore()
-  private var followed: Followed?
-  private var ended: [WatchEnded] = []
+  /// The phone's latest state, none until it has sent one since launch.
+  private var said: WatchState?
   /// While a session the system kept running while the app was ended is taken up.
   private var recovering = false
   /// While the user is asked to allow the health store.
@@ -41,7 +39,9 @@ final class WorkoutSession: NSObject, ObservableObject {
     didSet { UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey) }
   }
   /// While the workout of the session that ended is saved or left out.
-  private var ending: (saved: Bool, at: Date)?
+  private var ending = false
+  /// Ends a session that has run as long as a workout can.
+  private var cap: Timer?
 
   /// Takes up the session the system kept running while the app was ended, which it says by
   /// launching the app to recover it; until then nothing starts or ends.
@@ -63,29 +63,33 @@ final class WorkoutSession: NSObject, ObservableObject {
     }
   }
 
-  /// Takes what the phone last said: the workout the watch follows, and how the latest ended.
-  func sync(followed: Followed?, ended: [WatchEnded]) {
-    self.followed = followed
-    self.ended = ended
+  /// Takes a state the phone sent: the workout it runs, whether the watch follows it, and how the
+  /// latest ended.
+  func sync(_ state: WatchState) {
+    said = state
     reconcile()
   }
 
   /// Starts, ends or keeps the session as the phone said, once nothing else is under way.
   private func reconcile() {
-    guard !recovering, !asking, ending == nil else { return }
+    guard let said, !recovering, !asking, !ending else { return }
     if let session {
       guard let workoutId else { return end(session, saved: false, at: Date()) }
-      if let end = ended.first(where: { $0.id == workoutId }) {
+      if let end = said.ended.first(where: { $0.id == workoutId }) {
         self.end(session, saved: end.saved, at: end.endedAt.map(Self.date) ?? Date())
-      } else if followed?.workoutId != workoutId {
-        // The phone runs no workout or another, and says nothing of how this one ended.
+      } else if let running = said.workout?.id, running != workoutId {
+        // The phone runs another workout, and says nothing of how this one ended. Running none,
+        // as while it starts or signs in again, it may still run this one.
+        self.end(session, saved: false, at: Date())
+      } else if let start = builder?.startDate, Date().timeIntervalSince(start) > Self.longest {
         self.end(session, saved: false, at: Date())
       }
       return
     }
-    guard let followed, !stopped.contains(followed.workoutId),
-      !ended.contains(where: { $0.id == followed.workoutId }), HKHealthStore.isHealthDataAvailable()
+    guard let workout = said.workout, workout.follows, !stopped.contains(workout.id),
+      !said.ended.contains(where: { $0.id == workout.id }), HKHealthStore.isHealthDataAvailable()
     else { return }
+    let followed = (workoutId: workout.id, startedAt: workout.startedAt)
     if store.authorizationStatus(for: HKObjectType.workoutType()) == .notDetermined {
       asking = true
       store.requestAuthorization(
@@ -104,7 +108,7 @@ final class WorkoutSession: NSObject, ObservableObject {
 
   /// Measures the phone's workout, from when it started there, so that the saved workout covers
   /// the log's time and the phone takes it for the same workout (ADR 0105, ADR 0106).
-  private func begin(_ followed: Followed) {
+  private func begin(_ followed: (workoutId: String, startedAt: Double)) {
     let configuration = HKWorkoutConfiguration()
     configuration.activityType = .traditionalStrengthTraining
     configuration.locationType = .indoor
@@ -125,6 +129,17 @@ final class WorkoutSession: NSObject, ObservableObject {
     builder.beginCollection(withStart: start) { _, error in
       if let error { NSLog("[WorkoutSession] Could not collect: %@", error.localizedDescription) }
     }
+    limit(from: start)
+  }
+
+  /// Looks again once the session has run as long as a workout can, as the phone, not opened,
+  /// may never say it ended.
+  private func limit(from start: Date) {
+    cap?.invalidate()
+    let left = max(1, start.addingTimeInterval(Self.longest + 1).timeIntervalSinceNow)
+    cap = Timer.scheduledTimer(withTimeInterval: left, repeats: false) { [weak self] _ in
+      Task { @MainActor in self?.reconcile() }
+    }
   }
 
   /// Ends the session, then its workout: saved to the health store, to the time the log ends, or
@@ -136,7 +151,9 @@ final class WorkoutSession: NSObject, ObservableObject {
     self.builder = nil
     workoutId = nil
     heartRate = nil
-    ending = (saved, end)
+    cap?.invalidate()
+    cap = nil
+    ending = true
     if session.state != .ended { session.end() }
     builder.endCollection(withEnd: max(end, builder.startDate ?? end)) { _, error in
       if let error {
@@ -152,23 +169,18 @@ final class WorkoutSession: NSObject, ObservableObject {
         builder.discardWorkout()
       }
       Task { @MainActor in
-        self.ending = nil
+        self.ending = false
         self.reconcile()
       }
     }
   }
 
-  /// A session that ended from outside, as by another workout app, is left out, and not started
-  /// again.
+  /// A session that ended from outside, as by another workout app, or failed, is left out, and not
+  /// started again.
   private func sessionEnded(_ session: HKWorkoutSession) {
     guard session === self.session else { return }
     if let workoutId { stopped.insert(workoutId) }
     end(session, saved: false, at: Date())
-  }
-
-  /// A session that failed is left out, and not started again.
-  private func failed(_ session: HKWorkoutSession) {
-    sessionEnded(session)
   }
 
   private func adopt(_ session: HKWorkoutSession, workoutId: String?) {
@@ -177,11 +189,12 @@ final class WorkoutSession: NSObject, ObservableObject {
     builder = session.associatedWorkoutBuilder()
     builder?.delegate = self
     self.workoutId = workoutId
+    if let start = builder?.startDate { limit(from: start) }
   }
 
   private func measured(_ beats: Int?, by builder: HKLiveWorkoutBuilder) {
     // A reading the ending session's builder still sends is not the next workout's.
-    guard builder === self.builder, ending == nil else { return }
+    guard builder === self.builder, !ending else { return }
     heartRate = beats
   }
 
@@ -202,7 +215,7 @@ extension WorkoutSession: HKWorkoutSessionDelegate {
   nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error)
   {
     NSLog("[WorkoutSession] Failed: %@", error.localizedDescription)
-    Task { @MainActor in self.failed(workoutSession) }
+    Task { @MainActor in self.sessionEnded(workoutSession) }
   }
 }
 
