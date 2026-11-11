@@ -45,6 +45,8 @@ struct ShownRest: Equatable {
   let endsAt: Double
   let seconds: Int
   let byWatch: Bool
+  /// The set after it, as "Set 4 · 80 kg × 8".
+  let next: String?
 }
 
 struct WatchExercise: Decodable {
@@ -131,9 +133,11 @@ struct WatchCommand {
   let change: Change
   let json: String
 
-  private init?(workoutId: String, change: Change, body: [String: Any]) {
+  /// Now, as a command's time, in whole milliseconds since the epoch.
+  static func now() -> Double { (Date().timeIntervalSince1970 * 1000).rounded() }
+
+  private init?(workoutId: String, change: Change, body: [String: Any], at: Double = now()) {
     let id = UUID().uuidString
-    let at = (Date().timeIntervalSince1970 * 1000).rounded()
     var message = body
     message["v"] = protocolVersion
     message["id"] = id
@@ -148,18 +152,26 @@ struct WatchCommand {
     self.json = json
   }
 
-  /// Sets a set done or not done, as of now, with the values edited on the watch set first.
+  /// Sets a set done or not done, as of now, with the values edited on the watch set first. A tick
+  /// that starts a rest of `rest` seconds reckons its end from the command's own time, as the
+  /// phone does (toggleDoneUnchecked in src/sessions/session.ts), so that a change of it made
+  /// before the phone answers is of the rest the phone then has.
   static func setDone(
     workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double],
-    startsRest: ShownRest?
+    rest: (seconds: Int, next: String?)?
   ) -> WatchCommand? {
     var body: [String: Any] = ["type": "setDone", "exercise": exercise, "set": set, "done": done]
     if !values.isEmpty {
       body["values"] = Dictionary(uniqueKeysWithValues: values.map { ($0.key.rawValue, $0.value) })
     }
+    let at = now()
+    let startsRest = rest.map {
+      ShownRest(
+        endsAt: at + Double($0.seconds) * 1000, seconds: $0.seconds, byWatch: true, next: $0.next)
+    }
     return WatchCommand(
       workoutId: workoutId, change: .tick(exercise: exercise, set: set, startsRest: startsRest),
-      body: body)
+      body: body, at: at)
   }
 
   /// Follows the workout from now on.
@@ -180,12 +192,29 @@ struct WatchCommand {
     ["command": json, "workoutId": workoutId, "takesRest": takesRest]
   }
 
-  private var takesRest: Bool {
-    switch change {
-    case .tick(_, _, let startsRest): startsRest != nil
-    case .rest: true
-    case .join: false
-    }
+  private var takesRest: Bool { change.startsRest != nil || change.isRest }
+}
+
+extension WatchCommand.Change {
+  func isTick(exercise: Int, set: Int) -> Bool {
+    guard case .tick(exercise, set, _) = self else { return false }
+    return true
+  }
+
+  var isRest: Bool {
+    guard case .rest = self else { return false }
+    return true
+  }
+
+  var isJoin: Bool {
+    guard case .join = self else { return false }
+    return true
+  }
+
+  /// The rest a tick starts, as the watch reckons it.
+  var startsRest: ShownRest? {
+    guard case .tick(_, _, let startsRest) = self else { return nil }
+    return startsRest
   }
 }
 
@@ -206,6 +235,21 @@ struct NextSet {
 }
 
 extension WatchWorkout {
+  /// The set to do after a tick of this one, before the phone says: the first not done after it,
+  /// then in the exercises after it, then in those before it, as nextSetOf() goes on.
+  func nextSet(after exercise: Int, set: Int) -> NextSet? {
+    let count = exercises.count
+    for step in 0..<count {
+      let index = (exercise + step) % count
+      let first = step == 0 ? set + 1 : 0
+      let sets = exercises[index].sets
+      if let next = sets.indices.first(where: { $0 >= first && !sets[$0].done }) {
+        return NextSet(exerciseIndex: index, setIndex: next, exercise: exercises[index])
+      }
+    }
+    return nil
+  }
+
   var nextSet: NextSet? {
     guard let next, exercises.indices.contains(next.exercise),
       exercises[next.exercise].sets.indices.contains(next.set)

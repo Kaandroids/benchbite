@@ -40,7 +40,7 @@ struct WorkoutView: View {
     }
     // Only the rests the watch started or last changed, of a workout it follows, are signalled
     // here; the phone signals the others.
-    .onChange(of: signalled, initial: true) { restAlert.follow(signalled) }
+    .onChange(of: signalled, initial: true) { restAlert.signal(signalled) }
   }
 
   /// The rest whose end the watch signals, one it started or last changed, and the set after it.
@@ -48,7 +48,7 @@ struct WorkoutView: View {
     guard let workout = phone.workout, workout.follows, let rest = phone.rest(of: workout),
       rest.byWatch
     else { return nil }
-    return RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: workout.nextSet?.label)
+    return RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: rest.next)
   }
 }
 
@@ -107,7 +107,7 @@ private struct RestOverView: View {
       Image(systemName: "timer")
         .font(.system(size: 36, weight: .semibold))
         .foregroundStyle(Theme.accent)
-      Text("Rest is over").font(.rounded(20, .heavy))
+      Text(RestAlert.title).font(.rounded(20, .heavy))
       if let next {
         Text(next)
           .font(.rounded(14))

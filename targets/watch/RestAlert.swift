@@ -18,6 +18,9 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
   /// A rest that ended while the app was open, until Go.
   @Published var over: Rest?
 
+  /// What the notification and the rest-over screen say.
+  static let title = "Rest is over"
+
   private static let id = "rest-end"
   /// A rest that ended longer ago than this, when the app comes back, is not signalled again.
   private static let late: TimeInterval = 2
@@ -38,7 +41,7 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
   }
 
   /// Signals the end of this rest, or of none, in place of the one before.
-  func follow(_ rest: Rest?) {
+  func signal(_ rest: Rest?) {
     guard rest != self.rest else { return }
     if rest == nil, let current = self.rest {
       // The phone ends a rest by its own clock, which may run ahead of the watch's: one about to
@@ -55,7 +58,7 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
     let seconds = rest.endsAt / 1000 - Date().timeIntervalSince1970
     guard seconds > 0 else { return }
     let content = UNMutableNotificationContent()
-    content.title = "Rest is over"
+    content.title = Self.title
     content.body = rest.next ?? ""
     content.sound = .default
     center.add(

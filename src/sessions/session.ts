@@ -330,6 +330,7 @@ export function toggleDoneUnchecked(
     return { ...next, rest: null, restChangedAt: now };
   }
   const item = next.exercises[exercise];
+  // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
   next = {
     ...next,
     restChangedAt: now,

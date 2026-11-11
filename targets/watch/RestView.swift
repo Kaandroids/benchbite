@@ -47,9 +47,9 @@ struct RestView: View {
     .foregroundStyle(Theme.text)
   }
 
-  /// The set after the rest, as "Next: set 4 · 80 kg × 8".
+  /// The set after the rest, as "Next: Set 4 · 80 kg × 8".
   private var next: String? {
-    workout.nextSet.map { "Next: \($0.label)" }
+    rest.next.map { "Next: \($0)" }
   }
 
   private func change(_ title: String, to newEnd: Double?) -> some View {
@@ -57,8 +57,7 @@ struct RestView: View {
       phone.send(.setRest(workoutId: workout.id, of: rest.endsAt, endsAt: newEnd))
     }
     .buttonStyle(PillButtonStyle(prominent: false, height: 38, fontSize: 14))
-    // The phone takes a change only of the rest it has, so one waits for what was done before,
-    // as the tick that starts the rest.
-    .disabled(phone.isWaiting(workoutId: workout.id))
+    // The phone takes a change only of the rest it has, so one waits for the one before.
+    .disabled(phone.isRestWaiting(workoutId: workout.id))
   }
 }
