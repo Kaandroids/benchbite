@@ -13,7 +13,7 @@ import { missingFields, type SetValues } from '@/sets/values';
 import { useTheme } from '@/theme';
 
 import { recordValues } from './records';
-import type { SessionSet } from './session';
+import { timedByClock, type SessionSet } from './session';
 
 type SetRowProps = {
   number: number;
@@ -62,8 +62,7 @@ export function SetRow({
     }
     onToggle();
   };
-  // A timed set is done with its clock, or with a tick once its time is typed by hand.
-  const clockButton = kind.timed && !set.done && (running || set.seconds === null);
+  const clockButton = timedByClock(set, kind, running);
   // One record names its value; several only their kinds, the set's values being beside them.
   const [firstRecord] = records;
   const values = recordValues(set, kind);

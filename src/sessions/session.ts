@@ -453,6 +453,15 @@ export function startClock(
   };
 }
 
+/**
+ * Whether a set is done with its clock, Start and Stop in place of its tick: a timed set not done,
+ * while its clock runs or it has no time yet; one whose time was typed by hand is ticked as it is.
+ * The phone's set row and the watch both go by it (ADR 0124).
+ */
+export function timedByClock(set: SessionSet, kind: SetKind, running: boolean): boolean {
+  return kind.timed && !set.done && (running || set.seconds === null);
+}
+
 /** The seconds a clock has run; never below zero, as `now` may lag just behind its start. */
 export function clockSeconds(clock: SetClock, now = Date.now()): number {
   return Math.max(0, Math.floor((now - clock.startedAt) / 1000));
