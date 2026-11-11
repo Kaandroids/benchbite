@@ -467,23 +467,55 @@ describe('applyCommand', () => {
     });
   });
 
-  it('sets no values with a tick it refuses', () => {
+  it('sets a done set’s values from a later tick of the watch, the latest change', () => {
     const lifted = {
       metricsOf: () => ['weight', 'reps'] as ('weight' | 'reps')[],
       now: NOW + MINUTE,
     };
+    // Ticked on the phone while the watch was out of reach, then changed and ticked there.
     const ticked = toggleDoneUnchecked(setValues(start(), 0, 0, { weightKg: 80 }, NOW), 0, 0, NOW);
-    const stale = command(NOW + MINUTE, {
+    const later = command(NOW + MINUTE, {
       type: 'setDone',
       exercise: 0,
       set: 0,
       done: true,
       values: { weightKg: 85 },
     });
-    expect(bench(applyCommand(ticked, stale, lifted))[0]).toMatchObject({
-      weightKg: 80,
+    expect(bench(applyCommand(ticked, later, lifted))[0]).toMatchObject({
+      weightKg: 85,
       done: true,
     });
+  });
+
+  it('sets no values with a tick older than the set’s last untick', () => {
+    const lifted = {
+      metricsOf: () => ['weight', 'reps'] as ('weight' | 'reps')[],
+      now: NOW + MINUTE,
+    };
+    let session = toggleDoneUnchecked(setValues(start(), 0, 0, { weightKg: 80 }, NOW), 0, 0, NOW);
+    session = toggleDoneUnchecked(session, 0, 0, NOW + MINUTE);
+    const older = command(NOW + 30_000, {
+      type: 'setDone',
+      exercise: 0,
+      set: 0,
+      done: true,
+      values: { weightKg: 85 },
+    });
+    expect(bench(applyCommand(session, older, lifted))[0]).toMatchObject({
+      weightKg: 80,
+      done: false,
+    });
+  });
+
+  it('keeps the rest changed at the later time, as a watch’s clock can run behind', () => {
+    const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
+    const skipped = applyCommand(
+      session,
+      command(NOW + 30_000, { type: 'setRest', of: session.rest!.endsAt, endsAt: null }),
+      { metricsOf: noLibrary, now: NOW + MINUTE + 1000 },
+    );
+    expect(skipped.rest).toBeNull();
+    expect(skipped.restChangedAt).toBe(NOW + MINUTE);
   });
 
   it('starts no rest again for an older tick once the watch changed the rest', () => {

@@ -3,7 +3,14 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
-import { addSet, markDone, setRestEnd, setValues, type Session } from '@/sessions/session';
+import {
+  addSet,
+  markDone,
+  setRestEnd,
+  setValues,
+  tickedSince,
+  type Session,
+} from '@/sessions/session';
 import {
   describeSet,
   SET_LIMITS,
@@ -265,18 +272,15 @@ function change(
       return setValues(session, command.exercise, command.set, command.values, at);
     case 'setDone': {
       const item = session.exercises[command.exercise];
-      if (!item) return session;
+      const set = item?.sets[command.set];
+      // The values go with the tick: a tick older than the set's last tick or untick sets none.
+      // Otherwise each is the latest change of its value, even for a set already ticked.
+      if (!item || !set || tickedSince(set, at)) return session;
       const kind = setKindOf(metricsOf(item.exerciseId), item.target);
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      const ticked = markDone(edited, command.exercise, command.set, command.done, kind, {
-        at,
-        now,
-      });
-      // The values go with the tick: a tick refused, as one older than the set's, sets none.
-      // markDone() returns what it was given when it refuses.
-      return ticked === edited ? session : ticked;
+      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.

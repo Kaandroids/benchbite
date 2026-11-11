@@ -419,13 +419,17 @@ export function restUntil(
   return rest && endsAt !== null && endsAt > now ? { ...rest, endsAt } : null;
 }
 
+/** Whether the set was ticked or unticked after `at`, which a change made then cannot undo. */
+export function tickedSince(set: SessionSet, at: number): boolean {
+  return (set.doneChangedAt ?? 0) > at;
+}
+
 /**
  * Marks a set done or not done at `at`, as far as it may be, on the phone or from the watch (ADR
  * 0109). A set is not done without what it needs. A set whose clock runs is done with the clock's
  * time, or, done before the clock started, with its own, the clock stopping. A change older than
  * the set's last tick or untick changes nothing, and one older than the latest set keeps the open
- * exercise and the rest that set started. A rest that is over by `now` is none. A tick it
- * refuses returns `value` itself, which the watch's protocol relies on.
+ * exercise and the rest that set started. A rest that is over by `now` is none.
  */
 export function markDone(
   value: Session,
@@ -444,7 +448,7 @@ export function markDone(
     options.at ??
     Math.max(Date.now(), set.doneChangedAt ?? 0, lastActivity(value), value.restChangedAt ?? 0);
   const now = options.now ?? at;
-  if (set.done === done || (set.doneChangedAt ?? 0) > at) {
+  if (set.done === done || tickedSince(set, at)) {
     return value;
   }
   const { clock } = value;
@@ -474,7 +478,12 @@ export function markDone(
  * made before then starts no rest again. A rest that is over by `now` ends.
  */
 export function setRestEnd(value: Session, endsAt: number | null, at: number, now = at): Session {
-  return { ...value, rest: restUntil(value.rest, endsAt, now), restChangedAt: at };
+  return {
+    ...value,
+    rest: restUntil(value.rest, endsAt, now),
+    // Never back in time, as a watch's clock can run behind the phone's.
+    restChangedAt: Math.max(value.restChangedAt ?? 0, at),
+  };
 }
 
 /** Lengthens or shortens the rest; a rest that is over ends. */
