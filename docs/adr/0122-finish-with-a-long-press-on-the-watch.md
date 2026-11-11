@@ -10,6 +10,7 @@ ADR 0118 finishes the workout on the watch from the end of the exercise list, a 
 ## Decision
 
 - **A long press on the set or the rest opens the finish question**, the same sheet as the list's end, after 0.6 s and with a click on the wrist, so it is not mistaken for a tap. Done and the values' tiles keep their taps; a press on them does not finish.
+- **The question stays above the workout's screens**, so that a rest ending while it is open, as when it is asked from the rest, does not close it; it closes when the workout ends or another runs.
 - **Nothing on the screen names it**: the list's end stays the way to find it, and the long press is the shortcut once known.
 
 ## Alternatives considered

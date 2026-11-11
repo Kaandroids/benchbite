@@ -1,6 +1,6 @@
 # 0118. Finish the workout on the watch
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0122
 - **Date:** 2026-11-11
 
 ## Context
