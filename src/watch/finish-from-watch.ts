@@ -1,36 +1,58 @@
 // Saving a workout finished on the watch, which the phone does at once, as its own Save does
-// (ADR 0118).
-import { useQueryClient } from '@tanstack/react-query';
+// (ADR 0118). The finish is kept in the workout until it is saved, so that one the app was ended
+// on before it was saved is saved once the app runs again, rather than lost to the watch.
 import { router, usePathname } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
-import { afterWorkoutLogged } from '@/health/health-catch-up';
-import { useLogWorkout } from '@/sessions/logs';
+import { useSaveWorkout } from '@/sessions/save-workout';
 import {
   activeSession,
   endOfWatchFinish,
-  endSession,
   sessionTotals,
   stopClock,
-  toLog,
   updateSession,
+  type Session,
 } from '@/sessions/session';
 
-import { applyCommand, isFor, type WatchCommand } from './protocol';
+import { applyCommand, isFor, PROTOCOL_VERSION, workoutIdOf, type WatchCommand } from './protocol';
 
 export type FinishCommand = Extract<WatchCommand, { type: 'finish' }>;
 
-/** The finishes being saved, so that one delivered twice is saved once. */
+/** The workout with the watch's finish kept to be saved, unless one is kept already. */
+export function keepFinish(session: Session, command: FinishCommand): Session {
+  return isFor(session, command) && !session.watchFinish
+    ? { ...session, watchFinish: { id: command.id, at: command.at } }
+    : session;
+}
+
+/**
+ * The workout with its kept finish given up, as the phone could not save it: the finish is applied,
+ * which tells the watch that the workout goes on.
+ */
+function giveUpFinish(session: Session): Session {
+  const kept = session.watchFinish;
+  if (!kept) return session;
+  const command: FinishCommand = {
+    v: PROTOCOL_VERSION,
+    ...kept,
+    workoutId: workoutIdOf(session),
+    type: 'finish',
+  };
+  return {
+    ...applyCommand(session, command, { metricsOf: () => undefined }),
+    watchFinish: undefined,
+  };
+}
+
+/** The finishes being saved, so that the workout's finish is saved once at a time. */
 const saving = new Set<string>();
 
 /**
- * Saves the workout the watch finished and ends it, closing the workout's screens, as the phone's
- * Save does. A finish it cannot save is applied without ending the workout, which tells the watch:
- * the workout goes on, to be finished again there or on the phone.
+ * Saves the finish the workout keeps, and ends it, closing the workout's screens, as the phone's
+ * Save does; or gives the finish up when it cannot be saved.
  */
-export function useFinishFromWatch() {
-  const logWorkout = useLogWorkout();
-  const queryClient = useQueryClient();
+export function useFinishFromWatch(session: Session | null) {
+  const { save } = useSaveWorkout();
   const pathname = usePathname();
   // Where the app is once the save is done, which it may have left meanwhile.
   const path = useRef(pathname);
@@ -38,35 +60,30 @@ export function useFinishFromWatch() {
     path.current = pathname;
   }, [pathname]);
 
-  return async (command: FinishCommand, userId: string | undefined) => {
-    const session = activeSession();
-    if (!session || session.userId !== userId || !isFor(session, command)) return;
-    if (saving.has(command.id)) return;
-    saving.add(command.id);
-    const failed = () =>
-      updateSession((current) => applyCommand(current, command, { metricsOf: () => undefined }));
+  const finish = useEffectEvent(async (id: string) => {
+    const current = activeSession();
+    const kept = current?.watchFinish;
+    if (!current || kept?.id !== id || saving.has(id)) return;
+    saving.add(id);
     try {
+      const endedAt = endOfWatchFinish(current, kept.at);
       // The phone saves none without a set done, nor does the watch offer it.
-      if (sessionTotals(session).done === 0) {
-        failed();
+      if (sessionTotals(stopClock(current, endedAt)).done === 0) {
+        updateSession(giveUpFinish);
         return;
       }
-      const endedAt = endOfWatchFinish(session, command.at);
-      const logId = await logWorkout.mutateAsync(toLog(stopClock(session, endedAt), endedAt));
-      if (logId !== null) {
-        void afterWorkoutLogged(queryClient, logId, null, {
-          followedOnWatch: !!session.watchFollows,
-        });
-      }
-      // Unless it was ended on the phone meanwhile.
-      if (activeSession()?.id !== session.id) return;
-      endSession({ saved: true, endedAt });
-      if (path.current.startsWith('/session')) router.dismissAll();
+      await save(current, endedAt);
+      if (activeSession() === null && path.current.startsWith('/session')) router.dismissAll();
     } catch (error) {
       console.warn('Could not save the workout finished on the watch', error);
-      failed();
+      updateSession(giveUpFinish);
     } finally {
-      saving.delete(command.id);
+      saving.delete(id);
     }
-  };
+  });
+
+  const kept = session?.watchFinish?.id;
+  useEffect(() => {
+    if (kept) void finish(kept);
+  }, [kept]);
 }

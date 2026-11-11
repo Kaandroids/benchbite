@@ -89,6 +89,11 @@ export type Session = {
    * rest while it is heard (ADR 0112, ADR 0114).
    */
   watchFollows?: boolean;
+  /**
+   * The finish from the watch being saved, by its command's id and when it was done there: kept
+   * until it is saved or given up, also when the app is ended meanwhile (ADR 0118).
+   */
+  watchFinish?: { id: string; at: number };
 };
 
 /** Sets of an exercise's latest log, in order. */

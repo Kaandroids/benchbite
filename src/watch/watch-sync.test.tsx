@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import {
   endSession,
   resetSessionStore,
+  startClock,
   startSession,
   toggleDoneUnchecked,
   updateSession,
@@ -206,6 +207,49 @@ describe('a workout finished on the watch', () => {
     // Delivered again, as a message that is also sent as a transfer.
     await act(async () => deliver(finish()));
     expect(lastSent().workout?.applied).toEqual(['finish-1']);
+  });
+
+  it('is saved with the set its clock times as its only work', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    updateSession((current) => startClock(current, 0, 0, NOW + 30_000));
+    await render(<WatchSync />);
+    jest.setSystemTime(NOW + 120_000);
+    await act(async () => deliver(finish()));
+    expect(supabase.rpc).toHaveBeenCalledWith('log_workout', {
+      log: expect.objectContaining({
+        exercises: [{ exerciseId: 'bench', sets: [expect.objectContaining({ seconds: 30 })] }],
+      }),
+    });
+    expect(lastSent().workout).toBeNull();
+  });
+
+  it('is saved once when delivered again while it is saved', async () => {
+    let respond: (value: unknown) => void = () => undefined;
+    jest
+      .mocked(supabase.rpc)
+      .mockReturnValue(new Promise((resolve) => (respond = resolve)) as never);
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW + 30_000));
+    await render(<WatchSync />);
+    await act(async () => deliver(finish()));
+    await act(async () => deliver(finish()));
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    await act(async () => respond({ data: 12, error: null }));
+    expect(lastSent().workout).toBeNull();
+  });
+
+  it('is saved when the app runs again, if it was ended before saving it', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    updateSession((current) => ({
+      ...toggleDoneUnchecked(current, 0, 0, NOW + 30_000),
+      watchFinish: { id: 'finish-1', at: NOW + 60_000 },
+    }));
+    await render(<WatchSync />);
+    await act(async () => undefined);
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    expect(lastSent()).toMatchObject({ workout: null, ended: [{ saved: true }] });
   });
 });
 
