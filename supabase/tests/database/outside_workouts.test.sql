@@ -16,7 +16,8 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
--- A workout of `minutes` that started `hours_ago`, as the app sends it.
+-- A workout of `minutes` that started `hours_ago`, as the app sends it: on the day it started,
+-- which for one started 30 hours ago is not always yesterday.
 create function pg_temp.workout(id text, hours_ago numeric, minutes integer, extra jsonb default '{}')
 returns jsonb language sql as $$
   select jsonb_build_object(
@@ -24,7 +25,7 @@ returns jsonb language sql as $$
     'activity', 'running',
     'startedAt', now() - make_interval(secs => hours_ago * 3600),
     'endedAt', now() - make_interval(secs => hours_ago * 3600) + make_interval(mins => minutes),
-    'startedOn', current_date,
+    'startedOn', ((now() - make_interval(secs => hours_ago * 3600)) at time zone 'UTC')::date,
     'activeKcal', 310.4,
     'heartRateAvg', 148,
     'source', 'Apple Watch'
