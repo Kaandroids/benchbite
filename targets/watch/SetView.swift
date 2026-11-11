@@ -4,7 +4,7 @@ import SwiftUI
 struct SetView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
-  /// The values changed here, by set, which go to the phone with its tick.
+  /// The values changed here for the set shown, which go to the phone with its tick.
   @State private var drafts: [SetKey: [SetField: Draft]] = [:]
   @State private var editing: Editing?
 
@@ -13,7 +13,9 @@ struct SetView: View {
       let set = next.set
       let key = SetKey(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
       let draft = values(of: key, set: set)
-      // The Crown never turns a needed value to none, so a value changed here is never missing.
+      let editable = next.exercise.fields.filter { next.exercise.crown[$0] != nil }
+      // The watch decides only about its own drafts (ADR 0111): the Crown never turns a needed
+      // value to none, so a value changed here is never missing.
       let missing = set.missing.filter { draft[$0] == nil }
       ScrollView {
         VStack(alignment: .leading, spacing: 6) {
@@ -23,14 +25,18 @@ struct SetView: View {
           Text(subtitle(next))
             .font(.rounded(13))
             .foregroundStyle(Theme.secondary)
-          let editable = next.exercise.fields.filter { next.exercise.crown[$0] != nil }
           if editable.isEmpty {
             Text(set.text).font(.rounded(22, .heavy))
           } else {
             HStack(spacing: 6) {
               ForEach(editable, id: \.self) { field in
                 Button {
-                  editing = Editing(key: key, fields: Array(editable.drop { $0 != field }))
+                  let fields = Array(editable.drop { $0 != field })
+                  editing = Editing(
+                    key: key, fields: fields,
+                    starts: Dictionary(
+                      uniqueKeysWithValues: fields.map { ($0, draft[$0] ?? set.value($0)) }),
+                    phone: Dictionary(uniqueKeysWithValues: fields.map { ($0, set.value($0)) }))
                 } label: {
                   ValueTile(value: formatted(draft[field] ?? set.value(field)), unit: field.unit)
                 }
@@ -38,7 +44,7 @@ struct SetView: View {
               }
             }
           }
-          if missing.isEmpty {
+          if missing.isEmpty || !editable.isEmpty {
             Button {
               phone.send(
                 .setDone(
@@ -48,10 +54,12 @@ struct SetView: View {
               Label("Done", systemImage: "checkmark")
             }
             .buttonStyle(PillButtonStyle())
-            // PhoneLink sends no second tick while one waits; this shows that it would not.
+            // Until the tiles fill in what the set needs; and PhoneLink sends no second tick
+            // while one waits, which this shows.
             .disabled(
-              phone.isWaiting(
-                workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
+              !missing.isEmpty
+                || phone.isWaiting(
+                  workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
             .padding(.top, 4)
           } else {
             // A time is measured by the phone's clock.
@@ -69,13 +77,18 @@ struct SetView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
       }
       .sheet(item: $editing) { editing in
-        let draft = values(of: editing.key, set: set)
         ValueEditor(
-          fields: editing.fields, crown: next.exercise.crown,
-          start: { draft[$0] ?? set.value($0) }
+          fields: editing.fields, crown: next.exercise.crown, start: { editing.starts[$0] ?? nil }
         ) { field, value in
-          drafts[editing.key, default: [:]][field] = Draft(value: value, over: set.value(field))
+          drafts[editing.key, default: [:]][field] = Draft(
+            value: value, over: editing.phone[field] ?? nil)
         }
+      }
+      // Once the phone moves on, the drafts and the editor of the set before go: a set ticked
+      // or unticked on the phone starts again from the phone's values.
+      .onChange(of: key) {
+        editing = nil
+        drafts = drafts.filter { $0.key == key }
       }
     } else {
       Text("All sets done")
@@ -109,13 +122,16 @@ private struct Draft {
   let over: Double?
 }
 
-private struct Editing: Identifiable {
+/// The editor open for a set, with the values it started from, taken when it opened, so that the
+/// Crown turns from them however the set changes meanwhile.
+private struct Editing: Identifiable, Hashable {
   let key: SetKey
   /// The value tapped and those after it.
   let fields: [SetField]
-  var id: String {
-    "\(key.workoutId)/\(key.exercise)/\(key.set)/\(fields.first?.rawValue ?? "")"
-  }
+  let starts: [SetField: Double?]
+  /// The phone's values then, which the changes are made over.
+  let phone: [SetField: Double?]
+  var id: Self { self }
 }
 
 private struct ValueTile: View {

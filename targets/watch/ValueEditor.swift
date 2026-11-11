@@ -6,7 +6,7 @@ struct ValueEditor: View {
   /// The value tapped and those after it.
   let fields: [SetField]
   let crown: [SetField: CrownRange]
-  /// The value a field starts from: as changed so far, else the phone's.
+  /// The value a field starts from: as changed so far, else the phone's; none when it has none.
   let start: (SetField) -> Double?
   /// A value the Crown turned.
   let change: (SetField, Double) -> Void
@@ -41,8 +41,11 @@ private struct FieldEditor: View {
   let next: () -> Void
   let change: (Double) -> Void
 
-  /// The value the Crown started from, and how many steps it has turned since.
-  private let base: Double
+  /// The value the Crown started from, kept however often the view is made again, and how many
+  /// steps it has turned since.
+  @State private var base: Double
+  /// The field had no value, so the one shown is taken as soon as it shows.
+  private let empty: Bool
   @State private var turned = 0.0
   @FocusState private var focused: Bool
 
@@ -54,7 +57,8 @@ private struct FieldEditor: View {
     self.range = range
     self.next = next
     self.change = change
-    base = min(max(start ?? range.min, range.min), range.max)
+    _base = State(initialValue: min(max(start ?? range.min, range.min), range.max))
+    empty = start == nil
   }
 
   private var value: Double { min(max(base + turned * range.step, range.min), range.max) }
@@ -94,9 +98,12 @@ private struct FieldEditor: View {
       $turned, from: (range.min - base) / range.step, through: (range.max - base) / range.step,
       by: 1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true
     )
-    // Only a turn changes the value: opening it, or moving on from it, changes none.
+    // Only a turn changes a value there was: opening it, or moving on from it, changes none.
     .onChange(of: turned) { change(value) }
-    .onAppear { focused = true }
+    .onAppear {
+      focused = true
+      if empty { change(value) }
+    }
   }
 
   /// The value a step away, or nothing past the ends.
