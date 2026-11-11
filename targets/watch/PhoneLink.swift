@@ -95,6 +95,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isRestWaiting(workoutId: command.workoutId) { return }
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
+    case .open:
+      // Each pick goes, as the phone applies them in order and the last one counts.
+      break
     }
     let payload = command.payload
     waiting[command.id] = command

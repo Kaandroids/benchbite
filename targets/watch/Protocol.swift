@@ -133,6 +133,8 @@ struct WatchCommand {
     /// The rest ending at `endsAt`, or skipped.
     case rest(endsAt: Double?)
     case join
+    /// The exercise picked from the list, whose sets come next once the phone opens it.
+    case open(exercise: Int)
   }
 
   let id: String
@@ -186,6 +188,13 @@ struct WatchCommand {
     WatchCommand(workoutId: workoutId, change: .join, body: ["type": "join"])
   }
 
+  /// Opens the exercise on the phone, whose sets then come next (ADR 0117).
+  static func open(workoutId: String, exercise: Int) -> WatchCommand? {
+    WatchCommand(
+      workoutId: workoutId, change: .open(exercise: exercise),
+      body: ["type": "open", "exercise": exercise])
+  }
+
   /// Makes the rest that ends at `of` end at `endsAt`, or skips it.
   static func setRest(workoutId: String, of: Double, endsAt: Double?) -> WatchCommand? {
     WatchCommand(
@@ -212,6 +221,11 @@ extension WatchCommand.Change {
 
   var isJoin: Bool {
     guard case .join = self else { return false }
+    return true
+  }
+
+  var isOpen: Bool {
+    guard case .open = self else { return false }
     return true
   }
 
