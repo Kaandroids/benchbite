@@ -22,7 +22,11 @@ jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
 }));
-jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
+const mockSignIn = { status: 'ready' as 'ready' | 'loading' };
+jest.mock('@/providers/session-provider', () => ({
+  useUserId: () => (mockSignIn.status === 'ready' ? 'user-a' : undefined),
+  useSession: () => mockSignIn,
+}));
 jest.mock('./link', () => ({
   link: {
     status: jest.fn(),
@@ -47,6 +51,7 @@ const lastSent = (): WatchState => sent()[sent().length - 1]!;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSignIn.status = 'ready';
   jest.useFakeTimers({ now: NOW });
   jest.mocked(useExerciseLibrary).mockReturnValue(LOADED);
   jest.mocked(link.onCommand).mockImplementation((listener) => {
@@ -75,6 +80,17 @@ it('sends the workout to the watch, and each change of it', async () => {
 it('tells the watch when no workout runs', async () => {
   await render(<WatchSync />);
   expect(lastSent().workout).toBeNull();
+});
+
+it('says nothing to the watch until sign-in is known', async () => {
+  startSession('user-a', PUSH, {}, { now: NOW });
+  mockSignIn.status = 'loading';
+  const { rerender } = await render(<WatchSync />);
+  // No workout would show yet, which the watch would take for one let go of.
+  expect(link.sendState).not.toHaveBeenCalled();
+  mockSignIn.status = 'ready';
+  await rerender(<WatchSync />);
+  expect(lastSent().workout?.id).toBe('workout-1');
 });
 
 it('tells the watch how the workout it followed ended', async () => {

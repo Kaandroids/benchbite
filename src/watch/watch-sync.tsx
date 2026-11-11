@@ -3,7 +3,7 @@
 import { useEffect, useEffectEvent } from 'react';
 
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { useUserId } from '@/providers/session-provider';
+import { useSession, useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession, useEndedSessions } from '@/sessions/session';
 import { useWorkoutName } from '@/workouts/format';
 
@@ -29,6 +29,8 @@ const exerciseIn =
 
 /** Sends the workout to the watch and applies what the watch sends. */
 export function WatchSync() {
+  // Until sign-in is known, no workout shows, which the watch would take for one let go of.
+  const signedIn = useSession().status !== 'loading';
   const session = useActiveSession(useUserId());
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
@@ -44,12 +46,12 @@ export function WatchSync() {
   const ready = session !== null && !(library.isPending && library.failureCount === 0);
 
   useEffect(() => {
-    if (session === null || ready) {
+    if (signedIn && (session === null || ready)) {
       link.sendState(
         stateOf(session, { exerciseOf: exerciseIn(library.data), name }, nextSeq(), ended),
       );
     }
-  }, [session, ready, library.data, name, ended]);
+  }, [signedIn, session, ready, library.data, name, ended]);
 
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);
