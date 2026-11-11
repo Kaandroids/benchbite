@@ -22,6 +22,21 @@ struct WatchEnded: Decodable, Equatable {
   let endedAt: Double?
 }
 
+/// A workout the watch followed, saved on the phone, as the watch's summary shows it (ADR 0119).
+struct FinishedWorkout: Equatable {
+  let id: String
+  let title: String
+  let startedAt: Double
+  let endedAt: Double
+  /// The sets saved, of how many.
+  let sets: (done: Int, count: Int)
+  let records: Int
+
+  static func == (a: FinishedWorkout, b: FinishedWorkout) -> Bool {
+    a.id == b.id && a.endedAt == b.endedAt
+  }
+}
+
 struct WatchWorkout: Decodable {
   let id: String
   let name: String?
@@ -32,6 +47,8 @@ struct WatchWorkout: Decodable {
   let rest: WatchRest?
   /// How many sets finishing the workout saves: those done, and the one the phone's clock times.
   let setsToSave: Int
+  /// How many records its sets have set, as the phone's finish screen lists them (ADR 0119).
+  let records: Int
   let exercises: [WatchExercise]
   let applied: [String]
   /// The watch follows it, measuring it and signalling its rests while it can; else it offers to

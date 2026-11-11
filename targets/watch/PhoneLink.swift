@@ -17,6 +17,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// (ADR 0118); none once it is finished again. The phone applies a finish only then: one it
   /// saves ends the workout instead.
   @Published private(set) var unsaved: String?
+  /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
+  /// once another workout runs.
+  @Published private(set) var finished: FinishedWorkout?
 
   private var lastSeq: Double = 0
   private var here: Timer?
@@ -193,6 +196,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     DispatchQueue.main.async {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
+      // The workout shown is saved: its summary shows, as it was last sent.
+      if let shown = self.workout, shown.follows, state.workout?.id != shown.id,
+        let end = state.ended.first(where: { $0.id == shown.id }), end.saved,
+        let endedAt = end.endedAt
+      {
+        self.finished = FinishedWorkout(
+          id: shown.id, title: shown.title, startedAt: shown.startedAt, endedAt: endedAt,
+          sets: (shown.setsToSave, shown.setsDone.count), records: shown.records)
+      }
+      if state.workout != nil { self.finished = nil }
       self.workout = state.workout
       self.ended = state.ended
       MainActor.assumeIsolated { self.onState?(state) }
