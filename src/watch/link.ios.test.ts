@@ -16,6 +16,7 @@ function fakeModule() {
       }),
     ),
     sendState: jest.fn(),
+    signalRest: jest.fn(),
     takeCommands: jest.fn((): string[] => []),
     addListener: jest.fn((event: string, listener: Listener) => {
       listeners.set(event, listener);
@@ -81,6 +82,7 @@ it('tells the watch’s status, and when it changes', async () => {
     installed: true,
     reachable: false,
     heardUntil: null,
+    heardRest: null,
   });
   const listener = jest.fn();
   link.onStatusChange(listener);
@@ -91,7 +93,19 @@ it('tells the watch’s status, and when it changes', async () => {
     installed: true,
     reachable: true,
     heardUntil: 7,
+    heardRest: null,
   });
+});
+
+it('leaves the rest’s notification to the native module, which puts it off for the watch', () => {
+  const native = fakeModule();
+  const link = load(native);
+  link.signalRest?.({ endsAt: 1_000, title: 'Rest is over', body: 'Next up: Bench press' });
+  expect(native.signalRest).toHaveBeenCalledWith(1_000, 'Rest is over', 'Next up: Bench press');
+  link.signalRest?.(null);
+  expect(native.signalRest).toHaveBeenLastCalledWith(null, '', '');
+  // Without it, the app schedules the notification itself.
+  expect(load(null).signalRest).toBeUndefined();
 });
 
 it('has no watch in a build without the native module', async () => {

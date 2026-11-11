@@ -19,8 +19,7 @@ import { Alert, AppState, Linking, Platform } from 'react-native';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
-
-import { useWatchStatus } from '@/watch/watch-status';
+import { link } from '@/watch/link';
 
 import { useRestOnWatch } from './rest-owner';
 import { updateSession, useActiveSession } from './session';
@@ -173,33 +172,37 @@ function inTurn<T>(task: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Schedules the notification for the end of a rest, replacing the one before, when allowed: when it
- * ends, or at `firesAt`, when the watch signals it and the notification stands in for it.
+ * Schedules the notification for the end of a rest, replacing the one before, when allowed. Where
+ * the watch link signals rests, on iOS, it alone schedules it, as it puts it off while the watch
+ * signals the rest itself (ADR 0114).
  */
-export function scheduleRestEnd(endsAt: number, content: RestNotification, firesAt = endsAt) {
+export function scheduleRestEnd(endsAt: number, content: RestNotification) {
   return inTurn(async () => {
     if (!(await getPermissionsAsync()).granted) {
+      return;
+    }
+    if (link.signalRest) {
+      link.signalRest({ endsAt, title: content.title, body: content.body });
       return;
     }
     await createChannel(content.channelName);
     await scheduleNotificationAsync({
       identifier: REST_NOTIFICATION_ID,
-      // The end, and when it fires, go with it, as the watch link's module puts it off by them
-      // while the watch is heard (modules/watch-link/ios/WatchSession.swift): its trigger does
-      // not tell them.
-      content: {
-        title: content.title,
-        body: content.body,
-        data: { restEndsAt: endsAt, watchLinkFires: firesAt / 1000 },
-      },
-      trigger: { type: SchedulableTriggerInputTypes.DATE, date: firesAt, channelId: CHANNEL_ID },
+      content: { title: content.title, body: content.body },
+      trigger: { type: SchedulableTriggerInputTypes.DATE, date: endsAt, channelId: CHANNEL_ID },
     });
   });
 }
 
 /** Cancels the notification for the end of the rest, if one is scheduled. */
 export function cancelRestEnd() {
-  return inTurn(() => cancelScheduledNotificationAsync(REST_NOTIFICATION_ID));
+  return inTurn(async () => {
+    if (link.signalRest) {
+      link.signalRest(null);
+    } else {
+      await cancelScheduledNotificationAsync(REST_NOTIFICATION_ID);
+    }
+  });
 }
 
 /**
@@ -218,14 +221,7 @@ export function RestAlarm() {
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
   const onWatch = useRestOnWatch(session);
-  const { heardUntil } = useWatchStatus();
-  // Whether the watch signals it is read when the rest is scheduled and when it ends: its changing
-  // schedules nothing again, which would undo the module's putting the notification off.
-  // Scheduled while the watch is heard, the notification fires once that time is up at the
-  // earliest, as the watch's next sign may come only then.
-  const firesAt = useEffectEvent((endsAt: number) =>
-    onWatch && heardUntil !== null ? Math.max(endsAt, heardUntil) : endsAt,
-  );
+  // Whether the watch signals it is read when the rest ends: its changing schedules nothing again.
   const ended = useEffectEvent((endsAt: number) => {
     if (!onWatch && Date.now() - endsAt < LATE_MS) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -239,15 +235,11 @@ export function RestAlarm() {
       );
       return;
     }
-    void scheduleRestEnd(
-      endsAt,
-      {
-        title: t('session.restOver.title'),
-        body: name ? t('session.restOver.next', { name }) : t('session.restOver.body'),
-        channelName: t('session.restOver.channel'),
-      },
-      firesAt(endsAt),
-    ).catch((error: unknown) => console.warn('Could not schedule the rest notification', error));
+    void scheduleRestEnd(endsAt, {
+      title: t('session.restOver.title'),
+      body: name ? t('session.restOver.next', { name }) : t('session.restOver.body'),
+      channelName: t('session.restOver.channel'),
+    }).catch((error: unknown) => console.warn('Could not schedule the rest notification', error));
     const timer = setTimeout(() => {
       ended(endsAt);
       updateSession((current) =>

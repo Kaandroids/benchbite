@@ -16,6 +16,8 @@ export type WatchStatus = {
    * milliseconds (ADR 0114).
    */
   heardUntil: number | null;
+  /** The end of the rest it then signalled, in milliseconds. */
+  heardRest: number | null;
 };
 
 /** No watch to talk to. */
@@ -24,6 +26,7 @@ export const NO_WATCH: WatchStatus = {
   installed: false,
   reachable: false,
   heardUntil: null,
+  heardRest: null,
 };
 
 /**
@@ -41,4 +44,9 @@ export type WatchLink = {
    * returns what stops listening. A message is checked with parseCommand() before it is used.
    */
   onCommand(listener: (message: unknown) => void): () => void;
+  /**
+   * Where the link signals rests, on iOS, the phone's notification of the end of a rest goes
+   * through it, or none with null, as it puts it off while the watch signals the rest (ADR 0114).
+   */
+  signalRest?: (rest: { endsAt: number; title: string; body: string } | null) => void;
 };

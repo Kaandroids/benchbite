@@ -10,7 +10,7 @@ import type { Session } from './session';
  * Whether the watch signals the end of the workout's rest at `now`, so that the phone only keeps
  * its notification as a stand-in, which its module puts off while the watch is heard: the watch
  * follows the workout, is still paired with Benchbite on it, and was heard from lately, as it is
- * every half a minute while its workout session runs.
+ * every half a minute while its workout session runs, signalling this very rest.
  */
 export function restOnWatch(session: Session | null, status: WatchStatus, now: number): boolean {
   return (
@@ -18,7 +18,8 @@ export function restOnWatch(session: Session | null, status: WatchStatus, now: n
     status.paired &&
     status.installed &&
     status.heardUntil !== null &&
-    now < status.heardUntil
+    now < status.heardUntil &&
+    status.heardRest === session.rest?.endsAt
   );
 }
 

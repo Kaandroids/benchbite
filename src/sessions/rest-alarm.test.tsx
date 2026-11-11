@@ -93,12 +93,7 @@ describe('scheduleRestEnd', () => {
     await scheduleRestEnd(NOW + 90_000, content);
     expect(schedule).toHaveBeenCalledWith({
       identifier: 'rest-end',
-      // With its end, by which the watch link's module puts it off.
-      content: {
-        title: 'Rest is over',
-        body: 'Next up: Bench press',
-        data: { restEndsAt: NOW + 90_000, watchLinkFires: (NOW + 90_000) / 1000 },
-      },
+      content: { title: 'Rest is over', body: 'Next up: Bench press' },
       trigger: { type: 'date', date: NOW + 90_000, channelId: 'rest-timer' },
     });
   });
@@ -163,7 +158,7 @@ describe('RestAlarm', () => {
     await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
     expect(schedule).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        content: expect.objectContaining({ title: 'Rest is over', body: 'Next up: Bench press' }),
+        content: { title: 'Rest is over', body: 'Next up: Bench press' },
         trigger: expect.objectContaining({ date: NOW + 90_000 }),
       }),
     );
@@ -215,6 +210,8 @@ describe('RestAlarm while the watch follows the workout', () => {
     installed: true,
     reachable: true,
     heardUntil: Date.now() + 75_000,
+    // The rest a tick at NOW starts, which the watch signals.
+    heardRest: NOW + 90_000,
   });
 
   beforeEach(() => {
@@ -241,21 +238,14 @@ describe('RestAlarm while the watch follows the workout', () => {
     expect(cancel).toHaveBeenCalledWith('rest-end');
   });
 
-  it('schedules a rest ending before the watch’s time is up to fire only once it is', async () => {
-    jest.mocked(link.status).mockResolvedValue(heard());
+  it('signals a rest the watch does not, as one it has not heard of yet', async () => {
+    jest.mocked(link.status).mockResolvedValue({ ...heard(), heardRest: NOW + 30_000 });
     await render(<RestAlarm />);
-    // A rest with 20 s left, while the watch was heard just now: its next sign may come only after.
-    await act(async () =>
-      updateSession((session) => ({ ...session, rest: { endsAt: NOW + 20_000, seconds: 90 } })),
-    );
-    expect(schedule).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        content: expect.objectContaining({
-          data: { restEndsAt: NOW + 20_000, watchLinkFires: (NOW + 75_000) / 1000 },
-        }),
-        trigger: expect.objectContaining({ date: NOW + 75_000 }),
-      }),
-    );
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    await act(async () => {
+      jest.advanceTimersByTime(90_000);
+    });
+    expect(Haptics.notificationAsync).toHaveBeenCalled();
   });
 
   it('signals the rest itself once the watch is no longer heard', async () => {
