@@ -14,6 +14,7 @@ import {
   type EndedSession,
   type HowEnded,
   type Session,
+  workoutIdOf,
 } from '@/sessions/session';
 import {
   describeSet,
@@ -136,11 +137,6 @@ export type WatchCommand = CommandBase &
      */
     | { type: 'finish' }
   );
-
-/** The workout's id; one started before ids were kept is named by its start. */
-export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string {
-  return session.id ?? `started-${session.startedAt}`;
-}
 
 /**
  * How the Crown turns a lifted set's values: the weight by what its equipment goes up by, down to

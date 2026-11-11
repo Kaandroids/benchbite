@@ -6,6 +6,7 @@ import {
   stopClock,
   toggleDoneUnchecked,
   type Session,
+  workoutIdOf,
 } from '@/sessions/session';
 import { setKindOf } from '@/sets/fields';
 import { testExercise, testWorkout } from '@/workouts/test-data';
@@ -17,7 +18,6 @@ import {
   parseCommand,
   PROTOCOL_VERSION,
   stateOf,
-  workoutIdOf,
   type ExerciseOf,
   type MetricsOf,
   type ChangeCommand,

@@ -1,9 +1,9 @@
 // Opens Benchbite on the watch for a workout started there too (ADR 0115), once the phone has sent
 // the watch that workout, so that the app it launches finds the workout to follow.
-import type { Session } from '@/sessions/session';
+import { workoutIdOf, type Session } from '@/sessions/session';
 
 import { link } from './link';
-import { workoutIdOf, type WatchState } from './protocol';
+import type { WatchState } from './protocol';
 
 /** The workout to open Benchbite on the watch for, once the watch is told that it follows it. */
 let opening: string | null = null;

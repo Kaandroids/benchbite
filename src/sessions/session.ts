@@ -96,6 +96,14 @@ export type Session = {
   watchFinish?: { id: string; at: number };
 };
 
+/**
+ * The workout's id, which the watch knows it by and a save is kept by; one started before ids were
+ * kept is named by its start.
+ */
+export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string {
+  return session.id ?? `started-${session.startedAt}`;
+}
+
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
 
