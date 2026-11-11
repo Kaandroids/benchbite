@@ -14,7 +14,7 @@ import {
   type Session,
 } from '@/sessions/session';
 
-import { applyCommand, isFor, PROTOCOL_VERSION, workoutIdOf, type WatchCommand } from './protocol';
+import { isFor, markApplied, type WatchCommand } from './protocol';
 
 export type FinishCommand = Extract<WatchCommand, { type: 'finish' }>;
 
@@ -26,22 +26,12 @@ export function keepFinish(session: Session, command: FinishCommand): Session {
 }
 
 /**
- * The workout with its kept finish given up, as the phone could not save it: the finish is applied,
+ * The workout with its kept finish given up, as the phone could not save it: recorded as applied,
  * which tells the watch that the workout goes on.
  */
 function giveUpFinish(session: Session): Session {
   const kept = session.watchFinish;
-  if (!kept) return session;
-  const command: FinishCommand = {
-    v: PROTOCOL_VERSION,
-    ...kept,
-    workoutId: workoutIdOf(session),
-    type: 'finish',
-  };
-  return {
-    ...applyCommand(session, command, { metricsOf: () => undefined }),
-    watchFinish: undefined,
-  };
+  return kept ? { ...markApplied(session, kept.id), watchFinish: undefined } : session;
 }
 
 /**

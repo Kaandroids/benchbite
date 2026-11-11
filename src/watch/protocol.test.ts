@@ -20,7 +20,7 @@ import {
   workoutIdOf,
   type ExerciseOf,
   type MetricsOf,
-  type WatchCommand,
+  type ChangeCommand,
 } from './protocol';
 
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'workout-1' }));
@@ -53,8 +53,8 @@ const PUSH = testWorkout(7, {
 const start = () => startSession('user-a', PUSH, {}, { now: NOW });
 
 let count = 0;
-/** A command from the watch, made at `at`. */
-function command(at: number, body: Record<string, unknown>): WatchCommand {
+/** A command from the watch that changes the workout, made at `at`. */
+function command(at: number, body: Record<string, unknown>): ChangeCommand {
   count += 1;
   const parsed = parseCommand({
     v: PROTOCOL_VERSION,
@@ -63,7 +63,7 @@ function command(at: number, body: Record<string, unknown>): WatchCommand {
     workoutId: 'workout-1',
     ...body,
   });
-  if (!parsed) throw new Error('Not a command');
+  if (!parsed || parsed.type === 'finish') throw new Error('Not a command that changes it');
   return parsed;
 }
 
@@ -84,7 +84,9 @@ describe('parseCommand', () => {
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
     expect(command(NOW, { type: 'open', exercise: 1 })).toMatchObject({ exercise: 1 });
-    expect(command(NOW, { type: 'finish' })).toMatchObject({ type: 'finish' });
+    expect(
+      parseCommand({ v: PROTOCOL_VERSION, id: 'f', at: NOW, workoutId: 'w', type: 'finish' }),
+    ).toMatchObject({ type: 'finish' });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });

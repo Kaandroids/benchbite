@@ -298,10 +298,16 @@ export function parseCommand(message: unknown): WatchCommand | null {
 /** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
 export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
 
+/**
+ * A command that changes the workout: all but a finish, which the phone saves instead
+ * (finish-from-watch.ts).
+ */
+export type ChangeCommand = Exclude<WatchCommand, { type: 'finish' }>;
+
 /** The change a command makes, before it is recorded as applied. */
 function change(
   session: Session,
-  command: WatchCommand,
+  command: ChangeCommand,
   at: number,
   now: number,
   metricsOf: MetricsOf,
@@ -333,9 +339,6 @@ function change(
       return { ...session, watchFollows: true };
     case 'open':
       return openExercise(session, command.exercise, at);
-    case 'finish':
-      // Applied only when it could not be saved (finish-from-watch.ts), which changes nothing.
-      return session;
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
@@ -359,13 +362,25 @@ export function isFor(session: Session, command: WatchCommand): boolean {
  */
 export function applyCommand(
   session: Session,
-  command: WatchCommand,
+  command: ChangeCommand,
   { now = Date.now(), metricsOf }: { now?: number; metricsOf: MetricsOf },
 ): Session {
   if (!isFor(session, command)) {
     return session;
   }
-  const applied = session.watchCommands ?? [];
-  const next = change(session, command, Math.min(command.at, now), now, metricsOf);
-  return { ...next, watchCommands: [...applied, command.id].slice(-KEPT_COMMANDS) };
+  return markApplied(
+    change(session, command, Math.min(command.at, now), now, metricsOf),
+    command.id,
+  );
+}
+
+/**
+ * The workout with a command recorded as applied, which the watch then stops showing as waiting.
+ * A finish recorded so, with the workout going on, tells the watch that it was not saved.
+ */
+export function markApplied(session: Session, id: string): Session {
+  return {
+    ...session,
+    watchCommands: [...(session.watchCommands ?? []), id].slice(-KEPT_COMMANDS),
+  };
 }
