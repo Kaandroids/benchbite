@@ -58,7 +58,7 @@ struct SetView: View {
             // while one waits, which this shows.
             .disabled(
               !missing.isEmpty
-                || phone.isWaiting(
+                || phone.isTickWaiting(
                   workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
             .padding(.top, 4)
           } else {

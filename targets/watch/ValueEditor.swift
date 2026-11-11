@@ -61,7 +61,10 @@ private struct FieldEditor: View {
     empty = start == nil
   }
 
-  private var value: Double { min(max(base + turned * range.step, range.min), range.max) }
+  /// Whole steps from the start, which need not be on the step's grid: 81 kg turns to 83.5.
+  private var value: Double {
+    min(max(base + turned.rounded() * range.step, range.min), range.max)
+  }
 
   var body: some View {
     VStack(spacing: 8) {
@@ -86,7 +89,9 @@ private struct FieldEditor: View {
       }
       .buttonStyle(.plain)
       Text(
-        field == .weightKg ? "Turn the Crown · \(formatted(range.step)) kg steps" : "Turn the Crown"
+        range.step == 1
+          ? "Turn the Crown"
+          : "Turn the Crown · \(formatted(range.step)) \(field.unit.lowercased()) steps"
       )
       .font(.rounded(12))
       .foregroundStyle(Theme.secondary)
@@ -95,7 +100,8 @@ private struct FieldEditor: View {
     .focusable()
     .focused($focused)
     .digitalCrownRotation(
-      $turned, from: (range.min - base) / range.step, through: (range.max - base) / range.step,
+      $turned, from: ((range.min - base) / range.step).rounded(.up),
+      through: ((range.max - base) / range.step).rounded(.down),
       by: 1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true
     )
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.

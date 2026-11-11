@@ -20,7 +20,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   /// Whether a tick of this set waits for the phone, which a second one would only repeat.
-  func isWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
+  func isTickWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
     waiting.values.contains {
       guard $0.workoutId == workoutId, case .tick(exercise, set) = $0.change else { return false }
       return true
@@ -54,7 +54,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     guard let command else { return }
     switch command.change {
     case .tick(let exercise, let set):
-      if isWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
+      if isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
     case .rest:
       if isRestWaiting(workoutId: command.workoutId) { return }
     }
