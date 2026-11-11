@@ -1627,7 +1627,8 @@
       "turnOn": "Turn on rest alerts",
       "offTitle": "Notifications are off",
       "offMessage": "Turn on notifications for Benchbite in your phone's settings to hear when your rest is over.",
-      "openSettings": "Open settings"
+      "openSettings": "Open settings",
+      "onWatch": "Alert on watch"
     },
     "end": {
       "title": "When did you finish?",
