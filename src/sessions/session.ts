@@ -80,6 +80,11 @@ export type Session = {
   /** When the rest was last started, changed or ended by hand, which a late tick does not undo. */
   restChangedAt?: number;
   /**
+   * When the open exercise was last picked, on the phone or the watch, or moved on by a tick, which
+   * a late pick or tick does not undo (ADR 0117).
+   */
+  currentChangedAt?: number;
+  /**
    * The watch follows the workout, started there too or joined from it: it signals the end of a
    * rest while it is heard (ADR 0112, ADR 0114).
    */
@@ -330,6 +335,21 @@ export function setValues(
   };
 }
 
+/**
+ * Opens an exercise, picked at `at` on the phone or the watch. A pick older than the open
+ * exercise's last change, or than the last set ticked, changes nothing, so that one that waited
+ * does not undo what was done since (ADR 0117). One picked here is the latest, whatever the clock
+ * says.
+ */
+export function openExercise(value: Session, index: number, at?: number): Session {
+  const since = Math.max(lastActivity(value), value.currentChangedAt ?? 0);
+  const time = at ?? Math.max(Date.now(), since);
+  if (index < 0 || index >= value.exercises.length || since > time) {
+    return value;
+  }
+  return { ...value, current: index, currentChangedAt: time };
+}
+
 /** Whether every set of the exercise is done. */
 export function isExerciseDone(exercise: SessionExercise): boolean {
   return exercise.sets.length > 0 && exercise.sets.every((s) => s.done);
@@ -484,7 +504,13 @@ export function markDone(
   // A tick made here is the latest, whatever the clock says.
   const at =
     options.at ??
-    Math.max(Date.now(), set.doneChangedAt ?? 0, lastActivity(value), value.restChangedAt ?? 0);
+    Math.max(
+      Date.now(),
+      set.doneChangedAt ?? 0,
+      lastActivity(value),
+      value.restChangedAt ?? 0,
+      value.currentChangedAt ?? 0,
+    );
   const now = options.now ?? at;
   if (set.done === done || tickedSince(set, at)) {
     return value;
@@ -500,12 +526,15 @@ export function markDone(
     next = toggleDoneUnchecked(clocked ? { ...value, clock: null } : value, exercise, index, at);
   }
   const older = lastActivity(value) > at;
-  // A rest started, changed or ended after the tick stays as it is.
+  // A rest started, changed or ended after the tick stays as it is, as does an exercise opened.
   const restOlder = older || (value.restChangedAt ?? 0) > at;
   const rest = restOlder ? value.rest : next.rest;
+  const currentOlder = older || (value.currentChangedAt ?? 0) > at;
+  const movedOn = !currentOlder && next.current !== value.current;
   return {
     ...next,
-    current: older ? value.current : next.current,
+    current: currentOlder ? value.current : next.current,
+    currentChangedAt: movedOn ? at : value.currentChangedAt,
     rest: restUntil(rest, rest?.endsAt ?? null, now),
     restChangedAt: restOlder ? value.restChangedAt : next.restChangedAt,
   };
