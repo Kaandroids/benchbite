@@ -212,6 +212,7 @@ describe('RestAlarm while the watch follows the workout', () => {
     heardUntil: Date.now() + 75_000,
     // The rest a tick at NOW starts, which the watch signals.
     heardRest: NOW + 90_000,
+    heartRate: null,
   });
 
   beforeEach(() => {

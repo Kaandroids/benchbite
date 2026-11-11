@@ -21,6 +21,7 @@ const heard = {
   reachable: false,
   heardUntil: NOW + 65_000,
   heardRest: NOW + 60_000,
+  heartRate: null,
 };
 
 it('leaves the rest to the watch while it follows, with the app on it, and was heard lately', () => {

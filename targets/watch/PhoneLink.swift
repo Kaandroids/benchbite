@@ -25,6 +25,13 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if signalling != oldValue, let measuring { sendHere(measuring) }
     }
   }
+  /// The heart rate the watch measures, which its sign tells, and which it tells when it changes,
+  /// so that the phone shows it while the workout runs there (ADR 0116).
+  var heartRate: Int? {
+    didSet {
+      if heartRate != oldValue, let measuring { sendHere(measuring) }
+    }
+  }
   /// Less than half the time the phone takes the watch to be there after its sign: `heardFor` in
   /// modules/watch-link/ios/RestSignal.swift (ADR 0114).
   private static let hereEvery: TimeInterval = 30
@@ -117,13 +124,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
-  /// One sign, with the rest the watch signals; only while the phone can be reached, as a sign that
-  /// waited would say nothing of now.
+  /// One sign, with the rest the watch signals and its heart rate; only while the phone can be
+  /// reached, as a sign that waited would say nothing of now.
   private func sendHere(_ workoutId: String) {
     let session = WCSession.default
     guard session.activationState == .activated, session.isReachable else { return }
     var sign: [String: Any] = ["here": workoutId]
     if let signalling { sign["rest"] = signalling }
+    if let heartRate { sign["bpm"] = heartRate }
     session.sendMessage(sign, replyHandler: nil) { error in
       NSLog("[PhoneLink] Could not say the watch is there: %@", error.localizedDescription)
     }

@@ -1632,6 +1632,12 @@
       "onWatch": "Saatte",
       "onWatchLabel": "Dinlenme bitince saatin uyarır"
     },
+    "watch": {
+      "title": "Apple Watch’ta",
+      "withHeartRate": "Apple Watch’ta · {{bpm}} atım/dk",
+      "label": "Apple Watch’ta da sürüyor",
+      "labelWithHeartRate": "Apple Watch’ta da sürüyor, nabız dakikada {{bpm}} atım"
+    },
     "end": {
       "title": "Ne zaman bitirdin?",
       "hour": "Saat",

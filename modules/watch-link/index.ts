@@ -18,6 +18,8 @@ declare class WatchLinkModule extends NativeModule<WatchLinkEvents> {
     heardUntil?: number | null;
     /** The end of the rest the watch then signalled, in milliseconds. */
     heardRest?: number | null;
+    /** The heart rate the watch then measured, in beats per minute. */
+    heartRate?: number | null;
   };
   /** Sends the state, with its workout's id, as only JavaScript reads the state. */
   sendState(json: string, workoutId: string | null): void;

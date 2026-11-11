@@ -15,10 +15,12 @@ final class WatchSession: NSObject, WCSessionDelegate {
   /// The most commands kept for JavaScript: far more than wait at once.
   private static let maxCommands = 200
 
-  /// Guards the kept commands and the listeners.
+  /// Guards the kept commands, the heart rate and the listeners.
   private let lock = NSLock()
   /// Guards the last state across its delivery, so that an older state never replaces a newer one.
   private let delivery = NSLock()
+  /// The heart rate the watch last told with its sign, kept only while the app runs (ADR 0116).
+  private var heartRate: Int?
   /// The last state JavaScript sent, sent again once the watch can take it.
   private var lastState: String?
   /// Told when commands are waiting, and when the watch's status changes.
@@ -59,7 +61,8 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   /// Whether a watch is paired, has Benchbite, and can be talked to now, and until when it is taken
-  /// to be there, heard from about the workout the phone runs, signalling which rest.
+  /// to be there, heard from about the workout the phone runs, signalling which rest, with which
+  /// heart rate.
   var status: [String: Any] {
     var status: [String: Any] = ["paired": false, "installed": false, "reachable": false]
     if WCSession.isSupported(), WCSession.default.activationState == .activated {
@@ -74,6 +77,11 @@ final class WatchSession: NSObject, WCSessionDelegate {
         status["heardRest"] = rest
       }
     }
+    lock.lock()
+    if let heartRate {
+      status["heartRate"] = heartRate
+    }
+    lock.unlock()
     return status
   }
 
@@ -87,7 +95,9 @@ final class WatchSession: NSObject, WCSessionDelegate {
     lock.lock()
     // Heard of another workout is not heard of this one.
     if UserDefaults.standard.string(forKey: Self.workoutIdKey) != workoutId {
+      // With its heart rate, which only this keeps, in memory (ADR 0116).
       RestSignal.shared.forgetHeard()
+      heartRate = nil
     }
     UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey)
     lock.unlock()
@@ -144,14 +154,19 @@ final class WatchSession: NSObject, WCSessionDelegate {
     commandsWaiting()
   }
 
-  /// The watch sent its sign (`["here": workoutId, "rest": endsAt]`), which it does only while it
-  /// measures the workout, with the end of the rest it signals, if any; a command says nothing of
-  /// that, and may have waited. About the workout the phone runs, the watch is there.
+  /// The watch sent its sign (`["here": workoutId, "rest": endsAt, "bpm": heartRate]`), which it
+  /// does only while it measures the workout, with the end of the rest it signals and the heart
+  /// rate it measures, if any; a command says nothing of that, and may have waited. About the
+  /// workout the phone runs, the watch is there.
   private func heard(_ sign: [String: Any]) {
     lock.lock()
     let running = UserDefaults.standard.string(forKey: Self.workoutIdKey)
+    guard let workoutId = sign["here"] as? String, workoutId == running else {
+      lock.unlock()
+      return
+    }
+    heartRate = sign["bpm"] as? Int
     lock.unlock()
-    guard let workoutId = sign["here"] as? String, workoutId == running else { return }
     RestSignal.shared.heard(restEndsAt: sign["rest"] as? Double) { [weak self] in
       self?.statusChanged()
     }

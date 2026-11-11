@@ -33,6 +33,11 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
     workoutSession.$measuring.removeDuplicates()
       .sink { [phone] workoutId in phone.sayHere(while: workoutId) }
       .store(in: &subscriptions)
+    // With its heart rate, at most every few seconds, as each change is sent at once.
+    workoutSession.$heartRate.removeDuplicates()
+      .throttle(for: .seconds(5), scheduler: RunLoop.main, latest: true)
+      .sink { [phone] beats in phone.heartRate = beats }
+      .store(in: &subscriptions)
     // It signals the rests of the workout it measures, as the phone puts its own notification off
     // while the watch says it is there (ADR 0114). After the change, which the publishers announce
     // before it is made.

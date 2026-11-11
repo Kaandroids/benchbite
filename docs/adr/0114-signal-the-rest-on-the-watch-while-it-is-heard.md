@@ -1,6 +1,6 @@
 # 0114. Signal the rest on the watch while it is heard
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0116
 - **Date:** 2026-11-11
 
 ## Context
