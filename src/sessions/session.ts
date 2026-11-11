@@ -161,8 +161,16 @@ export function updateSession(change: (current: Session) => Session) {
  * saves its own workout to the health store, or leaves it out, by it (ADR 0113).
  */
 export type HowEnded =
-  /** With how many records it set, for the watch's summary (ADR 0119). */
-  { saved: true; endedAt: number; records?: number } | { saved: false };
+  | {
+      saved: true;
+      endedAt: number;
+      /** The sets it saved, of all its sets, for the watch's summary (ADR 0119). */
+      setsSaved?: number;
+      setCount?: number;
+      /** The records it set, for the watch's summary. */
+      records?: number;
+    }
+  | { saved: false };
 
 /** A workout that ended, and how. */
 export type EndedSession = Pick<Session, 'id' | 'startedAt'> & HowEnded;

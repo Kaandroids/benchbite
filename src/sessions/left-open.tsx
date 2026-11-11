@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -27,6 +28,8 @@ export function LeftOpenSaver() {
   const insets = useSafeAreaInsets();
   const session = useActiveSession(useUserId());
   const { save: saveWorkout } = useSaveWorkout();
+  // By which its records are counted, as for any workout saved; loaded only while one runs.
+  const library = useExerciseLibrary({ enabled: session !== null });
   const workoutName = useWorkoutName();
   const [saved, setSaved] = useState<Saved | null>(null);
   const saving = useRef(false);
@@ -39,7 +42,7 @@ export function LeftOpenSaver() {
     }
     saving.current = true;
     const endedAt = lastActivity(session);
-    saveWorkout(session, endedAt)
+    saveWorkout(session, endedAt, { metricsOf: (id) => findExercise(library.data, id)?.metrics })
       .then((logId) => {
         if (logId !== null) {
           setSaved({ logId, name: workoutName(session), endedAt });

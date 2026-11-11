@@ -12,6 +12,7 @@ import { sessionRecords, type MetricsOf } from './records';
 import {
   activeSession,
   endSession,
+  sessionTotals,
   setsToSave,
   stopClock,
   toLog,
@@ -28,16 +29,16 @@ const running = new Map<string, Promise<number | null>>();
 type SaveOptions = {
   /** What the watch measured over it, kept with the log. */
   health?: WorkoutStats | null;
-  /** Its exercises' metrics, by which its records are counted. */
-  metricsOf?: MetricsOf;
+  /** Its exercises' metrics, by which its records are counted as its finish screen lists them. */
+  metricsOf: MetricsOf;
 };
 
 /**
- * Saves the workout as ended at `endedAt`, with what the watch measured, and ends it with the records
- * it set, unless it was ended meanwhile; the log's id. A clock still running logs its set, as stopping it then
- * would. A workout without a set to save is not saved, which gives none. While a save of the
- * workout runs, another waits for it instead, ended as it was and with what it measured. A failed
- * save throws, and leaves the workout as it was.
+ * Saves the workout as ended at `endedAt`, with what the watch measured, and ends it with the sets
+ * and records it saved, unless it was ended meanwhile; the log's id. A clock still running logs its
+ * set, as stopping it then would. A workout without a set to save is not saved, which gives none.
+ * While a save of the workout runs, another waits for it instead, ended as it was and with what it
+ * measured. A failed save throws, and leaves the workout as it was.
  */
 export function useSaveWorkout() {
   const { mutateAsync, isPending } = useLogWorkout();
@@ -46,7 +47,7 @@ export function useSaveWorkout() {
   const saveOnce = async (
     session: Session,
     endedAt: number,
-    { health = null, metricsOf = () => undefined }: SaveOptions,
+    { health = null, metricsOf }: SaveOptions,
   ) => {
     // As it ends: a clock still running has logged its set.
     const ending = stopClock(session, endedAt);
@@ -68,12 +69,19 @@ export function useSaveWorkout() {
     });
     const active = activeSession();
     if (active && workoutIdOf(active) === workoutIdOf(session)) {
-      endSession({ saved: true, endedAt, records: sessionRecords(ending, metricsOf).length });
+      const totals = sessionTotals(ending);
+      endSession({
+        saved: true,
+        endedAt,
+        setsSaved: totals.done,
+        setCount: totals.planned,
+        records: sessionRecords(ending, metricsOf).length,
+      });
     }
     return logId;
   };
 
-  const save = (session: Session, endedAt: number, options: SaveOptions = {}) => {
+  const save = (session: Session, endedAt: number, options: SaveOptions) => {
     const key = workoutIdOf(session);
     const saving = running.get(key);
     if (saving) return saving;

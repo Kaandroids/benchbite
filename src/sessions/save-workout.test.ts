@@ -24,6 +24,8 @@ jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('@/health/health-catch-up', () => ({ afterWorkoutLogged: jest.fn() }));
 
 const NOW = 1_800_000_000_000;
+/** Before the library loads: sets are judged by their targets. */
+const noLibrary = () => undefined;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -48,8 +50,8 @@ it('saves a workout saved from two places at once once, with the first one’s e
   let saves: Promise<number | null>[] = [];
   await act(async () => {
     saves = [
-      result.current.save(session, NOW + 120_000),
-      result.current.save(session, NOW + 180_000),
+      result.current.save(session, NOW + 120_000, { metricsOf: noLibrary }),
+      result.current.save(session, NOW + 180_000, { metricsOf: noLibrary }),
     ];
   });
   expect(supabase.rpc).toHaveBeenCalledTimes(1);
@@ -82,12 +84,16 @@ it('ends the workout with the records it set, with the set a running clock times
     save: useSaveWorkout().save,
     ended: useEndedSessions(),
   }));
-  await act(async () => void (await result.current.save(session, NOW + 90_000)));
+  await act(
+    async () => void (await result.current.save(session, NOW + 90_000, { metricsOf: noLibrary })),
+  );
   expect(result.current.ended[0]).toEqual({
     id: 'workout-1',
     startedAt: NOW,
     saved: true,
     endedAt: NOW + 90_000,
+    setsSaved: 1,
+    setCount: 3,
     records: 1,
   });
 });
