@@ -7,8 +7,8 @@ import WatchConnectivity
 final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The workout the phone runs, or none.
   @Published private(set) var workout: WatchWorkout?
-  /// How the latest workout ended, which the workout session ends by.
-  @Published private(set) var ended: WatchEnded?
+  /// How the latest workouts ended, which the workout session ends by.
+  @Published private(set) var ended: [WatchEnded] = []
   /// The commands sent that the phone has not applied yet, by their id.
   @Published private(set) var waiting: [String: WatchCommand] = [:]
 
