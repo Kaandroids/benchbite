@@ -69,7 +69,7 @@ struct SetView: View {
               .foregroundStyle(Theme.secondary)
           }
           // Unless the line at the top says what waits.
-          if !phone.waiting.isEmpty, phone.reachable || phone.setsWaiting(of: workout) == 0 {
+          if !phone.waiting.isEmpty, phone.setsWaitingOutOfReach(of: workout) == 0 {
             Text("Waiting for your iPhone")
               .font(.rounded(12))
               .foregroundStyle(Theme.warning)
@@ -110,7 +110,7 @@ struct SetView: View {
   private func restStarted(by next: NextSet) -> (seconds: Int, next: String?)? {
     let seconds = next.exercise.restSeconds
     guard seconds > 0 else { return nil }
-    return (seconds, phone.nextSet(after: next, of: workout)?.label)
+    return (seconds, phone.nextSet(afterTicking: next, of: workout)?.label)
   }
 
   private func subtitle(_ next: NextSet) -> String {

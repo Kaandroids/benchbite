@@ -250,6 +250,14 @@ struct WatchCommand {
 }
 
 extension WatchCommand.Change {
+  /// The exercise a pick opens, or a tick stays on, which the next set is found from.
+  var leads: Int? {
+    switch self {
+    case .open(let exercise), .tick(let exercise, _, _): return exercise
+    default: return nil
+    }
+  }
+
   func isTick(exercise: Int, set: Int) -> Bool {
     guard case .tick(exercise, set, _) = self else { return false }
     return true
@@ -306,19 +314,16 @@ struct NextSet {
 }
 
 extension WatchWorkout {
-  /// The set to do after a tick of this one, before the phone says: the first not done after it,
-  /// then in the exercises after it, then in those before it, as nextSetOf() goes on; past the
-  /// sets in `ticked`, ticked here but not taken by the phone yet.
-  func nextSet(after exercise: Int, set: Int, skipping ticked: Set<SetIndex> = []) -> NextSet? {
+  /// The first set from `exercise` that is not done nor in `ticked`, ticked here but not taken by
+  /// the phone yet: in it, then in the exercises after it, then in those before it, as the phone's
+  /// nextSetOf() goes from its open exercise.
+  func firstOpenSet(from exercise: Int, skipping ticked: Set<SetIndex> = []) -> NextSet? {
     let count = exercises.count
-    guard count > 0 else { return nil }
-    // Round to the sets before it in its own exercise last.
-    for step in 0...count {
+    for step in 0..<count {
       let index = (exercise + step) % count
-      let first = step == 0 ? set + 1 : 0
       let sets = exercises[index].sets
       if let next = sets.indices.first(where: {
-        $0 >= first && !sets[$0].done && !ticked.contains(SetIndex(exercise: index, set: $0))
+        !sets[$0].done && !ticked.contains(SetIndex(exercise: index, set: $0))
       }) {
         return NextSet(exerciseIndex: index, setIndex: next, exercise: exercises[index])
       }
@@ -340,7 +345,9 @@ extension WatchWorkout {
     return (sets.filter(\.done).count, sets.count)
   }
 
-  var nextSet: NextSet? {
+  /// The set to do next as the phone's state names it; the watch shows `PhoneLink.nextSet(of:)`,
+  /// which goes on past what waits for the phone.
+  var phoneNextSet: NextSet? {
     guard let next, exercises.indices.contains(next.exercise),
       exercises[next.exercise].sets.indices.contains(next.set)
     else { return nil }

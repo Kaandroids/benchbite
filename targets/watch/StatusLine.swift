@@ -7,7 +7,7 @@ struct StatusLine: View {
   let workout: WatchWorkout
 
   var body: some View {
-    let waiting = phone.reachable ? 0 : phone.setsWaiting(of: workout)
+    let waiting = phone.setsWaitingOutOfReach(of: workout)
     if waiting > 0 {
       Label(
         waiting == 1 ? "1 set waits for your iPhone" : "\(waiting) sets wait for your iPhone",

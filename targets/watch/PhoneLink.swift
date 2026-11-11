@@ -105,9 +105,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       })
   }
 
-  /// How many sets ticked here wait for the phone (ADR 0121).
-  func setsWaiting(of workout: WatchWorkout) -> Int {
-    waitingTicks(of: workout).count
+  /// How many sets ticked here wait for the phone while it is out of reach, which the top line then
+  /// says in place of the heart rate (ADR 0121); none while it can be reached.
+  func setsWaitingOutOfReach(of workout: WatchWorkout) -> Int {
+    reachable ? 0 : waitingTicks(of: workout).count
   }
 
   /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
@@ -118,16 +119,27 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   /// The set to do next as the watch shows it: the phone's, or, while a pick or ticks here wait
-  /// for the phone, the first set of the exercise picked last, or of the phone's, that is not done
-  /// nor ticked here, as the phone finds it once it takes them; so logging goes on with the phone
-  /// out of reach (ADR 0117, ADR 0121).
+  /// for the phone, the set the phone finds once it takes them: the first not done nor ticked here
+  /// from the exercise of the latest of them, as a pick opens its exercise and a tick stays on its
+  /// own until it is done (markDone, nextSetOf); so logging goes on with the phone out of reach
+  /// (ADR 0121).
   func nextSet(of workout: WatchWorkout) -> NextSet? {
-    let ticked = waitingTicks(of: workout)
-    if let picked = picked(workoutId: workout.id), workout.exercises.indices.contains(picked) {
-      return workout.nextSet(after: picked, set: -1, skipping: ticked)
+    let latest = waiting.values.filter { $0.workoutId == workout.id && $0.change.leads != nil }
+      .max { $0.at < $1.at }
+    guard let from = latest?.change.leads, workout.exercises.indices.contains(from) else {
+      return workout.phoneNextSet
     }
-    guard let next = workout.nextSet, !ticked.isEmpty else { return workout.nextSet }
-    return workout.nextSet(after: next.exerciseIndex, set: -1, skipping: ticked)
+    return workout.firstOpenSet(from: from, skipping: waitingTicks(of: workout))
+  }
+
+  /// The set to do after a tick of `next`, for its rest: the next set the watch shows once the
+  /// tick is sent.
+  func nextSet(afterTicking next: NextSet, of workout: WatchWorkout) -> NextSet? {
+    workout.firstOpenSet(
+      from: next.exerciseIndex,
+      skipping: waitingTicks(of: workout).union([
+        SetIndex(exercise: next.exerciseIndex, set: next.setIndex)
+      ]))
   }
 
   /// Whether joining the workout waits for the phone.
@@ -142,16 +154,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       .max { $0.at < $1.at }?.change.opens
   }
 
-  /// The set to do after a tick of `next`, as the watch shows it, past the sets ticked here.
-  func nextSet(after next: NextSet, of workout: WatchWorkout) -> NextSet? {
-    workout.nextSet(
-      after: next.exerciseIndex, set: next.setIndex, skipping: waitingTicks(of: workout))
-  }
-
-  /// The exercise whose sets come next as the watch shows it: the one picked last, while the
-  /// phone has not applied the pick, else the phone's.
+  /// The exercise whose sets come next as the watch shows it: that of the set it shows, else the
+  /// one picked last while the phone has not applied the pick.
   func openExercise(of workout: WatchWorkout) -> Int? {
-    picked(workoutId: workout.id) ?? nextSet(of: workout)?.exerciseIndex
+    nextSet(of: workout)?.exerciseIndex ?? picked(workoutId: workout.id)
   }
 
   /// The workout's rest as the watch shows it: the phone's, or one a tick here starts, as changed
@@ -202,8 +208,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let payload = command.payload
     waiting[command.id] = command
     let session = WCSession.default
-    // Without a reply handler, as the phone takes messages without replying.
-    if session.isReachable {
+    // Without a reply handler, as the phone takes messages without replying. Behind a transfer
+    // still on its way, a command goes as a transfer too, as transfers arrive in order and a
+    // message could overtake them: a tick before the pick it follows (ADR 0121).
+    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty {
       session.sendMessage(payload, replyHandler: nil) { _ in
         session.transferUserInfo(payload)
       }
