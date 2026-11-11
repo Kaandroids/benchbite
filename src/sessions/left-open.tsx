@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { useSaveWorkout } from './save-workout';
-import { isLeftOpen, lastActivity, sessionTotals, useActiveSession } from './session';
+import { isLeftOpen, lastActivity, useActiveSession } from './session';
 
 type Saved = { logId: number; name: string; endedAt: number };
 
@@ -31,25 +31,27 @@ export function LeftOpenSaver() {
   const [saved, setSaved] = useState<Saved | null>(null);
   const saving = useRef(false);
 
-  useEffect(() => {
-    const save = () => {
-      if (!session || saving.current || !isLeftOpen(session)) {
-        return;
-      }
-      if (sessionTotals(session).done === 0) {
-        return;
-      }
-      saving.current = true;
-      const endedAt = lastActivity(session);
-      saveWorkout(session, endedAt)
-        .then((logId) => {
+  // Read when it runs, so that the effect runs again only for another workout, and a failed save
+  // is tried again only when the app comes back.
+  const save = useEffectEvent(() => {
+    if (!session || saving.current || !isLeftOpen(session)) {
+      return;
+    }
+    saving.current = true;
+    const endedAt = lastActivity(session);
+    saveWorkout(session, endedAt)
+      .then((logId) => {
+        if (logId !== null) {
           setSaved({ logId, name: workoutName(session), endedAt });
-        })
-        .catch((error: unknown) => console.warn('Could not save the workout left open', error))
-        .finally(() => {
-          saving.current = false;
-        });
-    };
+        }
+      })
+      .catch((error: unknown) => console.warn('Could not save the workout left open', error))
+      .finally(() => {
+        saving.current = false;
+      });
+  });
+
+  useEffect(() => {
     save();
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
@@ -57,7 +59,7 @@ export function LeftOpenSaver() {
       }
     });
     return () => subscription.remove();
-  }, [session, saveWorkout, workoutName]);
+  }, [session]);
 
   if (!saved) {
     return null;

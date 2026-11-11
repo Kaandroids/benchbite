@@ -38,7 +38,7 @@ it('saves a workout saved from two places at once once, with the first one’s e
     NOW + 60_000,
   );
   const { result } = await renderHook(() => useSaveWorkout());
-  let saves: Promise<number>[] = [];
+  let saves: Promise<number | null>[] = [];
   await act(async () => {
     saves = [
       result.current.save(session, NOW + 120_000),
