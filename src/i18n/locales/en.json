@@ -1632,6 +1632,12 @@
       "onWatch": "On watch",
       "onWatchLabel": "Your watch alerts when the rest is over"
     },
+    "watch": {
+      "title": "On your Apple Watch",
+      "withHeartRate": "On your Apple Watch · {{bpm}} bpm",
+      "label": "Following on your Apple Watch",
+      "labelWithHeartRate": "Following on your Apple Watch, heart rate {{bpm}} beats per minute"
+    },
     "end": {
       "title": "When did you finish?",
       "hour": "Hour",

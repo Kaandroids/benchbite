@@ -1632,6 +1632,12 @@
       "onWatch": "Auf der Uhr",
       "onWatchLabel": "Deine Uhr meldet sich, wenn die Pause vorbei ist"
     },
+    "watch": {
+      "title": "Auf deiner Apple Watch",
+      "withHeartRate": "Auf deiner Apple Watch · {{bpm}} SPM",
+      "label": "Läuft auf deiner Apple Watch mit",
+      "labelWithHeartRate": "Läuft auf deiner Apple Watch mit, Herzfrequenz {{bpm}} Schläge pro Minute"
+    },
     "end": {
       "title": "Wann warst du fertig?",
       "hour": "Stunde",

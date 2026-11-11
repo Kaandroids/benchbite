@@ -20,6 +20,8 @@ import { RestBar } from './rest-bar';
 import { useRestOnWatch } from './rest-owner';
 import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
+import { WatchChip } from './watch-chip';
+import { useHeardWatch } from './watch-heard';
 import { useNow } from '@/lib/use-now';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
@@ -32,6 +34,7 @@ export function SessionScreen() {
   const now = useNow(!!session, session?.clock?.startedAt);
   const permission = useNotificationPermission();
   const onWatch = useRestOnWatch(session);
+  const watch = useHeardWatch(session);
 
   if (!session) {
     return (
@@ -74,6 +77,12 @@ export function SessionScreen() {
           onPress={() => router.push('/session/finish')}
         />
       </View>
+
+      {watch ? (
+        <View style={{ paddingBottom: spacing.sm }}>
+          <WatchChip heartRate={watch.heartRate} />
+        </View>
+      ) : null}
 
       <View
         style={[
