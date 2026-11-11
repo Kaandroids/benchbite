@@ -39,13 +39,44 @@ struct WatchExercise: Decodable {
   let exerciseId: String
   /// None when the phone's library does not know it.
   let name: String?
+  /// What its sets record: the weight and the reps, or a time with or without a distance.
+  let fields: [SetField]
+  /// The values the Crown changes, and how; none for sets measured by time.
+  let crown: [SetField: CrownRange]
   let restSeconds: Int
   let sets: [WatchSet]
 }
 
+/// How the Crown turns a value: from `min` to `max`, by `step`.
+struct CrownRange: Decodable {
+  let min: Double
+  let max: Double
+  let step: Double
+}
+
 /// A value a set records, as SetField in src/sets/fields.ts.
-enum SetField: String, Decodable {
+enum SetField: String, Decodable, CodingKeyRepresentable {
   case weightKg, reps, seconds, meters
+
+  /// Under a value, as "80 KG".
+  var unit: String {
+    switch self {
+    case .weightKg: "KG"
+    case .reps: "REPS"
+    case .seconds: "TIME"
+    case .meters: "M"
+    }
+  }
+
+  /// Over a value the Crown turns.
+  var label: String {
+    switch self {
+    case .weightKg: "WEIGHT"
+    case .reps: "REPS"
+    case .seconds: "TIME"
+    case .meters: "DISTANCE"
+    }
+  }
 }
 
 struct WatchSet: Decodable {
@@ -58,44 +89,96 @@ struct WatchSet: Decodable {
   let missing: [SetField]
   /// As the phone describes it: "80 kg × 8", "0:50" or "2000 m · 8:12".
   let text: String
+  /// Last time's set of the same number, described the same way.
+  let lastText: String?
+
+  func value(_ field: SetField) -> Double? {
+    switch field {
+    case .weightKg: weightKg
+    case .reps: reps
+    case .seconds: seconds
+    case .meters: meters
+    }
+  }
 }
 
 /// A command for the phone, as JSON beside its workout's id, which the phone reads without
 /// reading the JSON. The JSON is made once, with the time the user acted.
 struct WatchCommand {
+  /// What a command changes, which the watch shows until the phone has applied it.
+  enum Change {
+    case tick(exercise: Int, set: Int)
+    /// The rest ending at `endsAt`, or skipped.
+    case rest(endsAt: Double?)
+  }
+
   let id: String
   let workoutId: String
-  /// The set it is for.
-  let exercise: Int
-  let set: Int
+  let change: Change
   let json: String
 
-  private init?(workoutId: String, exercise: Int, set: Int, body: [String: Any]) {
+  private init?(workoutId: String, change: Change, body: [String: Any]) {
     let id = UUID().uuidString
+    let at = (Date().timeIntervalSince1970 * 1000).rounded()
     var message = body
     message["v"] = protocolVersion
     message["id"] = id
-    message["at"] = (Date().timeIntervalSince1970 * 1000).rounded()
+    message["at"] = at
     message["workoutId"] = workoutId
     guard let data = try? JSONSerialization.data(withJSONObject: message),
       let json = String(data: data, encoding: .utf8)
     else { return nil }
     self.id = id
     self.workoutId = workoutId
-    self.exercise = exercise
-    self.set = set
+    self.change = change
     self.json = json
   }
 
-  /// Sets a set done or not done, as of now.
-  static func setDone(workoutId: String, exercise: Int, set: Int, done: Bool) -> WatchCommand? {
+  /// Sets a set done or not done, as of now, with the values edited on the watch set first.
+  static func setDone(
+    workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double]
+  ) -> WatchCommand? {
+    var body: [String: Any] = ["type": "setDone", "exercise": exercise, "set": set, "done": done]
+    if !values.isEmpty {
+      body["values"] = Dictionary(uniqueKeysWithValues: values.map { ($0.key.rawValue, $0.value) })
+    }
+    return WatchCommand(
+      workoutId: workoutId, change: .tick(exercise: exercise, set: set), body: body)
+  }
+
+  /// Makes the rest that ends at `of` end at `endsAt`, or skips it.
+  static func setRest(workoutId: String, of: Double, endsAt: Double?) -> WatchCommand? {
     WatchCommand(
-      workoutId: workoutId, exercise: exercise, set: set,
-      body: ["type": "setDone", "exercise": exercise, "set": set, "done": done])
+      workoutId: workoutId, change: .rest(endsAt: endsAt),
+      body: ["type": "setRest", "of": of, "endsAt": endsAt ?? NSNull()])
   }
 
   var payload: [String: Any] {
     ["command": json, "workoutId": workoutId]
+  }
+}
+
+/// A value as the watch shows it: a weight to its quarter kilogram, without trailing zeros.
+func formatted(_ value: Double?) -> String {
+  guard let value else { return "—" }
+  return value.formatted(.number.precision(.fractionLength(0...2)))
+}
+
+/// The set to do next, as the phone found it.
+struct NextSet {
+  let exerciseIndex: Int
+  let setIndex: Int
+  let exercise: WatchExercise
+  var set: WatchSet { exercise.sets[setIndex] }
+}
+
+extension WatchWorkout {
+  var nextSet: NextSet? {
+    guard let next, exercises.indices.contains(next.exercise),
+      exercises[next.exercise].sets.indices.contains(next.set)
+    else { return nil }
+    return NextSet(
+      exerciseIndex: next.exercise, setIndex: next.set, exercise: exercises[next.exercise])
   }
 }
 

@@ -419,6 +419,11 @@ export function restUntil(
   return rest && endsAt !== null && endsAt > now ? { ...rest, endsAt } : null;
 }
 
+/** Whether the set was ticked or unticked after `at`, which a change made then cannot undo. */
+export function tickedSince(set: SessionSet, at: number): boolean {
+  return (set.doneChangedAt ?? 0) > at;
+}
+
 /**
  * Marks a set done or not done at `at`, as far as it may be, on the phone or from the watch (ADR
  * 0109). A set is not done without what it needs. A set whose clock runs is done with the clock's
@@ -443,7 +448,7 @@ export function markDone(
     options.at ??
     Math.max(Date.now(), set.doneChangedAt ?? 0, lastActivity(value), value.restChangedAt ?? 0);
   const now = options.now ?? at;
-  if (set.done === done || (set.doneChangedAt ?? 0) > at) {
+  if (set.done === done || tickedSince(set, at)) {
     return value;
   }
   const { clock } = value;
@@ -468,21 +473,27 @@ export function markDone(
   };
 }
 
-/** Lengthens or shortens the rest; a rest that is over ends. */
-export function changeRest(value: Session, seconds: number, now = Date.now()): Session {
-  if (!value.rest) {
-    return value;
-  }
+/**
+ * Makes the rest end at another time, or ends it with null, as changed at `at`, so that a tick
+ * made before then starts no rest again. A rest that is over by `now` ends.
+ */
+export function setRestEnd(value: Session, endsAt: number | null, at: number, now = at): Session {
   return {
     ...value,
-    rest: restUntil(value.rest, value.rest.endsAt + seconds * 1000, now),
-    restChangedAt: now,
+    rest: restUntil(value.rest, endsAt, now),
+    // Never back in time, as a watch's clock can run behind the phone's.
+    restChangedAt: Math.max(value.restChangedAt ?? 0, at),
   };
+}
+
+/** Lengthens or shortens the rest; a rest that is over ends. */
+export function changeRest(value: Session, seconds: number, now = Date.now()): Session {
+  return value.rest ? setRestEnd(value, value.rest.endsAt + seconds * 1000, now) : value;
 }
 
 /** Ends the rest before its time. */
 export function skipRest(value: Session, now = Date.now()): Session {
-  return { ...value, rest: null, restChangedAt: now };
+  return setRestEnd(value, null, now);
 }
 
 /** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */

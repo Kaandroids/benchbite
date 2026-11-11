@@ -19,17 +19,45 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     WCSession.default.activate()
   }
 
-  /// Whether a command for this set waits for the phone, which a second one would only repeat.
-  func isWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
+  /// Whether a tick of this set waits for the phone, which a second one would only repeat.
+  func isTickWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
     waiting.values.contains {
-      $0.workoutId == workoutId && $0.exercise == exercise && $0.set == set
+      guard $0.workoutId == workoutId, case .tick(exercise, set) = $0.change else { return false }
+      return true
+    }
+  }
+
+  /// Whether a change of the workout's rest waits for the phone. Another waits until it is
+  /// applied, as the phone takes a change only of the rest it has, and the two could arrive in
+  /// either order.
+  func isRestWaiting(workoutId: String) -> Bool {
+    waitingRest(workoutId: workoutId) != nil
+  }
+
+  /// When the workout's rest ends as the watch shows it: as the change made here that the phone
+  /// has not applied yet says, else as the phone says.
+  func restEndsAt(_ workout: WatchWorkout) -> Double? {
+    if case .rest(let endsAt) = waitingRest(workoutId: workout.id)?.change {
+      return endsAt
+    }
+    return workout.rest?.endsAt
+  }
+
+  private func waitingRest(workoutId: String) -> WatchCommand? {
+    waiting.values.first {
+      guard $0.workoutId == workoutId, case .rest = $0.change else { return false }
+      return true
     }
   }
 
   func send(_ command: WatchCommand?) {
-    guard let command,
-      !isWaiting(workoutId: command.workoutId, exercise: command.exercise, set: command.set)
-    else { return }
+    guard let command else { return }
+    switch command.change {
+    case .tick(let exercise, let set):
+      if isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
+    case .rest:
+      if isRestWaiting(workoutId: command.workoutId) { return }
+    }
     let payload = command.payload
     waiting[command.id] = command
     let session = WCSession.default

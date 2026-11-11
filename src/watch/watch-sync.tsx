@@ -7,7 +7,7 @@ import { useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession } from '@/sessions/session';
 
 import { link } from './link';
-import { applyCommand, parseCommand, stateOf } from './protocol';
+import { applyCommand, parseCommand, stateOf, type ExerciseOf } from './protocol';
 
 let lastSeq = 0;
 
@@ -18,13 +18,13 @@ function nextSeq(): number {
 }
 
 /**
- * The library's names and metrics by exercise id, which sending the state and applying commands
- * both judge a set by, so that the watch offers no Done the phone then refuses.
+ * The library's exercise of an id, which sending the state and applying commands both judge a set
+ * by, so that the watch offers no Done the phone then refuses.
  */
-const lookups = (library: LibraryExercise[] | undefined) => ({
-  name: (id: string) => findExercise(library, id)?.name ?? null,
-  metricsOf: (id: string) => findExercise(library, id)?.metrics,
-});
+const exerciseIn =
+  (library: LibraryExercise[] | undefined): ExerciseOf =>
+  (id) =>
+    findExercise(library, id);
 
 /** Sends the workout to the watch and applies what the watch sends. */
 export function WatchSync() {
@@ -40,7 +40,7 @@ export function WatchSync() {
 
   useEffect(() => {
     if (session === null || ready) {
-      link.sendState(stateOf(session, lookups(library.data), nextSeq()));
+      link.sendState(stateOf(session, exerciseIn(library.data), nextSeq()));
     }
   }, [session, ready, library.data]);
 
@@ -50,8 +50,10 @@ export function WatchSync() {
       console.warn('Dropped a message from the watch that is not a command');
       return;
     }
-    const { metricsOf } = lookups(library.data);
-    updateSession((current) => applyCommand(current, command, { metricsOf }));
+    const exerciseOf = exerciseIn(library.data);
+    updateSession((current) =>
+      applyCommand(current, command, { metricsOf: (id) => exerciseOf(id)?.metrics }),
+    );
   });
 
   useEffect(() => (ready ? link.onCommand((message) => receive(message)) : undefined), [ready]);

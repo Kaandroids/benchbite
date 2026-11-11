@@ -3,8 +3,23 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
-import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
-import { describeSet, setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import {
+  addSet,
+  markDone,
+  setRestEnd,
+  setValues,
+  tickedSince,
+  type Session,
+} from '@/sessions/session';
+import {
+  describeSet,
+  SET_LIMITS,
+  setKindOf,
+  setValueOf,
+  weightStepOf,
+  type SetField,
+  type SetKind,
+} from '@/sets/fields';
 import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
@@ -22,16 +37,27 @@ export type WatchSet = SetValues & {
   missing: SetField[];
   /** As the phone describes it: "80 kg × 8", "0:50" or "2000 m · 8:12". */
   text: string;
+  /** Last time's set of the same number, described the same way; none when there was none. */
+  lastText: string | null;
 };
+
+/** How the Crown turns a value: from `min` to `max`, by `step`. */
+export type CrownRange = { min: number; max: number; step: number };
 
 export type WatchExercise = {
   exerciseId: string;
   /** In the user's language, as the phone shows it; none when the library does not know it. */
   name: string | null;
   target: WorkoutTarget;
+  /** What its sets record, as the phone shows them (setKindOf), in the order it shows them. */
+  fields: SetField[];
+  /**
+   * The values the watch changes with the Crown, and how; none for sets measured by time, which
+   * the phone's clock measures.
+   */
+  crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
   sets: WatchSet[];
-  last: SetValues[];
 };
 
 export type WatchWorkout = {
@@ -68,7 +94,14 @@ type CommandBase = {
 export type WatchCommand = CommandBase &
   (
     | { type: 'setValues'; exercise: number; set: number; values: Partial<SetValues> }
-    | { type: 'setDone'; exercise: number; set: number; done: boolean }
+    /** With the values the watch showed for the set, which are set first, when it was edited there. */
+    | {
+        type: 'setDone';
+        exercise: number;
+        set: number;
+        done: boolean;
+        values?: Partial<SetValues>;
+      }
     /** Adds a set while the exercise has fewer than `sets`, the number the watch then showed. */
     | { type: 'addSet'; exercise: number; sets: number }
     /** The rest the watch showed, `of` its end, made to end at `endsAt`, or skipped with null. */
@@ -78,6 +111,22 @@ export type WatchCommand = CommandBase &
 /** The workout's id; one started before ids were kept is named by its start. */
 export function workoutIdOf(session: Session): string {
   return session.id ?? `started-${session.startedAt}`;
+}
+
+/**
+ * How the Crown turns a lifted set's values: the weight by what its equipment goes up by, down to
+ * none only when it is added to the body, and the reps by one; each up to what a set can hold.
+ */
+export function crownOf(
+  kind: SetKind,
+  equipment: LibraryExercise['equipment'] | undefined,
+): Partial<Record<SetField, CrownRange>> {
+  if (kind.timed) return {};
+  const step = weightStepOf(equipment);
+  return {
+    weightKg: { min: kind.addedWeight ? 0 : step, max: SET_LIMITS.weightKg, step },
+    reps: { min: 1, max: SET_LIMITS.reps, step: 1 },
+  };
 }
 
 /**
@@ -96,15 +145,16 @@ export function nextSetOf(session: Session): { exercise: number; set: number } |
   return null;
 }
 
+/** The library's exercise of an id, as far as the watch needs it; none where it is not loaded. */
+export type ExerciseOf = (
+  exerciseId: string,
+) => Pick<LibraryExercise, 'name' | 'metrics' | 'equipment'> | undefined;
+
 /**
- * The state for the watch: its exercises named by `name`, and each set judged by `metricsOf` as
+ * The state for the watch: its exercises named and each set judged by the library's exercise as
  * the phone judges it, with its text as the phone shows it.
  */
-export function stateOf(
-  session: Session | null,
-  { name, metricsOf }: { name: (exerciseId: string) => string | null; metricsOf: MetricsOf },
-  seq: number,
-): WatchState {
+export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: number): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
@@ -116,19 +166,25 @@ export function stateOf(
       next: nextSetOf(session),
       rest: session.rest,
       exercises: session.exercises.map((exercise) => {
-        const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
+        const known = exerciseOf(exercise.exerciseId);
+        const kind = setKindOf(known?.metrics, exercise.target);
         return {
           exerciseId: exercise.exerciseId,
-          name: name(exercise.exerciseId),
+          name: known?.name ?? null,
           target: exercise.target,
+          fields: kind.fields,
+          crown: crownOf(kind, known?.equipment),
           restSeconds: exercise.restSeconds,
-          sets: exercise.sets.map((set) => ({
-            ...pickSetValues(set),
-            done: set.done,
-            missing: set.done ? [] : missingFields(set, kind),
-            text: describeSet(set, kind),
-          })),
-          last: exercise.last,
+          sets: exercise.sets.map((set, index) => {
+            const last = exercise.last[index];
+            return {
+              ...pickSetValues(set),
+              done: set.done,
+              missing: set.done ? [] : missingFields(set, kind),
+              text: describeSet(set, kind),
+              lastText: last ? describeSet(last, kind) : null,
+            };
+          }),
         };
       }),
       applied: session.watchCommands ?? [],
@@ -174,10 +230,13 @@ export function parseCommand(message: unknown): WatchCommand | null {
         ? { ...base, type, exercise: message.exercise, set: message.set, values }
         : null;
     }
-    case 'setDone':
-      return isIndex(message.exercise) && isIndex(message.set) && typeof message.done === 'boolean'
-        ? { ...base, type, exercise: message.exercise, set: message.set, done: message.done }
-        : null;
+    case 'setDone': {
+      const { exercise, set, done } = message;
+      if (!isIndex(exercise) || !isIndex(set) || typeof done !== 'boolean') return null;
+      if (message.values === undefined) return { ...base, type, exercise, set, done };
+      const values = valuesOf(message.values);
+      return values ? { ...base, type, exercise, set, done, values } : null;
+    }
     case 'addSet':
       return isIndex(message.exercise) && isIndex(message.sets) && message.sets > 0
         ? { ...base, type, exercise: message.exercise, sets: message.sets }
@@ -208,9 +267,15 @@ function change(
       return setValues(session, command.exercise, command.set, command.values, at);
     case 'setDone': {
       const item = session.exercises[command.exercise];
-      if (!item) return session;
+      const set = item?.sets[command.set];
+      // The values go with the tick: a tick older than the set's last tick or untick sets none.
+      // Otherwise each is the latest change of its value, even for a set already ticked.
+      if (!item || !set || tickedSince(set, at)) return session;
       const kind = setKindOf(metricsOf(item.exerciseId), item.target);
-      return markDone(session, command.exercise, command.set, command.done, kind, { at, now });
+      const edited = command.values
+        ? setValues(session, command.exercise, command.set, command.values, at)
+        : session;
+      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
@@ -222,7 +287,7 @@ function change(
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
-        ? { ...session, rest: restUntil(session.rest, command.endsAt, now) }
+        ? setRestEnd(session, command.endsAt, at, now)
         : session;
   }
 }
