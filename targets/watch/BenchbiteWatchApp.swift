@@ -79,6 +79,12 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
     restAlert.requestPermission()
   }
 
+  /// With the wrist down the summary of the workout saved last closes, so that the app opens on
+  /// what comes next (ADR 0120).
+  @MainActor func applicationDidEnterBackground() {
+    phone.closeSummary()
+  }
+
   /// The app may have been launched in the background, where the user could not be asked to let
   /// it signal the rests of the workout it measures: it asks once it is open.
   @MainActor func applicationDidBecomeActive() {
