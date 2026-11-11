@@ -20,6 +20,35 @@ struct WatchEnded: Decodable, Equatable {
   let id: String
   let saved: Bool
   let endedAt: Double?
+  /// The sets a saved workout saved, of all its sets, and the records it set, for the summary
+  /// (ADR 0119).
+  let setsSaved: Int?
+  let setCount: Int?
+  let records: Int?
+}
+
+/// A workout the watch followed, saved on the phone, as the watch's summary shows it (ADR 0119).
+struct FinishedWorkout {
+  let id: String
+  let title: String
+  let startedAt: Double
+  let endedAt: Double
+  let setsSaved: Int
+  let setCount: Int
+  let records: Int
+
+  /// The workout shown, if the state says the phone saved it: with the end, the sets and the
+  /// records it was saved with, else as it was last sent. Only a workout the watch followed.
+  static func saved(_ shown: WatchWorkout?, in state: WatchState) -> FinishedWorkout? {
+    guard let shown, shown.follows,
+      let end = state.ended.first(where: { $0.id == shown.id }), end.saved,
+      let endedAt = end.endedAt
+    else { return nil }
+    return FinishedWorkout(
+      id: shown.id, title: shown.title, startedAt: shown.startedAt, endedAt: endedAt,
+      setsSaved: end.setsSaved ?? shown.setsToSave, setCount: end.setCount ?? shown.setsDone.count,
+      records: end.records ?? 0)
+  }
 }
 
 struct WatchWorkout: Decodable {

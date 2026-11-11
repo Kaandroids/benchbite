@@ -4,6 +4,7 @@
 import { useEffect, useEffectEvent } from 'react';
 
 import { useCloseSessionScreens } from '@/sessions/close-screens';
+import type { MetricsOf } from '@/sessions/records';
 import { useSaveWorkout } from '@/sessions/save-workout';
 import { activeSession, endOfWatchFinish, updateSession, type Session } from '@/sessions/session';
 
@@ -31,7 +32,7 @@ function giveUpFinish(session: Session): Session {
  * Saves the finish the workout keeps, and ends it, closing the workout's screens, as the phone's
  * Save does; or gives the finish up when it cannot be saved.
  */
-export function useFinishFromWatch(session: Session | null) {
+export function useFinishFromWatch(session: Session | null, metricsOf: MetricsOf) {
   const { save } = useSaveWorkout();
   const closeScreens = useCloseSessionScreens();
 
@@ -42,7 +43,7 @@ export function useFinishFromWatch(session: Session | null) {
     let logId: number | null = null;
     try {
       // None without a set to save, which the watch does not offer either.
-      logId = await save(current, endOfWatchFinish(current, kept.at));
+      logId = await save(current, endOfWatchFinish(current, kept.at), { metricsOf });
     } catch (error) {
       console.warn('Could not save the workout finished on the watch', error);
     }

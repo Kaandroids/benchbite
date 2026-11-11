@@ -8,6 +8,7 @@ import {
   type Session,
   workoutIdOf,
 } from '@/sessions/session';
+import type { MetricsOf } from '@/sessions/records';
 import { setKindOf } from '@/sets/fields';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
@@ -19,7 +20,6 @@ import {
   PROTOCOL_VERSION,
   stateOf,
   type ExerciseOf,
-  type MetricsOf,
   type ChangeCommand,
 } from './protocol';
 

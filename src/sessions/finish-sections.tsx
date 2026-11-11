@@ -13,7 +13,7 @@ import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
 import { workoutLength } from '@/workouts/format';
 
-import { newRecords } from './records';
+import { sessionRecords } from './records';
 import type { sessionTotals, Session } from './session';
 
 /** Looks an exercise of the workout up in the library. */
@@ -161,14 +161,12 @@ export function NewRecords({ session, details }: { session: Session; details: De
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const formatRecord = useRecordFormat();
-  const records = session.exercises.flatMap((exercise) => {
-    const info = details(exercise.exerciseId);
-    const kind = setKindOf(info?.metrics, exercise.target);
-    return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
-      name: `${info?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,
+  const records = sessionRecords(session, (id) => details(id)?.metrics).map(
+    ({ exerciseId, record }) => ({
+      name: `${details(exerciseId)?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,
       value: formatRecord(record),
-    }));
-  });
+    }),
+  );
   if (records.length === 0) {
     return null;
   }

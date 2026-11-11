@@ -3,6 +3,7 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
+import type { MetricsOf } from '@/sessions/records';
 import {
   addSet,
   markDone,
@@ -291,9 +292,6 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return null;
   }
 }
-
-/** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
-export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
 
 /**
  * A command that changes the workout: all but a finish, which the phone saves instead
