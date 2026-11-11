@@ -4,7 +4,7 @@
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
 import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
-import { describeSet, setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import { describeSet, setKindOf, setValueOf, weightStepOf, type SetField } from '@/sets/fields';
 import { EMPTY_SET, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
@@ -93,21 +93,6 @@ export type WatchCommand = CommandBase &
 /** The workout's id; one started before ids were kept is named by its start. */
 export function workoutIdOf(session: Session): string {
   return session.id ?? `started-${session.startedAt}`;
-}
-
-/**
- * What a weight usually goes up by with the equipment: dumbbells in pairs of a kilogram each,
- * kettlebells by 4 kg, and plates by 1.25 kg a side.
- */
-export function weightStepOf(equipment: LibraryExercise['equipment'] | undefined): number {
-  switch (equipment) {
-    case 'dumbbell':
-      return 2;
-    case 'kettlebells':
-      return 4;
-    default:
-      return 2.5;
-  }
 }
 
 /**

@@ -40,6 +40,21 @@ export function setKindOf(
   };
 }
 
+/**
+ * What a weight usually goes up by with the equipment: dumbbells in pairs of a kilogram each,
+ * kettlebells by 4 kg, and plates by 1.25 kg a side.
+ */
+export function weightStepOf(equipment: LibraryExercise['equipment'] | undefined): number {
+  switch (equipment) {
+    case 'dumbbell':
+      return 2;
+    case 'kettlebells':
+      return 4;
+    default:
+      return 2.5;
+  }
+}
+
 /** A set in a few characters, such as "80 kg × 8", "0:50" or "2000 m · 8:12". */
 export function describeSet(values: SetValues, kind: SetKind): string {
   if (kind.fields.includes('reps')) {

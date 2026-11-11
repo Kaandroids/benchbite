@@ -15,7 +15,6 @@ import {
   parseCommand,
   PROTOCOL_VERSION,
   stateOf,
-  weightStepOf,
   workoutIdOf,
   type Lookups,
   type MetricsOf,
@@ -186,13 +185,6 @@ describe('stateOf', () => {
     const { id: _id, ...older } = start();
     expect(workoutIdOf(older)).toBe(`started-${NOW}`);
   });
-});
-
-it('steps a weight as its equipment goes up', () => {
-  expect(weightStepOf('dumbbell')).toBe(2);
-  expect(weightStepOf('kettlebells')).toBe(4);
-  expect(weightStepOf('barbell')).toBe(2.5);
-  expect(weightStepOf(undefined)).toBe(2.5);
 });
 
 describe('nextSetOf', () => {

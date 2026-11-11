@@ -1,4 +1,4 @@
-import { describeSet, parseTime, setKindOf } from './fields';
+import { describeSet, parseTime, setKindOf, weightStepOf } from './fields';
 
 const reps = { reps: { min: 8, max: 12 } };
 const time = { seconds: 45, meters: null };
@@ -46,6 +46,13 @@ describe('describeSet', () => {
       ),
     ).toBe('2000 m · 8:12');
   });
+});
+
+it('steps a weight as its equipment goes up', () => {
+  expect(weightStepOf('dumbbell')).toBe(2);
+  expect(weightStepOf('kettlebells')).toBe(4);
+  expect(weightStepOf('barbell')).toBe(2.5);
+  expect(weightStepOf(undefined)).toBe(2.5);
 });
 
 describe('parseTime', () => {
