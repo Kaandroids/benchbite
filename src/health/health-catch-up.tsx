@@ -24,6 +24,7 @@ export async function afterWorkoutLogged(
   queryClient: QueryClient,
   logId: number,
   stats: WorkoutStats | null | undefined,
+  { followedOnWatch = false }: { followedOnWatch?: boolean } = {},
 ): Promise<void> {
   // The log may hide a watch's copy of it among other apps' workouts (ADR 0106).
   void queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY });
@@ -36,6 +37,10 @@ export async function afterWorkoutLogged(
       console.warn('Could not keep the watch’s data', error);
     }
   }
+  // A workout the watch followed it saves itself, which reaches this store only after the watch
+  // hears of the finish: saved now, the phone's copy would count its calories twice until the
+  // catch-up, which keeps the store right from then (ADR 0105, ADR 0113).
+  if (followedOnWatch) return;
   try {
     await saveRecentWorkouts(queryClient);
   } catch (error) {

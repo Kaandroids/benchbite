@@ -110,6 +110,11 @@ describe('afterWorkoutLogged', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['outside-workouts'] });
   });
 
+  it('leaves a workout the watch followed to the watch, which saves its own', async () => {
+    await afterWorkoutLogged(createTestQueryClient(), 7, STATS, { followedOnWatch: true });
+    expect(saveWorkout).not.toHaveBeenCalled();
+  });
+
   it('still saves a workout without a heart rate, keeping nothing', async () => {
     await afterWorkoutLogged(createTestQueryClient(), 7, { ...STATS, heartRate: null });
     expect(supabase.rpc).not.toHaveBeenCalled();
