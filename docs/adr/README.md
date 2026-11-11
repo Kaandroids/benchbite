@@ -138,3 +138,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0120](0120-close-the-summary-on-the-watch.md)                        | Close the summary on the watch                                                          | Accepted                                             |
 | [0121](0121-log-on-the-watch-with-the-iphone-out-of-reach.md)         | Log on the watch with the iPhone out of reach                                           | Accepted                                             |
 | [0122](0122-finish-with-a-long-press-on-the-watch.md)                 | Finish with a long press on the watch                                                   | Accepted                                             |
+| [0123](0123-translate-the-watch-app.md)                               | Translate the watch app                                                                 | Accepted                                             |
