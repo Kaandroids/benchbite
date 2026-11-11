@@ -14,6 +14,10 @@ import HealthKit
 final class WorkoutSession: NSObject, ObservableObject {
   /// The latest heart rate, in beats a minute, while a session runs.
   @Published private(set) var heartRate: Int?
+  /// The workout the session measures, whose rests the watch signals while it runs (ADR 0114).
+  @Published private(set) var measuring: String?
+  /// Says to the phone that the watch is there, every so often while a session runs.
+  var onHere: ((String) -> Void)?
 
   private nonisolated static let heartRateType = HKQuantityType(.heartRate)
   private nonisolated static let calories = HKQuantityType(.activeEnergyBurned)
@@ -36,12 +40,36 @@ final class WorkoutSession: NSObject, ObservableObject {
   private var builder: HKLiveWorkoutBuilder?
   /// The phone's workout the session measures, kept so that a session taken up knows it.
   private var workoutId: String? {
-    didSet { UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey) }
+    didSet {
+      UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey)
+      measuring = workoutId
+      sayHere()
+    }
+  }
+
+  /// Says the watch is there now and every half a minute while it measures a workout, and stops
+  /// with it.
+  private func sayHere() {
+    here?.invalidate()
+    here = nil
+    guard let workoutId else { return }
+    onHere?(workoutId)
+    here = Timer.scheduledTimer(withTimeInterval: Self.hereEvery, repeats: true) {
+      [weak self] _ in
+      Task { @MainActor in
+        guard let self, let workoutId = self.workoutId else { return }
+        self.onHere?(workoutId)
+      }
+    }
   }
   /// While the workout of the session that ended is saved or left out.
   private var ending = false
   /// Ends a session that has run as long as a workout can.
   private var cap: Timer?
+  /// Says the watch is there; less than half the time the phone takes it to be: WATCH_HEARD_FOR_MS
+  /// in src/watch/protocol.ts.
+  private var here: Timer?
+  private static let hereEvery: TimeInterval = 30
 
   /// Takes up the session the system kept running while the app was ended, which it says by
   /// launching the app to recover it; until then nothing starts or ends.

@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
   @MainActor override init() {
     super.init()
     phone.onState = { [workoutSession] state in workoutSession.sync(state) }
+    workoutSession.onHere = { [phone] workoutId in phone.sayHere(workoutId: workoutId) }
   }
 
   @MainActor func handleActiveWorkoutRecovery() {

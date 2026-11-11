@@ -44,8 +44,6 @@ struct WatchNext: Decodable {
 struct WatchRest: Decodable {
   let endsAt: Double
   let seconds: Int
-  /// The watch started or last changed it, and so signals its end.
-  let byWatch: Bool
 }
 
 /// The rest as the watch shows it: the phone's, or one a change made here, not applied yet, starts
@@ -53,7 +51,6 @@ struct WatchRest: Decodable {
 struct ShownRest: Equatable {
   let endsAt: Double
   let seconds: Int
-  let byWatch: Bool
   /// The set after it, as "Set 4 · 80 kg × 8".
   let next: String?
 }
@@ -176,7 +173,7 @@ struct WatchCommand {
     let at = now()
     let startsRest = rest.map {
       ShownRest(
-        endsAt: at + Double($0.seconds) * 1000, seconds: $0.seconds, byWatch: true, next: $0.next)
+        endsAt: at + Double($0.seconds) * 1000, seconds: $0.seconds, next: $0.next)
     }
     return WatchCommand(
       workoutId: workoutId, change: .tick(exercise: exercise, set: set, startsRest: startsRest),
@@ -195,13 +192,11 @@ struct WatchCommand {
       body: ["type": "setRest", "of": of, "endsAt": endsAt ?? NSNull()])
   }
 
-  /// The JSON with what the phone's module reads without reading it: the workout it is for, and
-  /// whether it makes the rest the watch's to signal, so that the phone's notification goes.
+  /// The JSON with what the phone's module reads without reading it: the workout it is for, which
+  /// it also takes as a sign that the watch is there (ADR 0114).
   var payload: [String: Any] {
-    ["command": json, "workoutId": workoutId, "takesRest": takesRest]
+    ["command": json, "workoutId": workoutId]
   }
-
-  private var takesRest: Bool { change.startsRest != nil || change.isRest }
 }
 
 extension WatchCommand.Change {

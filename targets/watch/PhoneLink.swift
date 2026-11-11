@@ -49,17 +49,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let rest =
       ticked
       ?? workout.rest.map {
-        ShownRest(
-          endsAt: $0.endsAt, seconds: $0.seconds, byWatch: $0.byWatch,
-          next: workout.nextSet?.label)
+        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: workout.nextSet?.label)
       }
     guard let change = firstWaiting(workout.id, where: \.isRest)?.change,
       case .rest(let endsAt) = change
     else { return rest }
     return endsAt.map {
       ShownRest(
-        endsAt: $0, seconds: rest?.seconds ?? 0, byWatch: true,
-        next: rest?.next ?? workout.nextSet?.label)
+        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? workout.nextSet?.label)
     }
   }
 
@@ -89,6 +86,17 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       }
     } else {
       session.transferUserInfo(payload)
+    }
+  }
+
+  /// Tells the phone that the watch is there to signal the workout's rests, which then puts its own
+  /// notification off (ADR 0114). Only while the phone can be reached: a sign that waited would
+  /// say nothing of now.
+  func sayHere(workoutId: String) {
+    let session = WCSession.default
+    guard session.activationState == .activated, session.isReachable else { return }
+    session.sendMessage(["here": workoutId], replyHandler: nil) { error in
+      NSLog("[PhoneLink] Could not say the watch is there: %@", error.localizedDescription)
     }
   }
 
