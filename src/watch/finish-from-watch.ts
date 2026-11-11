@@ -44,9 +44,6 @@ function giveUpFinish(session: Session): Session {
   };
 }
 
-/** The finishes being saved, so that the workout's finish is saved once at a time. */
-const saving = new Set<string>();
-
 /**
  * Saves the finish the workout keeps, and ends it, closing the workout's screens, as the phone's
  * Save does; or gives the finish up when it cannot be saved.
@@ -63,8 +60,7 @@ export function useFinishFromWatch(session: Session | null) {
   const finish = useEffectEvent(async (id: string) => {
     const current = activeSession();
     const kept = current?.watchFinish;
-    if (!current || kept?.id !== id || saving.has(id)) return;
-    saving.add(id);
+    if (!current || kept?.id !== id) return;
     try {
       const endedAt = endOfWatchFinish(current, kept.at);
       // The phone saves none without a set done, nor does the watch offer it.
@@ -77,8 +73,6 @@ export function useFinishFromWatch(session: Session | null) {
     } catch (error) {
       console.warn('Could not save the workout finished on the watch', error);
       updateSession(giveUpFinish);
-    } finally {
-      saving.delete(id);
     }
   });
 
