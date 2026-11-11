@@ -498,19 +498,23 @@ describe('applyCommand', () => {
     expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 50 });
   });
 
-  it('starts no clock for a set done, nor over one started later', () => {
-    const done2 = toggleDoneUnchecked(startClock(start(), 2, 0, NOW), 2, 0, NOW);
-    const late = command(NOW - MINUTE, { type: 'startClock', exercise: 2, set: 0 });
-    expect(applyCommand(done2, late, { metricsOf: noLibrary, now: NOW })).toMatchObject({
-      clock: { exercise: 2, set: 0, startedAt: NOW },
-    });
-    const running = startClock(start(), 1, 0, NOW);
-    const older = command(NOW - MINUTE, { type: 'startClock', exercise: 2, set: 0 });
-    expect(applyCommand(running, older, { metricsOf: noLibrary, now: NOW }).clock).toEqual({
-      exercise: 1,
-      set: 0,
-      startedAt: NOW,
-    });
+  it('starts no clock for a set done, nor over a clock that runs', () => {
+    const done2 = toggleDoneUnchecked(start(), 2, 0, NOW);
+    const later = command(NOW + MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    expect(
+      applyCommand(done2, later, { metricsOf: noLibrary, now: NOW + MINUTE }).clock,
+    ).toBeNull();
+    // Started on the phone, then on the watch before it heard: the first start stays.
+    const running = startClock(start(), 2, 0, NOW);
+    const again = command(NOW + 5_000, { type: 'startClock', exercise: 2, set: 0 });
+    expect(applyCommand(running, again, { metricsOf: noLibrary, now: NOW + MINUTE }).clock).toEqual(
+      running.clock,
+    );
+    // Another set's clock, which the watch did not show, is not thrown away.
+    const other = startClock(start(), 1, 0, NOW);
+    expect(applyCommand(other, again, { metricsOf: noLibrary, now: NOW + MINUTE }).clock).toEqual(
+      other.clock,
+    );
   });
 
   it('ticks a set with the values the watch edited for it', () => {

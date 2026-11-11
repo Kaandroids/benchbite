@@ -149,14 +149,14 @@ export type WatchCommand = CommandBase &
     | { type: 'finish' }
   );
 
+/** The step of a distance turned with the Crown. */
+const METERS_STEP = 50;
+
 /**
  * How the Crown turns a set's values: the weight by what its equipment goes up by, down to none
  * only when it is added to the body, and the reps by one; for a timed set only its distance, by
  * 50 m, as the clock measures the time; each up to what a set can hold.
  */
-/** The step of a distance turned with the Crown. */
-const METERS_STEP = 50;
-
 export function crownOf(
   kind: SetKind,
   equipment: LibraryExercise['equipment'] | undefined,
@@ -360,8 +360,9 @@ function change(
       return openExercise(session, command.exercise, at);
     case 'startClock': {
       const set = session.exercises[command.exercise]?.sets[command.set];
-      // Not for a set done or ticked since, nor over a clock started after it.
-      if (!set || set.done || tickedSince(set, at) || (session.clock?.startedAt ?? 0) > at) {
+      // Not for a set done or ticked since, nor over a clock that runs, of this set, as when it
+      // was started on both, or of another, which the watch did not show.
+      if (!set || set.done || tickedSince(set, at) || session.clock) {
         return session;
       }
       return startClock(session, command.exercise, command.set, at);
