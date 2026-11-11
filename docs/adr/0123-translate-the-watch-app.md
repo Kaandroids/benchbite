@@ -9,7 +9,7 @@ The app is in English, German and Turkish, in the language chosen in Benchbite o
 
 ## Decision
 
-- **The watch shows its text in the language chosen in Benchbite.** The phone sends it with each state (`language`), and the watch keeps the last one, so that it opens in it; English until the phone has said. The watch's screens are drawn again when it changes.
+- **The watch shows its text in the language chosen in Benchbite.** The phone sends it with each state (`language`), and the watch keeps the last one, so that it opens in it; English until the phone has said. The views that observe the link to the phone are drawn again when it changes, keeping what they hold, such as a value turned with the Crown and not yet sent; the few that hold texts without observing it observe it for that.
 - **The text lives in `src/i18n/watch/`, one file per language**, beside the app's (ADR 0007) and the permission texts (ADR 0102), with i18next's `{{placeholders}}` and `_one` / `_other` forms. A separate folder keeps the app from loading text it never shows.
 - **`pnpm watch:strings` writes it to `targets/watch/Strings.swift`**, a dictionary by language and key, which `L10n.t()` reads on the watch, filling in the placeholders and taking `_one` for a count of one, as i18next does for the app's languages. The file is committed, as the watch target is built from `targets/watch`.
 - **`pnpm check:locales` checks the watch's text too**: the same keys and placeholders in each language as in English, the app's languages, and a Swift file written from the current text.
