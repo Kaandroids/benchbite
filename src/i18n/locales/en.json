@@ -153,7 +153,8 @@
       "tryFree_other": "Try premium free for {{count}} days",
       "more": "Chat with Bite, and more",
       "hint": "Opens your plan and what premium adds"
-    }
+    },
+    "watch": "Watch"
   },
   "loadError": {
     "title": "This couldn't load",
@@ -2545,5 +2546,31 @@
     "weekLabel": "Steps this week: {{days}}",
     "dayLabel": "{{day}} {{steps}}",
     "error": "Your steps could not load."
+  },
+  "watch": {
+    "startOnWatch": {
+      "title": "Start on your Apple Watch too?",
+      "body": "Log sets from your wrist. Your watch measures your heart rate and taps you when a rest is over.",
+      "both": "Sets you log on either one show on both",
+      "alerts": "Rest alerts come only from the watch",
+      "onWatch": "Start on watch too",
+      "onPhone": "Only on this phone",
+      "keep": "Don't ask again"
+    },
+    "settings": {
+      "name": "Apple Watch",
+      "installed": "Benchbite is on your watch",
+      "start": "Start workouts on the watch too",
+      "choices": {
+        "ask": "Ask",
+        "always": "Always",
+        "never": "Never"
+      },
+      "notes": {
+        "ask": "When your watch is near, Benchbite asks at each start. While the watch follows a workout, only the watch tells you a rest is over.",
+        "always": "Every workout starts on your watch too. While the watch follows a workout, only the watch tells you a rest is over.",
+        "never": "Workouts stay on this phone, which tells you when a rest is over. You can still open Benchbite on the watch and join one."
+      }
+    }
   }
 }

@@ -153,7 +153,8 @@
       "tryFree_other": "Teste Premium {{count}} Tage kostenlos",
       "more": "Chatte mit Bite, und mehr",
       "hint": "Öffnet deinen Plan und was Premium bietet"
-    }
+    },
+    "watch": "Uhr"
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
@@ -2545,5 +2546,31 @@
     "weekLabel": "Schritte diese Woche: {{days}}",
     "dayLabel": "{{day}} {{steps}}",
     "error": "Deine Schritte konnten nicht geladen werden."
+  },
+  "watch": {
+    "startOnWatch": {
+      "title": "Auch auf deiner Apple Watch starten?",
+      "body": "Trag Sätze am Handgelenk ein. Deine Uhr misst deinen Puls und tippt dich an, wenn eine Pause vorbei ist.",
+      "both": "Sätze, die du auf einem Gerät einträgst, siehst du auf beiden",
+      "alerts": "Pausenhinweise kommen nur von der Uhr",
+      "onWatch": "Auch auf der Uhr starten",
+      "onPhone": "Nur auf diesem iPhone",
+      "keep": "Nicht mehr fragen"
+    },
+    "settings": {
+      "name": "Apple Watch",
+      "installed": "Benchbite ist auf deiner Uhr",
+      "start": "Trainings auch auf der Uhr starten",
+      "choices": {
+        "ask": "Fragen",
+        "always": "Immer",
+        "never": "Nie"
+      },
+      "notes": {
+        "ask": "Ist deine Uhr in der Nähe, fragt Benchbite bei jedem Start. Solange die Uhr ein Training begleitet, meldet nur sie das Ende einer Pause.",
+        "always": "Jedes Training startet auch auf deiner Uhr. Solange die Uhr ein Training begleitet, meldet nur sie das Ende einer Pause.",
+        "never": "Trainings bleiben auf diesem iPhone, das dir das Ende einer Pause meldet. Du kannst Benchbite trotzdem auf der Uhr öffnen und einsteigen."
+      }
+    }
   }
 }
