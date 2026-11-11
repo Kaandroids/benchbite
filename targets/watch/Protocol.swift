@@ -140,6 +140,8 @@ struct WatchCommand {
   let id: String
   let workoutId: String
   let change: Change
+  /// When the user did it, in milliseconds since the epoch.
+  let at: Double
   let json: String
 
   /// Now, as a command's time, in whole milliseconds since the epoch.
@@ -156,6 +158,7 @@ struct WatchCommand {
       let json = String(data: data, encoding: .utf8)
     else { return nil }
     self.id = id
+    self.at = at
     self.workoutId = workoutId
     self.change = change
     self.json = json
@@ -224,9 +227,10 @@ extension WatchCommand.Change {
     return true
   }
 
-  var isOpen: Bool {
-    guard case .open = self else { return false }
-    return true
+  /// The exercise a pick opens.
+  var opens: Int? {
+    guard case .open(let exercise) = self else { return nil }
+    return exercise
   }
 
   /// The rest a tick starts, as the watch reckons it.
@@ -266,6 +270,11 @@ extension WatchWorkout {
       }
     }
     return nil
+  }
+
+  /// An exercise's name, or the workout's where the phone's library does not know it.
+  func name(of exercise: WatchExercise) -> String {
+    exercise.name ?? name ?? "Workout"
   }
 
   var nextSet: NextSet? {

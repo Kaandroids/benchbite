@@ -20,7 +20,7 @@ struct SetView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 6) {
           HeartRateLabel()
-          Text(next.exercise.name ?? workout.name ?? "Workout")
+          Text(workout.name(of: next.exercise))
             .font(.rounded(17, .heavy))
             .lineLimit(2)
           Text(subtitle(next))
@@ -45,7 +45,14 @@ struct SetView: View {
               }
             }
           }
-          if missing.isEmpty || !editable.isEmpty {
+          if let picked = phone.picked(workoutId: workout.id),
+            workout.exercises.indices.contains(picked)
+          {
+            // A tick now would be of this set, which the phone takes after the pick (ADR 0117).
+            Text("Opening \(workout.name(of: workout.exercises[picked])) on your iPhone")
+              .font(.rounded(13))
+              .foregroundStyle(Theme.secondary)
+          } else if missing.isEmpty || !editable.isEmpty {
             Button {
               phone.send(
                 .setDone(

@@ -60,6 +60,13 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isJoin } != nil
   }
 
+  /// The exercise picked last for the workout, while the phone has not applied the pick: its sets
+  /// come next once it has (ADR 0117).
+  func picked(workoutId: String) -> Int? {
+    waiting.values.filter { $0.workoutId == workoutId && $0.change.opens != nil }
+      .max { $0.at < $1.at }?.change.opens
+  }
+
   /// The workout's rest as the watch shows it: the phone's, or one a tick here starts, as changed
   /// by a change made here that the phone has not applied yet.
   func rest(of workout: WatchWorkout) -> ShownRest? {
