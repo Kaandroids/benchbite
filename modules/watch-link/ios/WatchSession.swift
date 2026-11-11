@@ -95,6 +95,7 @@ final class WatchSession: NSObject, WCSessionDelegate {
     lock.lock()
     // Heard of another workout is not heard of this one.
     if UserDefaults.standard.string(forKey: Self.workoutIdKey) != workoutId {
+      // With its heart rate, which only this keeps, in memory (ADR 0116).
       RestSignal.shared.forgetHeard()
       heartRate = nil
     }
@@ -155,8 +156,8 @@ final class WatchSession: NSObject, WCSessionDelegate {
 
   /// The watch sent its sign (`["here": workoutId, "rest": endsAt, "bpm": heartRate]`), which it
   /// does only while it measures the workout, with the end of the rest it signals and the heart
-  /// rate it measures, if any; a command says nothing of
-  /// that, and may have waited. About the workout the phone runs, the watch is there.
+  /// rate it measures, if any; a command says nothing of that, and may have waited. About the
+  /// workout the phone runs, the watch is there.
   private func heard(_ sign: [String: Any]) {
     lock.lock()
     let running = UserDefaults.standard.string(forKey: Self.workoutIdKey)

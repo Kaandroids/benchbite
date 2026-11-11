@@ -124,8 +124,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
-  /// One sign, with the rest the watch signals and its heart rate; only while the phone can be reached, as a sign that
-  /// waited would say nothing of now.
+  /// One sign, with the rest the watch signals and its heart rate; only while the phone can be
+  /// reached, as a sign that waited would say nothing of now.
   private func sendHere(_ workoutId: String) {
     let session = WCSession.default
     guard session.activationState == .activated, session.isReachable else { return }
