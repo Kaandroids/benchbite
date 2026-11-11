@@ -10,7 +10,9 @@ struct ExerciseListView: View {
 
   var body: some View {
     let sets = workout.exercises.flatMap(\.sets)
-    let current = workout.next?.exercise
+    // The pick the phone has not applied yet, which goes before the phone's: picking the phone's
+    // again undoes it.
+    let current = phone.picked(workoutId: workout.id) ?? workout.nextSet?.exerciseIndex
     ScrollView {
       VStack(alignment: .leading, spacing: 6) {
         Text("\(workout.name ?? "Workout") · \(sets.filter(\.done).count) / \(sets.count)")
@@ -21,18 +23,19 @@ struct ExerciseListView: View {
           .padding(.leading, 4)
         ForEach(Array(workout.exercises.enumerated()), id: \.offset) { index, exercise in
           let done = exercise.sets.filter(\.done).count
+          let isDone = done == exercise.sets.count
           let isCurrent = index == current
           Button {
             if !isCurrent { phone.send(.open(workoutId: workout.id, exercise: index)) }
             picked()
           } label: {
             ExerciseRow(
-              name: exercise.name ?? "Exercise \(index + 1)", done: done,
-              count: exercise.sets.count, isCurrent: isCurrent)
+              name: workout.name(of: exercise), done: done, count: exercise.sets.count,
+              isDone: isDone, isCurrent: isCurrent)
           }
           .buttonStyle(.plain)
           // One whose sets are all done has none to come next.
-          .disabled(!isCurrent && done == exercise.sets.count)
+          .disabled(!isCurrent && isDone)
         }
       }
       .foregroundStyle(Theme.text)
@@ -46,6 +49,7 @@ private struct ExerciseRow: View {
   let name: String
   let done: Int
   let count: Int
+  let isDone: Bool
   let isCurrent: Bool
 
   var body: some View {
@@ -59,7 +63,7 @@ private struct ExerciseRow: View {
       Spacer(minLength: 0)
       if isCurrent {
         Text("NOW").font(.rounded(13, .heavy)).foregroundStyle(Theme.accent)
-      } else if done == count {
+      } else if isDone {
         Image(systemName: "checkmark")
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.success)
