@@ -85,6 +85,13 @@ describe('startSession', () => {
     ]);
   });
 
+  it('starts on the watch too only when asked to', () => {
+    expect(start().watchFollows).toBeUndefined();
+    expect(startSession('user-a', PUSH, {}, { now: NOW, watchFollows: true }).watchFollows).toBe(
+      true,
+    );
+  });
+
   it('fills in the target without a last time', () => {
     const session = start();
     expect(session.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, reps: 12 });
