@@ -1,33 +1,114 @@
 import SwiftUI
 
-/// The workout the phone runs: its rest while one runs, else the set to do next, which the wrist
-/// edits and ticks.
+/// The workout the phone runs: an offer to join it, until the watch follows it; then its rest while
+/// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks.
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
+  @EnvironmentObject private var restAlert: RestAlert
 
   var body: some View {
-    if let workout = phone.workout {
-      // Each second, so that the rest counts down and gives way to the set when it is over.
-      TimelineView(.periodic(from: .now, by: 1)) { context in
-        let now = context.date.timeIntervalSince1970 * 1000
-        if let endsAt = phone.restEndsAt(workout), endsAt > now, let rest = workout.rest {
-          RestView(workout: workout, seconds: rest.seconds, endsAt: endsAt, now: now)
+    Group {
+      if let workout = phone.workout {
+        if !workout.follows {
+          JoinView(workout: workout)
+        } else if let over = restAlert.over {
+          RestOverView(next: over.next) { restAlert.over = nil }
         } else {
-          SetView(workout: workout)
+          // Each second, so that the rest counts down and gives way to the set when it is over.
+          TimelineView(.periodic(from: .now, by: 1)) { context in
+            let now = context.date.timeIntervalSince1970 * 1000
+            if let endsAt = phone.restEndsAt(workout), endsAt > now, let rest = workout.rest {
+              RestView(workout: workout, seconds: rest.seconds, endsAt: endsAt, now: now)
+            } else {
+              SetView(workout: workout)
+            }
+          }
         }
+      } else {
+        VStack(spacing: 10) {
+          Image(systemName: "dumbbell")
+            .font(.system(size: 32, weight: .semibold))
+            .foregroundStyle(Theme.secondary)
+          Text("No workout yet").font(.rounded(17, .heavy))
+          Text("Start one on your iPhone and it shows here.")
+            .font(.rounded(14))
+            .foregroundStyle(Theme.secondary)
+            .multilineTextAlignment(.center)
+        }
+        .foregroundStyle(Theme.text)
       }
-    } else {
-      VStack(spacing: 10) {
-        Image(systemName: "dumbbell")
-          .font(.system(size: 32, weight: .semibold))
-          .foregroundStyle(Theme.secondary)
-        Text("No workout yet").font(.rounded(17, .heavy))
-        Text("Start one on your iPhone and it shows here.")
+    }
+    // Only a workout the watch follows has its rests signalled here; the phone signals the others.
+    .onChange(of: signalled, initial: true) { restAlert.follow(signalled) }
+  }
+
+  /// The rest whose end the watch signals, and the set after it.
+  private var signalled: RestAlert.Rest? {
+    guard let workout = phone.workout, workout.follows, let endsAt = phone.restEndsAt(workout)
+    else { return nil }
+    return RestAlert.Rest(
+      endsAt: endsAt, next: workout.nextSet.map { "Set \($0.setIndex + 1) · \($0.set.text)" })
+  }
+}
+
+/// A workout that runs on the phone alone, which the watch can join.
+private struct JoinView: View {
+  @EnvironmentObject private var phone: PhoneLink
+  @EnvironmentObject private var restAlert: RestAlert
+  let workout: WatchWorkout
+
+  var body: some View {
+    let sets = workout.exercises.flatMap(\.sets)
+    VStack(spacing: 6) {
+      Text("ON YOUR IPHONE")
+        .font(.rounded(13, .heavy))
+        .foregroundStyle(Theme.secondary)
+      Text(workout.name ?? "Workout")
+        .font(.rounded(19, .heavy))
+        .lineLimit(2)
+      HStack(spacing: 0) {
+        Text(Date(timeIntervalSince1970: workout.startedAt / 1000), style: .timer)
+          .monospacedDigit()
+        Text(" · \(sets.filter(\.done).count) of \(sets.count) sets")
+      }
+      .font(.rounded(14))
+      .foregroundStyle(Theme.secondary)
+      Button("Join") {
+        restAlert.requestPermission()
+        phone.send(.join(workoutId: workout.id))
+      }
+      .buttonStyle(PillButtonStyle())
+      .disabled(phone.isJoinWaiting(workoutId: workout.id))
+      .padding(.top, 8)
+    }
+    .multilineTextAlignment(.center)
+    .foregroundStyle(Theme.text)
+  }
+}
+
+/// The end of a rest, signalled while the app was open.
+private struct RestOverView: View {
+  let next: String?
+  let go: () -> Void
+
+  var body: some View {
+    VStack(spacing: 8) {
+      Image(systemName: "timer")
+        .font(.system(size: 36, weight: .semibold))
+        .foregroundStyle(Theme.accent)
+      Text("Rest is over").font(.rounded(20, .heavy))
+      if let next {
+        Text(next)
           .font(.rounded(14))
           .foregroundStyle(Theme.secondary)
-          .multilineTextAlignment(.center)
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
       }
-      .foregroundStyle(Theme.text)
+      Button("Go", action: go)
+        .buttonStyle(PillButtonStyle())
+        .padding(.top, 8)
     }
+    .multilineTextAlignment(.center)
+    .foregroundStyle(Theme.text)
   }
 }

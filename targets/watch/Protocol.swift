@@ -23,6 +23,8 @@ struct WatchWorkout: Decodable {
   let rest: WatchRest?
   let exercises: [WatchExercise]
   let applied: [String]
+  /// The watch follows it and signals the end of a rest; else it offers to join.
+  let follows: Bool
 }
 
 struct WatchNext: Decodable {
@@ -110,6 +112,7 @@ struct WatchCommand {
     case tick(exercise: Int, set: Int)
     /// The rest ending at `endsAt`, or skipped.
     case rest(endsAt: Double?)
+    case join
   }
 
   let id: String
@@ -144,6 +147,11 @@ struct WatchCommand {
     }
     return WatchCommand(
       workoutId: workoutId, change: .tick(exercise: exercise, set: set), body: body)
+  }
+
+  /// Follows the workout from now on.
+  static func join(workoutId: String) -> WatchCommand? {
+    WatchCommand(workoutId: workoutId, change: .join, body: ["type": "join"])
   }
 
   /// Makes the rest that ends at `of` end at `endsAt`, or skips it.

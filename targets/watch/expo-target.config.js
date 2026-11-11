@@ -8,6 +8,6 @@ module.exports = {
   // Inside the phone app's: com.benchbite.app.watchkitapp, and .dev.watchkitapp for the dev build.
   bundleIdentifier: '.watchkitapp',
   deploymentTarget: '10.0',
-  frameworks: ['SwiftUI', 'WatchConnectivity'],
+  frameworks: ['SwiftUI', 'WatchConnectivity', 'WatchKit', 'UserNotifications'],
   icon: '../../assets/images/icon.png',
 };

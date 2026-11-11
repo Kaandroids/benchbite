@@ -43,6 +43,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     return workout.rest?.endsAt
   }
 
+  /// Whether joining the workout waits for the phone.
+  func isJoinWaiting(workoutId: String) -> Bool {
+    waiting.values.contains {
+      guard $0.workoutId == workoutId, case .join = $0.change else { return false }
+      return true
+    }
+  }
+
   private func waitingRest(workoutId: String) -> WatchCommand? {
     waiting.values.first {
       guard $0.workoutId == workoutId, case .rest = $0.change else { return false }
@@ -57,6 +65,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
     case .rest:
       if isRestWaiting(workoutId: command.workoutId) { return }
+    case .join:
+      if isJoinWaiting(workoutId: command.workoutId) { return }
     }
     let payload = command.payload
     waiting[command.id] = command
