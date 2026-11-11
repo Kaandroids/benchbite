@@ -19,6 +19,8 @@ enum Theme {
   static let onAccent = Color(hex: 0x1C0C00)
   /// warning
   static let warning = Color(hex: 0xFBBF24)
+  /// snack: the heart rate, as the app's heart rate chart shows it.
+  static let heart = Color(hex: 0xF28AB7)
 }
 
 extension Font {

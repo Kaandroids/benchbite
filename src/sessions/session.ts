@@ -4,7 +4,7 @@ import { randomUUID } from 'expo-crypto';
 import { useSyncExternalStore } from 'react';
 
 import { toIsoDate } from '@/i18n/dates';
-import { readItem, writeItem } from '@/lib/device-storage';
+import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -103,21 +103,11 @@ let session: Session | null = null;
 const listeners = new Set<() => void>();
 
 function load(): Session | null {
-  const stored = readItem(KEY);
-  if (!stored) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(stored) as { version?: number; session?: Session };
-    return parsed.version === VERSION && parsed.session ? parsed.session : null;
-  } catch (error) {
-    console.warn('Could not read the workout in progress', error);
-    return null;
-  }
+  return readVersioned<Session>(KEY, VERSION, 'session');
 }
 
 function store(value: Session | null) {
-  writeItem(KEY, value ? JSON.stringify({ version: VERSION, session: value }) : null);
+  writeVersioned(KEY, VERSION, 'session', value);
 }
 
 function current(): Session | null {
@@ -156,15 +146,55 @@ export function updateSession(change: (current: Session) => Session) {
   }
 }
 
-/** Ends the workout in progress without saving it, or after it was saved. */
-export function endSession() {
+/**
+ * How a workout ended: saved as a log, at the time it ended, or let go. A watch that followed it
+ * saves its own workout to the health store, or leaves it out, by it (ADR 0113).
+ */
+export type HowEnded = { saved: true; endedAt: number } | { saved: false };
+
+/** A workout that ended, and how. */
+export type EndedSession = Pick<Session, 'id' | 'startedAt'> & HowEnded;
+
+const ENDED_KEY = 'session.ended';
+const ENDED_VERSION = 1;
+/** How many ended workouts are kept, latest first: a watch that missed one still finds it. */
+const ENDED_KEPT = 5;
+let ended: EndedSession[] | undefined;
+
+function endedSessions(): EndedSession[] {
+  ended ??= readVersioned<EndedSession[]>(ENDED_KEY, ENDED_VERSION, 'ended') ?? [];
+  return ended;
+}
+
+/** How the latest workouts ended, latest first. */
+export function useEndedSessions(): EndedSession[] {
+  return useSyncExternalStore(subscribe, endedSessions);
+}
+
+/** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */
+export function endSession(how: HowEnded) {
+  const value = current();
+  if (value) {
+    ended = [{ id: value.id, startedAt: value.startedAt, ...how }, ...endedSessions()].slice(
+      0,
+      ENDED_KEPT,
+    );
+    writeVersioned(ENDED_KEY, ENDED_VERSION, 'ended', ended);
+  }
   set(null);
+}
+
+/** Forgets how the latest workouts ended, as when another user signs in on the device. */
+export function forgetEndedSessions() {
+  ended = [];
+  writeVersioned(ENDED_KEY, ENDED_VERSION, 'ended', null);
 }
 
 /** For tests: forgets the session in memory, so that the next read loads it again. */
 export function resetSessionStore() {
   loaded = false;
   session = null;
+  ended = undefined;
 }
 
 /**

@@ -109,9 +109,11 @@ export function FinishScreen({ next }: { next?: number }) {
       const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
       // What the watch measured goes with it, and it is saved to the health store (ADR 0105).
       if (logId !== null) {
-        void afterWorkoutLogged(queryClient, logId, health.data);
+        void afterWorkoutLogged(queryClient, logId, health.data, {
+          followedOnWatch: !!session.watchFollows,
+        });
       }
-      endSession();
+      endSession({ saved: true, endedAt: finishedAt });
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
       if (following) {
@@ -143,7 +145,7 @@ export function FinishScreen({ next }: { next?: number }) {
         text: t('common.discard'),
         style: 'destructive',
         onPress: () => {
-          endSession();
+          endSession({ saved: false });
           router.dismissAll();
         },
       },

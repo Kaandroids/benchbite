@@ -11,6 +11,7 @@ import {
   changeRest,
   clockSeconds,
   endSession,
+  useEndedSessions,
   isLeftOpen,
   lastActivity,
   markDone,
@@ -99,8 +100,25 @@ describe('startSession', () => {
     expect(result.current?.workoutId).toBe(7);
     const other = await renderHook(() => useActiveSession('user-b'));
     expect(other.result.current).toBeNull();
-    await act(() => endSession());
+    await act(() => endSession({ saved: false }));
     expect(result.current).toBeNull();
+  });
+
+  it('keeps how the latest workouts ended, for the watch that followed them', async () => {
+    const first = start();
+    const { result } = await renderHook(() => useEndedSessions());
+    expect(result.current).toEqual([]);
+    await act(() => endSession({ saved: true, endedAt: NOW + 3_600_000 }));
+    const second = start();
+    await act(() => endSession({ saved: false }));
+    expect(result.current).toEqual([
+      { id: second.id, startedAt: NOW, saved: false },
+      { id: first.id, startedAt: NOW, saved: true, endedAt: NOW + 3_600_000 },
+    ]);
+    // Kept on the device, as the watch may hear of them only later.
+    resetSessionStore();
+    const later = await renderHook(() => useEndedSessions());
+    expect(later.result.current).toHaveLength(2);
   });
 });
 

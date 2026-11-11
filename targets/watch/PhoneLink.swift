@@ -7,6 +7,10 @@ import WatchConnectivity
 final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The workout the phone runs, or none.
   @Published private(set) var workout: WatchWorkout?
+  /// How the latest workouts ended, which the workout session ends by.
+  @Published private(set) var ended: [WatchEnded] = []
+  /// Told each state the phone sends, as the workout session follows it whether a view shows.
+  var onState: (@MainActor (WatchState) -> Void)?
   /// The commands sent that the phone has not applied yet, by their id.
   @Published private(set) var waiting: [String: WatchCommand] = [:]
 
@@ -97,6 +101,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
       self.workout = state.workout
+      self.ended = state.ended
+      MainActor.assumeIsolated { self.onState?(state) }
       // Applied, or for a workout the phone no longer runs, which it drops without saying so.
       let applied = Set(state.workout?.applied ?? [])
       self.waiting = self.waiting.filter { id, command in

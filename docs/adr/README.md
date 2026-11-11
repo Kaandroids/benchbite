@@ -128,3 +128,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0110](0110-build-the-apple-watch-app-as-a-target-beside-the-app.md)  | Build the Apple Watch app as a target beside the app                                    | Accepted                                             |
 | [0111](0111-edit-and-tick-a-set-on-the-watch.md)                      | Edit and tick a set on the watch                                                        | Accepted                                             |
 | [0112](0112-signal-the-rest-on-the-watch-that-follows-the-workout.md) | Signal the rest on the watch that follows the workout                                   | Accepted                                             |
+| [0113](0113-run-a-workout-session-on-the-watch.md)                    | Run a workout session on the watch                                                      | Accepted                                             |

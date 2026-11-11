@@ -407,7 +407,9 @@ describe('FinishScreen', () => {
     expect(screen.getByText('412')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats, {
+      followedOnWatch: false,
+    });
   });
 
   it('shows nothing of a watch without a heart rate, and still hands the workout on', async () => {
@@ -418,7 +420,9 @@ describe('FinishScreen', () => {
     expect(screen.queryByText('From your watch')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats, {
+      followedOnWatch: false,
+    });
   });
 
   it('logs the set of a clock that still runs', async () => {

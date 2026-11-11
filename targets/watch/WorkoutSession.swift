@@ -1,0 +1,234 @@
+import Foundation
+import HealthKit
+
+/// The watch's workout session for the workout it follows (ADR 0113): it keeps the app running with
+/// the wrist down, measures the heart rate and the calories, and, when the phone saves its log,
+/// saves the watch's workout to the health store with them, as a watch's workout app does. A
+/// workout the phone lets go of is left out.
+///
+/// What the phone last said decides, whatever order things happen in: `sync` keeps each state it
+/// sends, and each step that ends, whether taking up a session after a relaunch, asking the user
+/// or a session ending, looks at it again. Before the phone has said anything since launch, nothing
+/// starts or ends.
+@MainActor
+final class WorkoutSession: NSObject, ObservableObject {
+  /// The latest heart rate, in beats a minute, while a session runs.
+  @Published private(set) var heartRate: Int?
+
+  private nonisolated static let heartRateType = HKQuantityType(.heartRate)
+  private nonisolated static let calories = HKQuantityType(.activeEnergyBurned)
+  private static let workoutIdKey = "workoutSession.workoutId"
+
+  /// As long as a workout can be on the phone: one older is let go of, as left open there.
+  private static let longest: TimeInterval = 12 * 3600
+
+  private let store = HKHealthStore()
+  /// The phone's latest state, none until it has sent one since launch.
+  private var said: WatchState?
+  /// While a session the system kept running while the app was ended is taken up.
+  private var recovering = false
+  /// While the user is asked to allow the health store.
+  private var asking = false
+  /// Workouts whose session ended from outside, as by another workout app, not started again.
+  private var stopped: Set<String> = []
+
+  private var session: HKWorkoutSession?
+  private var builder: HKLiveWorkoutBuilder?
+  /// The phone's workout the session measures, kept so that a session taken up knows it.
+  private var workoutId: String? {
+    didSet { UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey) }
+  }
+  /// While the workout of the session that ended is saved or left out.
+  private var ending = false
+  /// Ends a session that has run as long as a workout can.
+  private var cap: Timer?
+
+  /// Takes up the session the system kept running while the app was ended, which it says by
+  /// launching the app to recover it; until then nothing starts or ends.
+  func recover() {
+    guard HKHealthStore.isHealthDataAvailable(), session == nil else { return }
+    recovering = true
+    store.recoverActiveWorkoutSession { [weak self] session, error in
+      Task { @MainActor in
+        guard let self else { return }
+        if let error {
+          NSLog("[WorkoutSession] Could not recover: %@", error.localizedDescription)
+        }
+        if let session {
+          self.adopt(session, workoutId: UserDefaults.standard.string(forKey: Self.workoutIdKey))
+        }
+        self.recovering = false
+        self.reconcile()
+      }
+    }
+  }
+
+  /// Takes a state the phone sent: the workout it runs, whether the watch follows it, and how the
+  /// latest ended.
+  func sync(_ state: WatchState) {
+    said = state
+    reconcile()
+  }
+
+  /// Starts, ends or keeps the session as the phone said, once nothing else is under way.
+  private func reconcile() {
+    guard let said, !recovering, !asking, !ending else { return }
+    if let session {
+      guard let workoutId else { return end(session, saved: false, at: Date()) }
+      if let end = said.ended.first(where: { $0.id == workoutId }) {
+        self.end(session, saved: end.saved, at: end.endedAt.map(Self.date) ?? Date())
+      } else if let running = said.workout?.id, running != workoutId {
+        // The phone runs another workout, and says nothing of how this one ended. Running none,
+        // as while it starts or signs in again, it may still run this one.
+        self.end(session, saved: false, at: Date())
+      } else if let start = builder?.startDate, Date().timeIntervalSince(start) > Self.longest {
+        self.end(session, saved: false, at: Date())
+      }
+      return
+    }
+    guard let workout = said.workout, workout.follows, !stopped.contains(workout.id),
+      !said.ended.contains(where: { $0.id == workout.id }), HKHealthStore.isHealthDataAvailable()
+    else { return }
+    let followed = (workoutId: workout.id, startedAt: workout.startedAt)
+    if store.authorizationStatus(for: HKObjectType.workoutType()) == .notDetermined {
+      asking = true
+      store.requestAuthorization(
+        toShare: [HKObjectType.workoutType(), Self.calories, Self.heartRateType],
+        read: [Self.calories, Self.heartRateType]
+      ) { _, _ in
+        Task { @MainActor in
+          self.asking = false
+          self.reconcile()
+        }
+      }
+      return
+    }
+    begin(followed)
+  }
+
+  /// Measures the phone's workout, from when it started there, so that the saved workout covers
+  /// the log's time and the phone takes it for the same workout (ADR 0105, ADR 0106).
+  private func begin(_ followed: (workoutId: String, startedAt: Double)) {
+    let configuration = HKWorkoutConfiguration()
+    configuration.activityType = .traditionalStrengthTraining
+    configuration.locationType = .indoor
+    let session: HKWorkoutSession
+    do {
+      session = try HKWorkoutSession(healthStore: store, configuration: configuration)
+    } catch {
+      NSLog("[WorkoutSession] Could not start: %@", error.localizedDescription)
+      stopped.insert(followed.workoutId)
+      return
+    }
+    let builder = session.associatedWorkoutBuilder()
+    builder.dataSource = HKLiveWorkoutDataSource(
+      healthStore: store, workoutConfiguration: configuration)
+    adopt(session, workoutId: followed.workoutId)
+    let start = Self.date(followed.startedAt)
+    session.startActivity(with: start)
+    builder.beginCollection(withStart: start) { _, error in
+      if let error { NSLog("[WorkoutSession] Could not collect: %@", error.localizedDescription) }
+    }
+    limit(from: start)
+  }
+
+  /// Looks again once the session has run as long as a workout can, as the phone, not opened,
+  /// may never say it ended.
+  private func limit(from start: Date) {
+    cap?.invalidate()
+    let left = max(1, start.addingTimeInterval(Self.longest + 1).timeIntervalSinceNow)
+    cap = Timer.scheduledTimer(withTimeInterval: left, repeats: false) { [weak self] _ in
+      Task { @MainActor in self?.reconcile() }
+    }
+  }
+
+  /// Ends the session, then its workout: saved to the health store, to the time the log ends, or
+  /// left out. The workout is closed at once, as the session's own news of its end can wait while
+  /// the app is in the background, and the workout closes only once the session has ended.
+  private func end(_ session: HKWorkoutSession, saved: Bool, at end: Date) {
+    guard let builder else { return }
+    self.session = nil
+    self.builder = nil
+    workoutId = nil
+    heartRate = nil
+    cap?.invalidate()
+    cap = nil
+    ending = true
+    if session.state != .ended { session.end() }
+    builder.endCollection(withEnd: max(end, builder.startDate ?? end)) { _, error in
+      if let error {
+        NSLog("[WorkoutSession] Could not end: %@", error.localizedDescription)
+        builder.discardWorkout()
+      } else if saved {
+        builder.finishWorkout { _, error in
+          if let error {
+            NSLog("[WorkoutSession] Could not save: %@", error.localizedDescription)
+          }
+        }
+      } else {
+        builder.discardWorkout()
+      }
+      Task { @MainActor in
+        self.ending = false
+        self.reconcile()
+      }
+    }
+  }
+
+  /// A session that ended from outside, as by another workout app, or failed, is left out, and not
+  /// started again.
+  private func sessionEnded(_ session: HKWorkoutSession) {
+    guard session === self.session else { return }
+    if let workoutId { stopped.insert(workoutId) }
+    end(session, saved: false, at: Date())
+  }
+
+  private func adopt(_ session: HKWorkoutSession, workoutId: String?) {
+    self.session = session
+    session.delegate = self
+    builder = session.associatedWorkoutBuilder()
+    builder?.delegate = self
+    self.workoutId = workoutId
+    if let start = builder?.startDate { limit(from: start) }
+  }
+
+  private func measured(_ beats: Int?, by builder: HKLiveWorkoutBuilder) {
+    // A reading the ending session's builder still sends is not the next workout's.
+    guard builder === self.builder, !ending else { return }
+    heartRate = beats
+  }
+
+  private static func date(_ milliseconds: Double) -> Date {
+    Date(timeIntervalSince1970: milliseconds / 1000)
+  }
+}
+
+extension WorkoutSession: HKWorkoutSessionDelegate {
+  nonisolated func workoutSession(
+    _ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState,
+    from fromState: HKWorkoutSessionState, date: Date
+  ) {
+    guard toState == .ended else { return }
+    Task { @MainActor in self.sessionEnded(workoutSession) }
+  }
+
+  nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error)
+  {
+    NSLog("[WorkoutSession] Failed: %@", error.localizedDescription)
+    Task { @MainActor in self.sessionEnded(workoutSession) }
+  }
+}
+
+extension WorkoutSession: HKLiveWorkoutBuilderDelegate {
+  nonisolated func workoutBuilder(
+    _ workoutBuilder: HKLiveWorkoutBuilder, didCollectDataOf collectedTypes: Set<HKSampleType>
+  ) {
+    guard collectedTypes.contains(Self.heartRateType) else { return }
+    let perMinute = HKUnit.count().unitDivided(by: .minute())
+    let beats = workoutBuilder.statistics(for: Self.heartRateType)?.mostRecentQuantity()
+      .map { Int($0.doubleValue(for: perMinute).rounded()) }
+    Task { @MainActor in self.measured(beats, by: workoutBuilder) }
+  }
+
+  nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
+}

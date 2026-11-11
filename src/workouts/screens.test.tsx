@@ -395,9 +395,12 @@ describe('WorkoutsScreen', () => {
       // It starts once the sheet has closed, as iOS cannot open the question before.
       await waitFor(() =>
         expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }), {
-          beforeStart: endSession,
+          beforeStart: expect.any(Function),
         }),
       );
+      // Which ends Push without saving it.
+      jest.mocked(startWorkout).mock.calls[0]![1]!.beforeStart!();
+      expect(endSession).toHaveBeenCalledWith({ saved: false });
     });
 
     it('goes back to it from the question', async () => {

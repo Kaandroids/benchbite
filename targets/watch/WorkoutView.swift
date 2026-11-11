@@ -79,6 +79,7 @@ private struct JoinView: View {
       Button("Join") {
         restAlert.requestPermission { granted in
           refused = !granted
+          // The workout session then asks for the health store, which joining goes on without.
           if granted { phone.send(.join(workoutId: workout.id)) }
         }
       }

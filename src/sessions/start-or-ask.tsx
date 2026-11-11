@@ -49,7 +49,9 @@ export function useStartOrAsk() {
         setWaiting(null);
         // The running workout ends only once the new one is sure to start, which may ask first.
         if (next) {
-          afterSheetCloses(() => void startWorkout(next, { beforeStart: endSession }));
+          afterSheetCloses(
+            () => void startWorkout(next, { beforeStart: () => endSession({ saved: false }) }),
+          );
         }
       }}
       onClose={() => setWaiting(null)}
