@@ -16,6 +16,7 @@ import {
   lastActivity,
   markDone,
   MAX_WORKOUT_MS,
+  openExercise,
   resetSessionStore,
   sessionTotals,
   setValues,
@@ -295,10 +296,49 @@ describe('markDone', () => {
     }
   });
 
+  it('leaves open an exercise picked after a tick that arrives late', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 60 }, NOW);
+    session = setValues(session, 0, 1, { weightKg: 60 }, NOW);
+    session = markDone(session, 0, 0, true, lifted, { at: NOW + 1000 });
+    session = openExercise(session, 2, NOW + 3000);
+    // The bench's last set, ticked before the pick, which would open the plank after it.
+    const late = markDone(session, 0, 1, true, lifted, { at: NOW + 2000 });
+    expect(late.exercises[0]?.sets[1]?.done).toBe(true);
+    expect(late.current).toBe(2);
+  });
+
   it('ticks no set without what it needs, and leaves one already so', () => {
     const session = start();
     expect(markDone(session, 0, 0, true, lifted, { at: NOW })).toBe(session);
     expect(markDone(session, 0, 0, false, lifted, { at: NOW })).toBe(session);
+  });
+});
+
+describe('openExercise', () => {
+  it('opens the exercise picked, and none the workout does not have', () => {
+    const opened = openExercise(start(), 2, NOW + 1000);
+    expect(opened).toMatchObject({ current: 2, currentChangedAt: NOW + 1000 });
+    expect(openExercise(opened, 3, NOW + 2000)).toBe(opened);
+  });
+
+  it('leaves the open exercise to a later pick, or a set ticked later', () => {
+    const opened = openExercise(start(), 2, NOW + 2000);
+    // A pick that waited, as on the watch with the phone out of reach.
+    expect(openExercise(opened, 1, NOW + 1000)).toBe(opened);
+    const weighed = setValues(start(), 0, 0, { weightKg: 60 }, NOW);
+    const lifted: SetKind = { fields: ['weightKg', 'reps'], timed: false, addedWeight: false };
+    const ticked = markDone(weighed, 0, 0, true, lifted, { at: NOW + 2000 });
+    expect(openExercise(ticked, 1, NOW + 1000).current).toBe(0);
+  });
+
+  it('takes a pick on the phone as the latest, though its clock moved back', () => {
+    jest.useFakeTimers({ now: NOW });
+    try {
+      const opened = openExercise(start(), 2, NOW + 60_000);
+      expect(openExercise(opened, 1).current).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

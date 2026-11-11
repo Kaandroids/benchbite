@@ -133,11 +133,15 @@ struct WatchCommand {
     /// The rest ending at `endsAt`, or skipped.
     case rest(endsAt: Double?)
     case join
+    /// The exercise picked from the list, whose sets come next once the phone opens it.
+    case open(exercise: Int)
   }
 
   let id: String
   let workoutId: String
   let change: Change
+  /// When the user did it, in milliseconds since the epoch.
+  let at: Double
   let json: String
 
   /// Now, as a command's time, in whole milliseconds since the epoch.
@@ -154,6 +158,7 @@ struct WatchCommand {
       let json = String(data: data, encoding: .utf8)
     else { return nil }
     self.id = id
+    self.at = at
     self.workoutId = workoutId
     self.change = change
     self.json = json
@@ -186,6 +191,13 @@ struct WatchCommand {
     WatchCommand(workoutId: workoutId, change: .join, body: ["type": "join"])
   }
 
+  /// Opens the exercise on the phone, whose sets then come next (ADR 0117).
+  static func open(workoutId: String, exercise: Int) -> WatchCommand? {
+    WatchCommand(
+      workoutId: workoutId, change: .open(exercise: exercise),
+      body: ["type": "open", "exercise": exercise])
+  }
+
   /// Makes the rest that ends at `of` end at `endsAt`, or skips it.
   static func setRest(workoutId: String, of: Double, endsAt: Double?) -> WatchCommand? {
     WatchCommand(
@@ -213,6 +225,12 @@ extension WatchCommand.Change {
   var isJoin: Bool {
     guard case .join = self else { return false }
     return true
+  }
+
+  /// The exercise a pick opens.
+  var opens: Int? {
+    guard case .open(let exercise) = self else { return nil }
+    return exercise
   }
 
   /// The rest a tick starts, as the watch reckons it.
@@ -252,6 +270,20 @@ extension WatchWorkout {
       }
     }
     return nil
+  }
+
+  /// The workout's name, or a plain one where it has none.
+  var title: String { name ?? "Workout" }
+
+  /// An exercise's name, or the workout's where the phone's library does not know it.
+  func name(of exercise: WatchExercise) -> String {
+    exercise.name ?? title
+  }
+
+  /// How many of its sets are done, of how many.
+  var setsDone: (done: Int, count: Int) {
+    let sets = exercises.flatMap(\.sets)
+    return (sets.filter(\.done).count, sets.count)
   }
 
   var nextSet: NextSet? {

@@ -83,6 +83,7 @@ describe('parseCommand', () => {
     ).toMatchObject({ values: { weightKg: 80 } });
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
+    expect(command(NOW, { type: 'open', exercise: 1 })).toMatchObject({ exercise: 1 });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -110,6 +111,8 @@ describe('parseCommand', () => {
       { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: { kg: 80 } },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: {} },
+      { ...base, type: 'open' },
+      { ...base, type: 'open', exercise: -1 },
     ]) {
       expect(parseCommand(message)).toBeNull();
     }
@@ -571,6 +574,50 @@ describe('applyCommand', () => {
     expect(
       applyCommand(joined, command(NOW, { type: 'join' }), { metricsOf: noLibrary }).watchFollows,
     ).toBe(true);
+  });
+
+  it('opens the exercise picked on the watch, whose sets then come next', () => {
+    const opened = applyCommand(start(), command(NOW, { type: 'open', exercise: 1 }), {
+      metricsOf: noLibrary,
+      now: NOW,
+    });
+    expect(opened.current).toBe(1);
+    expect(nextSetOf(opened)).toEqual({ exercise: 1, set: 0 });
+    // One the workout does not have, as after it was changed on the phone.
+    const missing = command(NOW, { type: 'open', exercise: opened.exercises.length });
+    expect(applyCommand(opened, missing, { metricsOf: noLibrary, now: NOW }).current).toBe(1);
+  });
+
+  it('keeps the exercise of a set ticked after a pick that waited', () => {
+    // The pick was made at NOW, but the phone ticked a set of the open exercise since.
+    const ticked = applyCommand(start(), done(NOW + MINUTE, 0), {
+      metricsOf: noLibrary,
+      now: NOW + MINUTE,
+    });
+    const late = command(NOW, { type: 'open', exercise: 1 });
+    expect(
+      applyCommand(ticked, late, { metricsOf: noLibrary, now: NOW + 2 * MINUTE }).current,
+    ).toBe(0);
+    // The last of picks made in turn counts.
+    const picks = [2, 1].reduce(
+      (session, exercise, i) =>
+        applyCommand(session, command(NOW + 2 * MINUTE + i, { type: 'open', exercise }), {
+          metricsOf: noLibrary,
+          now: NOW + 3 * MINUTE,
+        }),
+      ticked,
+    );
+    expect(picks.current).toBe(1);
+    // A newer pick that arrived first.
+    const outOfOrder = [
+      command(NOW + 3 * MINUTE, { type: 'open', exercise: 2 }),
+      command(NOW + 2 * MINUTE, { type: 'open', exercise: 1 }),
+    ].reduce(
+      (session, pick) =>
+        applyCommand(session, pick, { metricsOf: noLibrary, now: NOW + 4 * MINUTE }),
+      ticked,
+    );
+    expect(outOfOrder.current).toBe(2);
   });
 
   it('keeps only the latest command ids', () => {

@@ -23,6 +23,7 @@ import {
   startClock,
   stopClock,
   markDone,
+  openExercise,
   updateSession,
   type Session,
   type SessionExercise,
@@ -49,7 +50,7 @@ export function FoldedExercise({ exercise, index, info }: ExerciseProps) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={info?.name}
-      onPress={() => updateSession((current) => ({ ...current, current: index }))}
+      onPress={() => updateSession((current) => openExercise(current, index))}
       style={[
         styles.folded,
         {
