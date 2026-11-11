@@ -72,6 +72,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:locales": "node scripts/check-locales.ts",
+    "watch:strings": "node scripts/generate-watch-strings.ts",
     "import:exercises": "node scripts/import-exercises.ts",
     "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",

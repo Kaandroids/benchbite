@@ -1,14 +1,18 @@
 // Checks that every locale has exactly the keys of the English source locale, and that each
 // translation uses the same {{placeholders}}; the same for the iOS permission texts, whose English
-// must also be what app.json gives the config plugins. Run with `pnpm check:locales`.
+// must also be what app.json gives the config plugins, and for the watch app's texts, whose Swift
+// file must be written from them. Run with `pnpm check:locales`.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+import { WATCH_STRINGS_PATH, WATCH_SWIFT_PATH, watchStringsSwift } from './lib/watch-strings.ts';
 
 const ROOT = join(import.meta.dirname, '..');
 const LOCALES_DIR = join(ROOT, 'src/i18n/locales');
 /** Where the iOS permission texts are, as app.json's `expo.locales` names them. */
 const PERMISSIONS_PATH = 'src/i18n/permissions';
 const PERMISSIONS_DIR = join(ROOT, PERMISSIONS_PATH);
+const WATCH_DIR = join(ROOT, WATCH_STRINGS_PATH);
 const SOURCE = 'en';
 
 /** Flattens nested objects into a map of dotted keys to strings. */
@@ -212,6 +216,14 @@ const options = pluginOptions(app.plugins);
 checkPluginOptions(options, errors);
 checkEnglish(appTexts(options, app.ios?.infoPlist ?? {}), errors);
 checkLanguages(locales, permissionLocales, app.locales ?? {}, errors);
+const watchLocales = translationsIn(WATCH_DIR);
+check(WATCH_DIR, `${WATCH_STRINGS_PATH}/`, watchLocales, errors);
+if ([...watchLocales].sort().join() !== [...locales].sort().join()) {
+  errors.push(`${WATCH_STRINGS_PATH} has ${watchLocales}, not the app's languages ${locales}`);
+}
+if (readFileSync(join(ROOT, WATCH_SWIFT_PATH), 'utf8') !== watchStringsSwift(ROOT)) {
+  errors.push(`${WATCH_SWIFT_PATH} is behind ${WATCH_STRINGS_PATH}: run \`pnpm watch:strings\``);
+}
 
 if (errors.length > 0) {
   console.error(errors.join('\n'));
@@ -219,3 +231,4 @@ if (errors.length > 0) {
 }
 console.log(`Locales match ${SOURCE}: ${locales.join(', ')}`);
 console.log(`Permission texts match ${SOURCE} and app.json: ${permissionLocales.join(', ')}`);
+console.log(`Watch texts match ${SOURCE} and ${WATCH_SWIFT_PATH}: ${watchLocales.join(', ')}`);
