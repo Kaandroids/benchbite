@@ -9,6 +9,7 @@ struct FinishView: View {
 
   var body: some View {
     let total = workout.setsDone
+    let saved = workout.setsToSave
     ScrollView {
       VStack(spacing: 8) {
         if phone.isFinishWaiting(workoutId: workout.id) {
@@ -23,7 +24,7 @@ struct FinishView: View {
           Text("Finish workout?")
             .font(.rounded(18, .heavy))
             .padding(.top, 10)
-          Text(total.done == 0 ? "No sets done yet" : "\(total.done) of \(total.count) sets done")
+          Text(saved == 0 ? "No sets done yet" : "\(saved) of \(total.count) sets done")
             .font(.rounded(14))
             .foregroundStyle(Theme.secondary)
           if phone.unsaved == workout.id {
@@ -35,8 +36,8 @@ struct FinishView: View {
             phone.send(.finish(workoutId: workout.id))
           }
           .buttonStyle(PillButtonStyle())
-          // The phone saves no workout without a set done.
-          .disabled(total.done == 0)
+          // The phone saves no workout without a set done, or one its clock times.
+          .disabled(saved == 0)
           .padding(.top, 6)
           Button("Keep going") { dismiss() }
             .buttonStyle(PillButtonStyle(prominent: false))

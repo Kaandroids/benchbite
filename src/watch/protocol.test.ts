@@ -140,6 +140,7 @@ describe('stateOf', () => {
       id: 'workout-1',
       current: 0,
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
+      running: null,
       applied: [],
       follows: false,
     });
@@ -154,6 +155,14 @@ describe('stateOf', () => {
       missing: [],
       text: '— × 12',
       lastText: null,
+    });
+  });
+
+  it('gives the watch the set the phone’s clock times', () => {
+    const running = startClock(start(), 0, 1, NOW + MINUTE);
+    expect(stateOf(running, names(withBench), 1, []).workout?.running).toEqual({
+      exercise: 0,
+      set: 1,
     });
   });
 

@@ -72,6 +72,8 @@ export type WatchWorkout = {
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
+  /** The set the phone's clock times, which finishing the workout logs as done. */
+  running: { exercise: number; set: number } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -126,7 +128,11 @@ export type WatchCommand = CommandBase &
     | { type: 'join' }
     /** Opens the exercise, picked from the watch's list, whose sets come next (ADR 0117). */
     | { type: 'open'; exercise: number }
-    /** Finishes the workout, which the phone then saves (ADR 0118). */
+    /**
+     * Finishes the workout, which the phone then saves and ends (ADR 0118). It is applied only
+     * when the phone could not save it, so a finish applied while the workout goes on tells the
+     * watch that it was not saved.
+     */
     | { type: 'finish' }
   );
 
@@ -196,6 +202,7 @@ export function stateOf(
       current: session.current,
       next: nextSetOf(session),
       rest: session.rest,
+      running: session.clock && { exercise: session.clock.exercise, set: session.clock.set },
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -327,8 +334,7 @@ function change(
     case 'open':
       return openExercise(session, command.exercise, at);
     case 'finish':
-      // Saving it ends the workout (finish-from-watch.ts); applied, it only tells the watch that
-      // the save failed.
+      // Applied only when it could not be saved (finish-from-watch.ts), which changes nothing.
       return session;
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
