@@ -115,7 +115,7 @@ struct SetView: View {
 
   private func subtitle(_ next: NextSet) -> String {
     let position = L10n.t(
-      "position", ["number": next.setIndex + 1, "count": next.exercise.sets.count])
+      "position", ["number": next.setIndex + 1, "total": next.exercise.sets.count])
     return next.set.lastText.map { L10n.t("lastTime", ["position": position, "values": $0]) }
       ?? position
   }

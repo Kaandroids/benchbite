@@ -72,7 +72,7 @@ private struct JoinView: View {
       HStack(spacing: 0) {
         Text(Date(timeIntervalSince1970: workout.startedAt / 1000), style: .timer)
           .monospacedDigit()
-        Text(" · " + L10n.t("progress", ["done": total.done, "count": total.count]))
+        Text(" · " + L10n.t("progress", ["done": total.done, "total": total.count]))
       }
       .font(.rounded(14))
       .foregroundStyle(Theme.secondary)

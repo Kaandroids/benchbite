@@ -26,7 +26,7 @@ struct FinishView: View {
           Text(
             saved == 0
               ? L10n.t("finish.noSets")
-              : L10n.t("finish.sets", ["done": saved, "count": workout.setsDone.count]))
+              : L10n.t("finish.sets", ["done": saved, "total": workout.setsDone.count]))
             .font(.rounded(14))
             .foregroundStyle(Theme.secondary)
           if phone.unsaved == workout.id {
