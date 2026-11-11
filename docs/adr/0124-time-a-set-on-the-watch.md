@@ -10,9 +10,9 @@ ADR 0111 left sets measured by time to the phone: "A set measured by time is sti
 ## Decision
 
 - **The watch starts and stops the phone's clock.** The phone keeps one clock (`Session.clock`), and the state now carries it (`clock`: the set and its start), so both show the same second and a clock started on one can be stopped on the other.
-- **Start is a new command, `startClock`,** with the set and the time it was pressed. The phone starts the clock then, unless the set is done or was ticked since, or a clock was started later.
-- **Stop is the set's tick.** A tick of the set whose clock runs already stops it with the time it ran (`markDone`), so Stop sends the same `setDone` as Done, with the values edited on the watch, and starts the set's rest the same way; waiting out of reach, it counts and moves on as a tick does (ADR 0121).
-- **The set shows its clock in place of the weight and the reps:** 0:00 until it starts, then counting up in the accent colour, with the plan's target beside it ("TIME · TARGET 0:40") when there is one; nothing happens at the target, as on the phone.
+- **Start is a new command, `startClock`,** with the set and the time it was pressed. The phone starts the clock then, unless the set is done or was ticked since, or a clock already runs: of the same set, as when it was started on both, or of another, which the watch did not show.
+- **Stop is the set's tick.** A tick of the set whose clock runs already stops it with the time it ran (`markDone`), so Stop sends the same `setDone` as Done, with the values edited on the watch, and starts the set's rest the same way; waiting out of reach, it counts and moves on as a tick does (ADR 0121). While the set's start waits for the phone, the tick goes as a transfer behind it, so that it cannot arrive first.
+- **The set shows its clock in place of the weight and the reps while it runs or the set has no time yet**, as the phone does; a timed set with a time, typed on the phone or ticked before, is ticked as it is, with Done. The clock shows 0:00 until it starts, then counting up in the accent colour, with the plan's target beside it ("TIME · TARGET 0:40") when there is one; nothing happens at the target, as on the phone.
 - **A set with a distance** turns its distance with the Crown, by 50 m, as a weight is turned; the time is never turned, as the clock measures it.
 
 ## Alternatives considered
