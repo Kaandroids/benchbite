@@ -19,17 +19,34 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     WCSession.default.activate()
   }
 
-  /// Whether a command for this set waits for the phone, which a second one would only repeat.
+  /// Whether a tick of this set waits for the phone, which a second one would only repeat.
   func isWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
     waiting.values.contains {
-      $0.workoutId == workoutId && $0.exercise == exercise && $0.set == set
+      guard $0.workoutId == workoutId, case .tick(exercise, set) = $0.change else { return false }
+      return true
     }
   }
 
+  /// When the workout's rest ends as the watch shows it: as the latest change made here that the
+  /// phone has not applied yet says, else as the phone says.
+  func restEndsAt(_ workout: WatchWorkout) -> Double? {
+    let latest = waiting.values
+      .filter { $0.workoutId == workout.id }
+      .compactMap { command -> (at: Double, endsAt: Double?)? in
+        guard case .rest(_, let endsAt) = command.change else { return nil }
+        return (command.at, endsAt)
+      }
+      .max { $0.at < $1.at }
+    return latest.map(\.endsAt) ?? workout.rest?.endsAt
+  }
+
   func send(_ command: WatchCommand?) {
-    guard let command,
-      !isWaiting(workoutId: command.workoutId, exercise: command.exercise, set: command.set)
-    else { return }
+    guard let command else { return }
+    if case .tick(let exercise, let set) = command.change,
+      isWaiting(workoutId: command.workoutId, exercise: exercise, set: set)
+    {
+      return
+    }
     let payload = command.payload
     waiting[command.id] = command
     let session = WCSession.default
