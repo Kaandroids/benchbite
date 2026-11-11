@@ -3,7 +3,7 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
-import { newRecords } from '@/sessions/records';
+import type { MetricsOf } from '@/sessions/records';
 import {
   addSet,
   markDone,
@@ -77,8 +77,6 @@ export type WatchWorkout = {
   rest: { endsAt: number; seconds: number } | null;
   /** How many sets finishing the workout saves: those done, and the one the phone's clock times. */
   setsToSave: number;
-  /** How many records its sets have set, as the phone's finish screen lists them (ADR 0119). */
-  records: number;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -203,10 +201,6 @@ export function stateOf(
       next: nextSetOf(session),
       rest: session.rest,
       setsToSave: setsToSave(session),
-      records: session.exercises.reduce((count, exercise) => {
-        const kind = setKindOf(exerciseOf(exercise.exerciseId)?.metrics, exercise.target);
-        return count + newRecords(exercise.sets, kind, exercise.bests).records.length;
-      }, 0),
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -299,8 +293,7 @@ export function parseCommand(message: unknown): WatchCommand | null {
   }
 }
 
-/** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
-export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
+export type { MetricsOf };
 
 /**
  * A command that changes the workout: all but a finish, which the phone saves instead

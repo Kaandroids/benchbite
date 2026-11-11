@@ -34,13 +34,13 @@ export function WatchSync() {
   // Until sign-in is known, no workout shows, which the watch would take for one let go of.
   const signedIn = useSession().status !== 'loading';
   const session = useActiveSession(useUserId());
-  useFinishFromWatch(session);
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
   const ended = useEndedSessions();
   const nameOf = useWorkoutName();
   // As the phone names it: a planned workout without a name of its own by its type.
   const name = session ? nameOf(session) || null : null;
+  useFinishFromWatch(session, (id) => exerciseIn(library.data)(id)?.metrics);
 
   // A set is judged, and commands are taken, once the library has loaded, as what a set needs
   // depends on its exercise; or once its first try failed, as offline, when they apply as the

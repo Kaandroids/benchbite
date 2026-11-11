@@ -102,7 +102,10 @@ export function FinishScreen({ next }: { next?: number }) {
     }
     saving.current = true;
     try {
-      await saveWorkout.save(active, finishedAt, health.data);
+      await saveWorkout.save(active, finishedAt, {
+        health: health.data,
+        metricsOf: (id) => details(id)?.metrics,
+      });
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
       if (following) {

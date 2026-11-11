@@ -3,7 +3,14 @@ import { act, renderHook } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import { useSaveWorkout } from './save-workout';
-import { activeSession, resetSessionStore, startSession, toggleDoneUnchecked } from './session';
+import {
+  activeSession,
+  resetSessionStore,
+  startClock,
+  startSession,
+  toggleDoneUnchecked,
+  useEndedSessions,
+} from './session';
 
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'workout-1' }));
 jest.mock('expo-sqlite/kv-store', () => ({
@@ -52,4 +59,35 @@ it('saves a workout saved from two places at once once, with the first one’s e
   await act(async () => respond({ data: 12, error: null }));
   await expect(Promise.all(saves)).resolves.toEqual([12, 12]);
   expect(activeSession()).toBeNull();
+});
+
+it('ends the workout with the records it set, with the set a running clock times', async () => {
+  jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
+  const plank = testExercise('plank', { target: { seconds: 45, meters: null } });
+  const session = startClock(
+    startSession(
+      'user-a',
+      testWorkout(1, { exercises: [plank] }),
+      {},
+      {
+        now: NOW,
+        bests: { plank: { longest_time: 60 } },
+      },
+    ),
+    0,
+    0,
+    NOW,
+  );
+  const { result } = await renderHook(() => ({
+    save: useSaveWorkout().save,
+    ended: useEndedSessions(),
+  }));
+  await act(async () => void (await result.current.save(session, NOW + 90_000)));
+  expect(result.current.ended[0]).toEqual({
+    id: 'workout-1',
+    startedAt: NOW,
+    saved: true,
+    endedAt: NOW + 90_000,
+    records: 1,
+  });
 });
