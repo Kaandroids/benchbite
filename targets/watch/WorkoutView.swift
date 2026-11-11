@@ -5,7 +5,6 @@ import SwiftUI
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
-  @EnvironmentObject private var workoutSession: WorkoutSession
 
   var body: some View {
     Group {
@@ -39,17 +38,6 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
-    // The rests of a workout the watch measures are signalled here, as the phone puts its own
-    // notification off while the watch says it is there (ADR 0114).
-    .onChange(of: signalled, initial: true) { restAlert.signal(signalled) }
-  }
-
-  /// The rest whose end the watch signals, and the set after it.
-  private var signalled: RestAlert.Rest? {
-    guard let workout = phone.workout, workoutSession.measuring == workout.id,
-      let rest = phone.rest(of: workout)
-    else { return nil }
-    return RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: rest.next)
   }
 }
 

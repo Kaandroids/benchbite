@@ -32,7 +32,8 @@ struct WatchWorkout: Decodable {
   let rest: WatchRest?
   let exercises: [WatchExercise]
   let applied: [String]
-  /// The watch follows it and signals the end of a rest; else it offers to join.
+  /// The watch follows it, measuring it and signalling its rests while it can; else it offers to
+  /// join.
   let follows: Bool
 }
 
@@ -122,8 +123,8 @@ struct WatchSet: Decodable {
   }
 }
 
-/// A command for the phone, as JSON beside its workout's id, which the phone reads without
-/// reading the JSON. The JSON is made once, with the time the user acted.
+/// A command for the phone, as JSON, made once with the time the user acted; the watch keeps its
+/// workout and what it changes, to show it until the phone has applied it.
 struct WatchCommand {
   /// What a command changes, which the watch shows until the phone has applied it.
   enum Change {
@@ -192,10 +193,9 @@ struct WatchCommand {
       body: ["type": "setRest", "of": of, "endsAt": endsAt ?? NSNull()])
   }
 
-  /// The JSON with what the phone's module reads without reading it: the workout it is for, which
-  /// it also takes as a sign that the watch is there (ADR 0114).
+  /// The JSON, which the phone's module keeps for JavaScript without reading it.
   var payload: [String: Any] {
-    ["command": json, "workoutId": workoutId]
+    ["command": json]
   }
 }
 
