@@ -14,7 +14,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The commands sent that the phone has not applied yet, by their id.
   @Published private(set) var waiting: [String: WatchCommand] = [:]
   /// The workout whose finish the phone took without ending it, as it could not save it
-  /// (ADR 0118); none once it is finished again.
+  /// (ADR 0118); none once it is finished again. The phone applies a finish only then: one it
+  /// saves ends the workout instead.
   @Published private(set) var unsaved: String?
 
   private var lastSeq: Double = 0
