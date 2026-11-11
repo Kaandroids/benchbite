@@ -10,6 +10,7 @@ import {
   openExercise,
   setRestEnd,
   startClock,
+  timedByClock,
   setsToSave,
   setValues,
   tickedSince,
@@ -46,6 +47,8 @@ export type WatchSet = SetValues & {
   text: string;
   /** Last time's set of the same number, described the same way; none when there was none. */
   lastText: string | null;
+  /** Done with its clock, Start and Stop in place of Done, as the phone shows it (ADR 0124). */
+  timedByClock: boolean;
 };
 
 /** How the Crown turns a value: from `min` to `max`, by `step`. */
@@ -149,7 +152,10 @@ export type WatchCommand = CommandBase &
     | { type: 'finish' }
   );
 
-/** The step of a distance turned with the Crown. */
+/**
+ * The step of a distance turned with the Crown: finer than the plan editor's 100 m, as a set's
+ * distance is what was done, not a round target.
+ */
 const METERS_STEP = 50;
 
 /**
@@ -221,7 +227,7 @@ export function stateOf(
       rest: session.rest,
       clock: session.clock,
       setsToSave: setsToSave(session),
-      exercises: session.exercises.map((exercise) => {
+      exercises: session.exercises.map((exercise, exerciseIndex) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
         return {
@@ -239,6 +245,11 @@ export function stateOf(
               missing: set.done ? [] : missingFields(set, kind),
               text: describeSet(set, kind),
               lastText: last ? describeSet(last, kind) : null,
+              timedByClock: timedByClock(
+                set,
+                kind,
+                session.clock?.exercise === exerciseIndex && session.clock.set === index,
+              ),
             };
           }),
         };
@@ -365,7 +376,11 @@ function change(
       if (!set || set.done || tickedSince(set, at) || session.clock) {
         return session;
       }
-      return startClock(session, command.exercise, command.set, at);
+      const started = startClock(session, command.exercise, command.set, at);
+      // A rest started or changed after it stays, as markDone and setRestEnd keep it.
+      return (session.restChangedAt ?? 0) > at
+        ? { ...started, rest: session.rest, restChangedAt: session.restChangedAt }
+        : started;
     }
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
