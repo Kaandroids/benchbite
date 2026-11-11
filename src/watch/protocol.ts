@@ -9,6 +9,8 @@ import {
   markDone,
   openExercise,
   setRestEnd,
+  startClock,
+  timedByClock,
   setsToSave,
   setValues,
   tickedSince,
@@ -45,6 +47,8 @@ export type WatchSet = SetValues & {
   text: string;
   /** Last time's set of the same number, described the same way; none when there was none. */
   lastText: string | null;
+  /** Done with its clock, Start and Stop in place of Done, as the phone shows it (ADR 0124). */
+  timedByClock: boolean;
 };
 
 /** How the Crown turns a value: from `min` to `max`, by `step`. */
@@ -58,8 +62,8 @@ export type WatchExercise = {
   /** What its sets record, as the phone shows them (setKindOf), in the order it shows them. */
   fields: SetField[];
   /**
-   * The values the watch changes with the Crown, and how; none for sets measured by time, which
-   * the phone's clock measures.
+   * The values the watch changes with the Crown, and how; never the time, which the clock measures,
+   * so for a timed set only its distance, if it has one (ADR 0124).
    */
   crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
@@ -75,6 +79,8 @@ export type WatchWorkout = {
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
+  /** The clock of the timed set it measures, from its start on the phone or the watch (ADR 0124). */
+  clock: { exercise: number; set: number; startedAt: number } | null;
   /** How many sets finishing the workout saves: those done, and the one the phone's clock times. */
   setsToSave: number;
   exercises: WatchExercise[];
@@ -134,6 +140,11 @@ export type WatchCommand = CommandBase &
     /** Opens the exercise, picked from the watch's list, whose sets come next (ADR 0117). */
     | { type: 'open'; exercise: number }
     /**
+     * Starts the clock of a timed set; a tick of the set then stops it, with the time it ran
+     * (ADR 0124).
+     */
+    | { type: 'startClock'; exercise: number; set: number }
+    /**
      * Finishes the workout, which the phone then saves and ends (ADR 0118). It is applied only
      * when the phone could not save it, so a finish applied while the workout goes on tells the
      * watch that it was not saved.
@@ -142,14 +153,25 @@ export type WatchCommand = CommandBase &
   );
 
 /**
- * How the Crown turns a lifted set's values: the weight by what its equipment goes up by, down to
- * none only when it is added to the body, and the reps by one; each up to what a set can hold.
+ * The step of a distance turned with the Crown: finer than the plan editor's 100 m, as a set's
+ * distance is what was done, not a round target.
+ */
+const METERS_STEP = 50;
+
+/**
+ * How the Crown turns a set's values: the weight by what its equipment goes up by, down to none
+ * only when it is added to the body, and the reps by one; for a timed set only its distance, by
+ * 50 m, as the clock measures the time; each up to what a set can hold.
  */
 export function crownOf(
   kind: SetKind,
   equipment: LibraryExercise['equipment'] | undefined,
 ): Partial<Record<SetField, CrownRange>> {
-  if (kind.timed) return {};
+  if (kind.timed) {
+    return kind.fields.includes('meters')
+      ? { meters: { min: METERS_STEP, max: SET_LIMITS.meters, step: METERS_STEP } }
+      : {};
+  }
   const step = weightStepOf(equipment);
   return {
     weightKg: { min: kind.addedWeight ? 0 : step, max: SET_LIMITS.weightKg, step },
@@ -203,8 +225,9 @@ export function stateOf(
       current: session.current,
       next: nextSetOf(session),
       rest: session.rest,
+      clock: session.clock,
       setsToSave: setsToSave(session),
-      exercises: session.exercises.map((exercise) => {
+      exercises: session.exercises.map((exercise, exerciseIndex) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
         return {
@@ -222,6 +245,11 @@ export function stateOf(
               missing: set.done ? [] : missingFields(set, kind),
               text: describeSet(set, kind),
               lastText: last ? describeSet(last, kind) : null,
+              timedByClock: timedByClock(
+                set,
+                kind,
+                session.clock?.exercise === exerciseIndex && session.clock.set === index,
+              ),
             };
           }),
         };
@@ -289,6 +317,10 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return { ...base, type };
     case 'open':
       return isIndex(message.exercise) ? { ...base, type, exercise: message.exercise } : null;
+    case 'startClock':
+      return isIndex(message.exercise) && isIndex(message.set)
+        ? { ...base, type, exercise: message.exercise, set: message.set }
+        : null;
     case 'finish':
       return { ...base, type };
     default:
@@ -337,6 +369,19 @@ function change(
       return { ...session, watchFollows: true };
     case 'open':
       return openExercise(session, command.exercise, at);
+    case 'startClock': {
+      const set = session.exercises[command.exercise]?.sets[command.set];
+      // Not for a set done or ticked since, nor over a clock that runs, of this set, as when it
+      // was started on both, or of another, which the watch did not show.
+      if (!set || set.done || tickedSince(set, at) || session.clock) {
+        return session;
+      }
+      const started = startClock(session, command.exercise, command.set, at);
+      // A rest started or changed after it stays, as markDone and setRestEnd keep it.
+      return (session.restChangedAt ?? 0) > at
+        ? { ...started, rest: session.rest, restChangedAt: session.restChangedAt }
+        : started;
+    }
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of

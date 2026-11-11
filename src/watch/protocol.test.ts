@@ -157,6 +157,7 @@ describe('stateOf', () => {
       missing: [],
       text: '— × 12',
       lastText: null,
+      timedByClock: false,
     });
   });
 
@@ -179,6 +180,12 @@ describe('stateOf', () => {
     });
     expect(bench?.sets.map((set) => set.lastText)).toEqual(['77.5 kg × 7', null, null, null]);
     expect(plank).toMatchObject({ fields: ['seconds'], crown: {} });
+  });
+
+  it('turns only the distance of a timed set, as the clock measures its time', () => {
+    const rowing = setKindOf(['distance', 'duration'], { seconds: null, meters: 2000 });
+    expect(crownOf(rowing, undefined)).toEqual({ meters: { min: 50, max: 1_000_000, step: 50 } });
+    expect(crownOf(setKindOf(['duration'], { seconds: 45, meters: null }), undefined)).toEqual({});
   });
 
   it('turns a weight added to the body down to none, and by the equipment’s step', () => {
@@ -474,6 +481,64 @@ describe('applyCommand', () => {
     expect(
       applyCommand(start(), plank, { metricsOf: noLibrary, now: NOW }).exercises[2]?.sets[0]?.done,
     ).toBe(false);
+  });
+
+  it('starts the clock of a timed set, which a tick then stops with the time it ran', () => {
+    const start2 = command(NOW + MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    let session = applyCommand(start(), start2, { metricsOf: noLibrary, now: NOW + MINUTE });
+    expect(session.clock).toEqual({ exercise: 2, set: 0, startedAt: NOW + MINUTE });
+    expect(stateOf(session, names(withBench), 1, []).workout?.clock).toEqual(session.clock);
+    const stop = command(NOW + MINUTE + 50_000, {
+      type: 'setDone',
+      exercise: 2,
+      set: 0,
+      done: true,
+    });
+    session = applyCommand(session, stop, { metricsOf: noLibrary, now: NOW + 2 * MINUTE });
+    expect(session.clock).toBeNull();
+    expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 50 });
+  });
+
+  it('keeps a rest started after a start that arrives late', () => {
+    const rested = toggleDoneUnchecked(start(), 0, 0, NOW + 10_000);
+    const late = command(NOW, { type: 'startClock', exercise: 2, set: 0 });
+    const session = applyCommand(rested, late, { metricsOf: noLibrary, now: NOW + MINUTE });
+    expect(session.clock).toEqual({ exercise: 2, set: 0, startedAt: NOW });
+    expect(session.rest).toEqual(rested.rest);
+    expect(session.restChangedAt).toBe(NOW + 10_000);
+  });
+
+  it('says which sets are done with their clock, as the phone shows them', () => {
+    const typed = setValues(start(), 2, 0, { seconds: 45 }, NOW);
+    expect(
+      stateOf(start(), names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.timedByClock,
+    ).toBe(true);
+    expect(
+      stateOf(typed, names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.timedByClock,
+    ).toBe(false);
+    const running = startClock(typed, 2, 0, NOW);
+    expect(
+      stateOf(running, names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.timedByClock,
+    ).toBe(true);
+  });
+
+  it('starts no clock for a set done, nor over a clock that runs', () => {
+    const done2 = toggleDoneUnchecked(start(), 2, 0, NOW);
+    const later = command(NOW + MINUTE, { type: 'startClock', exercise: 2, set: 0 });
+    expect(
+      applyCommand(done2, later, { metricsOf: noLibrary, now: NOW + MINUTE }).clock,
+    ).toBeNull();
+    // Started on the phone, then on the watch before it heard: the first start stays.
+    const running = startClock(start(), 2, 0, NOW);
+    const again = command(NOW + 5_000, { type: 'startClock', exercise: 2, set: 0 });
+    expect(applyCommand(running, again, { metricsOf: noLibrary, now: NOW + MINUTE }).clock).toEqual(
+      running.clock,
+    );
+    // Another set's clock, which the watch did not show, is not thrown away.
+    const other = startClock(start(), 1, 0, NOW);
+    expect(applyCommand(other, again, { metricsOf: noLibrary, now: NOW + MINUTE }).clock).toEqual(
+      other.clock,
+    );
   });
 
   it('ticks a set with the values the watch edited for it', () => {

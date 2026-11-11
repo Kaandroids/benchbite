@@ -84,6 +84,26 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isTick(exercise: exercise, set: set) } != nil
   }
 
+  /// Whether a start of the set's clock waits for the phone.
+  func isClockWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
+    startWaiting(workoutId, exercise: exercise, set: set) != nil
+  }
+
+  private func startWaiting(_ workoutId: String, exercise: Int, set: Int) -> WatchCommand? {
+    firstWaiting(workoutId) { $0.startsClock(exercise: exercise, set: set) }
+  }
+
+  /// When the clock of a set started, as the watch shows it: a start made here the phone has not
+  /// taken, else the phone's clock; none once a tick of the set waits, which stops it (ADR 0124).
+  func clockStart(of workout: WatchWorkout, exercise: Int, set: Int) -> Double? {
+    if isTickWaiting(workoutId: workout.id, exercise: exercise, set: set) { return nil }
+    if let started = startWaiting(workout.id, exercise: exercise, set: set) {
+      return started.at
+    }
+    guard let clock = workout.clock, clock.exercise == exercise, clock.set == set else { return nil }
+    return clock.startedAt
+  }
+
   /// Whether a change of the workout's rest waits for the phone. Another waits until it is
   /// applied, as the phone takes a change only of the rest it has, and the two could arrive in
   /// either order.
@@ -120,7 +140,21 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// sets ticked done here that the phone has not applied yet, as it applies them before the
   /// finish (ADR 0118).
   func setsToSave(of workout: WatchWorkout) -> Int {
-    workout.setsToSave + waitingTicks(of: workout).count
+    let ticked = waitingTicks(of: workout)
+    // A set whose clock's start waits, which finishing logs once the phone has started it, unless
+    // its tick waits too or the phone's clock already times it.
+    let timed = Set(
+      waiting.values.compactMap { command -> SetIndex? in
+        guard command.workoutId == workout.id, case .clock(let exercise, let set) = command.change,
+          workout.exercises.indices.contains(exercise),
+          workout.exercises[exercise].sets.indices.contains(set),
+          !workout.exercises[exercise].sets[set].done,
+          workout.clock.map({ $0.exercise != exercise || $0.set != set }) ?? true
+        else { return nil }
+        return SetIndex(exercise: exercise, set: set)
+      }
+    ).subtracting(ticked)
+    return workout.setsToSave + ticked.count + timed.count
   }
 
   /// The set to do next as the watch shows it: the phone's, or, while a pick or ticks here wait
@@ -200,6 +234,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isRestWaiting(workoutId: command.workoutId) { return }
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
+    case .clock(let exercise, let set):
+      if isClockWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
     case .finish:
       if isFinishWaiting(workoutId: command.workoutId) { return }
       unsaved = nil
@@ -215,8 +251,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let session = WCSession.default
     // Without a reply handler, as the phone takes messages without replying. Behind a transfer
     // still on its way, a command goes as a transfer too, as transfers arrive in order and a
-    // message could overtake them: a tick before the pick it follows (ADR 0121).
-    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty {
+    // message could overtake them: a tick before the pick it follows (ADR 0121). A clock's start
+    // always goes as a transfer, as its time is its own, so that its tick, its Stop, cannot
+    // overtake it (ADR 0124).
+    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty,
+      !command.change.startsAClock
+    {
       session.sendMessage(payload, replyHandler: nil) { _ in
         session.transferUserInfo(payload)
       }

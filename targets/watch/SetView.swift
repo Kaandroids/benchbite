@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The set to do next: its values, which the Crown changes, and Done, which ticks it with them.
+/// The set to do next: its values, which the Crown changes, and Done, which ticks it with them; for
+/// a timed set its clock, with Start and Stop.
 struct SetView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
@@ -26,10 +27,20 @@ struct SetView: View {
           Text(subtitle(next))
             .font(.rounded(13))
             .foregroundStyle(Theme.secondary)
-          if editable.isEmpty {
+          // A timed set's time is its clock's, started and stopped here or on the phone, as the
+          // phone decides; or while a start made here waits for it (ADR 0124).
+          let started = phone.clockStart(
+            of: workout, exercise: next.exerciseIndex, set: next.setIndex)
+          let timed = set.timedByClock || started != nil
+          let tickWaiting = phone.isTickWaiting(
+            workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
+          if editable.isEmpty && !timed {
             Text(set.text).font(.rounded(22, .heavy))
           } else {
             HStack(spacing: 6) {
+              if timed {
+                ClockTile(startedAt: started, target: next.exercise.target.seconds)
+              }
               ForEach(editable, id: \.self) { field in
                 Button {
                   let fields = Array(editable.drop { $0 != field })
@@ -45,28 +56,24 @@ struct SetView: View {
               }
             }
           }
-          if missing.isEmpty || !editable.isEmpty {
-            Button {
-              phone.send(
-                .setDone(
-                  workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
-                  done: true, values: draft, rest: restStarted(by: next)))
-            } label: {
-              Label(L10n.t("done"), systemImage: "checkmark")
-            }
-            .buttonStyle(PillButtonStyle())
+          SetAction(
+            kind: !timed ? .done : started == nil ? .start : .stop,
+            // No start over the phone's clock of another set, which the phone would refuse.
+            clockElsewhere: workout.clock.map {
+              $0.exercise != next.exerciseIndex || $0.set != next.setIndex
+            } ?? false,
             // Until the tiles fill in what the set needs; and PhoneLink sends no second tick
             // while one waits, which this shows.
-            .disabled(
-              !missing.isEmpty
-                || phone.isTickWaiting(
-                  workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
-            .padding(.top, 4)
-          } else {
-            // A time is measured by the phone's clock.
-            Text(L10n.t("finishOnPhone"))
-              .font(.rounded(13))
-              .foregroundStyle(Theme.secondary)
+            disabled: (!timed && !missing.isEmpty) || tickWaiting
+          ) {
+            phone.send(
+              .startClock(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
+          } tick: {
+            // Done, or Stop: its tick stops the clock with the time it ran, as on the phone.
+            phone.send(
+              .setDone(
+                workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
+                done: true, values: draft, rest: restStarted(by: next)))
           }
           // Unless the line at the top says what waits.
           if !phone.waiting.isEmpty, phone.setsWaitingOutOfReach(of: workout) == 0 {
@@ -160,9 +167,88 @@ private struct ValueTile: View {
       Text(unit).font(.rounded(12))
         .foregroundStyle(Theme.secondary)
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
+    .tile()
+  }
+}
+
+/// The set's button: Done, or Start and Stop for a set done with its clock (ADR 0124).
+private struct SetAction: View {
+  enum Kind { case done, start, stop }
+
+  let kind: Kind
+  let clockElsewhere: Bool
+  let disabled: Bool
+  let start: () -> Void
+  let tick: () -> Void
+
+  var body: some View {
+    switch kind {
+    case .start:
+      Button(action: start) { Label(L10n.t("start"), systemImage: "play.fill") }
+        .buttonStyle(PillButtonStyle())
+        .disabled(clockElsewhere)
+        .padding(.top, 4)
+      if clockElsewhere {
+        Text(L10n.t("clockElsewhere"))
+          .font(.rounded(12))
+          .foregroundStyle(Theme.secondary)
+      }
+    case .stop, .done:
+      Button(action: tick) {
+        Label(
+          L10n.t(kind == .stop ? "stop" : "done"),
+          systemImage: kind == .stop ? "stop.fill" : "checkmark")
+      }
+      .buttonStyle(PillButtonStyle())
+      .disabled(disabled)
+      .padding(.top, 4)
+    }
+  }
+}
+
+/// The clock of a timed set: 0:00 until it starts, then the time it runs, counted from its start,
+/// with the plan's target beside it (ADR 0124).
+private struct ClockTile: View {
+  let startedAt: Double?
+  let target: Double?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Group {
+        if let startedAt {
+          Text(Date(timeIntervalSince1970: startedAt / 1000), style: .timer)
+            .foregroundStyle(Theme.accent)
+        } else {
+          Text(Duration.seconds(0).formatted(.time(pattern: .minuteSecond)))
+        }
+      }
+      .font(.rounded(26, .heavy))
+      .monospacedDigit()
+      .lineLimit(1)
+      .minimumScaleFactor(0.6)
+      Text(label)
+        .font(.rounded(12))
+        .foregroundStyle(Theme.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+    }
+    .tile()
+  }
+
+  /// "TIME", or "TIME · TARGET 0:40" when the plan has a target time.
+  private var label: String {
+    guard let target, target > 0 else { return SetField.seconds.unit }
+    let time = Duration.seconds(target).formatted(.time(pattern: .minuteSecond))
+    return L10n.t("target", ["unit": SetField.seconds.unit, "time": time])
+  }
+}
+
+extension View {
+  /// The frame of a value's tile on the set: the value over what it is, on the tile's colour.
+  fileprivate func tile() -> some View {
+    padding(.horizontal, 8)
+      .padding(.vertical, 6)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
   }
 }
