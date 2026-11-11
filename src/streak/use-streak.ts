@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
+import { createListeners } from '@/lib/listeners';
 import { supabase } from '@/lib/supabase';
 
 import {
@@ -66,12 +67,7 @@ async function fetchCountedDays(week: Date, today: string): Promise<Record<strin
 
 // In development, the component gallery can show a sample on the Today tab instead.
 let sample: Streak | null = null;
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const listeners = createListeners();
 
 /**
  * The signed-in user's streak on the device's `today` (streak(), ADR 0042), with how each day of
@@ -80,7 +76,7 @@ function subscribe(listener: () => void) {
  * again.
  */
 export function useStreak(today: Date) {
-  const shown = useSyncExternalStore(subscribe, () => sample);
+  const shown = useSyncExternalStore(listeners.subscribe, () => sample);
   const todayOn = toIsoDate(today);
   const query = useQuery({
     queryKey: [...STREAK_KEY, todayOn],
@@ -125,9 +121,7 @@ export function useStreak(today: Date) {
 /** Shows a sample streak instead of the user's, or the user's again with null. */
 export function showSampleStreak(streak: Streak | null) {
   sample = streak;
-  for (const listener of listeners) {
-    listener();
-  }
+  listeners.notify();
 }
 
 /**
