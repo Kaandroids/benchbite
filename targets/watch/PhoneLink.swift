@@ -13,6 +13,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   var onState: (@MainActor (WatchState) -> Void)?
   /// The commands sent that the phone has not applied yet, by their id.
   @Published private(set) var waiting: [String: WatchCommand] = [:]
+  /// The workout whose finish the phone took without ending it, as it could not save it
+  /// (ADR 0118); none once it is finished again.
+  @Published private(set) var unsaved: String?
 
   private var lastSeq: Double = 0
   private var here: Timer?
@@ -53,6 +56,11 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// either order.
   func isRestWaiting(workoutId: String) -> Bool {
     firstWaiting(workoutId) { $0.isRest } != nil
+  }
+
+  /// Whether finishing the workout waits for the phone, which saves it.
+  func isFinishWaiting(workoutId: String) -> Bool {
+    firstWaiting(workoutId) { $0.isFinish } != nil
   }
 
   /// Whether joining the workout waits for the phone.
@@ -108,6 +116,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       if isRestWaiting(workoutId: command.workoutId) { return }
     case .join:
       if isJoinWaiting(workoutId: command.workoutId) { return }
+    case .finish:
+      if isFinishWaiting(workoutId: command.workoutId) { return }
+      unsaved = nil
     case .open(let exercise):
       // Only a pick of another exercise than the one shown: picking the phone's again undoes a
       // pick that waits, as the phone applies picks in the order made (ADR 0117).
@@ -169,6 +180,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       MainActor.assumeIsolated { self.onState?(state) }
       // Applied, or for a workout the phone no longer runs, which it drops without saying so.
       let applied = Set(state.workout?.applied ?? [])
+      // A finish the phone took while the workout goes on: it could not save it.
+      if let workout = state.workout,
+        self.waiting.values.contains(where: {
+          $0.workoutId == workout.id && $0.change.isFinish && applied.contains($0.id)
+        })
+      {
+        self.unsaved = workout.id
+      }
       self.waiting = self.waiting.filter { id, command in
         !applied.contains(id) && command.workoutId == state.workout?.id
       }
