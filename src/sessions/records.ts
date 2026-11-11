@@ -1,6 +1,9 @@
-import type { SetKind } from '@/sets/fields';
+import type { LibraryExercise } from '@/exercises/library';
+import { setKindOf, type SetKind } from '@/sets/fields';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import type { SetValues } from '@/sets/values';
+
+import type { Session } from './session';
 
 /** An exercise's best value of each kind of record before the workout (exercise_bests()). */
 export type Bests = Partial<Record<RecordKind, number>>;
@@ -91,4 +94,25 @@ export function newRecords(
       return record ? [record] : [];
     }),
   };
+}
+
+/** An exercise's metrics, which say what its sets record; none where the library is not loaded. */
+export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
+
+/**
+ * The records the workout's done sets set, exercise by exercise, as its finish screen lists them
+ * and the watch's summary counts them. Without an exercise's metrics, its sets are judged by its
+ * target.
+ */
+export function sessionRecords(
+  session: Session,
+  metricsOf: MetricsOf,
+): { exerciseId: string; record: NewRecord }[] {
+  return session.exercises.flatMap((exercise) => {
+    const kind = setKindOf(metricsOf(exercise.exerciseId), exercise.target);
+    return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
+      exerciseId: exercise.exerciseId,
+      record,
+    }));
+  });
 }
