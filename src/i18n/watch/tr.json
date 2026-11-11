@@ -15,7 +15,7 @@
   "done": "Tamam",
   "start": "Başlat",
   "stop": "Durdur",
-  "target": "HEDEF {{time}}",
+  "target": "{{unit}} · HEDEF {{time}}",
   "waiting": "iPhone'un bekleniyor",
   "allDone": "Tüm setler tamam",
   "turnCrown": "Kronu çevir",

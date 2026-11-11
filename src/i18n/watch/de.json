@@ -15,7 +15,7 @@
   "done": "Fertig",
   "start": "Start",
   "stop": "Stopp",
-  "target": "ZIEL {{time}}",
+  "target": "{{unit}} · ZIEL {{time}}",
   "waiting": "Wartet auf dein iPhone",
   "allDone": "Alle Sätze erledigt",
   "turnCrown": "Drehe die Krone",

@@ -15,7 +15,7 @@
   "done": "Done",
   "start": "Start",
   "stop": "Stop",
-  "target": "TARGET {{time}}",
+  "target": "{{unit}} · TARGET {{time}}",
   "waiting": "Waiting for your iPhone",
   "allDone": "All sets done",
   "turnCrown": "Turn the Crown",
