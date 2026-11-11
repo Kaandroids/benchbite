@@ -1,12 +1,16 @@
 import SwiftUI
+import WatchKit
 
 /// The workout the phone runs: an offer to join it, until the watch follows it; then its rest while
 /// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks, with
-/// the list of its exercises beside them. Once the phone saves it, its summary, until the next.
+/// the list of its exercises beside them, and a long press to finish it. Once the phone saves it,
+/// its summary, until the next.
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
   @State private var page = Page.set
+  /// Finishing, asked from a long press on the set or the rest (ADR 0122).
+  @State private var finishing = false
 
   private enum Page {
     case list, set
@@ -32,6 +36,15 @@ struct WorkoutView: View {
               } else {
                 SetView(workout: workout)
               }
+            }
+            // A long press anywhere but on a button asks to finish, as the list's end does.
+            .contentShape(Rectangle())
+            .onLongPressGesture(minimumDuration: 0.6) {
+              WKInterfaceDevice.current().play(.click)
+              finishing = true
+            }
+            .sheet(isPresented: $finishing) {
+              FinishView(workout: workout)
             }
             .tag(Page.set)
           }
