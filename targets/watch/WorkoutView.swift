@@ -8,6 +8,10 @@ import WatchKit
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
+  /// The finish question, asked from the list's end or a long press on the set or the rest
+  /// (ADR 0118, ADR 0122): above the workout's screens, so that the end of a rest does not close
+  /// it, and closed when the workout ends or another runs.
+  @State private var finishing = false
 
   var body: some View {
     Group {
@@ -17,8 +21,8 @@ struct WorkoutView: View {
         } else if let over = restAlert.over, over.workoutId == workout.id {
           RestOverView(next: over.next) { restAlert.over = nil }
         } else {
-          PagesView(workout: workout)
-            // Its pages and the finish question start again with each workout.
+          PagesView(workout: workout) { finishing = true }
+            // Its pages start again with each workout.
             .id(workout.id)
         }
       } else if let finished = phone.finished {
@@ -37,6 +41,12 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
+    .sheet(isPresented: $finishing) {
+      if let workout = phone.workout {
+        FinishView(workout: workout)
+      }
+    }
+    .onChange(of: phone.workout?.id) { finishing = false }
   }
 }
 
@@ -113,14 +123,15 @@ private struct RestOverView: View {
   }
 }
 
-/// The pages of a workout the watch follows: the list beside the set, a swipe away (ADR 0117), and
-/// the finish question, asked from the list's end or a long press on the set or the rest
-/// (ADR 0118, ADR 0122). They go with the workout, and the question with them.
+/// The pages of a workout the watch follows: the list beside the set, a swipe away (ADR 0117),
+/// both of which ask to finish it, from the list's end or a long press on the set or the rest
+/// (ADR 0118, ADR 0122).
 private struct PagesView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
+  /// Asks to finish the workout.
+  let finish: () -> Void
   @State private var page = Page.set
-  @State private var finishing = false
 
   private enum Page {
     case list, set
@@ -128,7 +139,7 @@ private struct PagesView: View {
 
   var body: some View {
     TabView(selection: $page) {
-      ExerciseListView(workout: workout, picked: { page = .set }, finish: { finishing = true })
+      ExerciseListView(workout: workout, picked: { page = .set }, finish: finish)
         .tag(Page.list)
       // Each second, so that the rest counts down and gives way to the set when it is over.
       TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -144,13 +155,10 @@ private struct PagesView: View {
       .contentShape(Rectangle())
       .onLongPressGesture(minimumDuration: 0.6) {
         WKInterfaceDevice.current().play(.click)
-        finishing = true
+        finish()
       }
       .tag(Page.set)
     }
     .tabViewStyle(.page(indexDisplayMode: .never))
-    .sheet(isPresented: $finishing) {
-      FinishView(workout: workout)
-    }
   }
 }
