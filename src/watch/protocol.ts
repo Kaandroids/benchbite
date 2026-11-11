@@ -293,8 +293,6 @@ export function parseCommand(message: unknown): WatchCommand | null {
   }
 }
 
-export type { MetricsOf };
-
 /**
  * A command that changes the workout: all but a finish, which the phone saves instead
  * (finish-from-watch.ts).
