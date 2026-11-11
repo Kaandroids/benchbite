@@ -19,7 +19,7 @@ struct SetView: View {
       let missing = set.missing.filter { draft[$0] == nil }
       ScrollView {
         VStack(alignment: .leading, spacing: 6) {
-          HeartRateLabel()
+          StatusLine(workoutId: workout.id)
           Text(workout.name(of: next.exercise))
             .font(.rounded(17, .heavy))
             .lineLimit(2)

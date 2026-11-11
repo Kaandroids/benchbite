@@ -15,8 +15,7 @@ struct RestView: View {
     let endsAt = rest.endsAt
     let left = max(0, Int(((endsAt - now) / 1000).rounded(.up)))
     VStack(spacing: 6) {
-      HeartRateLabel()
-        .frame(maxWidth: .infinity, alignment: .leading)
+      StatusLine(workoutId: workout.id)
       ZStack {
         Circle().stroke(Theme.control, lineWidth: 9)
         Circle()
