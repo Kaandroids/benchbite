@@ -118,7 +118,8 @@ function store(value: Session | null) {
   writeVersioned(KEY, VERSION, 'session', value);
 }
 
-function current(): Session | null {
+/** The workout in progress as it is now, for what reads it outside a screen. */
+export function activeSession(): Session | null {
   if (!loaded) {
     session = load();
     loaded = true;
@@ -133,20 +134,15 @@ function set(value: Session | null) {
   listeners.notify();
 }
 
-/** The workout in progress as it is now, for what reads it outside a screen. */
-export function activeSession(): Session | null {
-  return current();
-}
-
 /** The signed-in user's workout in progress, if there is one. */
 export function useActiveSession(userId: string | undefined): Session | null {
-  const value = useSyncExternalStore(listeners.subscribe, current);
+  const value = useSyncExternalStore(listeners.subscribe, activeSession);
   return value && value.userId === userId ? value : null;
 }
 
 /** Changes the workout in progress, if there is one. */
 export function updateSession(change: (current: Session) => Session) {
-  const value = current();
+  const value = activeSession();
   if (value) {
     set(change(value));
   }
@@ -179,7 +175,7 @@ export function useEndedSessions(): EndedSession[] {
 
 /** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */
 export function endSession(how: HowEnded) {
-  const value = current();
+  const value = activeSession();
   if (value) {
     ended = [{ id: value.id, startedAt: value.startedAt, ...how }, ...endedSessions()].slice(
       0,
