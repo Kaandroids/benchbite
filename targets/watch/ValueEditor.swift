@@ -36,6 +36,8 @@ struct ValueEditor: View {
 }
 
 private struct FieldEditor: View {
+  /// Observed so that its texts follow the language (ADR 0123).
+  @EnvironmentObject private var phone: PhoneLink
   let field: SetField
   let range: CrownRange
   let next: () -> Void

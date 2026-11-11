@@ -41,8 +41,6 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
-    // Drawn again in another language, once the phone says.
-    .id(phone.language)
     .sheet(isPresented: $finishing) {
       if let workout = phone.workout {
         FinishView(workout: workout)
@@ -100,6 +98,8 @@ private struct JoinView: View {
 
 /// The end of a rest, signalled while the app was open.
 private struct RestOverView: View {
+  /// Observed so that its texts follow the language (ADR 0123).
+  @EnvironmentObject private var phone: PhoneLink
   let next: String?
   let go: () -> Void
 

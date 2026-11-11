@@ -50,6 +50,8 @@ struct ExerciseListView: View {
 /// An exercise in the list: its name and sets done, marked when its set comes next or when all are
 /// done.
 private struct ExerciseRow: View {
+  /// Observed so that its texts follow the language (ADR 0123).
+  @EnvironmentObject private var phone: PhoneLink
   let name: String
   let done: Int
   let count: Int
