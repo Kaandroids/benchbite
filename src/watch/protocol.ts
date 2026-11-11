@@ -10,6 +10,7 @@ import {
   setValues,
   tickedSince,
   type EndedSession,
+  type HowEnded,
   type Session,
 } from '@/sessions/session';
 import {
@@ -82,7 +83,7 @@ export type WatchWorkout = {
  * How a workout ended, by its id: saved as a log, at the time it ended, or let go. The watch that
  * followed it saves its own workout to the health store, or leaves it out (ADR 0113).
  */
-export type WatchEnded = { id: string } & ({ saved: true; endedAt: number } | { saved: false });
+export type WatchEnded = { id: string } & HowEnded;
 
 /** The phone's state for the watch; none when no workout runs. */
 export type WatchState = {
@@ -172,7 +173,7 @@ export function stateOf(
   session: Session | null,
   { exerciseOf, name }: { exerciseOf: ExerciseOf; name: string | null },
   seq: number,
-  ended: EndedSession[] = [],
+  ended: EndedSession[],
 ): WatchState {
   return {
     v: PROTOCOL_VERSION,

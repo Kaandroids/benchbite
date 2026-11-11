@@ -131,7 +131,7 @@ it('keeps values as the phone keeps what is typed', () => {
 describe('stateOf', () => {
   it('gives the watch the workout with its exercises named', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW + MINUTE);
-    const state = stateOf(session, names(withBench), 7);
+    const state = stateOf(session, names(withBench), 7, []);
     expect(state).toMatchObject({ v: PROTOCOL_VERSION, seq: 7 });
     expect(state.workout).toMatchObject({
       id: 'workout-1',
@@ -157,7 +157,7 @@ describe('stateOf', () => {
   it('gives each exercise its fields and how the Crown turns them, and each set last time’s', () => {
     const last = { bench: [{ weightKg: 77.5, reps: 7, seconds: null, meters: null }] };
     const session = startSession('user-a', PUSH, last, { now: NOW });
-    const state = stateOf(session, names(withBench), 1);
+    const state = stateOf(session, names(withBench), 1, []);
     const [bench, , plank] = state.workout!.exercises;
     expect(bench).toMatchObject({
       fields: ['weightKg', 'reps'],
@@ -176,7 +176,7 @@ describe('stateOf', () => {
   });
 
   it('says what each set still needs, as the phone does', () => {
-    const state = stateOf(start(), names(withBench), 1);
+    const state = stateOf(start(), names(withBench), 1, []);
     const [bench, , plank] = state.workout!.exercises;
     // A weight is needed before the bench press can be ticked, as on the phone.
     expect(bench?.sets[0]?.missing).toEqual(['weightKg']);
@@ -185,7 +185,7 @@ describe('stateOf', () => {
   });
 
   it('names no exercise the library does not know', () => {
-    const state = stateOf(start(), names(noExercises), 1);
+    const state = stateOf(start(), names(noExercises), 1, []);
     expect(state.workout?.exercises[0]?.name).toBeNull();
   });
 
@@ -198,11 +198,10 @@ describe('stateOf', () => {
       { id: 'workout-2', saved: false },
       { id: `started-${NOW}`, saved: true, endedAt: NOW + MINUTE },
     ]);
-    expect(stateOf(null, names(noExercises), 1).ended).toEqual([]);
   });
 
   it('says no workout runs', () => {
-    expect(stateOf(null, names(noExercises), 1).workout).toBeNull();
+    expect(stateOf(null, names(noExercises), 1, []).workout).toBeNull();
   });
 
   it('names a workout started before ids were kept by its start', () => {
@@ -215,7 +214,7 @@ describe('nextSetOf', () => {
   it('is the open exercise’s first set not done', () => {
     const session = toggleDoneUnchecked(start(), 0, 0, NOW);
     expect(nextSetOf(session)).toEqual({ exercise: 0, set: 1 });
-    expect(stateOf(session, names(noExercises), 1).workout?.next).toEqual({
+    expect(stateOf(session, names(noExercises), 1, []).workout?.next).toEqual({
       exercise: 0,
       set: 1,
     });
@@ -575,7 +574,7 @@ describe('applyCommand', () => {
     const join = command(NOW, { type: 'join' });
     const joined = applyCommand(start(), join, { metricsOf: noLibrary, now: NOW });
     expect(joined.watchFollows).toBe(true);
-    expect(stateOf(joined, names(noExercises), 1).workout?.follows).toBe(true);
+    expect(stateOf(joined, names(noExercises), 1, []).workout?.follows).toBe(true);
     expect(
       applyCommand(joined, command(NOW, { type: 'join' }), { metricsOf: noLibrary }).watchFollows,
     ).toBe(true);

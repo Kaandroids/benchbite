@@ -4,7 +4,7 @@ import { randomUUID } from 'expo-crypto';
 import { useSyncExternalStore } from 'react';
 
 import { toIsoDate } from '@/i18n/dates';
-import { readItem, writeItem } from '@/lib/device-storage';
+import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -102,28 +102,6 @@ let loaded = false;
 let session: Session | null = null;
 const listeners = new Set<() => void>();
 
-/**
- * Reads a value kept on the device under `field`, beside the version of its shape: one of another
- * version is dropped instead of misread.
- */
-function readVersioned<T>(key: string, version: number, field: string): T | null {
-  const stored = readItem(key);
-  if (!stored) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(stored) as { version?: number } & Record<string, T | undefined>;
-    return parsed.version === version ? (parsed[field] ?? null) : null;
-  } catch (error) {
-    console.warn(`Could not read ${key}`, error);
-    return null;
-  }
-}
-
-function writeVersioned<T>(key: string, version: number, field: string, value: T | null) {
-  writeItem(key, value === null ? null : JSON.stringify({ version, [field]: value }));
-}
-
 function load(): Session | null {
   return readVersioned<Session>(KEY, VERSION, 'session');
 }
@@ -172,8 +150,10 @@ export function updateSession(change: (current: Session) => Session) {
  * How a workout ended: saved as a log, at the time it ended, or let go. A watch that followed it
  * saves its own workout to the health store, or leaves it out, by it (ADR 0113).
  */
-export type EndedSession = Pick<Session, 'id' | 'startedAt'> &
-  ({ saved: true; endedAt: number } | { saved: false });
+export type HowEnded = { saved: true; endedAt: number } | { saved: false };
+
+/** A workout that ended, and how. */
+export type EndedSession = Pick<Session, 'id' | 'startedAt'> & HowEnded;
 
 const ENDED_KEY = 'session.ended';
 const ENDED_VERSION = 1;
@@ -192,7 +172,7 @@ export function useEndedSessions(): EndedSession[] {
 }
 
 /** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */
-export function endSession(how: { saved: true; endedAt: number } | { saved: false }) {
+export function endSession(how: HowEnded) {
   const value = current();
   if (value) {
     ended = [{ id: value.id, startedAt: value.startedAt, ...how }, ...endedSessions()].slice(
@@ -202,6 +182,12 @@ export function endSession(how: { saved: true; endedAt: number } | { saved: fals
     writeVersioned(ENDED_KEY, ENDED_VERSION, 'ended', ended);
   }
   set(null);
+}
+
+/** Forgets how the latest workouts ended, as when another user signs in on the device. */
+export function forgetEndedSessions() {
+  ended = [];
+  writeVersioned(ENDED_KEY, ENDED_VERSION, 'ended', null);
 }
 
 /** For tests: forgets the session in memory, so that the next read loads it again. */

@@ -24,3 +24,26 @@ export function writeItem(key: string, value: string | null) {
     console.warn(`Could not write ${key}`, error);
   }
 }
+
+/**
+ * Reads a value kept on the device under `field`, beside the version of its shape: one of another
+ * version is dropped instead of misread.
+ */
+export function readVersioned<T>(key: string, version: number, field: string): T | null {
+  const stored = readItem(key);
+  if (!stored) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(stored) as { version?: number } & Record<string, T | undefined>;
+    return parsed.version === version ? (parsed[field] ?? null) : null;
+  } catch (error) {
+    console.warn(`Could not read ${key}`, error);
+    return null;
+  }
+}
+
+/** Stores a value under `field` beside the version of its shape, or removes it with null. */
+export function writeVersioned<T>(key: string, version: number, field: string, value: T | null) {
+  writeItem(key, value === null ? null : JSON.stringify({ version, [field]: value }));
+}
