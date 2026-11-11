@@ -1,5 +1,6 @@
 import { useExerciseLibrary } from '@/exercises/library';
 import {
+  endSession,
   resetSessionStore,
   startSession,
   toggleDoneUnchecked,
@@ -74,6 +75,16 @@ it('sends the workout to the watch, and each change of it', async () => {
 it('tells the watch when no workout runs', async () => {
   await render(<WatchSync />);
   expect(lastSent().workout).toBeNull();
+});
+
+it('tells the watch how the workout it followed ended', async () => {
+  startSession('user-a', PUSH, {}, { now: NOW });
+  await render(<WatchSync />);
+  await act(() => endSession({ saved: true, endedAt: NOW + 60_000 }));
+  expect(lastSent()).toMatchObject({
+    workout: null,
+    ended: { id: 'workout-1', saved: true, endedAt: NOW + 60_000 },
+  });
 });
 
 it('applies the watch’s commands to the workout, and sends it back', async () => {
