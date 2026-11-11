@@ -142,7 +142,7 @@ describe('stateOf', () => {
       id: 'workout-1',
       current: 0,
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
-      running: null,
+      setsToSave: 1,
       applied: [],
       follows: false,
     });
@@ -160,12 +160,9 @@ describe('stateOf', () => {
     });
   });
 
-  it('gives the watch the set the phone’s clock times', () => {
+  it('counts the set the phone’s clock times among those finishing saves', () => {
     const running = startClock(start(), 0, 1, NOW + MINUTE);
-    expect(stateOf(running, names(withBench), 1, []).workout?.running).toEqual({
-      exercise: 0,
-      set: 1,
-    });
+    expect(stateOf(running, names(withBench), 1, []).workout?.setsToSave).toBe(1);
   });
 
   it('gives each exercise its fields and how the Crown turns them, and each set last time’s', () => {

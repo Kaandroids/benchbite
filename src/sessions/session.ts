@@ -611,6 +611,11 @@ export function toLog(value: Session, finishedAt = Date.now()) {
   };
 }
 
+/** How many sets saving the workout now logs: those done, and the one a running clock times. */
+export function setsToSave(value: Session, now = Date.now()): number {
+  return sessionTotals(stopClock(value, now)).done;
+}
+
 /** Sets done and planned, and the weight lifted, for the progress bar and the summary. */
 export function sessionTotals(value: Session) {
   const sets = value.exercises.flatMap((exercise) => exercise.sets);

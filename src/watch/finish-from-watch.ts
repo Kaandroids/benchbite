@@ -8,8 +8,7 @@ import { useSaveWorkout } from '@/sessions/save-workout';
 import {
   activeSession,
   endOfWatchFinish,
-  sessionTotals,
-  stopClock,
+  setsToSave,
   updateSession,
   type Session,
 } from '@/sessions/session';
@@ -54,7 +53,7 @@ export function useFinishFromWatch(session: Session | null) {
     try {
       const endedAt = endOfWatchFinish(current, kept.at);
       // The phone saves none without a set done, nor does the watch offer it.
-      if (sessionTotals(stopClock(current, endedAt)).done === 0) {
+      if (setsToSave(current, endedAt) === 0) {
         updateSession(giveUpFinish);
         return;
       }

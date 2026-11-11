@@ -8,6 +8,7 @@ import {
   markDone,
   openExercise,
   setRestEnd,
+  setsToSave,
   setValues,
   tickedSince,
   type EndedSession,
@@ -72,8 +73,8 @@ export type WatchWorkout = {
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
-  /** The set the phone's clock times, which finishing the workout logs as done. */
-  running: { exercise: number; set: number } | null;
+  /** How many sets finishing the workout saves: those done, and the one the phone's clock times. */
+  setsToSave: number;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -202,7 +203,7 @@ export function stateOf(
       current: session.current,
       next: nextSetOf(session),
       rest: session.rest,
-      running: session.clock && { exercise: session.clock.exercise, set: session.clock.set },
+      setsToSave: setsToSave(session),
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
