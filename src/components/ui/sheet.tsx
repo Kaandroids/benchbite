@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,18 @@ import { Text } from './text';
 
 /** How long iOS takes to close a sheet, during which it cannot present another one. */
 const CLOSE_MS = 400;
+
+/** When a sheet last closed, which a sheet opening right after waits for on iOS. */
+let closedAt = -Infinity;
+
+/** Resolves once the sheet that closed last has closed, at once when none is closing. */
+export function whenSheetClosed(): Promise<void> {
+  const left = closedAt + CLOSE_MS - Date.now();
+  if (Platform.OS !== 'ios' || left <= 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => setTimeout(resolve, left));
+}
 
 /**
  * Runs `action` once a sheet closing now has closed, for an action that may open another sheet,
@@ -52,6 +64,12 @@ type SheetProps = {
 export function Sheet({ onClose, children }: SheetProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  useEffect(
+    () => () => {
+      closedAt = Date.now();
+    },
+    [],
+  );
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       {/* On iOS, a modal gets no safe area without a provider of its own, which left the sheet's

@@ -56,7 +56,7 @@ describe('StartMoveSheet', () => {
       });
     });
     expect(
-      screen.getByText(
+      await screen.findByText(
         'Legs is planned for Friday. Moved to today, it counts towards this week and Friday is free.',
       ),
     ).toBeTruthy();
@@ -71,7 +71,7 @@ describe('StartMoveSheet', () => {
         missed: false,
       });
     });
-    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Cancel' }));
     await expect(answer).resolves.toBeNull();
   });
 
@@ -102,7 +102,7 @@ describe('useStartMove', () => {
     await act(() => {
       choice = startMove(PUSH, WEDNESDAY);
     });
-    expect(screen.getByText("Do Monday's Push today?")).toBeTruthy();
+    expect(await screen.findByText("Do Monday's Push today?")).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Move to today' }));
     await expect(choice).resolves.toEqual({ fromOn: '2026-10-19' });
   });
@@ -144,7 +144,7 @@ describe('useStartMove', () => {
     await act(() => {
       void startMove(PUSH, WEDNESDAY);
     });
-    expect(screen.getByText("Do Monday's Push today?")).toBeTruthy();
+    expect(await screen.findByText("Do Monday's Push today?")).toBeTruthy();
   });
 
   it('starts an extra workout, or not at all when cancelled', async () => {
@@ -156,12 +156,12 @@ describe('useStartMove', () => {
     await act(() => {
       choice = startMove(PUSH, WEDNESDAY);
     });
-    await fireEvent.press(screen.getByRole('button', { name: 'Extra workout' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Extra workout' }));
     await expect(choice).resolves.toEqual({});
     await act(() => {
       choice = startMove(PUSH, WEDNESDAY);
     });
-    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Cancel' }));
     await expect(choice).resolves.toBeNull();
   });
 
