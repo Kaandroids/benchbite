@@ -7,6 +7,9 @@ public class WatchLinkModule: Module {
 
     Events("onCommands", "onStatus")
 
+    /// How long the watch is taken to be there after it was heard, in milliseconds (ADR 0114).
+    Constant("heardForMs") { WatchSession.heardFor * 1000 }
+
     OnCreate {
       // Activated at launch already; this covers a launch the subscriber did not see.
       WatchSession.shared.activate()

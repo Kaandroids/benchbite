@@ -10,6 +10,8 @@ export type WatchLinkEvents = {
 };
 
 declare class WatchLinkModule extends NativeModule<WatchLinkEvents> {
+  /** How long the watch is taken to be there after it was heard, in milliseconds (ADR 0114). */
+  readonly heardForMs: number;
   status(): {
     paired: boolean;
     installed: boolean;

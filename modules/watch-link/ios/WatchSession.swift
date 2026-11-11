@@ -4,9 +4,9 @@ import WatchConnectivity
 
 /// The phone's side of the connection to Benchbite on the Apple Watch (ADR 0109). It carries the
 /// protocol's messages as JSON, and puts the phone's rest notification off while the watch is
-/// heard, which then signals the rest itself (ADR 0114), as JavaScript may not be running then. It is activated when the app launches,
-/// also in the background, so that commands the watch sends while JavaScript is not running are
-/// kept until it reads them.
+/// heard, which then signals the rest itself (ADR 0114), as JavaScript may not be running then.
+/// It is activated when the app launches, also in the background, so that commands the watch sends
+/// while JavaScript is not running are kept until it reads them.
 final class WatchSession: NSObject, WCSessionDelegate {
   static let shared = WatchSession()
 
@@ -19,11 +19,14 @@ final class WatchSession: NSObject, WCSessionDelegate {
   private static let maxCommands = 200
   /// When the watch was last heard from about the workout the phone runs, in milliseconds.
   private static let heardAtKey = "watchLink.heardAt"
-  /// How long the watch is taken to be there after it was heard: WATCH_HEARD_FOR_MS in
-  /// src/watch/protocol.ts, over twice what the watch takes between its signs (ADR 0114).
-  private static let heardFor: TimeInterval = 75
-  /// When the rest notification was first due, kept in it once it is put off.
-  private static let dueKey = "watchLinkDue"
+  /// How long the watch is taken to be there after it was heard, over twice what the watch takes
+  /// between its signs (ADR 0114). JavaScript reads it from the module.
+  static let heardFor: TimeInterval = 75
+  /// When the rest ends, in milliseconds, which JavaScript puts in the notification's data: a time
+  /// interval's trigger tells only how long it was set for, not when it fires.
+  private static let endsAtKey = "restEndsAt"
+  /// When the notification fires once it was put off, kept in it.
+  private static let firesKey = "watchLinkFires"
 
   /// Guards the kept commands and the listeners.
   private let lock = NSLock()
@@ -92,6 +95,10 @@ final class WatchSession: NSObject, WCSessionDelegate {
     defer { delivery.unlock() }
     lastState = json
     lock.lock()
+    // Heard of another workout is not heard of this one.
+    if UserDefaults.standard.string(forKey: Self.workoutIdKey) != workoutId {
+      UserDefaults.standard.removeObject(forKey: Self.heardAtKey)
+    }
     UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey)
     lock.unlock()
     deliver(json)
@@ -145,12 +152,12 @@ final class WatchSession: NSObject, WCSessionDelegate {
     let commands = (UserDefaults.standard.stringArray(forKey: Self.commandsKey) ?? []) + [command]
     UserDefaults.standard.set(Array(commands.suffix(Self.maxCommands)), forKey: Self.commandsKey)
     lock.unlock()
-    heard(payload["workoutId"] as? String)
     commandsWaiting()
   }
 
-  /// The watch was heard from, by a command or by the sign it sends while it measures the workout
-  /// (`["here": workoutId]`). About the workout the phone runs, it is there to signal the rest.
+  /// The watch sent its sign (`["here": workoutId]`), which it does only while it measures the
+  /// workout and so signals its rests; a command says nothing of that, and may have waited. About
+  /// the workout the phone runs, the watch is there to signal the rest.
   private func heard(_ workoutId: String?) {
     lock.lock()
     let running = UserDefaults.standard.string(forKey: Self.workoutIdKey)
@@ -162,39 +169,32 @@ final class WatchSession: NSObject, WCSessionDelegate {
   }
 
   /// Puts the phone's rest notification off while the watch is heard, as the watch signals the
-  /// rest: one due within the time the watch is taken to be there is moved to its end, and one due
-  /// that long ago, which the watch signalled, goes. Should the watch stop being heard, it comes
-  /// at most that long after it was due.
+  /// rest: one that fires within the time the watch is taken to be there is moved to its end, and
+  /// one whose rest ended that long ago, which the watch signalled, goes. Should the watch stop
+  /// being heard, it comes at most that long after the rest ended.
   private func putRestOff() {
     let center = UNUserNotificationCenter.current()
     center.getPendingNotificationRequests { requests in
       guard let request = requests.first(where: { $0.identifier == Self.restNotificationId }),
-        let next = Self.nextDate(of: request.trigger)
+        let endsAt = request.content.userInfo[Self.endsAtKey] as? Double
       else { return }
       let now = Date()
-      let due = (request.content.userInfo[Self.dueKey] as? Double)
-        .map { Date(timeIntervalSince1970: $0) } ?? next
-      if now.timeIntervalSince(due) > Self.heardFor {
+      let ends = Date(timeIntervalSince1970: endsAt / 1000)
+      let fires = (request.content.userInfo[Self.firesKey] as? Double)
+        .map { Date(timeIntervalSince1970: $0) } ?? ends
+      if now.timeIntervalSince(ends) > Self.heardFor {
         center.removePendingNotificationRequests(withIdentifiers: [Self.restNotificationId])
         return
       }
-      guard next.timeIntervalSince(now) < Self.heardFor,
+      guard fires.timeIntervalSince(now) < Self.heardFor,
         let content = request.content.mutableCopy() as? UNMutableNotificationContent
       else { return }
-      content.userInfo[Self.dueKey] = due.timeIntervalSince1970
+      content.userInfo[Self.firesKey] = now.addingTimeInterval(Self.heardFor).timeIntervalSince1970
       center.add(
         UNNotificationRequest(
           identifier: Self.restNotificationId, content: content,
           trigger: UNTimeIntervalNotificationTrigger(timeInterval: Self.heardFor, repeats: false)))
     }
-  }
-
-  private static func nextDate(of trigger: UNNotificationTrigger?) -> Date? {
-    if let trigger = trigger as? UNCalendarNotificationTrigger { return trigger.nextTriggerDate() }
-    if let trigger = trigger as? UNTimeIntervalNotificationTrigger {
-      return trigger.nextTriggerDate()
-    }
-    return nil
   }
 
   // MARK: - WCSessionDelegate
