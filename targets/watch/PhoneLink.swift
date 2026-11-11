@@ -18,7 +18,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// saves ends the workout instead.
   @Published private(set) var unsaved: String?
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
-  /// once another workout runs.
+  /// once another workout runs, or once the summary is closed (ADR 0120).
   @Published private(set) var finished: FinishedWorkout?
 
   private var lastSeq: Double = 0
@@ -48,6 +48,11 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     guard WCSession.isSupported() else { return }
     WCSession.default.delegate = self
     WCSession.default.activate()
+  }
+
+  /// Closes the summary of the workout saved last, which then shows "No workout yet".
+  func closeSummary() {
+    finished = nil
   }
 
   /// Whether a tick of this set waits for the phone, which a second one would only repeat.

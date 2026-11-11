@@ -2,7 +2,9 @@ import SwiftUI
 
 /// The short summary of a workout the watch followed, once the phone saved it (ADR 0119): its time,
 /// the sets saved, what the watch measured and the records, which the phone's finish screen lists.
+/// Done closes it (ADR 0120).
 struct SummaryView: View {
+  @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var workoutSession: WorkoutSession
   let workout: FinishedWorkout
 
@@ -35,6 +37,9 @@ struct SummaryView: View {
           .multilineTextAlignment(.center)
           .padding(.top, 4)
         }
+        Button("Done") { phone.closeSummary() }
+          .buttonStyle(PillButtonStyle(prominent: false))
+          .padding(.top, 6)
       }
       .foregroundStyle(Theme.text)
     }
