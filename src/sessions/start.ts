@@ -6,7 +6,8 @@ import { Alert } from 'react-native';
 import { toIsoDate } from '@/i18n/dates';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
-import { openOnWatch, startsOnWatch } from '@/watch/start-on-watch';
+import { openOnWatch } from '@/watch/open-on-watch';
+import { startsOnWatch } from '@/watch/start-on-watch';
 import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 

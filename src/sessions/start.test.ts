@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
 import { act, createTestQueryClient, renderHook } from '@/test/render';
-import { openOnWatch, startsOnWatch } from '@/watch/start-on-watch';
+import { openOnWatch } from '@/watch/open-on-watch';
+import { startsOnWatch } from '@/watch/start-on-watch';
 import { testExercise } from '@/workouts/test-data';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
@@ -20,7 +21,8 @@ jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(u
 jest.mock('./session', () => ({ startSession: jest.fn() }));
 jest.mock('./start-move', () => ({ useStartMove: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/watch/start-on-watch', () => ({ startsOnWatch: jest.fn(), openOnWatch: jest.fn() }));
+jest.mock('@/watch/start-on-watch', () => ({ startsOnWatch: jest.fn() }));
+jest.mock('@/watch/open-on-watch', () => ({ openOnWatch: jest.fn() }));
 jest.mock('@/workouts/workouts', () => ({
   fetchWorkoutHeld: jest.fn(),
   reloadPlan: jest.fn(),

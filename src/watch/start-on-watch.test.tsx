@@ -1,16 +1,9 @@
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { link } from './link';
-import type { WatchState } from './protocol';
-import {
-  loadStartOnWatch,
-  openOnWatch,
-  sentToWatch,
-  setStartOnWatch,
-  startsOnWatch,
-} from './start-on-watch';
+import { loadStartOnWatch, setStartOnWatch, startsOnWatch } from './start-on-watch';
 import { StartOnWatchSheet } from './start-on-watch-sheet';
-import { hasWatch, NO_WATCH, type WatchStatus } from './types';
+import { NO_WATCH, type WatchStatus } from './types';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -23,7 +16,7 @@ jest.mock('expo-sqlite/kv-store', () => {
   };
 });
 jest.mock('./link', () => ({
-  link: { status: jest.fn(), onStatusChange: () => () => undefined, startWatchApp: jest.fn() },
+  link: { status: jest.fn(), onStatusChange: () => () => undefined },
 }));
 
 const WATCH: WatchStatus = { ...NO_WATCH, paired: true, installed: true };
@@ -45,14 +38,6 @@ async function ask() {
   expect(await screen.findByText(TITLE)).toBeTruthy();
   return { answer };
 }
-
-describe('hasWatch', () => {
-  it('needs a paired watch with Benchbite on it', () => {
-    expect(hasWatch(WATCH)).toBe(true);
-    expect(hasWatch({ ...WATCH, installed: false })).toBe(false);
-    expect(hasWatch(NO_WATCH)).toBe(false);
-  });
-});
 
 describe('startsOnWatch', () => {
   it('starts on the phone alone without a watch, whatever the choice', async () => {
@@ -112,20 +97,5 @@ describe('startsOnWatch', () => {
     await screen.unmount();
     await expect(second).resolves.toBeNull();
     expect(loadStartOnWatch()).toBe('ask');
-  });
-});
-
-describe('openOnWatch', () => {
-  const sent = (id: string, follows: boolean) =>
-    ({ workout: { id, follows } }) as unknown as WatchState;
-
-  it('opens Benchbite on the watch once the watch is sent the workout it follows', () => {
-    openOnWatch({ id: 'session-a', startedAt: 1 });
-    sentToWatch(sent('session-b', true));
-    sentToWatch(sent('session-a', false));
-    expect(link.startWatchApp).not.toHaveBeenCalled();
-    sentToWatch(sent('session-a', true));
-    sentToWatch(sent('session-a', true));
-    expect(link.startWatchApp).toHaveBeenCalledTimes(1);
   });
 });

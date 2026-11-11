@@ -5,10 +5,7 @@ import { useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from '@/lib/device-storage';
 import { createQuestion } from '@/lib/question';
-import type { Session } from '@/sessions/session';
 
-import { link } from './link';
-import { workoutIdOf, type WatchState } from './protocol';
 import { hasWatch } from './types';
 import { readWatchStatus } from './watch-status';
 
@@ -46,10 +43,6 @@ export type StartOnWatchAnswer = { onWatch: boolean; keep: boolean };
 /** The question, answered with null when it is closed or left open: the workout does not start. */
 const watchQuestion = createQuestion<void, StartOnWatchAnswer | null>(null);
 
-/** Asks "Start on your Apple Watch too?" in `StartOnWatchSheet`. */
-export const askStartOnWatch = watchQuestion.ask;
-/** Answers the question still open, if any, with null. */
-export const cancelStartOnWatch = watchQuestion.cancel;
 /** The question shown in `StartOnWatchSheet`, with its answer; none when none is. */
 export const useStartOnWatchQuestion = watchQuestion.useQuestion;
 
@@ -62,27 +55,8 @@ export async function startsOnWatch(): Promise<boolean | null> {
   if (!hasWatch(await readWatchStatus())) return false;
   const choice = loadStartOnWatch();
   if (choice !== 'ask') return choice === 'always';
-  const answer = await askStartOnWatch();
+  const answer = await watchQuestion.ask();
   if (!answer) return null;
   if (answer.keep) setStartOnWatch(answer.onWatch ? 'always' : 'never');
   return answer.onWatch;
-}
-
-/** The workout to open Benchbite on the watch for, once the watch is told that it follows it. */
-let opening: string | null = null;
-
-/**
- * Opens Benchbite on the watch for a workout started there too, once the phone has sent it the
- * workout, so that the app it launches finds the workout to follow.
- */
-export function openOnWatch(session: Pick<Session, 'id' | 'startedAt'>) {
-  opening = workoutIdOf(session);
-}
-
-/** Takes a state sent to the watch, which opens Benchbite on it when it carries that workout. */
-export function sentToWatch(state: WatchState) {
-  if (opening !== null && state.workout?.id === opening && state.workout.follows) {
-    opening = null;
-    link.startWatchApp?.();
-  }
 }
