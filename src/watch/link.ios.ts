@@ -4,7 +4,10 @@ import { NativeWatchLink } from '@/modules/watch-link';
 
 import { NO_WATCH, type WatchLink, type WatchStatus } from './types';
 
-const status = (): WatchStatus => NativeWatchLink?.status() ?? NO_WATCH;
+function status(): WatchStatus {
+  const native = NativeWatchLink?.status();
+  return native ? { ...native, heardAt: native.heardAt ?? null } : NO_WATCH;
+}
 
 /** Gives each command the native side kept to the listener; one that is not JSON is dropped. */
 function takeCommands(listener: (message: unknown) => void) {

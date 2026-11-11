@@ -10,7 +10,6 @@ import { Alert, Linking, type AlertButton } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 import { link } from '@/watch/link';
-import { applyCommand, parseCommand, PROTOCOL_VERSION, workoutIdOf } from '@/watch/protocol';
 import { NO_WATCH } from '@/watch/types';
 import { resetWatchStatus } from '@/watch/watch-status';
 import { act, render } from '@/test/render';
@@ -31,7 +30,6 @@ import {
   startSession,
   toggleDoneUnchecked,
   updateSession,
-  type Session,
 } from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -206,66 +204,44 @@ describe('RestAlarm', () => {
 });
 
 describe('RestAlarm while the watch follows the workout', () => {
-  const paired = { paired: true, installed: true, reachable: true };
-  /** A rest the watch started, as a tick there does. */
-  const watchRest = (session: Session): Session => {
-    const ticked = toggleDoneUnchecked(session, 0, 0, NOW);
-    return { ...ticked, rest: ticked.rest && { ...ticked.rest, byWatch: true } };
-  };
+  const heard = () => ({ paired: true, installed: true, reachable: true, heardAt: Date.now() });
 
   beforeEach(() => {
     updateSession((session) => ({ ...session, watchFollows: true }));
   });
 
-  it('leaves the end of a rest the watch started to the watch, and only ends it', async () => {
-    jest.mocked(link.status).mockResolvedValue(paired);
+  it('keeps its notification as a stand-in, and leaves the rest to the watch it hears', async () => {
+    jest.mocked(link.status).mockResolvedValue(heard());
     await render(<RestAlarm />);
-    await act(async () => updateSession(watchRest));
-    expect(schedule).not.toHaveBeenCalled();
+    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    // The phone's module puts it off while the watch is heard.
+    expect(schedule).toHaveBeenCalled();
     await act(async () => {
-      jest.advanceTimersByTime(90_000);
+      jest.advanceTimersByTime(60_000);
+    });
+    // Heard again, as every half a minute while the watch measures the workout.
+    await act(async () => {
+      jest.mocked(link.onStatusChange).mock.calls[0]![0](heard());
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(30_000);
     });
     expect(Haptics.notificationAsync).not.toHaveBeenCalled();
     expect(cancel).toHaveBeenCalledWith('rest-end');
   });
 
-  it('signals a rest started on the phone, which the watch may not hear of', async () => {
-    jest.mocked(link.status).mockResolvedValue(paired);
+  it('signals the rest itself once the watch is no longer heard', async () => {
+    jest.mocked(link.status).mockResolvedValue(heard());
     await render(<RestAlarm />);
     await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
-    expect(schedule).toHaveBeenCalled();
-  });
-
-  it('signals a rest the phone still owns after a refused command from the watch', async () => {
-    jest.mocked(link.status).mockResolvedValue(paired);
-    await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
-    schedule.mockClear();
-    // A tick of a set already done, which the phone's module took as taking the rest.
-    const tick = (session: Session) =>
-      parseCommand({
-        v: PROTOCOL_VERSION,
-        id: 'late tick',
-        at: NOW,
-        workoutId: workoutIdOf(session),
-        type: 'setDone',
-        exercise: 0,
-        set: 0,
-        done: true,
-      })!;
-    await act(async () =>
-      updateSession((session) =>
-        applyCommand(session, tick(session), { metricsOf: () => undefined }),
-      ),
-    );
-    expect(schedule).toHaveBeenCalled();
-  });
-
-  it('takes the alerts back once the watch app is gone', async () => {
-    jest.mocked(link.status).mockResolvedValue({ ...paired, installed: false });
-    await render(<RestAlarm />);
-    await act(async () => updateSession(watchRest));
-    expect(schedule).toHaveBeenCalled();
+    // Not heard for over a minute, after it was last.
+    await act(async () => {
+      jest.advanceTimersByTime(80_000);
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(10_000);
+    });
+    expect(Haptics.notificationAsync).toHaveBeenCalled();
   });
 });
 

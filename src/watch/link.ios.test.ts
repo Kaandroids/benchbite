@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, type WatchState } from './protocol';
+import { NO_WATCH } from './types';
 
 type Listener = () => void;
 
@@ -7,7 +8,13 @@ function fakeModule() {
   const listeners = new Map<string, Listener>();
   return {
     listeners,
-    status: jest.fn(() => ({ paired: true, installed: true, reachable: false })),
+    status: jest.fn(
+      (): { paired: boolean; installed: boolean; reachable: boolean; heardAt?: number } => ({
+        paired: true,
+        installed: true,
+        reachable: false,
+      }),
+    ),
     sendState: jest.fn(),
     takeCommands: jest.fn((): string[] => []),
     addListener: jest.fn((event: string, listener: Listener) => {
@@ -68,17 +75,28 @@ it('drops a command that is not JSON', () => {
 it('tells the watch’s status, and when it changes', async () => {
   const native = fakeModule();
   const link = load(native);
-  expect(await link.status()).toEqual({ paired: true, installed: true, reachable: false });
+  // Not heard from yet.
+  expect(await link.status()).toEqual({
+    paired: true,
+    installed: true,
+    reachable: false,
+    heardAt: null,
+  });
   const listener = jest.fn();
   link.onStatusChange(listener);
-  native.status.mockReturnValue({ paired: true, installed: true, reachable: true });
+  native.status.mockReturnValue({ paired: true, installed: true, reachable: true, heardAt: 7 });
   native.listeners.get('onStatus')!();
-  expect(listener).toHaveBeenCalledWith({ paired: true, installed: true, reachable: true });
+  expect(listener).toHaveBeenCalledWith({
+    paired: true,
+    installed: true,
+    reachable: true,
+    heardAt: 7,
+  });
 });
 
 it('has no watch in a build without the native module', async () => {
   const link = load(null);
-  expect(await link.status()).toEqual({ paired: false, installed: false, reachable: false });
+  expect(await link.status()).toEqual(NO_WATCH);
   const listener = jest.fn();
   link.onCommand(listener)();
   link.sendState(STATE);

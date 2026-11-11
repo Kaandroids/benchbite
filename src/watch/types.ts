@@ -11,10 +11,17 @@ export type WatchStatus = {
   installed: boolean;
   /** It can be talked to right now. */
   reachable: boolean;
+  /** When it was last heard from about the workout the phone runs, in milliseconds (ADR 0114). */
+  heardAt: number | null;
 };
 
 /** No watch to talk to. */
-export const NO_WATCH: WatchStatus = { paired: false, installed: false, reachable: false };
+export const NO_WATCH: WatchStatus = {
+  paired: false,
+  installed: false,
+  reachable: false,
+  heardAt: null,
+};
 
 /**
  * How the app talks to a watch, which each platform implements over its own channel (ADR 0109).

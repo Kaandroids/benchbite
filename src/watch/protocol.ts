@@ -28,6 +28,14 @@ import type { WorkoutTarget } from '@/workouts/workouts';
 /** Raised when a message changes shape; each side drops a message of another version. */
 export const PROTOCOL_VERSION = 1;
 
+/**
+ * How long the watch is taken to be there after it was heard from about the workout, signalling
+ * its rests: over twice what it takes between the signs it sends while it measures the workout
+ * (ADR 0114). The phone's module puts its own rest notification off by as much
+ * (modules/watch-link/ios/WatchSession.swift).
+ */
+export const WATCH_HEARD_FOR_MS = 75_000;
+
 /** How many applied command ids the workout keeps and sends back: far more than wait at once. */
 const KEPT_COMMANDS = 50;
 /** The longest command id taken: a UUID is 36 characters. */
