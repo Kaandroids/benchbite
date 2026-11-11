@@ -74,8 +74,10 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
     restAlert.requestPermission()
   }
 
+  /// The app may have been launched in the background, where the user could not be asked to let
+  /// it signal the rests of the workout it measures: it asks once it is open.
   @MainActor func applicationDidBecomeActive() {
-    restAlert.readPermission()
     workoutSession.becameActive()
+    restAlert.readPermission(asking: workoutSession.measuring != nil)
   }
 }

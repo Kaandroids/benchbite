@@ -48,11 +48,18 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
     }
   }
 
-  /// Reads again whether the user lets the app notify, as they may change it in the settings.
-  func readPermission() {
+  /// Reads again whether the user lets the app notify, as they may change it in the settings;
+  /// asks when they have not been asked yet and `asking`, as for a workout the watch measures.
+  func readPermission(asking: Bool = false) {
     UNUserNotificationCenter.current().getNotificationSettings { settings in
-      let allowed = settings.authorizationStatus == .authorized
-      Task { @MainActor in self.allowed = allowed }
+      let status = settings.authorizationStatus
+      Task { @MainActor in
+        if asking && status == .notDetermined {
+          self.requestPermission()
+        } else {
+          self.allowed = status == .authorized
+        }
+      }
     }
   }
 
