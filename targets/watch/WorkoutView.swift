@@ -8,13 +8,6 @@ import WatchKit
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
-  @State private var page = Page.set
-  /// Finishing, asked from a long press on the set or the rest (ADR 0122).
-  @State private var finishing = false
-
-  private enum Page {
-    case list, set
-  }
 
   var body: some View {
     Group {
@@ -24,31 +17,9 @@ struct WorkoutView: View {
         } else if let over = restAlert.over, over.workoutId == workout.id {
           RestOverView(next: over.next) { restAlert.over = nil }
         } else {
-          // The list beside the set, a swipe away (ADR 0117).
-          TabView(selection: $page) {
-            ExerciseListView(workout: workout) { page = .set }
-              .tag(Page.list)
-            // Each second, so that the rest counts down and gives way to the set when it is over.
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-              let now = context.date.timeIntervalSince1970 * 1000
-              if let rest = phone.rest(of: workout), rest.endsAt > now {
-                RestView(workout: workout, rest: rest, now: now)
-              } else {
-                SetView(workout: workout)
-              }
-            }
-            // A long press anywhere but on a button asks to finish, as the list's end does.
-            .contentShape(Rectangle())
-            .onLongPressGesture(minimumDuration: 0.6) {
-              WKInterfaceDevice.current().play(.click)
-              finishing = true
-            }
-            .sheet(isPresented: $finishing) {
-              FinishView(workout: workout)
-            }
-            .tag(Page.set)
-          }
-          .tabViewStyle(.page(indexDisplayMode: .never))
+          PagesView(workout: workout)
+            // Its pages and the finish question start again with each workout.
+            .id(workout.id)
         }
       } else if let finished = phone.finished {
         SummaryView(workout: finished)
@@ -139,5 +110,47 @@ private struct RestOverView: View {
     }
     .multilineTextAlignment(.center)
     .foregroundStyle(Theme.text)
+  }
+}
+
+/// The pages of a workout the watch follows: the list beside the set, a swipe away (ADR 0117), and
+/// the finish question, asked from the list's end or a long press on the set or the rest
+/// (ADR 0118, ADR 0122). They go with the workout, and the question with them.
+private struct PagesView: View {
+  @EnvironmentObject private var phone: PhoneLink
+  let workout: WatchWorkout
+  @State private var page = Page.set
+  @State private var finishing = false
+
+  private enum Page {
+    case list, set
+  }
+
+  var body: some View {
+    TabView(selection: $page) {
+      ExerciseListView(workout: workout, picked: { page = .set }, finish: { finishing = true })
+        .tag(Page.list)
+      // Each second, so that the rest counts down and gives way to the set when it is over.
+      TimelineView(.periodic(from: .now, by: 1)) { context in
+        let now = context.date.timeIntervalSince1970 * 1000
+        if let rest = phone.rest(of: workout), rest.endsAt > now {
+          RestView(workout: workout, rest: rest, now: now)
+        } else {
+          SetView(workout: workout)
+        }
+      }
+      // A long press anywhere on the page but on a button asks to finish.
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .contentShape(Rectangle())
+      .onLongPressGesture(minimumDuration: 0.6) {
+        WKInterfaceDevice.current().play(.click)
+        finishing = true
+      }
+      .tag(Page.set)
+    }
+    .tabViewStyle(.page(indexDisplayMode: .never))
+    .sheet(isPresented: $finishing) {
+      FinishView(workout: workout)
+    }
   }
 }

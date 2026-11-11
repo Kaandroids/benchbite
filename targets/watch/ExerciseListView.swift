@@ -8,7 +8,8 @@ struct ExerciseListView: View {
   let workout: WatchWorkout
   /// Goes back to the set, once an exercise is picked.
   let picked: () -> Void
-  @State private var finishing = false
+  /// Asks to finish the workout.
+  let finish: () -> Void
 
   var body: some View {
     let current = phone.openExercise(of: workout)
@@ -37,14 +38,11 @@ struct ExerciseListView: View {
           // One whose sets are all done has none to come next.
           .disabled(!isCurrent && isDone)
         }
-        Button("Finish workout") { finishing = true }
+        Button("Finish workout", action: finish)
           .buttonStyle(PillButtonStyle(prominent: false))
           .padding(.top, 4)
       }
       .foregroundStyle(Theme.text)
-    }
-    .sheet(isPresented: $finishing) {
-      FinishView(workout: workout)
     }
   }
 }
