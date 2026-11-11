@@ -18,6 +18,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// (ADR 0118); none once it is finished again. The phone applies a finish only then: one it
   /// saves ends the workout instead.
   @Published private(set) var unsaved: String?
+  /// The phone can be reached now, so that a command goes at once; else commands wait for it, and
+  /// the sets ticked here say so (ADR 0121).
+  @Published private(set) var reachable = false
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
   /// once another workout runs, or once the summary is closed (ADR 0120).
   @Published private(set) var finished: FinishedWorkout? {
@@ -88,21 +91,55 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isFinish } != nil
   }
 
-  /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
-  /// sets ticked done here that the phone has not applied yet, as it applies them before the
-  /// finish (ADR 0118).
-  func setsToSave(of workout: WatchWorkout) -> Int {
-    let ticked = Set(
-      waiting.values.compactMap { command -> [Int]? in
+  /// The sets ticked done here that the phone has not taken yet.
+  private func waitingTicks(of workout: WatchWorkout) -> Set<SetIndex> {
+    Set(
+      waiting.values.compactMap { command -> SetIndex? in
         guard command.workoutId == workout.id,
           case .tick(let exercise, let set, _) = command.change,
           workout.exercises.indices.contains(exercise),
           workout.exercises[exercise].sets.indices.contains(set),
           !workout.exercises[exercise].sets[set].done
         else { return nil }
-        return [exercise, set]
+        return SetIndex(exercise: exercise, set: set)
       })
-    return workout.setsToSave + ticked.count
+  }
+
+  /// How many sets ticked here wait for the phone while it is out of reach, which the top line then
+  /// says in place of the heart rate (ADR 0121); none while it can be reached.
+  func setsWaitingOutOfReach(of workout: WatchWorkout) -> Int {
+    reachable ? 0 : waitingTicks(of: workout).count
+  }
+
+  /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
+  /// sets ticked done here that the phone has not applied yet, as it applies them before the
+  /// finish (ADR 0118).
+  func setsToSave(of workout: WatchWorkout) -> Int {
+    workout.setsToSave + waitingTicks(of: workout).count
+  }
+
+  /// The set to do next as the watch shows it: the phone's, or, while a pick or ticks here wait
+  /// for the phone, the set the phone finds once it takes them: the first not done nor ticked here
+  /// from the exercise of the latest of them, as a pick opens its exercise and a tick stays on its
+  /// own until it is done (markDone, nextSetOf); so logging goes on with the phone out of reach
+  /// (ADR 0121).
+  func nextSet(of workout: WatchWorkout) -> NextSet? {
+    let latest = waiting.values.filter { $0.workoutId == workout.id && $0.change.leads != nil }
+      .max { $0.at < $1.at }
+    guard let from = latest?.change.leads, workout.exercises.indices.contains(from) else {
+      return workout.phoneNextSet
+    }
+    return workout.firstOpenSet(from: from, skipping: waitingTicks(of: workout))
+  }
+
+  /// The set to do after a tick of `next`, for its rest: the next set the watch shows once the
+  /// tick is sent.
+  func nextSet(afterTicking next: NextSet, of workout: WatchWorkout) -> NextSet? {
+    workout.firstOpenSet(
+      from: next.exerciseIndex,
+      skipping: waitingTicks(of: workout).union([
+        SetIndex(exercise: next.exerciseIndex, set: next.setIndex)
+      ]))
   }
 
   /// Whether joining the workout waits for the phone.
@@ -117,10 +154,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       .max { $0.at < $1.at }?.change.opens
   }
 
-  /// The exercise whose sets come next as the watch shows it: the one picked last, while the
-  /// phone has not applied the pick, else the phone's.
+  /// The exercise whose sets come next as the watch shows it: that of the set it shows, else the
+  /// one picked last while the phone has not applied the pick.
   func openExercise(of workout: WatchWorkout) -> Int? {
-    picked(workoutId: workout.id) ?? workout.nextSet?.exerciseIndex
+    nextSet(of: workout)?.exerciseIndex ?? picked(workoutId: workout.id)
   }
 
   /// The workout's rest as the watch shows it: the phone's, or one a tick here starts, as changed
@@ -132,14 +169,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let rest =
       ticked
       ?? workout.rest.map {
-        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: workout.nextSet?.label)
+        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: nextSet(of: workout)?.label)
       }
     guard let change = firstWaiting(workout.id, where: \.isRest)?.change,
       case .rest(let endsAt) = change
     else { return rest }
     return endsAt.map {
       ShownRest(
-        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? workout.nextSet?.label)
+        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? nextSet(of: workout)?.label)
     }
   }
 
@@ -171,8 +208,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let payload = command.payload
     waiting[command.id] = command
     let session = WCSession.default
-    // Without a reply handler, as the phone takes messages without replying.
-    if session.isReachable {
+    // Without a reply handler, as the phone takes messages without replying. Behind a transfer
+    // still on its way, a command goes as a transfer too, as transfers arrive in order and a
+    // message could overtake them: a tick before the pick it follows (ADR 0121).
+    if session.isReachable, session.outstandingUserInfoTransfers.isEmpty {
       session.sendMessage(payload, replyHandler: nil) { _ in
         session.transferUserInfo(payload)
       }
@@ -249,6 +288,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     error: Error?
   ) {
     receive(session.receivedApplicationContext)
+    reachabilityChanged(session)
+  }
+
+  func sessionReachabilityDidChange(_ session: WCSession) {
+    reachabilityChanged(session)
+  }
+
+  private func reachabilityChanged(_ session: WCSession) {
+    let reachable = session.isReachable
+    DispatchQueue.main.async { self.reachable = reachable }
   }
 
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {

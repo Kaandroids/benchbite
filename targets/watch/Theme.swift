@@ -21,6 +21,8 @@ enum Theme {
   static let success = Color(hex: 0x4ADE80)
   /// warning
   static let warning = Color(hex: 0xFBBF24)
+  /// warningBackground
+  static let warningBackground = Color(hex: 0x2E2410)
   /// snack: the heart rate, as the app's heart rate chart shows it.
   static let heart = Color(hex: 0xF28AB7)
 }

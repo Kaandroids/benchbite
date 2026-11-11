@@ -1,6 +1,6 @@
 # 0117. Pick the exercise on the watch
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0121
 - **Date:** 2026-11-11
 
 ## Context
