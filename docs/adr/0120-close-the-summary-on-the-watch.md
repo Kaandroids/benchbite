@@ -10,12 +10,13 @@ ADR 0119 shows a summary on the watch once the phone saves a workout the watch f
 ## Decision
 
 - **Done at the end of the summary closes it**, a plain pill button below the records, as Keep going on the finish question. The watch then shows "No workout yet".
-- **The summary also closes when the app goes to the background**, as with the wrist down, so that it is seen once: the app opens next on what comes next. A summary that arrives while the app is in the background, as when the workout is saved on the phone, still shows when the app opens.
+- **A summary seen also closes when the app goes to the background**, which happens once the watch returns to its face, after the Return to Clock delay with the wrist down; lowering the wrist alone only makes the app inactive. So it is seen once, and the app opens next on what comes next. A summary is seen once it shows with the app active: one that arrives while the app is not, as when the workout is saved on the phone with the wrist down, waits until the app is active again.
 
 ## Alternatives considered
 
 - **Only Done:** a summary left open would greet the user at the next workout's start, until it starts.
-- **Only the wrist down:** the summary could not be left while looking at it.
+- **Only the background:** the summary could not be left while looking at it.
+- **Closing as the app stops being active:** that also happens for a notification or Control Center, which would close it while it is read.
 - **Closing it after a time:** it could close while being read, and a time is arbitrary.
 
 ## Consequences
