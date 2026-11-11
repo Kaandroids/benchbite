@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, type WatchState } from './protocol';
+import { NO_WATCH } from './types';
 
 type Listener = () => void;
 
@@ -7,8 +8,15 @@ function fakeModule() {
   const listeners = new Map<string, Listener>();
   return {
     listeners,
-    status: jest.fn(() => ({ paired: true, installed: true, reachable: false })),
+    status: jest.fn(
+      (): { paired: boolean; installed: boolean; reachable: boolean; heardUntil?: number } => ({
+        paired: true,
+        installed: true,
+        reachable: false,
+      }),
+    ),
     sendState: jest.fn(),
+    signalRest: jest.fn(),
     takeCommands: jest.fn((): string[] => []),
     addListener: jest.fn((event: string, listener: Listener) => {
       listeners.set(event, listener);
@@ -68,17 +76,41 @@ it('drops a command that is not JSON', () => {
 it('tells the watch’s status, and when it changes', async () => {
   const native = fakeModule();
   const link = load(native);
-  expect(await link.status()).toEqual({ paired: true, installed: true, reachable: false });
+  // Not heard from yet.
+  expect(await link.status()).toEqual({
+    paired: true,
+    installed: true,
+    reachable: false,
+    heardUntil: null,
+    heardRest: null,
+  });
   const listener = jest.fn();
   link.onStatusChange(listener);
-  native.status.mockReturnValue({ paired: true, installed: true, reachable: true });
+  native.status.mockReturnValue({ paired: true, installed: true, reachable: true, heardUntil: 7 });
   native.listeners.get('onStatus')!();
-  expect(listener).toHaveBeenCalledWith({ paired: true, installed: true, reachable: true });
+  expect(listener).toHaveBeenCalledWith({
+    paired: true,
+    installed: true,
+    reachable: true,
+    heardUntil: 7,
+    heardRest: null,
+  });
+});
+
+it('leaves the rest’s notification to the native module, which puts it off for the watch', () => {
+  const native = fakeModule();
+  const link = load(native);
+  link.signalRest?.({ endsAt: 1_000, title: 'Rest is over', body: 'Next up: Bench press' });
+  expect(native.signalRest).toHaveBeenCalledWith(1_000, 'Rest is over', 'Next up: Bench press');
+  link.signalRest?.(null);
+  expect(native.signalRest).toHaveBeenLastCalledWith(null, '', '');
+  // Without it, the app schedules the notification itself.
+  expect(load(null).signalRest).toBeUndefined();
 });
 
 it('has no watch in a build without the native module', async () => {
   const link = load(null);
-  expect(await link.status()).toEqual({ paired: false, installed: false, reachable: false });
+  expect(await link.status()).toEqual(NO_WATCH);
   const listener = jest.fn();
   link.onCommand(listener)();
   link.sendState(STATE);

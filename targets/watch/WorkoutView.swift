@@ -38,17 +38,6 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
-    // Only the rests the watch started or last changed, of a workout it follows, are signalled
-    // here; the phone signals the others.
-    .onChange(of: signalled, initial: true) { restAlert.signal(signalled) }
-  }
-
-  /// The rest whose end the watch signals, one it started or last changed, and the set after it.
-  private var signalled: RestAlert.Rest? {
-    guard let workout = phone.workout, workout.follows, let rest = phone.rest(of: workout),
-      rest.byWatch
-    else { return nil }
-    return RestAlert.Rest(workoutId: workout.id, endsAt: rest.endsAt, next: rest.next)
   }
 }
 

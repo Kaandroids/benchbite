@@ -34,9 +34,10 @@ final class WorkoutSession: NSObject, ObservableObject {
 
   private var session: HKWorkoutSession?
   private var builder: HKLiveWorkoutBuilder?
-  /// The phone's workout the session measures, kept so that a session taken up knows it.
-  private var workoutId: String? {
-    didSet { UserDefaults.standard.set(workoutId, forKey: Self.workoutIdKey) }
+  /// The phone's workout the session measures, whose rests the watch signals while it runs
+  /// (ADR 0114); kept so that a session taken up knows it.
+  @Published private(set) var measuring: String? {
+    didSet { UserDefaults.standard.set(measuring, forKey: Self.workoutIdKey) }
   }
   /// While the workout of the session that ended is saved or left out.
   private var ending = false
@@ -74,10 +75,10 @@ final class WorkoutSession: NSObject, ObservableObject {
   private func reconcile() {
     guard let said, !recovering, !asking, !ending else { return }
     if let session {
-      guard let workoutId else { return end(session, saved: false, at: Date()) }
-      if let end = said.ended.first(where: { $0.id == workoutId }) {
+      guard let measuring else { return end(session, saved: false, at: Date()) }
+      if let end = said.ended.first(where: { $0.id == measuring }) {
         self.end(session, saved: end.saved, at: end.endedAt.map(Self.date) ?? Date())
-      } else if let running = said.workout?.id, running != workoutId {
+      } else if let running = said.workout?.id, running != measuring {
         // The phone runs another workout, and says nothing of how this one ended. Running none,
         // as while it starts or signs in again, it may still run this one.
         self.end(session, saved: false, at: Date())
@@ -149,7 +150,7 @@ final class WorkoutSession: NSObject, ObservableObject {
     guard let builder else { return }
     self.session = nil
     self.builder = nil
-    workoutId = nil
+    measuring = nil
     heartRate = nil
     cap?.invalidate()
     cap = nil
@@ -179,7 +180,7 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// started again.
   private func sessionEnded(_ session: HKWorkoutSession) {
     guard session === self.session else { return }
-    if let workoutId { stopped.insert(workoutId) }
+    if let measuring { stopped.insert(measuring) }
     end(session, saved: false, at: Date())
   }
 
@@ -188,7 +189,7 @@ final class WorkoutSession: NSObject, ObservableObject {
     session.delegate = self
     builder = session.associatedWorkoutBuilder()
     builder?.delegate = self
-    self.workoutId = workoutId
+    measuring = workoutId
     if let start = builder?.startDate { limit(from: start) }
   }
 

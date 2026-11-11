@@ -15,6 +15,19 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   @Published private(set) var waiting: [String: WatchCommand] = [:]
 
   private var lastSeq: Double = 0
+  private var here: Timer?
+  /// The workout the watch measures, which its sign is about.
+  private var measuring: String?
+  /// The end of the rest the watch signals, which its sign tells, and which it tells at once when
+  /// it changes, so that the phone puts its own notification off for it in time.
+  var signalling: Double? {
+    didSet {
+      if signalling != oldValue, let measuring { sendHere(measuring) }
+    }
+  }
+  /// Less than half the time the phone takes the watch to be there after its sign: `heardFor` in
+  /// modules/watch-link/ios/RestSignal.swift (ADR 0114).
+  private static let hereEvery: TimeInterval = 30
 
   override init() {
     super.init()
@@ -49,17 +62,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let rest =
       ticked
       ?? workout.rest.map {
-        ShownRest(
-          endsAt: $0.endsAt, seconds: $0.seconds, byWatch: $0.byWatch,
-          next: workout.nextSet?.label)
+        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: workout.nextSet?.label)
       }
     guard let change = firstWaiting(workout.id, where: \.isRest)?.change,
       case .rest(let endsAt) = change
     else { return rest }
     return endsAt.map {
       ShownRest(
-        endsAt: $0, seconds: rest?.seconds ?? 0, byWatch: true,
-        next: rest?.next ?? workout.nextSet?.label)
+        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? workout.nextSet?.label)
     }
   }
 
@@ -89,6 +99,33 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       }
     } else {
       session.transferUserInfo(payload)
+    }
+  }
+
+  /// Tells the phone the watch is there to signal the workout's rests, now and every half a minute
+  /// while it measures `workoutId`, or stops with nil; the phone then puts its own notification off
+  /// (ADR 0114).
+  func sayHere(while workoutId: String?) {
+    here?.invalidate()
+    here = nil
+    measuring = workoutId
+    guard let workoutId else { return }
+    sendHere(workoutId)
+    here = Timer.scheduledTimer(withTimeInterval: Self.hereEvery, repeats: true) {
+      [weak self] _ in
+      self?.sendHere(workoutId)
+    }
+  }
+
+  /// One sign, with the rest the watch signals; only while the phone can be reached, as a sign that
+  /// waited would say nothing of now.
+  private func sendHere(_ workoutId: String) {
+    let session = WCSession.default
+    guard session.activationState == .activated, session.isReachable else { return }
+    var sign: [String: Any] = ["here": workoutId]
+    if let signalling { sign["rest"] = signalling }
+    session.sendMessage(sign, replyHandler: nil) { error in
+      NSLog("[PhoneLink] Could not say the watch is there: %@", error.localizedDescription)
     }
   }
 

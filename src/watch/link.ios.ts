@@ -4,7 +4,12 @@ import { NativeWatchLink } from '@/modules/watch-link';
 
 import { NO_WATCH, type WatchLink, type WatchStatus } from './types';
 
-const status = (): WatchStatus => NativeWatchLink?.status() ?? NO_WATCH;
+function status(): WatchStatus {
+  const native = NativeWatchLink?.status();
+  return native
+    ? { ...native, heardUntil: native.heardUntil ?? null, heardRest: native.heardRest ?? null }
+    : NO_WATCH;
+}
 
 /** Gives each command the native side kept to the listener; one that is not JSON is dropped. */
 function takeCommands(listener: (message: unknown) => void) {
@@ -28,6 +33,10 @@ export const link: WatchLink = {
   },
   sendState: (state) =>
     NativeWatchLink?.sendState(JSON.stringify(state), state.workout?.id ?? null),
+  signalRest: NativeWatchLink
+    ? (rest) =>
+        NativeWatchLink?.signalRest(rest?.endsAt ?? null, rest?.title ?? '', rest?.body ?? '')
+    : undefined,
   onCommand: (listener) => {
     const subscription = NativeWatchLink?.addListener('onCommands', () => takeCommands(listener));
     // Those that arrived while nothing listened, as while the app was closed.

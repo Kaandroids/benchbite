@@ -2,9 +2,9 @@ import SwiftUI
 import UserNotifications
 import WatchKit
 
-/// Signals the end of the rests the watch started or last changed, while it follows the workout
-/// (ADR 0112): a local notification, which taps the wrist with the app closed or the wrist down,
-/// and, with the app open, a tap and the rest-over screen instead.
+/// Signals the end of the rests of the workout the watch measures (ADR 0112, ADR 0114): a local
+/// notification, which taps the wrist with the app closed or the wrist down, and, with the app
+/// open, a tap and the rest-over screen instead.
 @MainActor
 final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
   /// The rest a signal is set for: its workout, when it ends, and the set after it.

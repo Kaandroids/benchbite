@@ -11,10 +11,23 @@ export type WatchStatus = {
   installed: boolean;
   /** It can be talked to right now. */
   reachable: boolean;
+  /**
+   * Until when it is taken to be there, heard from about the workout the phone runs, in
+   * milliseconds (ADR 0114).
+   */
+  heardUntil: number | null;
+  /** The end of the rest it then signalled, in milliseconds. */
+  heardRest: number | null;
 };
 
 /** No watch to talk to. */
-export const NO_WATCH: WatchStatus = { paired: false, installed: false, reachable: false };
+export const NO_WATCH: WatchStatus = {
+  paired: false,
+  installed: false,
+  reachable: false,
+  heardUntil: null,
+  heardRest: null,
+};
 
 /**
  * How the app talks to a watch, which each platform implements over its own channel (ADR 0109).
@@ -31,4 +44,9 @@ export type WatchLink = {
    * returns what stops listening. A message is checked with parseCommand() before it is used.
    */
   onCommand(listener: (message: unknown) => void): () => void;
+  /**
+   * Where the link signals rests, on iOS, the phone's notification of the end of a rest goes
+   * through it, or none with null, as it puts it off while the watch signals the rest (ADR 0114).
+   */
+  signalRest?: (rest: { endsAt: number; title: string; body: string } | null) => void;
 };
