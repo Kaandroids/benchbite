@@ -608,6 +608,16 @@ describe('applyCommand', () => {
       ticked,
     );
     expect(picks.current).toBe(1);
+    // A newer pick that arrived first.
+    const outOfOrder = [
+      command(NOW + 3 * MINUTE, { type: 'open', exercise: 2 }),
+      command(NOW + 2 * MINUTE, { type: 'open', exercise: 1 }),
+    ].reduce(
+      (session, pick) =>
+        applyCommand(session, pick, { metricsOf: noLibrary, now: NOW + 4 * MINUTE }),
+      ticked,
+    );
+    expect(outOfOrder.current).toBe(2);
   });
 
   it('keeps only the latest command ids', () => {
