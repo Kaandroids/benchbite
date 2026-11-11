@@ -37,6 +37,7 @@ export const link: WatchLink = {
     ? (rest) =>
         NativeWatchLink?.signalRest(rest?.endsAt ?? null, rest?.title ?? '', rest?.body ?? '')
     : undefined,
+  startWatchApp: NativeWatchLink ? () => NativeWatchLink?.startWatchApp() : undefined,
   onCommand: (listener) => {
     const subscription = NativeWatchLink?.addListener('onCommands', () => takeCommands(listener));
     // Those that arrived while nothing listened, as while the app was closed.

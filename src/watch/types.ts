@@ -49,4 +49,6 @@ export type WatchLink = {
    * through it, or none with null, as it puts it off while the watch signals the rest (ADR 0114).
    */
   signalRest?: (rest: { endsAt: number; title: string; body: string } | null) => void;
+  /** Where the watch can be opened from the phone, on iOS, opens Benchbite on it (ADR 0115). */
+  startWatchApp?: () => void;
 };
