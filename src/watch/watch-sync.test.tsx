@@ -60,6 +60,8 @@ it('sends the workout to the watch, and each change of it', async () => {
   startSession('user-a', PUSH, {}, { now: NOW });
   await render(<WatchSync />);
   expect(lastSent().workout?.exercises[0]?.name).toBe('Bench press');
+  // Named as the phone names it: by its type, without a name of its own.
+  expect(lastSent().workout?.name).toBe('Full body');
 
   await act(() => updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW)));
   expect(lastSent().workout?.exercises[0]?.sets[0]?.done).toBe(true);

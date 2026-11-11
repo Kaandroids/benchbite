@@ -155,16 +155,23 @@ export type ExerciseOf = (
 ) => Pick<LibraryExercise, 'name' | 'metrics' | 'equipment'> | undefined;
 
 /**
- * The state for the watch: its exercises named and each set judged by the library's exercise as
- * the phone judges it, with its text as the phone shows it.
+ * The state for the watch: the workout named as the phone names it, its exercises named and each
+ * set judged by the library's exercise as the phone judges it, with its text as the phone shows it.
  */
-export function stateOf(session: Session | null, exerciseOf: ExerciseOf, seq: number): WatchState {
+export function stateOf(
+  session: Session | null,
+  {
+    exerciseOf,
+    workoutName,
+  }: { exerciseOf: ExerciseOf; workoutName: (session: Session) => string | null },
+  seq: number,
+): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
     workout: session && {
       id: workoutIdOf(session),
-      name: session.name,
+      name: workoutName(session),
       startedAt: session.startedAt,
       current: session.current,
       next: nextSetOf(session),
