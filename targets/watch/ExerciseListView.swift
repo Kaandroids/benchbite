@@ -1,12 +1,14 @@
 import SwiftUI
 
 /// The workout's exercises, with how many of their sets are done: the one whose set comes next is
-/// marked, and another picked opens on the phone, so that its sets come next (ADR 0117).
+/// marked, and another picked opens on the phone, so that its sets come next (ADR 0117). At its end
+/// the workout is finished (ADR 0118).
 struct ExerciseListView: View {
   @EnvironmentObject private var phone: PhoneLink
   let workout: WatchWorkout
   /// Goes back to the set, once an exercise is picked.
   let picked: () -> Void
+  @State private var finishing = false
 
   var body: some View {
     let current = phone.openExercise(of: workout)
@@ -35,8 +37,14 @@ struct ExerciseListView: View {
           // One whose sets are all done has none to come next.
           .disabled(!isCurrent && isDone)
         }
+        Button("Finish workout") { finishing = true }
+          .buttonStyle(PillButtonStyle(prominent: false))
+          .padding(.top, 4)
       }
       .foregroundStyle(Theme.text)
+    }
+    .sheet(isPresented: $finishing) {
+      FinishView(workout: workout)
     }
   }
 }
