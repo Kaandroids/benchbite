@@ -1,17 +1,31 @@
 import SwiftUI
 
-/// The colours of the approved watch design: the app's dark theme on a black face.
+/// The colours of the approved watch design: the app's dark theme (src/theme/colors.ts) on a
+/// black face, each named after its token there.
 enum Theme {
+  /// text
   static let text = Color(hex: 0xF2F3F5)
+  /// textMuted
   static let secondary = Color(hex: 0x9A9DA5)
-  /// The neighbours of the value the Crown turns.
+  /// placeholder: the neighbours of the value the Crown turns.
   static let faint = Color(hex: 0x5C5F66)
+  /// surface
   static let tile = Color(hex: 0x1B1C1F)
+  /// iconBackground
   static let control = Color(hex: 0x2A2C31)
+  /// primary
   static let accent = Color(hex: 0xFF7F26)
-  /// Text on the accent.
+  /// onPrimary
   static let onAccent = Color(hex: 0x1C0C00)
-  static let warning = Color(hex: 0xF5B54A)
+  /// warning
+  static let warning = Color(hex: 0xFBBF24)
+}
+
+extension Font {
+  /// The watch's type: the system's rounded face, close to the app's Nunito.
+  static func rounded(_ size: CGFloat, _ weight: Font.Weight = .bold) -> Font {
+    .system(size: size, weight: weight, design: .rounded)
+  }
 }
 
 extension Color {
@@ -40,7 +54,7 @@ struct PillButtonStyle: ButtonStyle {
     var body: some View {
       let prominent = style.prominent
       configuration.label
-        .font(.system(size: style.fontSize, weight: .heavy, design: .rounded))
+        .font(.rounded(style.fontSize, .heavy))
         .frame(maxWidth: .infinity, minHeight: style.height)
         .foregroundStyle(prominent ? Theme.onAccent : Theme.text)
         .background(prominent ? Theme.accent : Theme.control, in: Capsule())

@@ -21,9 +21,9 @@ struct WorkoutView: View {
         Image(systemName: "dumbbell")
           .font(.system(size: 32, weight: .semibold))
           .foregroundStyle(Theme.secondary)
-        Text("No workout yet").font(.system(size: 17, weight: .heavy, design: .rounded))
+        Text("No workout yet").font(.rounded(17, .heavy))
         Text("Start one on your iPhone and it shows here.")
-          .font(.system(size: 14, weight: .bold, design: .rounded))
+          .font(.rounded(14))
           .foregroundStyle(Theme.secondary)
           .multilineTextAlignment(.center)
       }
