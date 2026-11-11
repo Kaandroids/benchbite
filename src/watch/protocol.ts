@@ -5,6 +5,7 @@
 import type { LibraryExercise } from '@/exercises/library';
 import {
   addSet,
+  lastActivity,
   markDone,
   setRestEnd,
   setValues,
@@ -320,7 +321,9 @@ function change(
     case 'join':
       return { ...session, watchFollows: true };
     case 'open':
-      return command.exercise < session.exercises.length
+      // As markDone() keeps the open exercise for a tick older than the workout's last one, a
+      // pick that waited does not undo a set ticked since, as on the phone.
+      return command.exercise < session.exercises.length && lastActivity(session) <= at
         ? { ...session, current: command.exercise }
         : session;
     case 'setRest':

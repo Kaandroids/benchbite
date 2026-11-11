@@ -588,6 +588,28 @@ describe('applyCommand', () => {
     expect(applyCommand(opened, missing, { metricsOf: noLibrary, now: NOW }).current).toBe(1);
   });
 
+  it('keeps the exercise of a set ticked after a pick that waited', () => {
+    // The pick was made at NOW, but the phone ticked a set of the open exercise since.
+    const ticked = applyCommand(start(), done(NOW + MINUTE, 0), {
+      metricsOf: noLibrary,
+      now: NOW + MINUTE,
+    });
+    const late = command(NOW, { type: 'open', exercise: 1 });
+    expect(
+      applyCommand(ticked, late, { metricsOf: noLibrary, now: NOW + 2 * MINUTE }).current,
+    ).toBe(0);
+    // The last of picks made in turn counts.
+    const picks = [2, 1].reduce(
+      (session, exercise, i) =>
+        applyCommand(session, command(NOW + 2 * MINUTE + i, { type: 'open', exercise }), {
+          metricsOf: noLibrary,
+          now: NOW + 3 * MINUTE,
+        }),
+      ticked,
+    );
+    expect(picks.current).toBe(1);
+  });
+
   it('keeps only the latest command ids', () => {
     let session = start();
     for (let i = 0; i < 60; i++) {
