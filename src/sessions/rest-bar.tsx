@@ -64,7 +64,11 @@ export function RestBar({
             </Text>
           </View>
           {onWatch ? (
-            <View style={styles.onWatch}>
+            <View
+              accessible
+              accessibilityLabel={t('session.restAlerts.onWatchLabel')}
+              style={styles.onWatch}
+            >
               <Icon name="watch" size={15} color="onInverseMuted" />
               <Text
                 variant="caption"
