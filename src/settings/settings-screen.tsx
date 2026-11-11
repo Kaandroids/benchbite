@@ -9,7 +9,7 @@ import { healthStore } from '@/health/health';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
 import { useTheme } from '@/theme';
-import { hasWatch } from '@/watch/start-on-watch';
+import { hasWatch } from '@/watch/types';
 import { WatchSection } from '@/watch/watch-section';
 import { useWatchStatus } from '@/watch/watch-status';
 

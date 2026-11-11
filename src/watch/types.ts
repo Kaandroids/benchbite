@@ -29,6 +29,11 @@ export const NO_WATCH: WatchStatus = {
   heardRest: null,
 };
 
+/** Whether there is a watch to follow a workout: paired, with Benchbite on it. */
+export function hasWatch(status: WatchStatus): boolean {
+  return status.paired && status.installed;
+}
+
 /**
  * How the app talks to a watch, which each platform implements over its own channel (ADR 0109).
  * It carries the protocol's messages and nothing else: what they mean is decided in protocol.ts.

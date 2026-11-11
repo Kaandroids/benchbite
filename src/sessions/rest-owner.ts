@@ -1,7 +1,7 @@
 // Which device signals the end of the workout's rest (ADR 0114).
 import { useEffect, useState } from 'react';
 
-import type { WatchStatus } from '@/watch/types';
+import { hasWatch, type WatchStatus } from '@/watch/types';
 import { useWatchStatus } from '@/watch/watch-status';
 
 import type { Session } from './session';
@@ -15,8 +15,7 @@ import type { Session } from './session';
 export function restOnWatch(session: Session | null, status: WatchStatus, now: number): boolean {
   return (
     !!session?.watchFollows &&
-    status.paired &&
-    status.installed &&
+    hasWatch(status) &&
     status.heardUntil !== null &&
     now < status.heardUntil &&
     status.heardRest === session.rest?.endsAt

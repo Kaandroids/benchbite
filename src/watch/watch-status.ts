@@ -41,6 +41,21 @@ export function useWatchStatus(): WatchStatus {
   return useSyncExternalStore(subscribe, () => status);
 }
 
+/**
+ * The watch's status asked for now, as when a workout starts, and kept for everything that shows
+ * it; the one last told when it cannot be read.
+ */
+export async function readWatchStatus(): Promise<WatchStatus> {
+  try {
+    const next = await link.status();
+    changed(next);
+    return next;
+  } catch (error) {
+    console.warn('Could not read the watch status', error);
+    return status;
+  }
+}
+
 /** For tests: forgets the status and listens again when next used. */
 export function resetWatchStatus() {
   status = NO_WATCH;

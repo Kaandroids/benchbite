@@ -9,6 +9,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
 import { applyCommand, parseCommand, stateOf, type ExerciseOf } from './protocol';
+import { sentToWatch } from './start-on-watch';
 
 let lastSeq = 0;
 
@@ -47,9 +48,14 @@ export function WatchSync() {
 
   useEffect(() => {
     if (signedIn && (session === null || ready)) {
-      link.sendState(
-        stateOf(session, { exerciseOf: exerciseIn(library.data), name }, nextSeq(), ended),
+      const state = stateOf(
+        session,
+        { exerciseOf: exerciseIn(library.data), name },
+        nextSeq(),
+        ended,
       );
+      link.sendState(state);
+      sentToWatch(state);
     }
   }, [signedIn, session, ready, library.data, name, ended]);
 

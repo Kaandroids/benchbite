@@ -11,22 +11,26 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { cancelStartOnWatch, useStartOnWatchQuestion } from './start-on-watch';
+import {
+  cancelStartOnWatch,
+  useStartOnWatchQuestion,
+  type StartOnWatchAnswer,
+} from './start-on-watch';
 
 /** The sheet that asks `askStartOnWatch`'s question, over every screen. */
 export function StartOnWatchSheet() {
-  const answer = useStartOnWatchQuestion();
-  // A question left open when the sheet goes, as on signing out, starts on the phone.
+  const current = useStartOnWatchQuestion();
+  // A question left open when the sheet goes, as on signing out, does not start the workout.
   useEffect(() => cancelStartOnWatch, []);
-  return answer ? <Question answer={answer} /> : null;
+  return current ? <Question answer={current.answer} /> : null;
 }
 
-function Question({ answer }: { answer: NonNullable<ReturnType<typeof useStartOnWatchQuestion>> }) {
+function Question({ answer }: { answer: (value: StartOnWatchAnswer | null) => void }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const [keep, setKeep] = useState(false);
   return (
-    <Sheet onClose={() => answer({ onWatch: false, keep: false })}>
+    <Sheet onClose={() => answer(null)}>
       <View style={[styles.center, { gap: spacing.md }]}>
         <IconTile name="watch" size={64} />
         <Text variant="headline" accessibilityRole="header" style={styles.centerText}>

@@ -4,8 +4,13 @@
 import { useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from '@/lib/device-storage';
+import { createQuestion } from '@/lib/question';
+import type { Session } from '@/sessions/session';
 
-import type { WatchStatus } from './types';
+import { link } from './link';
+import { workoutIdOf, type WatchState } from './protocol';
+import { hasWatch } from './types';
+import { readWatchStatus } from './watch-status';
 
 export const START_ON_WATCH_CHOICES = ['ask', 'always', 'never'] as const;
 export type StartOnWatchChoice = (typeof START_ON_WATCH_CHOICES)[number];
@@ -35,61 +40,49 @@ export function useStartOnWatch(): StartOnWatchChoice {
   return useSyncExternalStore(subscribe, loadStartOnWatch);
 }
 
-/** Whether there is a watch to start a workout on: paired, with Benchbite on it. */
-export function hasWatch(status: WatchStatus): boolean {
-  return status.paired && status.installed;
-}
-
 /** The answer to "Start on your Apple Watch too?": on the watch or only on the phone, and kept. */
 export type StartOnWatchAnswer = { onWatch: boolean; keep: boolean };
 
-let pending: ((answer: StartOnWatchAnswer) => void) | null = null;
-const sheetListeners = new Set<() => void>();
+/** The question, answered with null when it is closed or left open: the workout does not start. */
+const watchQuestion = createQuestion<void, StartOnWatchAnswer | null>(null);
 
-function setPending(value: typeof pending) {
-  pending = value;
-  for (const listener of sheetListeners) {
-    listener();
-  }
-}
-
-/** The question open in `StartOnWatchSheet`, answered with `answer`; none when none is. */
-export function useStartOnWatchQuestion() {
-  return useSyncExternalStore(
-    (listener) => {
-      sheetListeners.add(listener);
-      return () => sheetListeners.delete(listener);
-    },
-    () => pending,
-  );
-}
-
-/** Answers the question still open, if any, with the phone alone. */
-export function cancelStartOnWatch() {
-  pending?.({ onWatch: false, keep: false });
-}
-
-/** Asks "Start on your Apple Watch too?" in `StartOnWatchSheet`; closing it starts on the phone. */
-export function askStartOnWatch(): Promise<StartOnWatchAnswer> {
-  cancelStartOnWatch();
-  return new Promise((resolve) => {
-    setPending((answer) => {
-      setPending(null);
-      resolve(answer);
-    });
-  });
-}
+/** Asks "Start on your Apple Watch too?" in `StartOnWatchSheet`. */
+export const askStartOnWatch = watchQuestion.ask;
+/** Answers the question still open, if any, with null. */
+export const cancelStartOnWatch = watchQuestion.cancel;
+/** The question shown in `StartOnWatchSheet`, with its answer; none when none is. */
+export const useStartOnWatchQuestion = watchQuestion.useQuestion;
 
 /**
  * Whether a workout about to start starts on the watch too: never without a watch; else as the
  * user chose, asking when they chose to be asked, and keeping an answer they ask not to be asked
- * again.
+ * again. Null when it is not to start, as the question was closed.
  */
-export async function startsOnWatch(status: WatchStatus): Promise<boolean> {
-  if (!hasWatch(status)) return false;
+export async function startsOnWatch(): Promise<boolean | null> {
+  if (!hasWatch(await readWatchStatus())) return false;
   const choice = loadStartOnWatch();
   if (choice !== 'ask') return choice === 'always';
-  const { onWatch, keep } = await askStartOnWatch();
-  if (keep) setStartOnWatch(onWatch ? 'always' : 'never');
-  return onWatch;
+  const answer = await askStartOnWatch();
+  if (!answer) return null;
+  if (answer.keep) setStartOnWatch(answer.onWatch ? 'always' : 'never');
+  return answer.onWatch;
+}
+
+/** The workout to open Benchbite on the watch for, once the watch is told that it follows it. */
+let opening: string | null = null;
+
+/**
+ * Opens Benchbite on the watch for a workout started there too, once the phone has sent it the
+ * workout, so that the app it launches finds the workout to follow.
+ */
+export function openOnWatch(session: Pick<Session, 'id' | 'startedAt'>) {
+  opening = workoutIdOf(session);
+}
+
+/** Takes a state sent to the watch, which opens Benchbite on it when it carries that workout. */
+export function sentToWatch(state: WatchState) {
+  if (opening !== null && state.workout?.id === opening && state.workout.follows) {
+    opening = null;
+    link.startWatchApp?.();
+  }
 }
