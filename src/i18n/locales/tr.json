@@ -2567,7 +2567,7 @@
         "never": "Asla"
       },
       "notes": {
-        "ask": "Saatin yakındaysa Benchbite her başlangıçta sorar. Saat bir antrenmanı takip ederken dinlenmenin bittiğini yalnızca saat haber verir.",
+        "ask": "Benchbite her başlangıçta sorar. Saat bir antrenmanı takip ederken dinlenmenin bittiğini yalnızca saat haber verir.",
         "always": "Her antrenman saatinde de başlar. Saat bir antrenmanı takip ederken dinlenmenin bittiğini yalnızca saat haber verir.",
         "never": "Antrenmanlar bu telefonda kalır; dinlenmenin bittiğini telefon haber verir. Yine de saatte Benchbite’ı açıp bir antrenmana katılabilirsin."
       }

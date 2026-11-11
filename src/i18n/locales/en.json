@@ -2567,7 +2567,7 @@
         "never": "Never"
       },
       "notes": {
-        "ask": "When your watch is near, Benchbite asks at each start. While the watch follows a workout, only the watch tells you a rest is over.",
+        "ask": "Benchbite asks at each start. While the watch follows a workout, only the watch tells you a rest is over.",
         "always": "Every workout starts on your watch too. While the watch follows a workout, only the watch tells you a rest is over.",
         "never": "Workouts stay on this phone, which tells you when a rest is over. You can still open Benchbite on the watch and join one."
       }

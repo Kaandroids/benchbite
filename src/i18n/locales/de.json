@@ -2567,7 +2567,7 @@
         "never": "Nie"
       },
       "notes": {
-        "ask": "Ist deine Uhr in der Nähe, fragt Benchbite bei jedem Start. Solange die Uhr ein Training begleitet, meldet nur sie das Ende einer Pause.",
+        "ask": "Benchbite fragt bei jedem Start. Solange die Uhr ein Training begleitet, meldet nur sie das Ende einer Pause.",
         "always": "Jedes Training startet auch auf deiner Uhr. Solange die Uhr ein Training begleitet, meldet nur sie das Ende einer Pause.",
         "never": "Trainings bleiben auf diesem iPhone, das dir das Ende einer Pause meldet. Du kannst Benchbite trotzdem auf der Uhr öffnen und einsteigen."
       }
