@@ -13,6 +13,8 @@ struct WatchState: Decodable {
   let workout: WatchWorkout?
   /// How the latest workouts ended, latest first.
   let ended: [WatchEnded]
+  /// The language chosen in Benchbite, which the watch shows its texts in (ADR 0123).
+  let language: String?
 }
 
 /// How a workout ended: saved as a log, at the time it ended, or let go.
@@ -113,20 +115,20 @@ enum SetField: String, Decodable, CodingKeyRepresentable {
   /// Under a value, as "80 KG".
   var unit: String {
     switch self {
-    case .weightKg: "KG"
-    case .reps: "REPS"
-    case .seconds: "TIME"
-    case .meters: "M"
+    case .weightKg: L10n.t("units.weightKg")
+    case .reps: L10n.t("units.reps")
+    case .seconds: L10n.t("units.seconds")
+    case .meters: L10n.t("units.meters")
     }
   }
 
   /// Over a value the Crown turns.
   var label: String {
     switch self {
-    case .weightKg: "WEIGHT"
-    case .reps: "REPS"
-    case .seconds: "TIME"
-    case .meters: "DISTANCE"
+    case .weightKg: L10n.t("fields.weightKg")
+    case .reps: L10n.t("fields.reps")
+    case .seconds: L10n.t("fields.seconds")
+    case .meters: L10n.t("fields.meters")
     }
   }
 }
@@ -310,7 +312,7 @@ struct NextSet {
   let exercise: WatchExercise
   var set: WatchSet { exercise.sets[setIndex] }
   /// As "Set 4 · 80 kg × 8".
-  var label: String { "Set \(setIndex + 1) · \(set.text)" }
+  var label: String { L10n.t("setLabel", ["number": setIndex + 1, "values": set.text]) }
 }
 
 extension WatchWorkout {
@@ -332,7 +334,7 @@ extension WatchWorkout {
   }
 
   /// The workout's name, or a plain one where it has none.
-  var title: String { name ?? "Workout" }
+  var title: String { name ?? L10n.t("workout") }
 
   /// An exercise's name, or the workout's where the phone's library does not know it.
   func name(of exercise: WatchExercise) -> String {

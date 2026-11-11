@@ -24,7 +24,7 @@ struct RestView: View {
           .rotationEffect(.degrees(-90))
           .animation(.linear(duration: 1), value: left)
         VStack(spacing: 0) {
-          Text("REST").font(.rounded(12, .heavy))
+          Text(L10n.t("rest")).font(.rounded(12, .heavy))
             .foregroundStyle(Theme.secondary)
           Text(Duration.seconds(left).formatted(.time(pattern: .minuteSecond)))
             .font(.rounded(30, .heavy))
@@ -41,7 +41,7 @@ struct RestView: View {
       }
       HStack(spacing: 6) {
         change("−15", to: endsAt - 15_000)
-        change("Skip", to: nil)
+        change(L10n.t("skip"), to: nil)
         change("+15", to: endsAt + 15_000)
       }
     }
@@ -50,7 +50,7 @@ struct RestView: View {
 
   /// The set after the rest, as "Next: Set 4 · 80 kg × 8".
   private var next: String? {
-    rest.next.map { "Next: \($0)" }
+    rest.next.map { L10n.t("next", ["set": $0]) }
   }
 
   private func change(_ title: String, to newEnd: Double?) -> some View {

@@ -22,7 +22,7 @@ final class RestAlert: NSObject, ObservableObject, UNUserNotificationCenterDeleg
   @Published private(set) var allowed = false
 
   /// What the notification and the rest-over screen say.
-  static let title = "Rest is over"
+  static var title: String { L10n.t("restOver") }
 
   private static let id = "rest-end"
   /// A rest that ended longer ago than this, when the app comes back, is not signalled again.

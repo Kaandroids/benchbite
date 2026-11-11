@@ -38,7 +38,7 @@ struct ExerciseListView: View {
           // One whose sets are all done has none to come next.
           .disabled(!isCurrent && isDone)
         }
-        Button("Finish workout", action: finish)
+        Button(L10n.t("list.finishWorkout"), action: finish)
           .buttonStyle(PillButtonStyle(prominent: false))
           .padding(.top, 4)
       }
@@ -66,12 +66,12 @@ private struct ExerciseRow: View {
       }
       Spacer(minLength: 0)
       if isCurrent {
-        Text("NOW").font(.rounded(13, .heavy)).foregroundStyle(Theme.accent)
+        Text(L10n.t("list.now")).font(.rounded(13, .heavy)).foregroundStyle(Theme.accent)
       } else if isDone {
         Image(systemName: "checkmark")
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.success)
-          .accessibilityLabel("Done")
+          .accessibilityLabel(L10n.t("done"))
       }
     }
     .padding(.horizontal, 10)

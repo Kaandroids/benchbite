@@ -90,8 +90,9 @@ private struct FieldEditor: View {
       .buttonStyle(.plain)
       Text(
         range.step == 1
-          ? "Turn the Crown"
-          : "Turn the Crown · \(formatted(range.step)) \(field.unit.lowercased()) steps"
+          ? L10n.t("turnCrown")
+          : L10n.t(
+            "turnCrownSteps", ["step": formatted(range.step), "unit": field.unit.lowercased()])
       )
       .font(.rounded(12))
       .foregroundStyle(Theme.secondary)

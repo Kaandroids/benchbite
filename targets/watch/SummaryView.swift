@@ -13,31 +13,30 @@ struct SummaryView: View {
     let totals = workoutSession.totals.flatMap { $0.workoutId == workout.id ? $0 : nil }
     ScrollView {
       VStack(spacing: 8) {
-        Text("\(workout.title) done")
+        Text(L10n.t("summary.title", ["name": workout.title]))
           .font(.rounded(17, .heavy))
           .multilineTextAlignment(.center)
           .lineLimit(2)
         Grid(horizontalSpacing: 6, verticalSpacing: 6) {
           GridRow {
-            Tile(value: duration, label: "TIME")
-            Tile(value: "\(workout.setsSaved)/\(workout.setCount)", label: "SETS")
+            Tile(value: duration, label: L10n.t("summary.time"))
+            Tile(value: "\(workout.setsSaved)/\(workout.setCount)", label: L10n.t("summary.sets"))
           }
           GridRow {
             Tile(
-              value: totals?.averageBpm.map(String.init) ?? "–", label: "AVG BPM",
+              value: totals?.averageBpm.map(String.init) ?? "–", label: L10n.t("summary.averageBpm"),
               tint: Theme.heart)
-            Tile(value: totals?.kcal.map(String.init) ?? "–", label: "KCAL")
+            Tile(value: totals?.kcal.map(String.init) ?? "–", label: L10n.t("summary.kcal"))
           }
         }
         if workout.records > 0 {
-          let records = workout.records == 1 ? "record" : "records"
-          Text("\(workout.records) new \(records) · see your iPhone")
+          Text(L10n.t("summary.records", count: workout.records))
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.success)
           .multilineTextAlignment(.center)
           .padding(.top, 4)
         }
-        Button("Done") { phone.closeSummary() }
+        Button(L10n.t("done")) { phone.closeSummary() }
           .buttonStyle(PillButtonStyle(prominent: false))
           .padding(.top, 6)
       }

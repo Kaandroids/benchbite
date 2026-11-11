@@ -21,6 +21,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The phone can be reached now, so that a command goes at once; else commands wait for it, and
   /// the sets ticked here say so (ADR 0121).
   @Published private(set) var reachable = false
+  /// The language the watch shows its texts in, as the phone last said (ADR 0123).
+  @Published private(set) var language = L10n.language
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
   /// once another workout runs, or once the summary is closed (ADR 0120).
   @Published private(set) var finished: FinishedWorkout? {
@@ -256,6 +258,10 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     DispatchQueue.main.async {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
+      if let language = state.language, language != self.language {
+        L10n.language = language
+        self.language = language
+      }
       // The workout shown is saved: its summary shows until the next runs or it is closed.
       if state.workout != nil {
         self.finished = nil
