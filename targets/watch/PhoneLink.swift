@@ -27,25 +27,36 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
-  /// When the workout's rest ends as the watch shows it: as the latest change made here that the
-  /// phone has not applied yet says, else as the phone says.
+  /// Whether a change of the workout's rest waits for the phone. Another waits until it is
+  /// applied, as the phone takes a change only of the rest it has, and the two could arrive in
+  /// either order.
+  func isRestWaiting(workoutId: String) -> Bool {
+    waiting.values.contains {
+      guard $0.workoutId == workoutId, case .rest = $0.change else { return false }
+      return true
+    }
+  }
+
+  /// When the workout's rest ends as the watch shows it: as the change made here that the phone
+  /// has not applied yet says, else as the phone says.
   func restEndsAt(_ workout: WatchWorkout) -> Double? {
-    let latest = waiting.values
+    let waitingEnd = waiting.values.lazy
       .filter { $0.workoutId == workout.id }
-      .compactMap { command -> (at: Double, endsAt: Double?)? in
-        guard case .rest(_, let endsAt) = command.change else { return nil }
-        return (command.at, endsAt)
+      .compactMap { command -> Double?? in
+        guard case .rest(let endsAt) = command.change else { return nil }
+        return .some(endsAt)
       }
-      .max { $0.at < $1.at }
-    return latest.map(\.endsAt) ?? workout.rest?.endsAt
+      .first
+    return waitingEnd ?? workout.rest?.endsAt
   }
 
   func send(_ command: WatchCommand?) {
     guard let command else { return }
-    if case .tick(let exercise, let set) = command.change,
-      isWaiting(workoutId: command.workoutId, exercise: exercise, set: set)
-    {
-      return
+    switch command.change {
+    case .tick(let exercise, let set):
+      if isWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
+    case .rest:
+      if isRestWaiting(workoutId: command.workoutId) { return }
     }
     let payload = command.payload
     waiting[command.id] = command

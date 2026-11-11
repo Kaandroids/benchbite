@@ -41,17 +41,42 @@ struct WatchExercise: Decodable {
   let name: String?
   /// What its sets record: the weight and the reps, or a time with or without a distance.
   let fields: [SetField]
-  /// What the Crown turns a weight by.
-  let weightStepKg: Double
-  /// The weight is added to the body, and none is a value it can have.
-  let addedWeight: Bool
+  /// The values the Crown changes, and how; none for sets measured by time.
+  let crown: [SetField: CrownRange]
   let restSeconds: Int
   let sets: [WatchSet]
 }
 
+/// How the Crown turns a value: from `min` to `max`, by `step`.
+struct CrownRange: Decodable {
+  let min: Double
+  let max: Double
+  let step: Double
+}
+
 /// A value a set records, as SetField in src/sets/fields.ts.
-enum SetField: String, Decodable {
+enum SetField: String, Decodable, CodingKeyRepresentable {
   case weightKg, reps, seconds, meters
+
+  /// Under a value, as "80 KG".
+  var unit: String {
+    switch self {
+    case .weightKg: "KG"
+    case .reps: "REPS"
+    case .seconds: "TIME"
+    case .meters: "M"
+    }
+  }
+
+  /// Over a value the Crown turns.
+  var label: String {
+    switch self {
+    case .weightKg: "WEIGHT"
+    case .reps: "REPS"
+    case .seconds: "TIME"
+    case .meters: "DISTANCE"
+    }
+  }
 }
 
 struct WatchSet: Decodable {
@@ -83,14 +108,12 @@ struct WatchCommand {
   /// What a command changes, which the watch shows until the phone has applied it.
   enum Change {
     case tick(exercise: Int, set: Int)
-    /// The rest the watch showed, ending at `endsAt`, or skipped.
-    case rest(of: Double, endsAt: Double?)
+    /// The rest ending at `endsAt`, or skipped.
+    case rest(endsAt: Double?)
   }
 
   let id: String
   let workoutId: String
-  /// When the user did it, in milliseconds since the epoch.
-  let at: Double
   let change: Change
   let json: String
 
@@ -107,7 +130,6 @@ struct WatchCommand {
     else { return nil }
     self.id = id
     self.workoutId = workoutId
-    self.at = at
     self.change = change
     self.json = json
   }
@@ -127,12 +149,30 @@ struct WatchCommand {
   /// Makes the rest that ends at `of` end at `endsAt`, or skips it.
   static func setRest(workoutId: String, of: Double, endsAt: Double?) -> WatchCommand? {
     WatchCommand(
-      workoutId: workoutId, change: .rest(of: of, endsAt: endsAt),
+      workoutId: workoutId, change: .rest(endsAt: endsAt),
       body: ["type": "setRest", "of": of, "endsAt": endsAt ?? NSNull()])
   }
 
   var payload: [String: Any] {
     ["command": json, "workoutId": workoutId]
+  }
+}
+
+/// The set to do next, as the phone found it.
+struct NextSet {
+  let exerciseIndex: Int
+  let setIndex: Int
+  let exercise: WatchExercise
+  var set: WatchSet { exercise.sets[setIndex] }
+}
+
+extension WatchWorkout {
+  var nextSet: NextSet? {
+    guard let next, exercises.indices.contains(next.exercise),
+      exercises[next.exercise].sets.indices.contains(next.set)
+    else { return nil }
+    return NextSet(
+      exerciseIndex: next.exercise, setIndex: next.set, exercise: exercises[next.exercise])
   }
 }
 

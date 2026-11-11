@@ -22,17 +22,17 @@ struct RestView: View {
           .rotationEffect(.degrees(-90))
           .animation(.linear(duration: 1), value: left)
         VStack(spacing: 0) {
-          Text("REST").font(.system(size: 12, weight: .heavy, design: .rounded))
+          Text("REST").font(.rounded(12, .heavy))
             .foregroundStyle(Theme.secondary)
           Text(Duration.seconds(left).formatted(.time(pattern: .minuteSecond)))
-            .font(.system(size: 30, weight: .heavy, design: .rounded))
+            .font(.rounded(30, .heavy))
             .monospacedDigit()
         }
       }
       .frame(width: 110, height: 110)
       if let next {
         Text(next)
-          .font(.system(size: 13, weight: .bold, design: .rounded))
+          .font(.rounded(13))
           .foregroundStyle(Theme.secondary)
           .lineLimit(1)
           .minimumScaleFactor(0.8)
@@ -48,10 +48,7 @@ struct RestView: View {
 
   /// The set after the rest, as "Next: set 4 · 80 kg × 8".
   private var next: String? {
-    guard let next = workout.next, workout.exercises.indices.contains(next.exercise),
-      workout.exercises[next.exercise].sets.indices.contains(next.set)
-    else { return nil }
-    return "Next: set \(next.set + 1) · \(workout.exercises[next.exercise].sets[next.set].text)"
+    workout.nextSet.map { "Next: set \($0.setIndex + 1) · \($0.set.text)" }
   }
 
   private func change(_ title: String, to newEnd: Double?) -> some View {
@@ -59,5 +56,7 @@ struct RestView: View {
       phone.send(.setRest(workoutId: workout.id, of: endsAt, endsAt: newEnd))
     }
     .buttonStyle(PillButtonStyle(prominent: false, height: 38, fontSize: 14))
+    // The phone takes a change only of the rest it has, so one waits for the one before.
+    .disabled(phone.isRestWaiting(workoutId: workout.id))
   }
 }
