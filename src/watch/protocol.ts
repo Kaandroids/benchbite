@@ -3,7 +3,7 @@
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
 import type { LibraryExercise } from '@/exercises/library';
-import { addSet, markDone, restUntil, setValues, type Session } from '@/sessions/session';
+import { addSet, markDone, setRestEnd, setValues, type Session } from '@/sessions/session';
 import {
   describeSet,
   SET_LIMITS,
@@ -42,7 +42,7 @@ export type WatchExercise = {
   /** In the user's language, as the phone shows it; none when the library does not know it. */
   name: string | null;
   target: WorkoutTarget;
-  /** What its sets record, as the phone shows them (setKindOf). */
+  /** What its sets record, as the phone shows them (setKindOf), in the order it shows them. */
   fields: SetField[];
   /**
    * The values the watch changes with the Crown, and how; none for sets measured by time, which
@@ -275,6 +275,7 @@ function change(
         now,
       });
       // The values go with the tick: a tick refused, as one older than the set's, sets none.
+      // markDone() returns what it was given when it refuses.
       return ticked === edited ? session : ticked;
     }
     case 'addSet': {
@@ -286,9 +287,8 @@ function change(
     }
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
-      // Changed at `at`, so that a tick made before it on the watch starts no rest again.
       return session.rest?.endsAt === command.of
-        ? { ...session, rest: restUntil(session.rest, command.endsAt, now), restChangedAt: at }
+        ? setRestEnd(session, command.endsAt, at, now)
         : session;
   }
 }

@@ -424,7 +424,8 @@ export function restUntil(
  * 0109). A set is not done without what it needs. A set whose clock runs is done with the clock's
  * time, or, done before the clock started, with its own, the clock stopping. A change older than
  * the set's last tick or untick changes nothing, and one older than the latest set keeps the open
- * exercise and the rest that set started. A rest that is over by `now` is none.
+ * exercise and the rest that set started. A rest that is over by `now` is none. A tick it
+ * refuses returns `value` itself, which the watch's protocol relies on.
  */
 export function markDone(
   value: Session,
@@ -468,21 +469,22 @@ export function markDone(
   };
 }
 
+/**
+ * Makes the rest end at another time, or ends it with null, as changed at `at`, so that a tick
+ * made before then starts no rest again. A rest that is over by `now` ends.
+ */
+export function setRestEnd(value: Session, endsAt: number | null, at: number, now = at): Session {
+  return { ...value, rest: restUntil(value.rest, endsAt, now), restChangedAt: at };
+}
+
 /** Lengthens or shortens the rest; a rest that is over ends. */
 export function changeRest(value: Session, seconds: number, now = Date.now()): Session {
-  if (!value.rest) {
-    return value;
-  }
-  return {
-    ...value,
-    rest: restUntil(value.rest, value.rest.endsAt + seconds * 1000, now),
-    restChangedAt: now,
-  };
+  return value.rest ? setRestEnd(value, value.rest.endsAt + seconds * 1000, now) : value;
 }
 
 /** Ends the rest before its time. */
 export function skipRest(value: Session, now = Date.now()): Session {
-  return { ...value, rest: null, restChangedAt: now };
+  return setRestEnd(value, null, now);
 }
 
 /** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */
