@@ -9,7 +9,7 @@ struct SetView: View {
   @State private var editing: Editing?
 
   var body: some View {
-    if let next = workout.nextSet {
+    if let next = phone.nextSet(of: workout) {
       let set = next.set
       let key = SetKey(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
       let draft = values(of: key, set: set)
@@ -19,7 +19,7 @@ struct SetView: View {
       let missing = set.missing.filter { draft[$0] == nil }
       ScrollView {
         VStack(alignment: .leading, spacing: 6) {
-          StatusLine(workoutId: workout.id)
+          StatusLine(workout: workout)
           Text(workout.name(of: next.exercise))
             .font(.rounded(17, .heavy))
             .lineLimit(2)
@@ -45,14 +45,7 @@ struct SetView: View {
               }
             }
           }
-          if let picked = phone.picked(workoutId: workout.id),
-            workout.exercises.indices.contains(picked)
-          {
-            // A tick now would be of this set, which the phone takes after the pick (ADR 0117).
-            Text("Opening \(workout.name(of: workout.exercises[picked])) on your iPhone")
-              .font(.rounded(13))
-              .foregroundStyle(Theme.secondary)
-          } else if missing.isEmpty || !editable.isEmpty {
+          if missing.isEmpty || !editable.isEmpty {
             Button {
               phone.send(
                 .setDone(
@@ -75,7 +68,8 @@ struct SetView: View {
               .font(.rounded(13))
               .foregroundStyle(Theme.secondary)
           }
-          if !phone.waiting.isEmpty {
+          // Unless the line at the top says what waits.
+          if !phone.waiting.isEmpty, phone.reachable || phone.setsWaiting(of: workout) == 0 {
             Text("Waiting for your iPhone")
               .font(.rounded(12))
               .foregroundStyle(Theme.warning)
@@ -116,7 +110,7 @@ struct SetView: View {
   private func restStarted(by next: NextSet) -> (seconds: Int, next: String?)? {
     let seconds = next.exercise.restSeconds
     guard seconds > 0 else { return nil }
-    return (seconds, workout.nextSet(after: next.exerciseIndex, set: next.setIndex)?.label)
+    return (seconds, phone.nextSet(after: next, of: workout)?.label)
   }
 
   private func subtitle(_ next: NextSet) -> String {

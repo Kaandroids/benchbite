@@ -250,11 +250,6 @@ struct WatchCommand {
 }
 
 extension WatchCommand.Change {
-  var ticks: Bool {
-    guard case .tick = self else { return false }
-    return true
-  }
-
   func isTick(exercise: Int, set: Int) -> Bool {
     guard case .tick(exercise, set, _) = self else { return false }
     return true
@@ -294,6 +289,12 @@ func formatted(_ value: Double?) -> String {
   return value.formatted(.number.precision(.fractionLength(0...2)))
 }
 
+/// A set of the workout, by its exercise and its place there.
+struct SetIndex: Hashable {
+  let exercise: Int
+  let set: Int
+}
+
 /// The set to do next, as the phone found it.
 struct NextSet {
   let exerciseIndex: Int
@@ -306,14 +307,19 @@ struct NextSet {
 
 extension WatchWorkout {
   /// The set to do after a tick of this one, before the phone says: the first not done after it,
-  /// then in the exercises after it, then in those before it, as nextSetOf() goes on.
-  func nextSet(after exercise: Int, set: Int) -> NextSet? {
+  /// then in the exercises after it, then in those before it, as nextSetOf() goes on; past the
+  /// sets in `ticked`, ticked here but not taken by the phone yet.
+  func nextSet(after exercise: Int, set: Int, skipping ticked: Set<SetIndex> = []) -> NextSet? {
     let count = exercises.count
-    for step in 0..<count {
+    guard count > 0 else { return nil }
+    // Round to the sets before it in its own exercise last.
+    for step in 0...count {
       let index = (exercise + step) % count
       let first = step == 0 ? set + 1 : 0
       let sets = exercises[index].sets
-      if let next = sets.indices.first(where: { $0 >= first && !sets[$0].done }) {
+      if let next = sets.indices.first(where: {
+        $0 >= first && !sets[$0].done && !ticked.contains(SetIndex(exercise: index, set: $0))
+      }) {
         return NextSet(exerciseIndex: index, setIndex: next, exercise: exercises[index])
       }
     }

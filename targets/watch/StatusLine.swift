@@ -4,10 +4,10 @@ import SwiftUI
 /// of reach (ADR 0121), else the heart rate.
 struct StatusLine: View {
   @EnvironmentObject private var phone: PhoneLink
-  let workoutId: String
+  let workout: WatchWorkout
 
   var body: some View {
-    let waiting = phone.reachable ? 0 : phone.setsWaiting(workoutId: workoutId)
+    let waiting = phone.reachable ? 0 : phone.setsWaiting(of: workout)
     if waiting > 0 {
       Label(
         waiting == 1 ? "1 set waits for your iPhone" : "\(waiting) sets wait for your iPhone",

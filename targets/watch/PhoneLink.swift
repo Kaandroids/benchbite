@@ -86,31 +86,48 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     firstWaiting(workoutId) { $0.isRest } != nil
   }
 
-  /// How many sets ticked here wait for the phone.
-  func setsWaiting(workoutId: String) -> Int {
-    waiting.values.filter { $0.workoutId == workoutId && $0.change.ticks }.count
-  }
-
   /// Whether finishing the workout waits for the phone, which saves it.
   func isFinishWaiting(workoutId: String) -> Bool {
     firstWaiting(workoutId) { $0.isFinish } != nil
   }
 
-  /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
-  /// sets ticked done here that the phone has not applied yet, as it applies them before the
-  /// finish (ADR 0118).
-  func setsToSave(of workout: WatchWorkout) -> Int {
-    let ticked = Set(
-      waiting.values.compactMap { command -> [Int]? in
+  /// The sets ticked done here that the phone has not taken yet.
+  private func waitingTicks(of workout: WatchWorkout) -> Set<SetIndex> {
+    Set(
+      waiting.values.compactMap { command -> SetIndex? in
         guard command.workoutId == workout.id,
           case .tick(let exercise, let set, _) = command.change,
           workout.exercises.indices.contains(exercise),
           workout.exercises[exercise].sets.indices.contains(set),
           !workout.exercises[exercise].sets[set].done
         else { return nil }
-        return [exercise, set]
+        return SetIndex(exercise: exercise, set: set)
       })
-    return workout.setsToSave + ticked.count
+  }
+
+  /// How many sets ticked here wait for the phone (ADR 0121).
+  func setsWaiting(of workout: WatchWorkout) -> Int {
+    waitingTicks(of: workout).count
+  }
+
+  /// How many sets finishing the workout saves, as the watch shows it: the phone's count, and the
+  /// sets ticked done here that the phone has not applied yet, as it applies them before the
+  /// finish (ADR 0118).
+  func setsToSave(of workout: WatchWorkout) -> Int {
+    workout.setsToSave + waitingTicks(of: workout).count
+  }
+
+  /// The set to do next as the watch shows it: the phone's, or, while a pick or ticks here wait
+  /// for the phone, the first set of the exercise picked last, or of the phone's, that is not done
+  /// nor ticked here, as the phone finds it once it takes them; so logging goes on with the phone
+  /// out of reach (ADR 0117, ADR 0121).
+  func nextSet(of workout: WatchWorkout) -> NextSet? {
+    let ticked = waitingTicks(of: workout)
+    if let picked = picked(workoutId: workout.id), workout.exercises.indices.contains(picked) {
+      return workout.nextSet(after: picked, set: -1, skipping: ticked)
+    }
+    guard let next = workout.nextSet, !ticked.isEmpty else { return workout.nextSet }
+    return workout.nextSet(after: next.exerciseIndex, set: -1, skipping: ticked)
   }
 
   /// Whether joining the workout waits for the phone.
@@ -125,10 +142,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       .max { $0.at < $1.at }?.change.opens
   }
 
+  /// The set to do after a tick of `next`, as the watch shows it, past the sets ticked here.
+  func nextSet(after next: NextSet, of workout: WatchWorkout) -> NextSet? {
+    workout.nextSet(
+      after: next.exerciseIndex, set: next.setIndex, skipping: waitingTicks(of: workout))
+  }
+
   /// The exercise whose sets come next as the watch shows it: the one picked last, while the
   /// phone has not applied the pick, else the phone's.
   func openExercise(of workout: WatchWorkout) -> Int? {
-    picked(workoutId: workout.id) ?? workout.nextSet?.exerciseIndex
+    picked(workoutId: workout.id) ?? nextSet(of: workout)?.exerciseIndex
   }
 
   /// The workout's rest as the watch shows it: the phone's, or one a tick here starts, as changed
@@ -140,14 +163,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     let rest =
       ticked
       ?? workout.rest.map {
-        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: workout.nextSet?.label)
+        ShownRest(endsAt: $0.endsAt, seconds: $0.seconds, next: nextSet(of: workout)?.label)
       }
     guard let change = firstWaiting(workout.id, where: \.isRest)?.change,
       case .rest(let endsAt) = change
     else { return rest }
     return endsAt.map {
       ShownRest(
-        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? workout.nextSet?.label)
+        endsAt: $0, seconds: rest?.seconds ?? 0, next: rest?.next ?? nextSet(of: workout)?.label)
     }
   }
 
