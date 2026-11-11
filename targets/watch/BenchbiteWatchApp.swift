@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import WatchKit
 
@@ -21,11 +22,15 @@ struct BenchbiteWatchApp: App {
 final class AppDelegate: NSObject, WKApplicationDelegate {
   @MainActor let phone = PhoneLink()
   @MainActor let workoutSession = WorkoutSession()
+  private var measured: AnyCancellable?
 
   @MainActor override init() {
     super.init()
     phone.onState = { [workoutSession] state in workoutSession.sync(state) }
-    workoutSession.onHere = { [phone] workoutId in phone.sayHere(workoutId: workoutId) }
+    // The watch says it is there while it measures a workout.
+    measured = workoutSession.$measuring.removeDuplicates().sink { [phone] workoutId in
+      phone.sayHere(while: workoutId)
+    }
   }
 
   @MainActor func handleActiveWorkoutRecovery() {

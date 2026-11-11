@@ -15,6 +15,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   @Published private(set) var waiting: [String: WatchCommand] = [:]
 
   private var lastSeq: Double = 0
+  private var here: Timer?
+  /// Less than half the time the phone takes the watch to be there after its sign (ADR 0114).
+  private static let hereEvery: TimeInterval = 30
 
   override init() {
     super.init()
@@ -89,10 +92,22 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
-  /// Tells the phone that the watch is there to signal the workout's rests, which then puts its own
-  /// notification off (ADR 0114). Only while the phone can be reached: a sign that waited would
-  /// say nothing of now.
-  func sayHere(workoutId: String) {
+  /// Tells the phone the watch is there to signal the workout's rests, now and every half a minute
+  /// while it measures `workoutId`, or stops with nil; the phone then puts its own notification off
+  /// (ADR 0114).
+  func sayHere(while workoutId: String?) {
+    here?.invalidate()
+    here = nil
+    guard let workoutId else { return }
+    sayHere(workoutId)
+    here = Timer.scheduledTimer(withTimeInterval: Self.hereEvery, repeats: true) {
+      [weak self] _ in
+      self?.sayHere(workoutId)
+    }
+  }
+
+  /// Only while the phone can be reached: a sign that waited would say nothing of now.
+  private func sayHere(_ workoutId: String) {
     let session = WCSession.default
     guard session.activationState == .activated, session.isReachable else { return }
     session.sendMessage(["here": workoutId], replyHandler: nil) { error in
