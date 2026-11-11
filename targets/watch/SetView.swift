@@ -27,11 +27,14 @@ struct SetView: View {
           Text(subtitle(next))
             .font(.rounded(13))
             .foregroundStyle(Theme.secondary)
-          // A timed set's time is its clock's, started and stopped here or on the phone (ADR 0124).
-          let timed = next.exercise.fields.contains(.seconds)
+          // A timed set's time is its clock's, started and stopped here or on the phone, while its
+          // clock runs or it has no time yet; one with a time is ticked as it is, as on the phone
+          // (set-row.tsx, ADR 0124).
           let started =
-            timed
+            next.exercise.fields.contains(.seconds)
             ? phone.clockStart(of: workout, exercise: next.exerciseIndex, set: next.setIndex) : nil
+          let timed =
+            next.exercise.fields.contains(.seconds) && (started != nil || set.seconds == nil)
           let tickWaiting = phone.isTickWaiting(
             workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
           if editable.isEmpty && !timed {
@@ -175,10 +178,7 @@ private struct ValueTile: View {
       Text(unit).font(.rounded(12))
         .foregroundStyle(Theme.secondary)
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
+    .tile()
   }
 }
 
@@ -208,16 +208,23 @@ private struct ClockTile: View {
         .lineLimit(1)
         .minimumScaleFactor(0.7)
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
+    .tile()
   }
 
   /// "TIME", or "TIME · TARGET 0:40" when the plan has a target time.
   private var label: String {
     guard let target, target > 0 else { return SetField.seconds.unit }
     let time = Duration.seconds(target).formatted(.time(pattern: .minuteSecond))
-    return "\(SetField.seconds.unit) · " + L10n.t("target", ["time": time])
+    return L10n.t("target", ["unit": SetField.seconds.unit, "time": time])
+  }
+}
+
+extension View {
+  /// The frame of a value's tile on the set: the value over what it is, on the tile's colour.
+  fileprivate func tile() -> some View {
+    padding(.horizontal, 8)
+      .padding(.vertical, 6)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(Theme.tile, in: RoundedRectangle(cornerRadius: 14))
   }
 }
