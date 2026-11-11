@@ -1,4 +1,7 @@
+import { router } from 'expo-router';
+
 import { useExerciseLibrary } from '@/exercises/library';
+import { supabase } from '@/lib/supabase';
 import {
   endSession,
   resetSessionStore,
@@ -18,7 +21,12 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'workout-1' }));
 jest.mock('expo-sqlite/kv-store', () => ({
   Storage: { getItemSync: () => null, setItemSync: () => undefined },
 }));
-jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { dismissAll: jest.fn() },
+  usePathname: () => '/session',
+}));
+jest.mock('@/health/health-catch-up', () => ({ afterWorkoutLogged: jest.fn() }));
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
@@ -151,6 +159,54 @@ const command = (id: string, body: Record<string, unknown>) => ({
   exercise: 0,
   set: 0,
   ...body,
+});
+
+describe('a workout finished on the watch', () => {
+  const last = { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] };
+  const finish = (id = 'finish-1') => command(id, { type: 'finish', at: NOW + 60_000 });
+
+  it('is saved at once and ended, closing the workout on the phone', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW + 30_000));
+    await render(<WatchSync />);
+    // It arrives a minute after the finish.
+    jest.setSystemTime(NOW + 120_000);
+    await act(async () => deliver(finish()));
+    expect(supabase.rpc).toHaveBeenCalledWith('log_workout', {
+      log: expect.objectContaining({ finishedAt: new Date(NOW + 60_000).toISOString() }),
+    });
+    expect(lastSent()).toMatchObject({
+      workout: null,
+      ended: [{ id: 'workout-1', saved: true, endedAt: NOW + 60_000 }],
+    });
+    expect(router.dismissAll).toHaveBeenCalled();
+  });
+
+  it('goes on when it cannot be saved, which the watch hears of', async () => {
+    jest
+      .mocked(supabase.rpc)
+      .mockResolvedValue({ data: null, error: new Error('offline') } as never);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    updateSession((current) => toggleDoneUnchecked(current, 0, 0, NOW + 30_000));
+    await render(<WatchSync />);
+    await act(async () => deliver(finish()));
+    expect(lastSent().workout?.applied).toEqual(['finish-1']);
+    expect(router.dismissAll).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('is not saved without a set done, nor twice', async () => {
+    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    await render(<WatchSync />);
+    await act(async () => deliver(finish()));
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(lastSent().workout?.applied).toEqual(['finish-1']);
+    // Delivered again, as a message that is also sent as a transfer.
+    await act(async () => deliver(finish()));
+    expect(lastSent().workout?.applied).toEqual(['finish-1']);
+  });
 });
 
 it('sends the workout and takes commands once the library has loaded, with its rules', async () => {
