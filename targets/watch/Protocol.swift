@@ -11,6 +11,14 @@ struct WatchState: Decodable {
   let v: Int
   let seq: Double
   let workout: WatchWorkout?
+  let ended: WatchEnded?
+}
+
+/// How the latest workout ended: saved as a log, at the time it ended, or let go.
+struct WatchEnded: Decodable, Equatable {
+  let id: String
+  let saved: Bool
+  let endedAt: Double
 }
 
 struct WatchWorkout: Decodable {

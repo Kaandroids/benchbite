@@ -8,6 +8,8 @@ module.exports = {
   // Inside the phone app's: com.benchbite.app.watchkitapp, and .dev.watchkitapp for the dev build.
   bundleIdentifier: '.watchkitapp',
   deploymentTarget: '10.0',
-  frameworks: ['SwiftUI', 'WatchConnectivity', 'WatchKit', 'UserNotifications'],
+  frameworks: ['SwiftUI', 'WatchConnectivity', 'WatchKit', 'UserNotifications', 'HealthKit'],
+  // The workout session that keeps the app running and measures the heart rate (ADR 0113).
+  entitlements: { 'com.apple.developer.healthkit': true },
   icon: '../../assets/images/icon.png',
 };

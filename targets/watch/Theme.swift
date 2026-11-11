@@ -19,6 +19,8 @@ enum Theme {
   static let onAccent = Color(hex: 0x1C0C00)
   /// warning
   static let warning = Color(hex: 0xFBBF24)
+  /// snack: the heart rate, as the app's heart rate chart shows it.
+  static let heart = Color(hex: 0xF28AB7)
 }
 
 extension Font {
@@ -59,6 +61,21 @@ struct PillButtonStyle: ButtonStyle {
         .foregroundStyle(prominent ? Theme.onAccent : Theme.text)
         .background(prominent ? Theme.accent : Theme.control, in: Capsule())
         .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+    }
+  }
+}
+
+/// The heart rate the workout session measures, as "♥︎ 132"; nothing before it measures one.
+struct HeartRateLabel: View {
+  @EnvironmentObject private var workoutSession: WorkoutSession
+
+  var body: some View {
+    if let heartRate = workoutSession.heartRate {
+      Text("♥︎ \(heartRate)")
+        .font(.rounded(13))
+        .monospacedDigit()
+        .foregroundStyle(Theme.heart)
+        .accessibilityLabel("Heart rate \(heartRate)")
     }
   }
 }

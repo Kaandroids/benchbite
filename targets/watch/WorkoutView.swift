@@ -5,6 +5,7 @@ import SwiftUI
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
+  @EnvironmentObject private var workoutSession: WorkoutSession
 
   var body: some View {
     Group {
@@ -41,6 +42,23 @@ struct WorkoutView: View {
     // Only the rests the watch started or last changed, of a workout it follows, are signalled
     // here; the phone signals the others.
     .onChange(of: signalled, initial: true) { restAlert.signal(signalled) }
+    // The session measures the workout the watch follows, and ends as the phone ended it.
+    .onChange(of: phone.ended, initial: true) {
+      if let ended = phone.ended, ended.id == workoutSession.workoutId {
+        workoutSession.end(
+          saved: ended.saved, at: Date(timeIntervalSince1970: ended.endedAt / 1000))
+      }
+    }
+    .onChange(of: followed, initial: true) {
+      if let workout = phone.workout, workout.follows {
+        workoutSession.start(workoutId: workout.id, startedAt: workout.startedAt)
+      }
+    }
+  }
+
+  /// The workout the watch follows, by its id.
+  private var followed: String? {
+    phone.workout.flatMap { $0.follows ? $0.id : nil }
   }
 
   /// The rest whose end the watch signals, one it started or last changed, and the set after it.
@@ -56,6 +74,7 @@ struct WorkoutView: View {
 private struct JoinView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
+  @EnvironmentObject private var workoutSession: WorkoutSession
   let workout: WatchWorkout
   /// Notifications were refused, without which the watch cannot signal a rest.
   @State private var refused = false
@@ -79,7 +98,11 @@ private struct JoinView: View {
       Button("Join") {
         restAlert.requestPermission { granted in
           refused = !granted
-          if granted { phone.send(.join(workoutId: workout.id)) }
+          guard granted else { return }
+          // The heart rate and saving the workout are asked for too, but joining goes on without.
+          workoutSession.requestPermission { _ in
+            phone.send(.join(workoutId: workout.id))
+          }
         }
       }
       .buttonStyle(PillButtonStyle())
