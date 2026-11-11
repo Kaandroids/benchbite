@@ -27,14 +27,11 @@ struct SetView: View {
           Text(subtitle(next))
             .font(.rounded(13))
             .foregroundStyle(Theme.secondary)
-          // A timed set's time is its clock's, started and stopped here or on the phone, while its
-          // clock runs or it has no time yet; one with a time is ticked as it is, as on the phone
-          // (set-row.tsx, ADR 0124).
-          let started =
-            next.exercise.fields.contains(.seconds)
-            ? phone.clockStart(of: workout, exercise: next.exerciseIndex, set: next.setIndex) : nil
-          let timed =
-            next.exercise.fields.contains(.seconds) && (started != nil || set.seconds == nil)
+          // A timed set's time is its clock's, started and stopped here or on the phone, as the
+          // phone decides; or while a start made here waits for it (ADR 0124).
+          let started = phone.clockStart(
+            of: workout, exercise: next.exerciseIndex, set: next.setIndex)
+          let timed = set.timedByClock || started != nil
           let tickWaiting = phone.isTickWaiting(
             workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex)
           if editable.isEmpty && !timed {
@@ -59,32 +56,24 @@ struct SetView: View {
               }
             }
           }
-          if timed && started == nil {
-            Button {
-              phone.send(
-                .startClock(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
-            } label: {
-              Label(L10n.t("start"), systemImage: "play.fill")
-            }
-            .buttonStyle(PillButtonStyle())
-            .padding(.top, 4)
-          } else {
-            // Done, or Stop for a timed set: its tick stops the clock with the time it ran, as on
-            // the phone.
-            Button {
-              phone.send(
-                .setDone(
-                  workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
-                  done: true, values: draft, rest: restStarted(by: next)))
-            } label: {
-              Label(
-                L10n.t(timed ? "stop" : "done"), systemImage: timed ? "stop.fill" : "checkmark")
-            }
-            .buttonStyle(PillButtonStyle())
+          SetAction(
+            kind: !timed ? .done : started == nil ? .start : .stop,
+            // No start over the phone's clock of another set, which the phone would refuse.
+            clockElsewhere: workout.clock.map {
+              $0.exercise != next.exerciseIndex || $0.set != next.setIndex
+            } ?? false,
             // Until the tiles fill in what the set needs; and PhoneLink sends no second tick
             // while one waits, which this shows.
-            .disabled((!timed && !missing.isEmpty) || tickWaiting)
-            .padding(.top, 4)
+            disabled: (!timed && !missing.isEmpty) || tickWaiting
+          ) {
+            phone.send(
+              .startClock(workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex))
+          } tick: {
+            // Done, or Stop: its tick stops the clock with the time it ran, as on the phone.
+            phone.send(
+              .setDone(
+                workoutId: workout.id, exercise: next.exerciseIndex, set: next.setIndex,
+                done: true, values: draft, rest: restStarted(by: next)))
           }
           // Unless the line at the top says what waits.
           if !phone.waiting.isEmpty, phone.setsWaitingOutOfReach(of: workout) == 0 {
@@ -179,6 +168,41 @@ private struct ValueTile: View {
         .foregroundStyle(Theme.secondary)
     }
     .tile()
+  }
+}
+
+/// The set's button: Done, or Start and Stop for a set done with its clock (ADR 0124).
+private struct SetAction: View {
+  enum Kind { case done, start, stop }
+
+  let kind: Kind
+  let clockElsewhere: Bool
+  let disabled: Bool
+  let start: () -> Void
+  let tick: () -> Void
+
+  var body: some View {
+    switch kind {
+    case .start:
+      Button(action: start) { Label(L10n.t("start"), systemImage: "play.fill") }
+        .buttonStyle(PillButtonStyle())
+        .disabled(clockElsewhere)
+        .padding(.top, 4)
+      if clockElsewhere {
+        Text(L10n.t("clockElsewhere"))
+          .font(.rounded(12))
+          .foregroundStyle(Theme.secondary)
+      }
+    case .stop, .done:
+      Button(action: tick) {
+        Label(
+          L10n.t(kind == .stop ? "stop" : "done"),
+          systemImage: kind == .stop ? "stop.fill" : "checkmark")
+      }
+      .buttonStyle(PillButtonStyle())
+      .disabled(disabled)
+      .padding(.top, 4)
+    }
   }
 }
 

@@ -5,6 +5,7 @@ let watchStrings: [String: [String: String]] = [
   "de": [
     "allDone": "Alle Sätze erledigt",
     "allowNotifications": "Erlaube in der Watch-App auf deinem iPhone Mitteilungen für Benchbite, um beizutreten.",
+    "clockElsewhere": "Auf deinem iPhone läuft die Uhr eines anderen Satzes",
     "done": "Fertig",
     "fields.meters": "DISTANZ",
     "fields.reps": "WDH.",
@@ -58,6 +59,7 @@ let watchStrings: [String: [String: String]] = [
   "en": [
     "allDone": "All sets done",
     "allowNotifications": "Allow notifications for Benchbite in the Watch app on your iPhone to join.",
+    "clockElsewhere": "Another set's clock runs on your iPhone",
     "done": "Done",
     "fields.meters": "DISTANCE",
     "fields.reps": "REPS",
@@ -111,6 +113,7 @@ let watchStrings: [String: [String: String]] = [
   "tr": [
     "allDone": "Tüm setler tamam",
     "allowNotifications": "Katılmak için iPhone'undaki Watch uygulamasında Benchbite bildirimlerine izin ver.",
+    "clockElsewhere": "iPhone'unda başka bir setin sayacı çalışıyor",
     "done": "Tamam",
     "fields.meters": "MESAFE",
     "fields.reps": "TEKRAR",

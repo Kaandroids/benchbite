@@ -16,6 +16,7 @@
   "start": "Start",
   "stop": "Stop",
   "target": "{{unit}} · TARGET {{time}}",
+  "clockElsewhere": "Another set's clock runs on your iPhone",
   "waiting": "Waiting for your iPhone",
   "allDone": "All sets done",
   "turnCrown": "Turn the Crown",

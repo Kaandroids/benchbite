@@ -160,6 +160,8 @@ struct WatchSet: Decodable {
   let text: String
   /// Last time's set of the same number, described the same way.
   let lastText: String?
+  /// Done with its clock, Start and Stop in place of Done, as the phone shows it (ADR 0124).
+  let timedByClock: Bool
 
   func value(_ field: SetField) -> Double? {
     switch field {
@@ -276,6 +278,12 @@ struct WatchCommand {
 }
 
 extension WatchCommand.Change {
+  /// Whether it starts a set's clock.
+  var startsAClock: Bool {
+    guard case .clock = self else { return false }
+    return true
+  }
+
   /// Whether it starts the clock of this set.
   func startsClock(exercise: Int, set: Int) -> Bool {
     guard case .clock(exercise, set) = self else { return false }

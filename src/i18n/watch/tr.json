@@ -16,6 +16,7 @@
   "start": "Başlat",
   "stop": "Durdur",
   "target": "{{unit}} · HEDEF {{time}}",
+  "clockElsewhere": "iPhone'unda başka bir setin sayacı çalışıyor",
   "waiting": "iPhone'un bekleniyor",
   "allDone": "Tüm setler tamam",
   "turnCrown": "Kronu çevir",

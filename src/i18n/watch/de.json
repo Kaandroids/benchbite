@@ -16,6 +16,7 @@
   "start": "Start",
   "stop": "Stopp",
   "target": "{{unit}} · ZIEL {{time}}",
+  "clockElsewhere": "Auf deinem iPhone läuft die Uhr eines anderen Satzes",
   "waiting": "Wartet auf dein iPhone",
   "allDone": "Alle Sätze erledigt",
   "turnCrown": "Drehe die Krone",
