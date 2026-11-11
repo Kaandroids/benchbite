@@ -2,9 +2,10 @@
 // translation uses the same {{placeholders}}; the same for the iOS permission texts, whose English
 // must also be what app.json gives the config plugins, and for the watch app's texts, whose Swift
 // file must be written from them. Run with `pnpm check:locales`.
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { languagesIn, load } from './lib/messages.ts';
 import { WATCH_STRINGS_PATH, WATCH_SWIFT_PATH, watchStringsSwift } from './lib/watch-strings.ts';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -15,36 +16,13 @@ const PERMISSIONS_DIR = join(ROOT, PERMISSIONS_PATH);
 const WATCH_DIR = join(ROOT, WATCH_STRINGS_PATH);
 const SOURCE = 'en';
 
-/** Flattens nested objects into a map of dotted keys to strings. */
-type Messages = { [key: string]: string | Messages };
-
-function flatten(object: Messages, prefix = ''): Record<string, string> {
-  const entries: Record<string, string> = {};
-  for (const [key, value] of Object.entries(object)) {
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (typeof value === 'object') {
-      Object.assign(entries, flatten(value, path));
-    } else {
-      entries[path] = String(value);
-    }
-  }
-  return entries;
-}
-
 function placeholders(text: string): string[] {
   return [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1] ?? '').sort();
 }
 
-function load(dir: string, locale: string): Record<string, string> {
-  return flatten(JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8')) as Messages);
-}
-
-/** The locales in a folder besides English. */
+/** The languages in a folder besides English. */
 function translationsIn(dir: string): string[] {
-  return readdirSync(dir)
-    .filter((file) => file.endsWith('.json'))
-    .map((file) => file.replace(/\.json$/, ''))
-    .filter((locale) => locale !== SOURCE);
+  return languagesIn(dir).filter((locale) => locale !== SOURCE);
 }
 
 /** Adds to `errors` each key or placeholder in which a translation differs from English. */
@@ -179,6 +157,15 @@ function checkEnglish(texts: Map<string, unknown>, errors: string[]) {
   }
 }
 
+/** Adds to `errors` where a folder of texts does not have the app's languages. */
+function checkSameLanguages(label: string, codes: string[], locales: string[], errors: string[]) {
+  const sorted = (list: string[]) => [...list].sort().join();
+  const languages = sorted([SOURCE, ...locales]);
+  if (sorted(codes) !== languages) {
+    errors.push(`${label} has ${sorted(codes)}, not the languages ${languages}`);
+  }
+}
+
 /**
  * Adds to `errors` where the permission languages are not those of the app's texts: iOS shows a
  * permission text in a language only when `expo.locales` names its file.
@@ -189,16 +176,8 @@ function checkLanguages(
   registered: Record<string, string>,
   errors: string[],
 ) {
-  const sorted = (codes: string[]) => [...codes].sort().join();
-  const languages = sorted([SOURCE, ...locales]);
-  const permissions = sorted([SOURCE, ...permissionLocales]);
-  if (permissions !== languages) {
-    errors.push(`${PERMISSIONS_PATH} has ${permissions}, not the languages ${languages}`);
-  }
-  const named = sorted(Object.keys(registered));
-  if (named !== languages) {
-    errors.push(`expo.locales in app.json has ${named}, not the languages ${languages}`);
-  }
+  checkSameLanguages(PERMISSIONS_PATH, [SOURCE, ...permissionLocales], locales, errors);
+  checkSameLanguages('expo.locales in app.json', Object.keys(registered), locales, errors);
   for (const [code, path] of Object.entries(registered)) {
     if (path !== `./${PERMISSIONS_PATH}/${code}.json`) {
       errors.push(`expo.locales in app.json: ${code} points to ${path}`);
@@ -218,9 +197,7 @@ checkEnglish(appTexts(options, app.ios?.infoPlist ?? {}), errors);
 checkLanguages(locales, permissionLocales, app.locales ?? {}, errors);
 const watchLocales = translationsIn(WATCH_DIR);
 check(WATCH_DIR, `${WATCH_STRINGS_PATH}/`, watchLocales, errors);
-if ([...watchLocales].sort().join() !== [...locales].sort().join()) {
-  errors.push(`${WATCH_STRINGS_PATH} has ${watchLocales}, not the app's languages ${locales}`);
-}
+checkSameLanguages(WATCH_STRINGS_PATH, [SOURCE, ...watchLocales], locales, errors);
 if (readFileSync(join(ROOT, WATCH_SWIFT_PATH), 'utf8') !== watchStringsSwift(ROOT)) {
   errors.push(`${WATCH_SWIFT_PATH} is behind ${WATCH_STRINGS_PATH}: run \`pnpm watch:strings\``);
 }
