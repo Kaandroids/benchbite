@@ -15,6 +15,15 @@ import WatchKit
 final class WorkoutSession: NSObject, ObservableObject {
   /// The latest heart rate, in beats a minute, while a session runs and measures it.
   @Published private(set) var heartRate: Int?
+  /// What the session of the workout saved last measured over it, for its summary (ADR 0119).
+  @Published private(set) var measured: Measured?
+
+  struct Measured {
+    let workoutId: String
+    /// The average heart rate, in beats a minute, and the active calories; none when not measured.
+    let averageBpm: Int?
+    let kcal: Int?
+  }
 
   private nonisolated static let heartRateType = HKQuantityType(.heartRate)
   private nonisolated static let calories = HKQuantityType(.activeEnergyBurned)
@@ -245,6 +254,7 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// the app is in the background, and the workout closes only once the session has ended.
   private func end(_ session: HKWorkoutSession, saved: Bool, at end: Date) {
     guard let builder else { return }
+    let workoutId = measuring
     self.session = nil
     self.builder = nil
     measuring = nil
@@ -262,6 +272,8 @@ final class WorkoutSession: NSObject, ObservableObject {
         NSLog("[WorkoutSession] Could not end: %@", error.localizedDescription)
         builder.discardWorkout()
       } else if saved {
+        let measured = workoutId.map { Self.measured(by: builder, for: $0) }
+        Task { @MainActor in self.measured = measured }
         builder.finishWorkout { _, error in
           if let error {
             NSLog("[WorkoutSession] Could not save: %@", error.localizedDescription)
@@ -310,6 +322,18 @@ final class WorkoutSession: NSObject, ObservableObject {
       [weak self] _ in
       Task { @MainActor in self?.heartRate = nil }
     }
+  }
+
+  /// What the builder measured over the whole workout.
+  private nonisolated static func measured(by builder: HKLiveWorkoutBuilder, for workoutId: String)
+    -> Measured
+  {
+    let perMinute = HKUnit.count().unitDivided(by: .minute())
+    let bpm = builder.statistics(for: heartRateType)?.averageQuantity()?.doubleValue(for: perMinute)
+    let kcal = builder.statistics(for: calories)?.sumQuantity()?.doubleValue(for: .kilocalorie())
+    return Measured(
+      workoutId: workoutId, averageBpm: bpm.map { Int($0.rounded()) },
+      kcal: kcal.map { Int($0.rounded()) })
   }
 
   private static func date(_ milliseconds: Double) -> Date {
