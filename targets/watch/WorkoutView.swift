@@ -1,16 +1,17 @@
 import SwiftUI
+import WatchKit
 
 /// The workout the phone runs: an offer to join it, until the watch follows it; then its rest while
 /// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks, with
-/// the list of its exercises beside them. Once the phone saves it, its summary, until the next.
+/// the list of its exercises beside them, and a long press to finish it. Once the phone saves it,
+/// its summary, until the next.
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
-  @State private var page = Page.set
-
-  private enum Page {
-    case list, set
-  }
+  /// The finish question, asked from the list's end or a long press on the set or the rest
+  /// (ADR 0118, ADR 0122): above the workout's screens, so that the end of a rest does not close
+  /// it, and closed when the workout ends or another runs.
+  @State private var finishing = false
 
   var body: some View {
     Group {
@@ -20,22 +21,9 @@ struct WorkoutView: View {
         } else if let over = restAlert.over, over.workoutId == workout.id {
           RestOverView(next: over.next) { restAlert.over = nil }
         } else {
-          // The list beside the set, a swipe away (ADR 0117).
-          TabView(selection: $page) {
-            ExerciseListView(workout: workout) { page = .set }
-              .tag(Page.list)
-            // Each second, so that the rest counts down and gives way to the set when it is over.
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-              let now = context.date.timeIntervalSince1970 * 1000
-              if let rest = phone.rest(of: workout), rest.endsAt > now {
-                RestView(workout: workout, rest: rest, now: now)
-              } else {
-                SetView(workout: workout)
-              }
-            }
-            .tag(Page.set)
-          }
-          .tabViewStyle(.page(indexDisplayMode: .never))
+          PagesView(workout: workout) { finishing = true }
+            // Its pages start again with each workout.
+            .id(workout.id)
         }
       } else if let finished = phone.finished {
         SummaryView(workout: finished)
@@ -53,6 +41,12 @@ struct WorkoutView: View {
         .foregroundStyle(Theme.text)
       }
     }
+    .sheet(isPresented: $finishing) {
+      if let workout = phone.workout {
+        FinishView(workout: workout)
+      }
+    }
+    .onChange(of: phone.workout?.id) { finishing = false }
   }
 }
 
@@ -126,5 +120,45 @@ private struct RestOverView: View {
     }
     .multilineTextAlignment(.center)
     .foregroundStyle(Theme.text)
+  }
+}
+
+/// The pages of a workout the watch follows: the list beside the set, a swipe away (ADR 0117),
+/// both of which ask to finish it, from the list's end or a long press on the set or the rest
+/// (ADR 0118, ADR 0122).
+private struct PagesView: View {
+  @EnvironmentObject private var phone: PhoneLink
+  let workout: WatchWorkout
+  /// Asks to finish the workout.
+  let finish: () -> Void
+  @State private var page = Page.set
+
+  private enum Page {
+    case list, set
+  }
+
+  var body: some View {
+    TabView(selection: $page) {
+      ExerciseListView(workout: workout, picked: { page = .set }, finish: finish)
+        .tag(Page.list)
+      // Each second, so that the rest counts down and gives way to the set when it is over.
+      TimelineView(.periodic(from: .now, by: 1)) { context in
+        let now = context.date.timeIntervalSince1970 * 1000
+        if let rest = phone.rest(of: workout), rest.endsAt > now {
+          RestView(workout: workout, rest: rest, now: now)
+        } else {
+          SetView(workout: workout)
+        }
+      }
+      // A long press anywhere on the page but on a button asks to finish.
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .contentShape(Rectangle())
+      .onLongPressGesture(minimumDuration: 0.6) {
+        WKInterfaceDevice.current().play(.click)
+        finish()
+      }
+      .tag(Page.set)
+    }
+    .tabViewStyle(.page(indexDisplayMode: .never))
   }
 }
