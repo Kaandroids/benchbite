@@ -189,14 +189,16 @@ describe('stateOf', () => {
     expect(state.workout?.exercises[0]?.name).toBeNull();
   });
 
-  it('says how the latest workout ended, by its id', () => {
-    const ended = { id: 'workout-1', startedAt: NOW, saved: true, endedAt: NOW + MINUTE };
-    expect(stateOf(null, names(noExercises), 1, ended).ended).toEqual({
-      id: 'workout-1',
-      saved: true,
-      endedAt: NOW + MINUTE,
-    });
-    expect(stateOf(null, names(noExercises), 1).ended).toBeNull();
+  it('says how the latest workouts ended, by their ids', () => {
+    const ended = [
+      { id: 'workout-2', startedAt: NOW + MINUTE, saved: false as const },
+      { id: undefined, startedAt: NOW, saved: true as const, endedAt: NOW + MINUTE },
+    ];
+    expect(stateOf(null, names(noExercises), 1, ended).ended).toEqual([
+      { id: 'workout-2', saved: false },
+      { id: `started-${NOW}`, saved: true, endedAt: NOW + MINUTE },
+    ]);
+    expect(stateOf(null, names(noExercises), 1).ended).toEqual([]);
   });
 
   it('says no workout runs', () => {

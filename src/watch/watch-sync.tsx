@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent } from 'react';
 
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
-import { updateSession, useActiveSession, useEndedSession } from '@/sessions/session';
+import { updateSession, useActiveSession, useEndedSessions } from '@/sessions/session';
 import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
@@ -32,7 +32,7 @@ export function WatchSync() {
   const session = useActiveSession(useUserId());
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
-  const ended = useEndedSession();
+  const ended = useEndedSessions();
   const nameOf = useWorkoutName();
   // As the phone names it: a planned workout without a name of its own by its type.
   const name = session ? nameOf(session) || null : null;

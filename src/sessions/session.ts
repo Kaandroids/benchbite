@@ -102,22 +102,34 @@ let loaded = false;
 let session: Session | null = null;
 const listeners = new Set<() => void>();
 
-function load(): Session | null {
-  const stored = readItem(KEY);
+/**
+ * Reads a value kept on the device under `field`, beside the version of its shape: one of another
+ * version is dropped instead of misread.
+ */
+function readVersioned<T>(key: string, version: number, field: string): T | null {
+  const stored = readItem(key);
   if (!stored) {
     return null;
   }
   try {
-    const parsed = JSON.parse(stored) as { version?: number; session?: Session };
-    return parsed.version === VERSION && parsed.session ? parsed.session : null;
+    const parsed = JSON.parse(stored) as { version?: number } & Record<string, T | undefined>;
+    return parsed.version === version ? (parsed[field] ?? null) : null;
   } catch (error) {
-    console.warn('Could not read the workout in progress', error);
+    console.warn(`Could not read ${key}`, error);
     return null;
   }
 }
 
+function writeVersioned<T>(key: string, version: number, field: string, value: T | null) {
+  writeItem(key, value === null ? null : JSON.stringify({ version, [field]: value }));
+}
+
+function load(): Session | null {
+  return readVersioned<Session>(KEY, VERSION, 'session');
+}
+
 function store(value: Session | null) {
-  writeItem(KEY, value ? JSON.stringify({ version: VERSION, session: value }) : null);
+  writeVersioned(KEY, VERSION, 'session', value);
 }
 
 function current(): Session | null {
@@ -157,40 +169,37 @@ export function updateSession(change: (current: Session) => Session) {
 }
 
 /**
- * How the latest workout ended: saved as a log, at the time it ended, or let go. A watch that
- * followed it saves its own workout to the health store, or leaves it out, by it (ADR 0113).
+ * How a workout ended: saved as a log, at the time it ended, or let go. A watch that followed it
+ * saves its own workout to the health store, or leaves it out, by it (ADR 0113).
  */
-export type EndedSession = Pick<Session, 'id' | 'startedAt'> & { saved: boolean; endedAt: number };
+export type EndedSession = Pick<Session, 'id' | 'startedAt'> &
+  ({ saved: true; endedAt: number } | { saved: false });
 
 const ENDED_KEY = 'session.ended';
-let ended: EndedSession | null | undefined;
+const ENDED_VERSION = 1;
+/** How many ended workouts are kept, latest first: a watch that missed one still finds it. */
+const ENDED_KEPT = 5;
+let ended: EndedSession[] | undefined;
 
-function lastEnded(): EndedSession | null {
-  if (ended === undefined) {
-    try {
-      const stored = readItem(ENDED_KEY);
-      ended = stored ? (JSON.parse(stored) as EndedSession) : null;
-    } catch (error) {
-      console.warn('Could not read how the last workout ended', error);
-      ended = null;
-    }
-  }
+function endedSessions(): EndedSession[] {
+  ended ??= readVersioned<EndedSession[]>(ENDED_KEY, ENDED_VERSION, 'ended') ?? [];
   return ended;
 }
 
-/** How the latest workout ended, or nothing yet. */
-export function useEndedSession(): EndedSession | null {
-  return useSyncExternalStore(subscribe, lastEnded);
+/** How the latest workouts ended, latest first. */
+export function useEndedSessions(): EndedSession[] {
+  return useSyncExternalStore(subscribe, endedSessions);
 }
 
-/**
- * Ends the workout in progress: after it was saved, at the time it ended, or without saving it.
- */
-export function endSession({ saved, endedAt = Date.now() }: { saved: boolean; endedAt?: number }) {
+/** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */
+export function endSession(how: { saved: true; endedAt: number } | { saved: false }) {
   const value = current();
   if (value) {
-    ended = { id: value.id, startedAt: value.startedAt, saved, endedAt };
-    writeItem(ENDED_KEY, JSON.stringify(ended));
+    ended = [{ id: value.id, startedAt: value.startedAt, ...how }, ...endedSessions()].slice(
+      0,
+      ENDED_KEPT,
+    );
+    writeVersioned(ENDED_KEY, ENDED_VERSION, 'ended', ended);
   }
   set(null);
 }

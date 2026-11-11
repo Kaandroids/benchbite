@@ -83,7 +83,7 @@ it('tells the watch how the workout it followed ended', async () => {
   await act(() => endSession({ saved: true, endedAt: NOW + 60_000 }));
   expect(lastSent()).toMatchObject({
     workout: null,
-    ended: { id: 'workout-1', saved: true, endedAt: NOW + 60_000 },
+    ended: [{ id: 'workout-1', saved: true, endedAt: NOW + 60_000 }],
   });
 });
 

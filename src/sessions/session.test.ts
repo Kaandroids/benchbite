@@ -11,7 +11,7 @@ import {
   changeRest,
   clockSeconds,
   endSession,
-  useEndedSession,
+  useEndedSessions,
   isLeftOpen,
   lastActivity,
   markDone,
@@ -104,21 +104,21 @@ describe('startSession', () => {
     expect(result.current).toBeNull();
   });
 
-  it('keeps how the workout ended, for the watch that followed it', async () => {
-    const started = start();
-    const { result } = await renderHook(() => useEndedSession());
-    expect(result.current).toBeNull();
+  it('keeps how the latest workouts ended, for the watch that followed them', async () => {
+    const first = start();
+    const { result } = await renderHook(() => useEndedSessions());
+    expect(result.current).toEqual([]);
     await act(() => endSession({ saved: true, endedAt: NOW + 3_600_000 }));
-    expect(result.current).toEqual({
-      id: started.id,
-      startedAt: NOW,
-      saved: true,
-      endedAt: NOW + 3_600_000,
-    });
-    // Kept on the device, as the watch may hear of it only later.
+    const second = start();
+    await act(() => endSession({ saved: false }));
+    expect(result.current).toEqual([
+      { id: second.id, startedAt: NOW, saved: false },
+      { id: first.id, startedAt: NOW, saved: true, endedAt: NOW + 3_600_000 },
+    ]);
+    // Kept on the device, as the watch may hear of them only later.
     resetSessionStore();
-    const later = await renderHook(() => useEndedSession());
-    expect(later.result.current?.saved).toBe(true);
+    const later = await renderHook(() => useEndedSessions());
+    expect(later.result.current).toHaveLength(2);
   });
 });
 

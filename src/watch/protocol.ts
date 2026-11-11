@@ -79,10 +79,10 @@ export type WatchWorkout = {
 };
 
 /**
- * How the latest workout ended, by its id: saved as a log, at the time it ended, or let go. The
- * watch that followed it saves its own workout to the health store, or leaves it out (ADR 0113).
+ * How a workout ended, by its id: saved as a log, at the time it ended, or let go. The watch that
+ * followed it saves its own workout to the health store, or leaves it out (ADR 0113).
  */
-export type WatchEnded = { id: string; saved: boolean; endedAt: number };
+export type WatchEnded = { id: string } & ({ saved: true; endedAt: number } | { saved: false });
 
 /** The phone's state for the watch; none when no workout runs. */
 export type WatchState = {
@@ -90,7 +90,8 @@ export type WatchState = {
   /** Grows with each state, so that the watch drops one older than what it has. */
   seq: number;
   workout: WatchWorkout | null;
-  ended: WatchEnded | null;
+  /** How the latest workouts ended, latest first, so that a watch that missed one finds it. */
+  ended: WatchEnded[];
 };
 
 type CommandBase = {
@@ -171,12 +172,15 @@ export function stateOf(
   session: Session | null,
   { exerciseOf, name }: { exerciseOf: ExerciseOf; name: string | null },
   seq: number,
-  ended: EndedSession | null = null,
+  ended: EndedSession[] = [],
 ): WatchState {
   return {
     v: PROTOCOL_VERSION,
     seq,
-    ended: ended && { id: workoutIdOf(ended), saved: ended.saved, endedAt: ended.endedAt },
+    ended: ended.map(({ id, startedAt, ...how }) => ({
+      id: workoutIdOf({ id, startedAt }),
+      ...how,
+    })),
     workout: session && {
       id: workoutIdOf(session),
       name,
