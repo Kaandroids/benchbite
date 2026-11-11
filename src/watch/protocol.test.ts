@@ -83,6 +83,7 @@ describe('parseCommand', () => {
     ).toMatchObject({ values: { weightKg: 80 } });
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
+    expect(command(NOW, { type: 'open', exercise: 1 })).toMatchObject({ exercise: 1 });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -110,6 +111,8 @@ describe('parseCommand', () => {
       { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: { kg: 80 } },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: true, values: {} },
+      { ...base, type: 'open' },
+      { ...base, type: 'open', exercise: -1 },
     ]) {
       expect(parseCommand(message)).toBeNull();
     }
@@ -571,6 +574,18 @@ describe('applyCommand', () => {
     expect(
       applyCommand(joined, command(NOW, { type: 'join' }), { metricsOf: noLibrary }).watchFollows,
     ).toBe(true);
+  });
+
+  it('opens the exercise picked on the watch, whose sets then come next', () => {
+    const opened = applyCommand(start(), command(NOW, { type: 'open', exercise: 1 }), {
+      metricsOf: noLibrary,
+      now: NOW,
+    });
+    expect(opened.current).toBe(1);
+    expect(nextSetOf(opened)).toEqual({ exercise: 1, set: 0 });
+    // One the workout does not have, as after it was changed on the phone.
+    const missing = command(NOW, { type: 'open', exercise: opened.exercises.length });
+    expect(applyCommand(opened, missing, { metricsOf: noLibrary, now: NOW }).current).toBe(1);
   });
 
   it('keeps only the latest command ids', () => {

@@ -123,6 +123,8 @@ export type WatchCommand = CommandBase &
     | { type: 'setRest'; of: number; endsAt: number | null }
     /** The watch follows the workout from now on. */
     | { type: 'join' }
+    /** Opens the exercise, picked from the watch's list, whose sets come next (ADR 0117). */
+    | { type: 'open'; exercise: number }
   );
 
 /** The workout's id; one started before ids were kept is named by its start. */
@@ -274,6 +276,8 @@ export function parseCommand(message: unknown): WatchCommand | null {
         : null;
     case 'join':
       return { ...base, type };
+    case 'open':
+      return isIndex(message.exercise) ? { ...base, type, exercise: message.exercise } : null;
     default:
       return null;
   }
@@ -315,6 +319,10 @@ function change(
     }
     case 'join':
       return { ...session, watchFollows: true };
+    case 'open':
+      return command.exercise < session.exercises.length
+        ? { ...session, current: command.exercise }
+        : session;
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
