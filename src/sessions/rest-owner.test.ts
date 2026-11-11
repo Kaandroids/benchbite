@@ -14,7 +14,7 @@ const session = (watchFollows: boolean): Session => ({
   ...startSession('user-a', testWorkout(1, { exercises: [testExercise('bench')] }), {}),
   watchFollows,
 });
-const heard = { paired: true, installed: true, reachable: false, heardAt: NOW - 10_000 };
+const heard = { paired: true, installed: true, reachable: false, heardUntil: NOW + 65_000 };
 
 it('leaves the rest to the watch while it follows, with the app on it, and was heard lately', () => {
   expect(restOnWatch(session(true), heard, NOW)).toBe(true);
@@ -26,9 +26,9 @@ it('leaves the rest to the watch while it follows, with the app on it, and was h
   expect(restOnWatch(null, heard, NOW)).toBe(false);
 });
 
-it('takes the rest back once the watch has not been heard from for over a minute', () => {
-  expect(restOnWatch(session(true), { ...heard, heardAt: NOW - 74_000 }, NOW)).toBe(true);
-  expect(restOnWatch(session(true), { ...heard, heardAt: NOW - 76_000 }, NOW)).toBe(false);
+it('takes the rest back once the time the watch was heard for is up', () => {
+  expect(restOnWatch(session(true), { ...heard, heardUntil: NOW + 1 }, NOW)).toBe(true);
+  expect(restOnWatch(session(true), { ...heard, heardUntil: NOW }, NOW)).toBe(false);
   // A watch that never sent a sign, as one whose workout session cannot run.
-  expect(restOnWatch(session(true), { ...heard, heardAt: null }, NOW)).toBe(false);
+  expect(restOnWatch(session(true), { ...heard, heardUntil: null }, NOW)).toBe(false);
 });

@@ -53,7 +53,7 @@ jest.mock('@/exercises/library', () => ({
 }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('@/watch/link', () => ({
-  link: { heardForMs: 75_000, status: jest.fn(), onStatusChange: jest.fn(() => () => undefined) },
+  link: { status: jest.fn(), onStatusChange: jest.fn(() => () => undefined) },
 }));
 
 const schedule = jest.mocked(scheduleNotificationAsync);
@@ -97,7 +97,7 @@ describe('scheduleRestEnd', () => {
       content: {
         title: 'Rest is over',
         body: 'Next up: Bench press',
-        data: { restEndsAt: NOW + 90_000 },
+        data: { restEndsAt: NOW + 90_000, watchLinkFires: (NOW + 90_000) / 1000 },
       },
       trigger: { type: 'date', date: NOW + 90_000, channelId: 'rest-timer' },
     });
@@ -209,7 +209,13 @@ describe('RestAlarm', () => {
 });
 
 describe('RestAlarm while the watch follows the workout', () => {
-  const heard = () => ({ paired: true, installed: true, reachable: true, heardAt: Date.now() });
+  // Heard just now, and so taken to be there for 75 s.
+  const heard = () => ({
+    paired: true,
+    installed: true,
+    reachable: true,
+    heardUntil: Date.now() + 75_000,
+  });
 
   beforeEach(() => {
     updateSession((session) => ({ ...session, watchFollows: true }));
@@ -233,6 +239,23 @@ describe('RestAlarm while the watch follows the workout', () => {
     });
     expect(Haptics.notificationAsync).not.toHaveBeenCalled();
     expect(cancel).toHaveBeenCalledWith('rest-end');
+  });
+
+  it('schedules a rest ending before the watch’s time is up to fire only once it is', async () => {
+    jest.mocked(link.status).mockResolvedValue(heard());
+    await render(<RestAlarm />);
+    // A rest with 20 s left, while the watch was heard just now: its next sign may come only after.
+    await act(async () =>
+      updateSession((session) => ({ ...session, rest: { endsAt: NOW + 20_000, seconds: 90 } })),
+    );
+    expect(schedule).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          data: { restEndsAt: NOW + 20_000, watchLinkFires: (NOW + 75_000) / 1000 },
+        }),
+        trigger: expect.objectContaining({ date: NOW + 75_000 }),
+      }),
+    );
   });
 
   it('signals the rest itself once the watch is no longer heard', async () => {

@@ -2,12 +2,11 @@
 // link.ts; without the native module, as in a build from before it, there is no watch.
 import { NativeWatchLink } from '@/modules/watch-link';
 
-import { WATCH_HEARD_FOR_MS } from './protocol';
 import { NO_WATCH, type WatchLink, type WatchStatus } from './types';
 
 function status(): WatchStatus {
   const native = NativeWatchLink?.status();
-  return native ? { ...native, heardAt: native.heardAt ?? null } : NO_WATCH;
+  return native ? { ...native, heardUntil: native.heardUntil ?? null } : NO_WATCH;
 }
 
 /** Gives each command the native side kept to the listener; one that is not JSON is dropped. */
@@ -25,7 +24,6 @@ function takeCommands(listener: (message: unknown) => void) {
 }
 
 export const link: WatchLink = {
-  heardForMs: NativeWatchLink?.heardForMs ?? WATCH_HEARD_FOR_MS,
   status: () => Promise.resolve(status()),
   onStatusChange: (listener) => {
     const subscription = NativeWatchLink?.addListener('onStatus', () => listener(status()));

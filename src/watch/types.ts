@@ -11,8 +11,11 @@ export type WatchStatus = {
   installed: boolean;
   /** It can be talked to right now. */
   reachable: boolean;
-  /** When it was last heard from about the workout the phone runs, in milliseconds (ADR 0114). */
-  heardAt: number | null;
+  /**
+   * Until when it is taken to be there, heard from about the workout the phone runs, in
+   * milliseconds (ADR 0114).
+   */
+  heardUntil: number | null;
 };
 
 /** No watch to talk to. */
@@ -20,7 +23,7 @@ export const NO_WATCH: WatchStatus = {
   paired: false,
   installed: false,
   reachable: false,
-  heardAt: null,
+  heardUntil: null,
 };
 
 /**
@@ -28,8 +31,6 @@ export const NO_WATCH: WatchStatus = {
  * It carries the protocol's messages and nothing else: what they mean is decided in protocol.ts.
  */
 export type WatchLink = {
-  /** How long the watch is taken to be there after it was heard, in milliseconds (ADR 0114). */
-  heardForMs: number;
   status(): Promise<WatchStatus>;
   /** Listens for the status changing; returns what stops listening. */
   onStatusChange(listener: (status: WatchStatus) => void): () => void;

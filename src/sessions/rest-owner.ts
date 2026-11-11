@@ -1,15 +1,14 @@
 // Which device signals the end of the workout's rest (ADR 0114).
 import { useEffect, useState } from 'react';
 
-import { link } from '@/watch/link';
 import type { WatchStatus } from '@/watch/types';
 import { useWatchStatus } from '@/watch/watch-status';
 
 import type { Session } from './session';
 
 /**
- * Whether the watch signals the end of the workout's rest, so that the phone only keeps its
- * notification as a stand-in, which its module puts off while the watch is heard: the watch
+ * Whether the watch signals the end of the workout's rest at `now`, so that the phone only keeps
+ * its notification as a stand-in, which its module puts off while the watch is heard: the watch
  * follows the workout, is still paired with Benchbite on it, and was heard from lately, as it is
  * every half a minute while its workout session runs.
  */
@@ -18,8 +17,8 @@ export function restOnWatch(session: Session | null, status: WatchStatus, now: n
     !!session?.watchFollows &&
     status.paired &&
     status.installed &&
-    status.heardAt !== null &&
-    now - status.heardAt < link.heardForMs
+    status.heardUntil !== null &&
+    now < status.heardUntil
   );
 }
 
@@ -29,16 +28,14 @@ export function restOnWatch(session: Session | null, status: WatchStatus, now: n
  */
 export function useRestOnWatch(session: Session | null): boolean {
   const status = useWatchStatus();
-  const [now, setNow] = useState(() => Date.now());
-  const onWatch = restOnWatch(session, status, now);
+  // When it was last checked, which only the end of the time the watch was heard for moves on:
+  // a sign heard since moves that end on, which is then later than this.
+  const [checkedAt, setCheckedAt] = useState(() => Date.now());
+  const onWatch = restOnWatch(session, status, checkedAt);
   useEffect(() => {
-    if (!onWatch || status.heardAt === null) return;
-    const timer = setTimeout(
-      () => setNow(Date.now()),
-      status.heardAt + link.heardForMs - Date.now(),
-    );
+    if (!onWatch || status.heardUntil === null) return;
+    const timer = setTimeout(() => setCheckedAt(Date.now()), status.heardUntil - Date.now());
     return () => clearTimeout(timer);
-  }, [onWatch, status.heardAt]);
-  // A sign heard after the time last read counts too, its time being later than that.
+  }, [onWatch, status.heardUntil]);
   return onWatch;
 }

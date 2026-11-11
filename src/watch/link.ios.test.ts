@@ -9,7 +9,7 @@ function fakeModule() {
   return {
     listeners,
     status: jest.fn(
-      (): { paired: boolean; installed: boolean; reachable: boolean; heardAt?: number } => ({
+      (): { paired: boolean; installed: boolean; reachable: boolean; heardUntil?: number } => ({
         paired: true,
         installed: true,
         reachable: false,
@@ -80,17 +80,17 @@ it('tells the watch’s status, and when it changes', async () => {
     paired: true,
     installed: true,
     reachable: false,
-    heardAt: null,
+    heardUntil: null,
   });
   const listener = jest.fn();
   link.onStatusChange(listener);
-  native.status.mockReturnValue({ paired: true, installed: true, reachable: true, heardAt: 7 });
+  native.status.mockReturnValue({ paired: true, installed: true, reachable: true, heardUntil: 7 });
   native.listeners.get('onStatus')!();
   expect(listener).toHaveBeenCalledWith({
     paired: true,
     installed: true,
     reachable: true,
-    heardAt: 7,
+    heardUntil: 7,
   });
 });
 

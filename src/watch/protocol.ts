@@ -28,13 +28,6 @@ import type { WorkoutTarget } from '@/workouts/workouts';
 /** Raised when a message changes shape; each side drops a message of another version. */
 export const PROTOCOL_VERSION = 1;
 
-/**
- * How long the watch is taken to be there after it was heard from about the workout, signalling
- * its rests (ADR 0114): the phone's module gives it, as it puts its own rest notification off by
- * as much; this is for a build without the module.
- */
-export const WATCH_HEARD_FOR_MS = 75_000;
-
 /** How many applied command ids the workout keeps and sends back: far more than wait at once. */
 const KEPT_COMMANDS = 50;
 /** The longest command id taken: a UUID is 36 characters. */
@@ -81,7 +74,10 @@ export type WatchWorkout = {
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
-  /** The watch follows it, and so signals the end of a rest; else it offers to join (ADR 0112). */
+  /**
+   * The watch follows it, measuring it and signalling its rests while it can (ADR 0113, ADR 0114);
+   * else it offers to join (ADR 0112).
+   */
   follows: boolean;
 };
 
