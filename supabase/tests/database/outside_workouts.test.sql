@@ -23,13 +23,14 @@ returns jsonb language sql as $$
   select jsonb_build_object(
     'id', id,
     'activity', 'running',
-    'startedAt', now() - make_interval(secs => hours_ago * 3600),
-    'endedAt', now() - make_interval(secs => hours_ago * 3600) + make_interval(mins => minutes),
-    'startedOn', ((now() - make_interval(secs => hours_ago * 3600)) at time zone 'UTC')::date,
+    'startedAt', start,
+    'endedAt', start + make_interval(mins => minutes),
+    'startedOn', (start at time zone 'UTC')::date,
     'activeKcal', 310.4,
     'heartRateAvg', 148,
     'source', 'Apple Watch'
-  ) || extra;
+  ) || extra
+  from (select now() - make_interval(secs => hours_ago * 3600) as start) as workout;
 $$;
 
 create function pg_temp.import(workouts jsonb, store text default 'appleHealth') returns integer
@@ -246,7 +247,8 @@ insert into public.outside_workouts (user_id, store, source_id, activity, starte
   started_on, imported_at)
 select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'years-ago-' || n, 'walking',
   now() - make_interval(days => 400 + n), now() - make_interval(days => 400 + n) + interval '20 minutes',
-  (now() - make_interval(days => 400 + n))::date, now() - make_interval(days => 400 + n)
+  ((now() - make_interval(days => 400 + n)) at time zone 'UTC')::date,
+  now() - make_interval(days => 400 + n)
 from generate_series(1, public.outside_workout_limit() + 650) as n;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is(
@@ -262,7 +264,7 @@ insert into public.outside_workouts (user_id, store, source_id, activity, starte
   started_on)
 select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'old-' || n, 'walking',
   now() - interval '450 days', now() - interval '450 days' + interval '20 minutes',
-  (now() - interval '450 days')::date
+  ((now() - interval '450 days') at time zone 'UTC')::date
 from generate_series(1, public.outside_workout_limit()) as n;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
