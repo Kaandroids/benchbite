@@ -196,16 +196,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     DispatchQueue.main.async {
       guard state.seq > self.lastSeq else { return }
       self.lastSeq = state.seq
-      // The workout shown is saved: its summary shows, as it was last sent.
-      if let shown = self.workout, shown.follows, state.workout?.id != shown.id,
-        let end = state.ended.first(where: { $0.id == shown.id }), end.saved,
-        let endedAt = end.endedAt
-      {
-        self.finished = FinishedWorkout(
-          id: shown.id, title: shown.title, startedAt: shown.startedAt, endedAt: endedAt,
-          sets: (shown.setsToSave, shown.setsDone.count), records: shown.records)
+      // The workout shown is saved: its summary shows until the next runs.
+      if state.workout != nil {
+        self.finished = nil
+      } else if let finished = FinishedWorkout.saved(self.workout, in: state) {
+        self.finished = finished
       }
-      if state.workout != nil { self.finished = nil }
       self.workout = state.workout
       self.ended = state.ended
       MainActor.assumeIsolated { self.onState?(state) }

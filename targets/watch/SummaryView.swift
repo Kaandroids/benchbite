@@ -8,7 +8,7 @@ struct SummaryView: View {
 
   var body: some View {
     // What the watch measured, once its workout is saved, which takes a moment.
-    let measured = workoutSession.measured.flatMap { $0.workoutId == workout.id ? $0 : nil }
+    let totals = workoutSession.totals.flatMap { $0.workoutId == workout.id ? $0 : nil }
     ScrollView {
       VStack(spacing: 8) {
         Text("\(workout.title) done")
@@ -18,19 +18,18 @@ struct SummaryView: View {
         Grid(horizontalSpacing: 6, verticalSpacing: 6) {
           GridRow {
             Tile(value: duration, label: "TIME")
-            Tile(value: "\(workout.sets.done)/\(workout.sets.count)", label: "SETS")
+            Tile(value: "\(workout.setsSaved)/\(workout.setCount)", label: "SETS")
           }
           GridRow {
             Tile(
-              value: measured?.averageBpm.map(String.init) ?? "–", label: "AVG BPM",
+              value: totals?.averageBpm.map(String.init) ?? "–", label: "AVG BPM",
               tint: Theme.heart)
-            Tile(value: measured?.kcal.map(String.init) ?? "–", label: "KCAL")
+            Tile(value: totals?.kcal.map(String.init) ?? "–", label: "KCAL")
           }
         }
         if workout.records > 0 {
-          Text(
-            "\(workout.records) new \(workout.records == 1 ? "record" : "records") · see your iPhone"
-          )
+          let records = workout.records == 1 ? "record" : "records"
+          Text("\(workout.records) new \(records) · see your iPhone")
           .font(.rounded(13, .heavy))
           .foregroundStyle(Theme.success)
           .multilineTextAlignment(.center)
