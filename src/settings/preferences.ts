@@ -4,7 +4,7 @@
 import { Appearance } from 'react-native';
 
 import { chooseLanguage, SUPPORTED_LANGUAGES, type Language } from '@/i18n';
-import { createDeviceChoice } from '@/lib/device-storage';
+import { createDeviceChoice } from '@/lib/device-choice';
 
 export const THEME_CHOICES = ['system', 'light', 'dark'] as const;
 export type ThemeChoice = (typeof THEME_CHOICES)[number];
@@ -47,9 +47,9 @@ export const useLanguageChoice = language.useChoice;
 
 /** Applies the stored look and language, once as the app starts. */
 export function applyStoredPreferences() {
-  const theme = loadThemeChoice();
-  if (theme !== 'system') {
-    applyTheme(theme);
+  const look = loadThemeChoice();
+  if (look !== 'system') {
+    applyTheme(look);
   }
   const chosen = loadLanguageChoice();
   if (chosen !== 'system') {

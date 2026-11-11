@@ -2,7 +2,7 @@
 // always, or never, as the user chose in the settings, and only with a watch to start it on. The
 // choice belongs to the device, as the watch does.
 import { createQuestion } from '@/components/ui/question';
-import { createDeviceChoice } from '@/lib/device-storage';
+import { createDeviceChoice } from '@/lib/device-choice';
 
 import { hasWatch } from './types';
 import { readWatchStatus } from './watch-status';
