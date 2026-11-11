@@ -13,13 +13,16 @@ import WatchKit
 /// starts or ends.
 @MainActor
 final class WorkoutSession: NSObject, ObservableObject {
-  /// The latest heart rate, in beats a minute, while a session runs.
+  /// The latest heart rate, in beats a minute, while a session runs and measures it.
   @Published private(set) var heartRate: Int?
 
   private nonisolated static let heartRateType = HKQuantityType(.heartRate)
   private nonisolated static let calories = HKQuantityType(.activeEnergyBurned)
   private static let workoutIdKey = "workoutSession.workoutId"
 
+  /// How long a heart rate is shown without a newer one: the sensor measures every few seconds
+  /// during a workout, and stops once the watch is off the wrist (ADR 0116).
+  private static let heartRateFor: TimeInterval = 30
   /// As long as a workout can be on the phone: one older is let go of, as left open there.
   private static let longest: TimeInterval = 12 * 3600
 
@@ -44,6 +47,8 @@ final class WorkoutSession: NSObject, ObservableObject {
   private var ending = false
   /// Ends a session that has run as long as a workout can.
   private var cap: Timer?
+  /// Forgets the heart rate once no newer one came for `heartRateFor`.
+  private var heartRateExpiry: Timer?
   /// The phone opened the app to start a workout on the watch too (ADR 0115).
   private enum PhoneStart {
     /// While the session before still ran or ended: the next may start in the background for a
@@ -244,6 +249,8 @@ final class WorkoutSession: NSObject, ObservableObject {
     self.builder = nil
     measuring = nil
     heartRate = nil
+    heartRateExpiry?.invalidate()
+    heartRateExpiry = nil
     cap?.invalidate()
     cap = nil
     clearPhoneStart()
@@ -298,6 +305,11 @@ final class WorkoutSession: NSObject, ObservableObject {
     // A reading the ending session's builder still sends is not the next workout's.
     guard builder === self.builder, !ending else { return }
     heartRate = beats
+    heartRateExpiry?.invalidate()
+    heartRateExpiry = Timer.scheduledTimer(withTimeInterval: Self.heartRateFor, repeats: false) {
+      [weak self] _ in
+      Task { @MainActor in self?.heartRate = nil }
+    }
   }
 
   private static func date(_ milliseconds: Double) -> Date {
