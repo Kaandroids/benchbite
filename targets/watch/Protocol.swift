@@ -250,6 +250,11 @@ struct WatchCommand {
 }
 
 extension WatchCommand.Change {
+  var ticks: Bool {
+    guard case .tick = self else { return false }
+    return true
+  }
+
   func isTick(exercise: Int, set: Int) -> Bool {
     guard case .tick(exercise, set, _) = self else { return false }
     return true

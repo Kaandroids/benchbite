@@ -18,6 +18,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// (ADR 0118); none once it is finished again. The phone applies a finish only then: one it
   /// saves ends the workout instead.
   @Published private(set) var unsaved: String?
+  /// The phone can be reached now, so that a command goes at once; else commands wait for it, and
+  /// the sets ticked here say so (ADR 0121).
+  @Published private(set) var reachable = false
   /// The workout the watch followed that the phone saved last, for its summary (ADR 0119); none
   /// once another workout runs, or once the summary is closed (ADR 0120).
   @Published private(set) var finished: FinishedWorkout? {
@@ -81,6 +84,11 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// either order.
   func isRestWaiting(workoutId: String) -> Bool {
     firstWaiting(workoutId) { $0.isRest } != nil
+  }
+
+  /// How many sets ticked here wait for the phone.
+  func setsWaiting(workoutId: String) -> Int {
+    waiting.values.filter { $0.workoutId == workoutId && $0.change.ticks }.count
   }
 
   /// Whether finishing the workout waits for the phone, which saves it.
@@ -249,6 +257,16 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     error: Error?
   ) {
     receive(session.receivedApplicationContext)
+    reachabilityChanged(session)
+  }
+
+  func sessionReachabilityDidChange(_ session: WCSession) {
+    reachabilityChanged(session)
+  }
+
+  private func reachabilityChanged(_ session: WCSession) {
+    let reachable = session.isReachable
+    DispatchQueue.main.async { self.reachable = reachable }
   }
 
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
