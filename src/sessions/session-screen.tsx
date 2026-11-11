@@ -17,7 +17,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
-import { useRestOnWatch } from './rest-owner';
+import { signalsRest } from './rest-owner';
 import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
 import { WatchChip } from './watch-chip';
@@ -33,7 +33,7 @@ export function SessionScreen() {
   const workoutName = useWorkoutName();
   const now = useNow(!!session, session?.clock?.startedAt);
   const permission = useNotificationPermission();
-  const onWatch = useRestOnWatch(session);
+  // The watch heard from about the workout, which the chip shows and which may signal the rest.
   const watch = useHeardWatch(session);
 
   if (!session) {
@@ -134,7 +134,7 @@ export function SessionScreen() {
           total={session.rest.seconds}
           onChange={(seconds) => updateSession((current) => changeRest(current, seconds))}
           onSkip={() => updateSession((current) => skipRest(current))}
-          onWatch={onWatch}
+          onWatch={watch !== null && signalsRest(session, watch)}
           onTurnOnAlerts={
             permission && !permission.granted
               ? () =>
