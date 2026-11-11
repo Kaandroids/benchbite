@@ -136,7 +136,7 @@ struct WatchCommand {
 
   /// Sets a set done or not done, as of now, with the values edited on the watch set first.
   static func setDone(
-    workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double] = [:]
+    workoutId: String, exercise: Int, set: Int, done: Bool, values: [SetField: Double]
   ) -> WatchCommand? {
     var body: [String: Any] = ["type": "setDone", "exercise": exercise, "set": set, "done": done]
     if !values.isEmpty {
@@ -156,6 +156,12 @@ struct WatchCommand {
   var payload: [String: Any] {
     ["command": json, "workoutId": workoutId]
   }
+}
+
+/// A value as the watch shows it: a weight to its quarter kilogram, without trailing zeros.
+func formatted(_ value: Double?) -> String {
+  guard let value else { return "—" }
+  return value.formatted(.number.precision(.fractionLength(0...2)))
 }
 
 /// The set to do next, as the phone found it.

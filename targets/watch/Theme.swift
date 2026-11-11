@@ -62,9 +62,3 @@ struct PillButtonStyle: ButtonStyle {
     }
   }
 }
-
-/// A value as the watch shows it: a weight to its quarter kilogram, without trailing zeros.
-func formatted(_ value: Double?) -> String {
-  guard let value else { return "—" }
-  return value.formatted(.number.precision(.fractionLength(0...2)))
-}
