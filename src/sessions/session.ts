@@ -468,6 +468,17 @@ export function lastActivity(value: Session): number {
   return Math.min(latest, value.startedAt + MAX_WORKOUT_MS);
 }
 
+/**
+ * When a workout finished on the watch at `at` ends: then, though no earlier than its last set, as
+ * one ticked on the phone after the finish is still in it, and within the longest a workout can be.
+ * A clock started after `at` shows a watch whose clock runs behind: the workout ends now, so that
+ * its set keeps the time it ran.
+ */
+export function endOfWatchFinish(value: Session, at: number, now = Date.now()): number {
+  const end = value.clock && value.clock.startedAt > at ? now : Math.min(at, now);
+  return Math.min(Math.max(end, lastActivity(value)), value.startedAt + MAX_WORKOUT_MS);
+}
+
 /** Whether a workout has been open longer than a workout can be, so it was left open. */
 export function isLeftOpen(value: Session, now = Date.now()): boolean {
   return now - value.startedAt > MAX_WORKOUT_MS;

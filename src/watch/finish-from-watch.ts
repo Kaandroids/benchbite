@@ -8,9 +8,8 @@ import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { useLogWorkout } from '@/sessions/logs';
 import {
   activeSession,
+  endOfWatchFinish,
   endSession,
-  lastActivity,
-  MAX_WORKOUT_MS,
   sessionTotals,
   stopClock,
   toLog,
@@ -21,17 +20,6 @@ import {
 import { applyCommand, isFor, type WatchCommand } from './protocol';
 
 export type FinishCommand = Extract<WatchCommand, { type: 'finish' }>;
-
-/**
- * When a workout finished on the watch at `at` ends: then, though no earlier than its last set, as
- * one ticked on the phone after the finish is still in it, and within the longest a workout can be.
- */
-export function finishedAt(session: Session, at: number, now = Date.now()): number {
-  return Math.min(
-    Math.max(Math.min(at, now), lastActivity(session)),
-    session.startedAt + MAX_WORKOUT_MS,
-  );
-}
 
 /** The finishes being saved, so that one delivered twice is saved once. */
 const saving = new Set<string>();
@@ -64,7 +52,7 @@ export function useFinishFromWatch() {
         failed();
         return;
       }
-      const endedAt = finishedAt(session, command.at);
+      const endedAt = endOfWatchFinish(session, command.at);
       const logId = await logWorkout.mutateAsync(toLog(stopClock(session, endedAt), endedAt));
       if (logId !== null) {
         void afterWorkoutLogged(queryClient, logId, null, {
