@@ -8,6 +8,7 @@ import { updateSession, useActiveSession, useEndedSessions } from '@/sessions/se
 import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
+import { keepFinish, useFinishFromWatch } from './finish-from-watch';
 import { applyCommand, parseCommand, stateOf, type ExerciseOf } from './protocol';
 import { sentToWatch } from './open-on-watch';
 
@@ -33,6 +34,7 @@ export function WatchSync() {
   // Until sign-in is known, no workout shows, which the watch would take for one let go of.
   const signedIn = useSession().status !== 'loading';
   const session = useActiveSession(useUserId());
+  useFinishFromWatch(session);
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
   const ended = useEndedSessions();
@@ -64,6 +66,11 @@ export function WatchSync() {
     const command = parseCommand(message);
     if (!command) {
       console.warn('Dropped a message from the watch that is not a command');
+      return;
+    }
+    // Kept to be saved at once, which ends the workout, or applied when it cannot be (ADR 0118).
+    if (command.type === 'finish') {
+      updateSession((current) => keepFinish(current, command));
       return;
     }
     const exerciseOf = exerciseIn(library.data);

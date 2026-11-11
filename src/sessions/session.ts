@@ -89,7 +89,20 @@ export type Session = {
    * rest while it is heard (ADR 0112, ADR 0114).
    */
   watchFollows?: boolean;
+  /**
+   * The finish from the watch being saved, by its command's id and when it was done there: kept
+   * until it is saved or given up, also when the app is ended meanwhile (ADR 0118).
+   */
+  watchFinish?: { id: string; at: number };
 };
+
+/**
+ * The workout's id, which the watch knows it by and a save is kept by; one started before ids were
+ * kept is named by its start.
+ */
+export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string {
+  return session.id ?? `started-${session.startedAt}`;
+}
 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
@@ -113,7 +126,8 @@ function store(value: Session | null) {
   writeVersioned(KEY, VERSION, 'session', value);
 }
 
-function current(): Session | null {
+/** The workout in progress as it is now, for what reads it outside a screen. */
+export function activeSession(): Session | null {
   if (!loaded) {
     session = load();
     loaded = true;
@@ -130,13 +144,13 @@ function set(value: Session | null) {
 
 /** The signed-in user's workout in progress, if there is one. */
 export function useActiveSession(userId: string | undefined): Session | null {
-  const value = useSyncExternalStore(listeners.subscribe, current);
+  const value = useSyncExternalStore(listeners.subscribe, activeSession);
   return value && value.userId === userId ? value : null;
 }
 
 /** Changes the workout in progress, if there is one. */
 export function updateSession(change: (current: Session) => Session) {
-  const value = current();
+  const value = activeSession();
   if (value) {
     set(change(value));
   }
@@ -169,7 +183,7 @@ export function useEndedSessions(): EndedSession[] {
 
 /** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */
 export function endSession(how: HowEnded) {
-  const value = current();
+  const value = activeSession();
   if (value) {
     ended = [{ id: value.id, startedAt: value.startedAt, ...how }, ...endedSessions()].slice(
       0,
@@ -463,6 +477,17 @@ export function lastActivity(value: Session): number {
   return Math.min(latest, value.startedAt + MAX_WORKOUT_MS);
 }
 
+/**
+ * When a workout finished on the watch at `at` ends: then, though no earlier than its last set, as
+ * one ticked on the phone after the finish is still in it, and within the longest a workout can be.
+ * A clock started after `at` shows a watch whose clock runs behind: the workout ends now, so that
+ * its set keeps the time it ran.
+ */
+export function endOfWatchFinish(value: Session, at: number, now = Date.now()): number {
+  const end = value.clock && value.clock.startedAt > at ? now : Math.min(at, now);
+  return Math.min(Math.max(end, lastActivity(value)), value.startedAt + MAX_WORKOUT_MS);
+}
+
 /** Whether a workout has been open longer than a workout can be, so it was left open. */
 export function isLeftOpen(value: Session, now = Date.now()): boolean {
   return now - value.startedAt > MAX_WORKOUT_MS;
@@ -588,6 +613,11 @@ export function toLog(value: Session, finishedAt = Date.now()) {
     })),
     ...(value.move ? { move: value.move } : {}),
   };
+}
+
+/** How many sets saving the workout now logs: those done, and the one a running clock times. */
+export function setsToSave(value: Session, now = Date.now()): number {
+  return sessionTotals(stopClock(value, now)).done;
 }
 
 /** Sets done and planned, and the weight lifted, for the progress bar and the summary. */

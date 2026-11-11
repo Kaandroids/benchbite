@@ -8,11 +8,13 @@ import {
   markDone,
   openExercise,
   setRestEnd,
+  setsToSave,
   setValues,
   tickedSince,
   type EndedSession,
   type HowEnded,
   type Session,
+  workoutIdOf,
 } from '@/sessions/session';
 import {
   describeSet,
@@ -72,6 +74,8 @@ export type WatchWorkout = {
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
   rest: { endsAt: number; seconds: number } | null;
+  /** How many sets finishing the workout saves: those done, and the one the phone's clock times. */
+  setsToSave: number;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -126,12 +130,13 @@ export type WatchCommand = CommandBase &
     | { type: 'join' }
     /** Opens the exercise, picked from the watch's list, whose sets come next (ADR 0117). */
     | { type: 'open'; exercise: number }
+    /**
+     * Finishes the workout, which the phone then saves and ends (ADR 0118). It is applied only
+     * when the phone could not save it, so a finish applied while the workout goes on tells the
+     * watch that it was not saved.
+     */
+    | { type: 'finish' }
   );
-
-/** The workout's id; one started before ids were kept is named by its start. */
-export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string {
-  return session.id ?? `started-${session.startedAt}`;
-}
 
 /**
  * How the Crown turns a lifted set's values: the weight by what its equipment goes up by, down to
@@ -194,6 +199,7 @@ export function stateOf(
       current: session.current,
       next: nextSetOf(session),
       rest: session.rest,
+      setsToSave: setsToSave(session),
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -279,6 +285,8 @@ export function parseCommand(message: unknown): WatchCommand | null {
       return { ...base, type };
     case 'open':
       return isIndex(message.exercise) ? { ...base, type, exercise: message.exercise } : null;
+    case 'finish':
+      return { ...base, type };
     default:
       return null;
   }
@@ -287,10 +295,16 @@ export function parseCommand(message: unknown): WatchCommand | null {
 /** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
 export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
 
+/**
+ * A command that changes the workout: all but a finish, which the phone saves instead
+ * (finish-from-watch.ts).
+ */
+export type ChangeCommand = Exclude<WatchCommand, { type: 'finish' }>;
+
 /** The change a command makes, before it is recorded as applied. */
 function change(
   session: Session,
-  command: WatchCommand,
+  command: ChangeCommand,
   at: number,
   now: number,
   metricsOf: MetricsOf,
@@ -330,6 +344,14 @@ function change(
   }
 }
 
+/** Whether a command is for the workout, and not applied to it yet. */
+export function isFor(session: Session, command: WatchCommand): boolean {
+  return (
+    command.workoutId === workoutIdOf(session) &&
+    !(session.watchCommands ?? []).includes(command.id)
+  );
+}
+
 /**
  * The workout with a command from the watch applied, once: a command for another workout, or one
  * already applied, changes nothing. Its time is at most `now`, so that a watch whose clock runs
@@ -337,13 +359,25 @@ function change(
  */
 export function applyCommand(
   session: Session,
-  command: WatchCommand,
+  command: ChangeCommand,
   { now = Date.now(), metricsOf }: { now?: number; metricsOf: MetricsOf },
 ): Session {
-  const applied = session.watchCommands ?? [];
-  if (command.workoutId !== workoutIdOf(session) || applied.includes(command.id)) {
+  if (!isFor(session, command)) {
     return session;
   }
-  const next = change(session, command, Math.min(command.at, now), now, metricsOf);
-  return { ...next, watchCommands: [...applied, command.id].slice(-KEPT_COMMANDS) };
+  return markApplied(
+    change(session, command, Math.min(command.at, now), now, metricsOf),
+    command.id,
+  );
+}
+
+/**
+ * The workout with a command recorded as applied, which the watch then stops showing as waiting.
+ * A finish recorded so, with the workout going on, tells the watch that it was not saved.
+ */
+export function markApplied(session: Session, id: string): Session {
+  return {
+    ...session,
+    watchCommands: [...(session.watchCommands ?? []), id].slice(-KEPT_COMMANDS),
+  };
 }

@@ -6,6 +6,7 @@ import {
   stopClock,
   toggleDoneUnchecked,
   type Session,
+  workoutIdOf,
 } from '@/sessions/session';
 import { setKindOf } from '@/sets/fields';
 import { testExercise, testWorkout } from '@/workouts/test-data';
@@ -17,10 +18,9 @@ import {
   parseCommand,
   PROTOCOL_VERSION,
   stateOf,
-  workoutIdOf,
   type ExerciseOf,
   type MetricsOf,
-  type WatchCommand,
+  type ChangeCommand,
 } from './protocol';
 
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'workout-1' }));
@@ -53,8 +53,8 @@ const PUSH = testWorkout(7, {
 const start = () => startSession('user-a', PUSH, {}, { now: NOW });
 
 let count = 0;
-/** A command from the watch, made at `at`. */
-function command(at: number, body: Record<string, unknown>): WatchCommand {
+/** A command from the watch that changes the workout, made at `at`. */
+function command(at: number, body: Record<string, unknown>): ChangeCommand {
   count += 1;
   const parsed = parseCommand({
     v: PROTOCOL_VERSION,
@@ -63,7 +63,7 @@ function command(at: number, body: Record<string, unknown>): WatchCommand {
     workoutId: 'workout-1',
     ...body,
   });
-  if (!parsed) throw new Error('Not a command');
+  if (!parsed || parsed.type === 'finish') throw new Error('Not a command that changes it');
   return parsed;
 }
 
@@ -84,6 +84,9 @@ describe('parseCommand', () => {
     expect(command(NOW, { type: 'addSet', exercise: 1, sets: 3 })).toMatchObject({ sets: 3 });
     expect(command(NOW, { type: 'join' })).toMatchObject({ type: 'join' });
     expect(command(NOW, { type: 'open', exercise: 1 })).toMatchObject({ exercise: 1 });
+    expect(
+      parseCommand({ v: PROTOCOL_VERSION, id: 'f', at: NOW, workoutId: 'w', type: 'finish' }),
+    ).toMatchObject({ type: 'finish' });
     expect(command(NOW, { type: 'setRest', of: NOW, endsAt: null })).toMatchObject({
       endsAt: null,
     });
@@ -97,7 +100,7 @@ describe('parseCommand', () => {
       { ...base, v: 2, type: 'addSet', exercise: 0, sets: 3 },
       { ...base, id: '', type: 'addSet', exercise: 0, sets: 3 },
       { ...base, at: 'now', type: 'addSet', exercise: 0, sets: 3 },
-      { ...base, type: 'finish' },
+      { ...base, type: 'end' },
       { ...base, type: 'addSet', exercise: -1, sets: 3 },
       { ...base, type: 'addSet', exercise: 0 },
       { ...base, type: 'addSet', exercise: 0, sets: 0 },
@@ -139,6 +142,7 @@ describe('stateOf', () => {
       id: 'workout-1',
       current: 0,
       rest: { endsAt: NOW + MINUTE + 90_000, seconds: 90 },
+      setsToSave: 1,
       applied: [],
       follows: false,
     });
@@ -154,6 +158,11 @@ describe('stateOf', () => {
       text: '— × 12',
       lastText: null,
     });
+  });
+
+  it('counts the set the phone’s clock times among those finishing saves', () => {
+    const running = startClock(start(), 0, 1, NOW + MINUTE);
+    expect(stateOf(running, names(withBench), 1, []).workout?.setsToSave).toBe(1);
   });
 
   it('gives each exercise its fields and how the Crown turns them, and each set last time’s', () => {

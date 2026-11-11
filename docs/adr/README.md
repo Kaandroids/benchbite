@@ -133,3 +133,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0115](0115-ask-to-start-the-workout-on-the-watch-too.md)             | Ask to start the workout on the watch too                                               | Accepted                                             |
 | [0116](0116-show-the-watch-and-its-heart-rate-on-the-phone.md)        | Show the watch and its heart rate on the phone                                          | Accepted                                             |
 | [0117](0117-pick-the-exercise-on-the-watch.md)                        | Pick the exercise on the watch                                                          | Accepted                                             |
+| [0118](0118-finish-the-workout-on-the-watch.md)                       | Finish the workout on the watch                                                         | Accepted                                             |

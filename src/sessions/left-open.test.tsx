@@ -8,6 +8,7 @@ import { useLogWorkout } from './logs';
 import {
   MAX_WORKOUT_MS,
   resetSessionStore,
+  startClock,
   startSession,
   toggleDoneUnchecked,
   updateSession,
@@ -27,6 +28,7 @@ jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('./logs', () => ({ useLogWorkout: jest.fn() }));
+jest.mock('@/health/health-catch-up', () => ({ afterWorkoutLogged: jest.fn() }));
 
 const NOW = new Date(2026, 9, 23, 18, 0).getTime();
 const PUSH = testWorkout(4, { type: 'push', exercises: [testExercise('bench', { sets: 2 })] });
@@ -72,5 +74,26 @@ describe('LeftOpenSaver', () => {
     await render(<LeftOpenSaver />);
     await act(async () => undefined);
     expect(logWorkout).not.toHaveBeenCalled();
+  });
+
+  it('saves a workout whose only work is a running clock, with the set it timed', async () => {
+    updateSession((session) => startClock(session, 0, 0, NOW + 10 * 60_000));
+    jest.setSystemTime(NOW + MAX_WORKOUT_MS + 60_000);
+    await render(<LeftOpenSaver />);
+    await act(async () => undefined);
+    expect(logWorkout).toHaveBeenCalledTimes(1);
+  });
+
+  it('tries a failed save once, until the app comes back', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    logWorkout.mockRejectedValue(new Error('offline'));
+    updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW + 45 * 60_000));
+    jest.setSystemTime(NOW + MAX_WORKOUT_MS + 60_000);
+    const view = await render(<LeftOpenSaver />);
+    await act(async () => undefined);
+    await view.rerender(<LeftOpenSaver />);
+    await act(async () => undefined);
+    expect(logWorkout).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });
