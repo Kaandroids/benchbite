@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 
 import { toIsoDate } from '@/i18n/dates';
 import { readVersioned, writeVersioned } from '@/lib/device-storage';
+import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -97,7 +98,7 @@ const VERSION = 2;
 
 let loaded = false;
 let session: Session | null = null;
-const listeners = new Set<() => void>();
+const listeners = createListeners();
 
 function load(): Session | null {
   return readVersioned<Session>(KEY, VERSION, 'session');
@@ -115,23 +116,16 @@ function current(): Session | null {
   return session;
 }
 
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
 function set(value: Session | null) {
   session = value;
   loaded = true;
   store(value);
-  for (const listener of listeners) {
-    listener();
-  }
+  listeners.notify();
 }
 
 /** The signed-in user's workout in progress, if there is one. */
 export function useActiveSession(userId: string | undefined): Session | null {
-  const value = useSyncExternalStore(subscribe, current);
+  const value = useSyncExternalStore(listeners.subscribe, current);
   return value && value.userId === userId ? value : null;
 }
 
@@ -165,7 +159,7 @@ function endedSessions(): EndedSession[] {
 
 /** How the latest workouts ended, latest first. */
 export function useEndedSessions(): EndedSession[] {
-  return useSyncExternalStore(subscribe, endedSessions);
+  return useSyncExternalStore(listeners.subscribe, endedSessions);
 }
 
 /** Ends the workout in progress: after it was saved, at the time it ended, or without saving it. */

@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import { createListeners } from '@/lib/listeners';
+
 import { link } from './link';
 import { NO_WATCH, type WatchStatus } from './types';
 
@@ -7,17 +9,15 @@ import { NO_WATCH, type WatchStatus } from './types';
 // so that all read the same: asked for once, then kept by the link's changes.
 let status: WatchStatus = NO_WATCH;
 let listening = false;
-const listeners = new Set<() => void>();
+const listeners = createListeners();
 
 function changed(next: WatchStatus) {
   status = next;
-  for (const listener of listeners) {
-    listener();
-  }
+  listeners.notify();
 }
 
 function subscribe(listener: () => void) {
-  listeners.add(listener);
+  const unsubscribe = listeners.subscribe(listener);
   if (!listening) {
     listening = true;
     // A change heard first is newer than the status asked for.
@@ -33,7 +33,7 @@ function subscribe(listener: () => void) {
       })
       .catch((error: unknown) => console.warn('Could not read the watch status', error));
   }
-  return () => listeners.delete(listener);
+  return unsubscribe;
 }
 
 /** The watch's status, as the link last told it. */

@@ -4,22 +4,12 @@
 import { useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from '@/lib/device-storage';
+import { createListeners } from '@/lib/listeners';
 
 const KEY = 'health.connected';
 const WRITE_SINCE_KEY = 'health.writeSince';
 
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function notify() {
-  for (const listener of listeners) {
-    listener();
-  }
-}
+const listeners = createListeners();
 
 export function isHealthConnected(): boolean {
   return readItem(KEY) === 'true';
@@ -29,12 +19,12 @@ export function isHealthConnected(): boolean {
 export function setHealthConnected(connected: boolean) {
   writeItem(KEY, connected ? 'true' : null);
   if (!connected) writeItem(WRITE_SINCE_KEY, null);
-  notify();
+  listeners.notify();
 }
 
 /** Whether Benchbite reads the phone's health store, kept up to date. */
 export function useHealthConnected(): boolean {
-  return useSyncExternalStore(subscribe, isHealthConnected);
+  return useSyncExternalStore(listeners.subscribe, isHealthConnected);
 }
 
 /**
@@ -59,12 +49,12 @@ export function readSync(kind: HealthRead): ReadSync {
 
 export function setReadSync(kind: HealthRead, sync: ReadSync) {
   writeItem(readKey(kind), sync);
-  notify();
+  listeners.notify();
 }
 
 /** Whether a kind is read from the store, kept up to date. */
 export function useReadSync(kind: HealthRead): ReadSync {
-  return useSyncExternalStore(subscribe, () => readSync(kind));
+  return useSyncExternalStore(listeners.subscribe, () => readSync(kind));
 }
 
 const STEPS_READ_ON_KEY = 'health.stepsReadOn';
@@ -100,7 +90,7 @@ export function writeSince(): Date | null {
 
 export function setWriteSince(since: Date | null) {
   writeItem(WRITE_SINCE_KEY, since?.toISOString() ?? null);
-  notify();
+  listeners.notify();
 }
 
 /** Whether workouts may be saved now: the store is connected and saving is on. */
@@ -108,7 +98,7 @@ export const mayWrite = () => isHealthConnected() && writeSince() !== null;
 
 /** Whether finished workouts are saved to the store, kept up to date. */
 export function useWritingWorkouts(): boolean {
-  return useSyncExternalStore(subscribe, () => readItem(WRITE_SINCE_KEY) !== null);
+  return useSyncExternalStore(listeners.subscribe, () => readItem(WRITE_SINCE_KEY) !== null);
 }
 
 /** Lets go of all the device keeps about the store, as when another user signs in. */
@@ -120,5 +110,5 @@ export function forgetHealthOnDevice() {
   }
   writeItem(STEPS_READ_ON_KEY, null);
   writeItem(WORKOUTS_READ_ON_KEY, null);
-  notify();
+  listeners.notify();
 }

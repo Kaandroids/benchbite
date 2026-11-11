@@ -1,10 +1,8 @@
 // Whether a workout started on the phone starts on the watch too (ADR 0115): asked at each start,
 // always, or never, as the user chose in the settings, and only with a watch to start it on. The
 // choice belongs to the device, as the watch does.
-import { useSyncExternalStore } from 'react';
-
-import { readItem, writeItem } from '@/lib/device-storage';
 import { createQuestion } from '@/components/ui/question';
+import { createDeviceChoice } from '@/lib/device-choice';
 
 import { hasWatch } from './types';
 import { readWatchStatus } from './watch-status';
@@ -12,30 +10,11 @@ import { readWatchStatus } from './watch-status';
 export const START_ON_WATCH_CHOICES = ['ask', 'always', 'never'] as const;
 export type StartOnWatchChoice = (typeof START_ON_WATCH_CHOICES)[number];
 
-const KEY = 'watch.startOnWatch';
+const startOnWatch = createDeviceChoice('watch.startOnWatch', START_ON_WATCH_CHOICES, 'ask');
 
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export function loadStartOnWatch(): StartOnWatchChoice {
-  const stored = readItem(KEY);
-  return START_ON_WATCH_CHOICES.find((choice) => choice === stored) ?? 'ask';
-}
-
-export function setStartOnWatch(choice: StartOnWatchChoice) {
-  writeItem(KEY, choice);
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-export function useStartOnWatch(): StartOnWatchChoice {
-  return useSyncExternalStore(subscribe, loadStartOnWatch);
-}
+export const loadStartOnWatch = startOnWatch.load;
+export const setStartOnWatch = startOnWatch.set;
+export const useStartOnWatch = startOnWatch.useChoice;
 
 /** The answer to "Start on your Apple Watch too?": on the watch or only on the phone, and kept. */
 export type StartOnWatchAnswer = { onWatch: boolean; keep: boolean };

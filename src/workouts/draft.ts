@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import type { LibraryExercise } from '@/exercises/library';
+import { createListeners } from '@/lib/listeners';
 
 import type { WorkoutDraft, WorkoutTarget } from './workouts';
 
@@ -19,21 +20,10 @@ export type Draft = Omit<WorkoutDraft, 'name' | 'exercises'> & {
 // the same draft; there is only ever one editor open.
 let draft: Draft | null = null;
 let nextKey = 0;
-const listeners = new Set<() => void>();
-
-function emit() {
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const listeners = createListeners();
 
 export function useDraft(): Draft | null {
-  return useSyncExternalStore(subscribe, () => draft);
+  return useSyncExternalStore(listeners.subscribe, () => draft);
 }
 
 /** Starts editing a workout, or a new one. */
@@ -42,19 +32,19 @@ export function startDraft(workout: Omit<Draft, 'exercises'> & Pick<WorkoutDraft
     ...workout,
     exercises: workout.exercises.map((exercise) => ({ ...exercise, key: String(nextKey++) })),
   };
-  emit();
+  listeners.notify();
 }
 
 export function updateDraft(change: (current: Draft) => Draft) {
   if (draft) {
     draft = change(draft);
-    emit();
+    listeners.notify();
   }
 }
 
 export function clearDraft() {
   draft = null;
-  emit();
+  listeners.notify();
 }
 
 /**

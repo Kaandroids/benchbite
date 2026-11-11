@@ -18,6 +18,7 @@ import { Alert, AppState, Linking, Platform } from 'react-native';
 
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
+import { createListeners } from '@/lib/listeners';
 import { useUserId } from '@/providers/session-provider';
 import { link } from '@/watch/link';
 
@@ -43,22 +44,15 @@ export type NotificationPermission = { granted: boolean; canAskAgain: boolean };
 // The permission as last read, shared by everything that shows or depends on it. It is read
 // again whenever the app comes back, as it can change in the phone's settings meanwhile.
 let permission: NotificationPermission | null = null;
-const listeners = new Set<() => void>();
+const listeners = createListeners();
 
 /** Reads the notification permission again, and tells everything that shows it. */
 export async function refreshPermission() {
   const { granted, canAskAgain } = await getPermissionsAsync();
   if (permission?.granted !== granted || permission.canAskAgain !== canAskAgain) {
     permission = { granted, canAskAgain };
-    for (const listener of listeners) {
-      listener();
-    }
+    listeners.notify();
   }
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
 }
 
 /** The notification permission, read when first used and whenever the app comes back. */
@@ -76,7 +70,7 @@ export function useNotificationPermission(): NotificationPermission | null {
     });
     return () => subscription.remove();
   }, []);
-  return useSyncExternalStore(subscribe, () => permission);
+  return useSyncExternalStore(listeners.subscribe, () => permission);
 }
 
 /** For tests: forgets the permission read. */
