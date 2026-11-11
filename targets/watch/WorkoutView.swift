@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The workout the phone runs: an offer to join it, until the watch follows it; then its rest while
 /// one runs, the end of the rest, or else the set to do next, which the wrist edits and ticks, with
-/// the list of its exercises beside them.
+/// the list of its exercises beside them. Once the phone saves it, its summary, until the next.
 struct WorkoutView: View {
   @EnvironmentObject private var phone: PhoneLink
   @EnvironmentObject private var restAlert: RestAlert
@@ -37,6 +37,8 @@ struct WorkoutView: View {
           }
           .tabViewStyle(.page(indexDisplayMode: .never))
         }
+      } else if let finished = phone.finished {
+        SummaryView(workout: finished)
       } else {
         VStack(spacing: 10) {
           Image(systemName: "dumbbell")
