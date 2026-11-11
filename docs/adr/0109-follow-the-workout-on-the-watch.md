@@ -1,6 +1,6 @@
 # 0109. Follow the workout in progress on the watch
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0112
 - **Date:** 2026-11-10
 
 ## Context
