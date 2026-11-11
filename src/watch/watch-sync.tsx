@@ -33,8 +33,7 @@ const exerciseIn =
 export function WatchSync() {
   // Until sign-in is known, no workout shows, which the watch would take for one let go of.
   const signedIn = useSession().status !== 'loading';
-  const userId = useUserId();
-  const session = useActiveSession(userId);
+  const session = useActiveSession(useUserId());
   useFinishFromWatch(session);
   // Loaded only while a workout runs, which is all the watch shows.
   const library = useExerciseLibrary({ enabled: session !== null });
