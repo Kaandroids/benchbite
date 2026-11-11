@@ -5,7 +5,6 @@ import { useEffect, useEffectEvent } from 'react';
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession } from '@/sessions/session';
-
 import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
@@ -45,13 +44,7 @@ export function WatchSync() {
 
   useEffect(() => {
     if (session === null || ready) {
-      link.sendState(
-        stateOf(
-          session,
-          { exerciseOf: exerciseIn(library.data), workoutName: () => name },
-          nextSeq(),
-        ),
-      );
+      link.sendState(stateOf(session, { exerciseOf: exerciseIn(library.data), name }, nextSeq()));
     }
   }, [session, ready, library.data, name]);
 

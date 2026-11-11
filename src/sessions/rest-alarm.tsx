@@ -19,7 +19,7 @@ import { Alert, AppState, Linking, Platform } from 'react-native';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
-import { useWatchStatus, watchSignalsRest } from '@/watch/watch-status';
+import { useWatchSignalsRest } from '@/watch/watch-status';
 
 import { updateSession, useActiveSession } from './session';
 
@@ -205,7 +205,7 @@ export function RestAlarm() {
   const name = findExercise(library.data, exerciseId)?.name;
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
-  const onWatch = watchSignalsRest(session, useWatchStatus());
+  const onWatch = useWatchSignalsRest(session);
 
   useEffect(() => {
     if (endsAt === undefined || endsAt <= Date.now()) {

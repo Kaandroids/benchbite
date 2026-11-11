@@ -1,5 +1,6 @@
 import {
   addSet,
+  changeRest,
   setValues,
   startClock,
   startSession,
@@ -33,11 +34,8 @@ const NOW = 1_800_000_000_000;
 const noLibrary: MetricsOf = () => undefined;
 /** The library's exercises: none known, as before it loads. */
 const noExercises: ExerciseOf = () => undefined;
-/** The workout named by its own name, and its exercises by the library's. */
-const names = (exerciseOf: ExerciseOf) => ({
-  exerciseOf,
-  workoutName: (session: Session) => session.name ?? 'Full body',
-});
+/** The workout named as the phone names it, and its exercises by the library. */
+const names = (exerciseOf: ExerciseOf) => ({ exerciseOf, name: 'Full body' });
 /** The bench press as the library has it: lifted, with a barbell. */
 const withBench: ExerciseOf = (id) =>
   id === 'bench'
@@ -253,7 +251,8 @@ describe('applyCommand', () => {
       now: NOW + MINUTE + 1000,
     });
     expect(bench(session)[0]).toMatchObject({ done: true, doneAt: NOW + MINUTE });
-    expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90 });
+    // The watch's to signal, as it started it.
+    expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90, byWatch: true });
     expect(session.watchCommands).toHaveLength(1);
   });
 
@@ -393,7 +392,12 @@ describe('applyCommand', () => {
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: endsAt + 15_000 }),
       { metricsOf: noLibrary, now: NOW + 10_000 },
     );
-    expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90 });
+    // Changed on the watch, it is the watch's to signal, though the phone started it.
+    expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90, byWatch: true });
+    expect(changeRest(longer, 15, NOW + 20_000).rest).toEqual({
+      endsAt: endsAt + 30_000,
+      seconds: 90,
+    });
     const skipped = applyCommand(
       resting,
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: null }),

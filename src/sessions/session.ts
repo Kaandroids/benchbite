@@ -64,8 +64,11 @@ export type Session = {
   exercises: SessionExercise[];
   /** The exercise that is open. */
   current: number;
-  /** The rest after a set, until the time it ends. */
-  rest: { endsAt: number; seconds: number } | null;
+  /**
+   * The rest after a set, until the time it ends; `byWatch` when the watch started or last changed
+   * it, and so signals its end (ADR 0112).
+   */
+  rest: { endsAt: number; seconds: number; byWatch?: true } | null;
   clock: SetClock | null;
   /** What the workout had when it started; sets added on the way do not count. */
   planned: { exercises: number; sets: number };
@@ -478,14 +481,27 @@ export function markDone(
   };
 }
 
+/** The rest as started or last changed by the watch, or by the phone. */
+export function restBy(rest: NonNullable<Session['rest']>, byWatch: boolean): Session['rest'] {
+  const { byWatch: _, ...phone } = rest;
+  return byWatch ? { ...phone, byWatch: true } : phone;
+}
+
 /**
- * Makes the rest end at another time, or ends it with null, as changed at `at`, so that a tick
- * made before then starts no rest again. A rest that is over by `now` ends.
+ * Makes the rest end at another time, or ends it with null, as changed at `at` on the phone or
+ * the watch, so that a tick made before then starts no rest again. A rest that is over by `now`
+ * ends.
  */
-export function setRestEnd(value: Session, endsAt: number | null, at: number, now = at): Session {
+export function setRestEnd(
+  value: Session,
+  endsAt: number | null,
+  at: number,
+  { now = at, byWatch = false }: { now?: number; byWatch?: boolean } = {},
+): Session {
+  const rest = restUntil(value.rest, endsAt, now);
   return {
     ...value,
-    rest: restUntil(value.rest, endsAt, now),
+    rest: rest && restBy(rest, byWatch),
     // Never back in time, as a watch's clock can run behind the phone's.
     restChangedAt: Math.max(value.restChangedAt ?? 0, at),
   };

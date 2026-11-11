@@ -20,7 +20,7 @@ import { RestBar } from './rest-bar';
 import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
 import { useNow } from '@/lib/use-now';
-import { useWatchStatus, watchSignalsRest } from '@/watch/watch-status';
+import { useWatchSignalsRest } from '@/watch/watch-status';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
 export function SessionScreen() {
@@ -31,7 +31,7 @@ export function SessionScreen() {
   const workoutName = useWorkoutName();
   const now = useNow(!!session, session?.clock?.startedAt);
   const permission = useNotificationPermission();
-  const onWatch = watchSignalsRest(session, useWatchStatus());
+  const onWatch = useWatchSignalsRest(session);
 
   if (!session) {
     return (
@@ -127,7 +127,7 @@ export function SessionScreen() {
           onSkip={() => updateSession((current) => skipRest(current))}
           onWatch={onWatch}
           onTurnOnAlerts={
-            !onWatch && permission && !permission.granted
+            permission && !permission.granted
               ? () =>
                   void enableRestAlerts({
                     channelName: t('session.restOver.channel'),

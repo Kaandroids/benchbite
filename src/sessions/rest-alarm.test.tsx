@@ -29,6 +29,7 @@ import {
   startSession,
   toggleDoneUnchecked,
   updateSession,
+  type Session,
 } from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -202,13 +203,21 @@ describe('RestAlarm', () => {
 });
 
 describe('RestAlarm while the watch follows the workout', () => {
-  const paired = { paired: true, installed: true, reachable: false };
+  const paired = { paired: true, installed: true, reachable: true };
+  /** A rest the watch started, as a tick there does. */
+  const watchRest = (session: Session): Session => {
+    const ticked = toggleDoneUnchecked(session, 0, 0, NOW);
+    return { ...ticked, rest: ticked.rest && { ...ticked.rest, byWatch: true } };
+  };
 
-  it('leaves the end of the rest to the watch, and only ends it', async () => {
-    jest.mocked(link.status).mockResolvedValue(paired);
+  beforeEach(() => {
     updateSession((session) => ({ ...session, watchFollows: true }));
+  });
+
+  it('leaves the end of a rest the watch started to the watch, and only ends it', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
     await render(<RestAlarm />);
-    await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    await act(async () => updateSession(watchRest));
     expect(schedule).not.toHaveBeenCalled();
     await act(async () => {
       jest.advanceTimersByTime(90_000);
@@ -217,11 +226,17 @@ describe('RestAlarm while the watch follows the workout', () => {
     expect(cancel).toHaveBeenCalledWith('rest-end');
   });
 
-  it('takes the alerts back once the watch app is gone', async () => {
-    jest.mocked(link.status).mockResolvedValue({ ...paired, installed: false });
-    updateSession((session) => ({ ...session, watchFollows: true }));
+  it('signals a rest started on the phone, which the watch may not hear of', async () => {
+    jest.mocked(link.status).mockResolvedValue(paired);
     await render(<RestAlarm />);
     await act(async () => updateSession((session) => toggleDoneUnchecked(session, 0, 0, NOW)));
+    expect(schedule).toHaveBeenCalled();
+  });
+
+  it('takes the alerts back once the watch app is gone', async () => {
+    jest.mocked(link.status).mockResolvedValue({ ...paired, installed: false });
+    await render(<RestAlarm />);
+    await act(async () => updateSession(watchRest));
     expect(schedule).toHaveBeenCalled();
   });
 });

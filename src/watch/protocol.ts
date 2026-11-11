@@ -6,6 +6,7 @@ import type { LibraryExercise } from '@/exercises/library';
 import {
   addSet,
   markDone,
+  restBy,
   setRestEnd,
   setValues,
   tickedSince,
@@ -68,7 +69,8 @@ export type WatchWorkout = {
   current: number;
   /** The set to do next, as nextSetOf() finds it; none when every set is done. */
   next: { exercise: number; set: number } | null;
-  rest: { endsAt: number; seconds: number } | null;
+  /** `byWatch` when the watch started or last changed it, and so signals its end (ADR 0112). */
+  rest: { endsAt: number; seconds: number; byWatch: boolean } | null;
   exercises: WatchExercise[];
   /** The latest commands the phone applied, so that the watch stops showing them as waiting. */
   applied: string[];
@@ -160,10 +162,7 @@ export type ExerciseOf = (
  */
 export function stateOf(
   session: Session | null,
-  {
-    exerciseOf,
-    workoutName,
-  }: { exerciseOf: ExerciseOf; workoutName: (session: Session) => string | null },
+  { exerciseOf, name }: { exerciseOf: ExerciseOf; name: string | null },
   seq: number,
 ): WatchState {
   return {
@@ -171,11 +170,15 @@ export function stateOf(
     seq,
     workout: session && {
       id: workoutIdOf(session),
-      name: workoutName(session),
+      name,
       startedAt: session.startedAt,
       current: session.current,
       next: nextSetOf(session),
-      rest: session.rest,
+      rest: session.rest && {
+        endsAt: session.rest.endsAt,
+        seconds: session.rest.seconds,
+        byWatch: !!session.rest.byWatch,
+      },
       exercises: session.exercises.map((exercise) => {
         const known = exerciseOf(exercise.exerciseId);
         const kind = setKindOf(known?.metrics, exercise.target);
@@ -289,7 +292,14 @@ function change(
       const edited = command.values
         ? setValues(session, command.exercise, command.set, command.values, at)
         : session;
-      return markDone(edited, command.exercise, command.set, command.done, kind, { at, now });
+      const ticked = markDone(edited, command.exercise, command.set, command.done, kind, {
+        at,
+        now,
+      });
+      // A rest the tick started is the watch's to signal.
+      return ticked.rest && ticked.rest.endsAt !== edited.rest?.endsAt
+        ? { ...ticked, rest: restBy(ticked.rest, true) }
+        : ticked;
     }
     case 'addSet': {
       // Up to the sets the watch showed after adding one, so that one added meanwhile counts.
@@ -303,7 +313,7 @@ function change(
     case 'setRest':
       // Only the rest the watch showed: one that has changed since is left as it is.
       return session.rest?.endsAt === command.of
-        ? setRestEnd(session, command.endsAt, at, now)
+        ? setRestEnd(session, command.endsAt, at, { now, byWatch: true })
         : session;
   }
 }
