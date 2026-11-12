@@ -2,8 +2,8 @@ import { Stack } from 'expo-router';
 
 import { useTheme } from '@/theme';
 
-// A screen opened in the tab from elsewhere, as a log from Today, has the list beneath it, so that
-// back, and a log deleted there, go to the list rather than out of the tab, leaving it on that screen.
+// The list goes beneath a screen opened in the tab from elsewhere with the anchor, as openWorkout()
+// and openLog() in src/workouts/open.ts do, so that back returns to it.
 export const unstable_settings = { anchor: 'index' };
 
 /** The Workout tab: the list of workouts, and the workouts and archive it opens. */
