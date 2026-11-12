@@ -105,7 +105,10 @@ export function LeftOpenSaver() {
             size="regular"
             onPress={() => {
               setSaved(null);
-              router.push({ pathname: '/workout/log/[id]', params: { id: String(saved.logId) } });
+              router.push(
+                { pathname: '/workout/log/[id]', params: { id: String(saved.logId) } },
+                { withAnchor: true },
+              );
             }}
           />
           <TextLink

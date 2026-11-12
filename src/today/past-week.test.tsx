@@ -153,10 +153,10 @@ describe('PastWeek', () => {
     expect(screen.getByText('52 min · 4,820 kg')).toBeTruthy();
     expect(screen.getByText('Thursday: Pull missed')).toBeTruthy();
     await act(() => fireEvent.press(screen.getByText('Push')));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/log/[id]',
-      params: { id: '1' },
-    });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/log/[id]', params: { id: '1' } },
+      { withAnchor: true },
+    );
   });
 
   it("shows each day's calories and macros, a day over its target and one not logged", async () => {

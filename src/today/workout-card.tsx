@@ -26,7 +26,11 @@ type WorkoutCardProps = {
 };
 
 function openWorkout(session: WeekSession) {
-  router.push({ pathname: '/workout/[id]', params: { id: String(session.workoutId) } });
+  // In the Workout tab, with its list beneath (its layout's anchor).
+  router.push(
+    { pathname: '/workout/[id]', params: { id: String(session.workoutId) } },
+    { withAnchor: true },
+  );
 }
 
 type OpenableWorkoutProps = Pick<

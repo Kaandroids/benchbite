@@ -61,7 +61,11 @@ export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardP
             accessibilityRole="button"
             accessibilityHint={t('today.pastWeek.workouts.open')}
             onPress={() =>
-              router.push({ pathname: '/workout/log/[id]', params: { id: String(log.id) } })
+              // In the Workout tab, with its list beneath (its layout's anchor).
+              router.push(
+                { pathname: '/workout/log/[id]', params: { id: String(log.id) } },
+                { withAnchor: true },
+              )
             }
             style={({ pressed }) => [
               styles.row,
