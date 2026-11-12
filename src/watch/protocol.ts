@@ -51,7 +51,6 @@ export type WatchSet = SetValues & {
   timedByClock: boolean;
 };
 
-/** How the Crown turns a value: from `min` to `max`, by `step`. */
 /**
  * How the Crown turns a value: from `min` to `max`, by `step`; with `fine`, by it while turned
  * slowly and by `step` while turned fast (ADR 0125).
