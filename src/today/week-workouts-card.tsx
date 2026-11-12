@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import type { WeekSchedule } from '@/workouts/week-schedule';
+import { openLog } from '@/workouts/open';
 
 type WeekWorkoutsCardProps = {
   entering?: CardProps['entering'];
@@ -60,9 +60,7 @@ export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardP
             key={log.id}
             accessibilityRole="button"
             accessibilityHint={t('today.pastWeek.workouts.open')}
-            onPress={() =>
-              router.push({ pathname: '/workout/log/[id]', params: { id: String(log.id) } })
-            }
+            onPress={() => openLog(log.id)}
             style={({ pressed }) => [
               styles.row,
               {

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -10,6 +9,7 @@ import { useDurationFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName } from '@/workouts/format';
+import { openLog } from '@/workouts/open';
 
 import { doneOf, durationMinutes, isPartial, kcalOf, type LogSummary } from './history';
 
@@ -45,7 +45,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     <Pressable
       accessibilityRole="button"
       accessibilityHint={t('history.open')}
-      onPress={() => router.push({ pathname: '/workout/log/[id]', params: { id: String(log.id) } })}
+      onPress={() => openLog(log.id)}
       style={({ pressed }) => [
         styles.row,
         {
