@@ -317,7 +317,10 @@ describe('TodayScreen', () => {
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: "Open today's workout" }));
     // The sessions of the test week use their weekday as the workout's id.
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '3' } },
+      { withAnchor: true },
+    );
   });
 
   it("says today's workout has no exercises yet, and opens it", async () => {
@@ -327,7 +330,10 @@ describe('TodayScreen', () => {
     expect(screen.getByText('No exercises yet')).toBeTruthy();
     expect(screen.queryByText(/about 45 min/)).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: "Open today's workout" }));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '3' } },
+      { withAnchor: true },
+    );
   });
 
   it('shows the next workout on a rest day', async () => {
@@ -344,10 +350,16 @@ describe('TodayScreen', () => {
     mockData();
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Open the next workout' }));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '5' } },
+      { withAnchor: true },
+    );
     jest.mocked(router.push).mockClear();
     await fireEvent.press(screen.getByText('Rest day · next tomorrow'));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '5' } },
+      { withAnchor: true },
+    );
   });
 
   it('names several next workouts with their size together, opening the first', async () => {
@@ -362,7 +374,10 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Push, Pull')).toBeTruthy();
     expect(screen.getByText('2 workouts · about 90 min')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Open the next workout' }));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '6' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '6' } },
+      { withAnchor: true },
+    );
   });
 
   it('leaves the time of a next workout without exercises out of their size', async () => {
@@ -419,7 +434,10 @@ describe('TodayScreen', () => {
     expect(screen.getByText('1 of 2 done')).toBeTruthy();
     expect(screen.getByText('Done')).toBeTruthy();
     await fireEvent.press(screen.getByHintText('Opens the workout'));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '3' } },
+      { withAnchor: true },
+    );
   });
 
   it('keeps showing what loaded when refreshing fails', async () => {

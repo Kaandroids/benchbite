@@ -200,10 +200,10 @@ describe('RecentLogs', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'See all' }));
     expect(router.push).toHaveBeenCalledWith('/workout/history');
     await fireEvent.press(screen.getAllByHintText('Opens the workout')[0]!);
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/log/[id]',
-      params: { id: '3' },
-    });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/log/[id]', params: { id: '3' } },
+      { withAnchor: true },
+    );
   });
 
   it('names the alternative a workout was done with, an unnamed one by its place', async () => {

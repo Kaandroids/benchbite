@@ -10,6 +10,7 @@ import { openOnWatch } from '@/watch/open-on-watch';
 import { startsOnWatch } from '@/watch/start-on-watch';
 import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
+import { openWorkout } from '@/workouts/open';
 
 import { fetchBests, fetchLastSets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
@@ -47,7 +48,7 @@ export function useStartWorkout() {
       return;
     }
     if (!hasExercises(workout)) {
-      router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
+      openWorkout(workout.id);
       return;
     }
     const held = await fetchWorkoutHeld(workout.id).catch((error: unknown) => {

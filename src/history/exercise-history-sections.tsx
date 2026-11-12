@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -24,6 +23,7 @@ import {
 } from './exercise-history';
 import { useTotalFormat } from './format';
 import { ProgressChart } from '@/components/progress-chart';
+import { openLog } from '@/workouts/open';
 import {
   defaultRange,
   lowerIsBetter,
@@ -218,9 +218,7 @@ export function SessionList({
           accessibilityRole={opensLogs ? 'button' : undefined}
           accessibilityHint={opensLogs ? t('history.open') : undefined}
           disabled={!opensLogs}
-          onPress={() =>
-            router.push({ pathname: '/workout/log/[id]', params: { id: String(session.logId) } })
-          }
+          onPress={() => openLog(session.logId)}
           style={({ pressed }) => [
             styles.session,
             {
