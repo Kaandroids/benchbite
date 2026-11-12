@@ -1,6 +1,6 @@
 # 0111. Edit and tick a set on the watch
 
-- **Status:** Accepted, amended by ADR-0124
+- **Status:** Accepted, amended by ADR-0124 and ADR-0125
 - **Date:** 2026-11-11
 
 ## Context
