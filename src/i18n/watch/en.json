@@ -21,6 +21,7 @@
   "allDone": "All sets done",
   "turnCrown": "Turn the Crown",
   "turnCrownSteps": "Turn the Crown · {{step}} {{unit}} steps",
+  "turnCrownSpeed": "Slow {{fine}} · fast {{step}} {{unit}}",
   "units": {
     "weightKg": "KG",
     "reps": "REPS",

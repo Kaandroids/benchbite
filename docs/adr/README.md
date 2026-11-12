@@ -126,7 +126,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0108](0108-keep-health-access-when-another-user-signs-in.md)         | Keep the health store's access when another user signs in                               | Accepted                                             |
 | [0109](0109-follow-the-workout-on-the-watch.md)                       | Follow the workout in progress on the watch                                             | Accepted, amended by ADR-0112                        |
 | [0110](0110-build-the-apple-watch-app-as-a-target-beside-the-app.md)  | Build the Apple Watch app as a target beside the app                                    | Accepted                                             |
-| [0111](0111-edit-and-tick-a-set-on-the-watch.md)                      | Edit and tick a set on the watch                                                        | Accepted, amended by ADR-0124                        |
+| [0111](0111-edit-and-tick-a-set-on-the-watch.md)                      | Edit and tick a set on the watch                                                        | Accepted, amended by ADR-0124 and ADR-0125           |
 | [0112](0112-signal-the-rest-on-the-watch-that-follows-the-workout.md) | Signal the rest on the watch that follows the workout                                   | Accepted, amended by ADR-0114                        |
 | [0113](0113-run-a-workout-session-on-the-watch.md)                    | Run a workout session on the watch                                                      | Accepted                                             |
 | [0114](0114-signal-the-rest-on-the-watch-while-it-is-heard.md)        | Signal the rest on the watch while it is heard                                          | Accepted, amended by ADR-0116                        |
@@ -140,3 +140,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0122](0122-finish-with-a-long-press-on-the-watch.md)                 | Finish with a long press on the watch                                                   | Accepted                                             |
 | [0123](0123-translate-the-watch-app.md)                               | Translate the watch app                                                                 | Accepted                                             |
 | [0124](0124-time-a-set-on-the-watch.md)                               | Time a set on the watch                                                                 | Accepted                                             |
+| [0125](0125-turn-the-weight-by-the-speed-of-the-crown.md)             | Turn the weight by the speed of the Crown                                               | Accepted                                             |

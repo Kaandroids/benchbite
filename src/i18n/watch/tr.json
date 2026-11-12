@@ -21,6 +21,7 @@
   "allDone": "Tüm setler tamam",
   "turnCrown": "Kronu çevir",
   "turnCrownSteps": "Kronu çevir · {{step}} {{unit}} adımlarla",
+  "turnCrownSpeed": "Yavaş {{fine}} · hızlı {{step}} {{unit}}",
   "units": {
     "weightKg": "KG",
     "reps": "TEKRAR",
