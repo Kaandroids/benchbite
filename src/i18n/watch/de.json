@@ -21,6 +21,7 @@
   "allDone": "Alle Sätze erledigt",
   "turnCrown": "Drehe die Krone",
   "turnCrownSteps": "Drehe die Krone · Schritte von {{step}} {{unit}}",
+  "turnCrownSpeed": "Langsam {{fine}} · schnell {{step}} {{unit}}",
   "units": {
     "weightKg": "KG",
     "reps": "WDH.",
