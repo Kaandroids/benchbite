@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { useUserId } from '@/providers/session-provider';
 import type { Workout } from '@/workouts/workouts';
+import { openWorkout } from '@/workouts/open';
 
 import { BusySheet } from './busy-sheet';
 import { endSession, useActiveSession } from './session';
@@ -24,7 +25,7 @@ export function useStartOrAsk() {
       router.push('/session');
     } else if (!hasExercises(workout)) {
       // Nothing to start, nor to finish or discard the running one for.
-      router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
+      openWorkout(workout.id);
     } else if (session) {
       setWaiting(workout);
     } else {

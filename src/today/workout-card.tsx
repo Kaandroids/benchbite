@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { useTheme } from '@/theme';
 import { useSessionSize, useSessionsSize, useWorkoutName } from '@/workouts/format';
 import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
+import { openWorkout } from '@/workouts/open';
 
 import { MovedFrom } from './moved-from';
 import { PlanRow, type PlanRowProps } from './plan-row';
@@ -24,14 +24,6 @@ type WorkoutCardProps = {
   sessions: WeekSession[];
   today: Date;
 };
-
-function openWorkout(session: WeekSession) {
-  // In the Workout tab, with its list beneath (its layout's anchor).
-  router.push(
-    { pathname: '/workout/[id]', params: { id: String(session.workoutId) } },
-    { withAnchor: true },
-  );
-}
 
 type OpenableWorkoutProps = Pick<
   PlanRowProps,
@@ -48,7 +40,7 @@ function OpenableWorkout({ session, entering, ...row }: OpenableWorkoutProps) {
     // The whole card opens the workout too; screen readers find that on its button alone.
     <Pressable
       accessible={false}
-      onPress={() => openWorkout(session)}
+      onPress={() => openWorkout(session.workoutId)}
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Card entering={entering}>
@@ -57,7 +49,7 @@ function OpenableWorkout({ session, entering, ...row }: OpenableWorkoutProps) {
           color="breakfast"
           background="breakfastBackground"
           actionIcon="forward"
-          onAction={() => openWorkout(session)}
+          onAction={() => openWorkout(session.workoutId)}
         />
       </Card>
     </Pressable>
@@ -168,7 +160,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
             key={session.workoutId}
             accessibilityRole="button"
             accessibilityHint={t('today.workout.open')}
-            onPress={() => openWorkout(session)}
+            onPress={() => openWorkout(session.workoutId)}
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
             {content}

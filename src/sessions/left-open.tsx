@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StyleSheet, View } from 'react-native';
@@ -11,6 +10,7 @@ import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
+import { openLog } from '@/workouts/open';
 
 import { useSaveWorkout } from './save-workout';
 import { isLeftOpen, lastActivity, useActiveSession } from './session';
@@ -105,10 +105,7 @@ export function LeftOpenSaver() {
             size="regular"
             onPress={() => {
               setSaved(null);
-              router.push(
-                { pathname: '/workout/log/[id]', params: { id: String(saved.logId) } },
-                { withAnchor: true },
-              );
+              openLog(saved.logId);
             }}
           />
           <TextLink

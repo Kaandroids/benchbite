@@ -142,7 +142,10 @@ describe('useStartWorkout', () => {
     expect(askMove).not.toHaveBeenCalled();
     expect(beforeStart).not.toHaveBeenCalled();
     expect(startSession).not.toHaveBeenCalled();
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '1' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '1' } },
+      { withAnchor: true },
+    );
   });
 
   it('does not start a workout that waits for premium since the list was loaded', async () => {

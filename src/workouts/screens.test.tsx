@@ -192,10 +192,10 @@ describe('WorkoutsScreen', () => {
     mockWorkouts([testWorkout(5, { type: 'pull' })]);
     await render(<WorkoutsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Pull' }));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/[id]',
-      params: { id: '5' },
-    });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '5' } },
+      { withAnchor: true },
+    );
     await fireEvent.press(screen.getByRole('button', { name: 'Archive' }));
     expect(router.push).toHaveBeenCalledWith('/workout/archive');
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
@@ -280,7 +280,10 @@ describe('WorkoutsScreen', () => {
     expect(screen.queryByText('~45 min')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
     expect(startWorkout).not.toHaveBeenCalled();
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/[id]', params: { id: '5' } },
+      { withAnchor: true },
+    );
   });
 
   describe('with workouts that wait for premium', () => {
@@ -317,7 +320,10 @@ describe('WorkoutsScreen', () => {
       expect(screen.queryByText(/waits? for premium\./)).toBeNull();
       await fireEvent.press(screen.getByRole('button', { name: 'Core' }));
       expect(screen.queryByText('Core waits for premium')).toBeNull();
-      expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });
+      expect(router.push).toHaveBeenCalledWith(
+        { pathname: '/workout/[id]', params: { id: '2' } },
+        { withAnchor: true },
+      );
     });
 
     it('opens a sheet for one, which offers premium, its exercises and a delete', async () => {
@@ -331,10 +337,10 @@ describe('WorkoutsScreen', () => {
 
       await fireEvent.press(screen.getByRole('button', { name: 'See its exercises' }));
       await waitFor(() =>
-        expect(router.push).toHaveBeenCalledWith({
-          pathname: '/workout/[id]',
-          params: { id: '2' },
-        }),
+        expect(router.push).toHaveBeenCalledWith(
+          { pathname: '/workout/[id]', params: { id: '2' } },
+          { withAnchor: true },
+        ),
       );
 
       await fireEvent.press(screen.getByRole('button', { name: 'Core, waits for premium' }));
@@ -466,7 +472,10 @@ describe('ArchiveScreen', () => {
       expect(screen.getByText(/They don't count toward your workouts/)).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: 'Cardio, waits for premium' }));
       expect(screen.queryByText('Cardio waits for premium')).toBeNull();
-      expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });
+      expect(router.push).toHaveBeenCalledWith(
+        { pathname: '/workout/[id]', params: { id: '2' } },
+        { withAnchor: true },
+      );
       await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
       expect(router.push).toHaveBeenLastCalledWith('/premium');
     });
