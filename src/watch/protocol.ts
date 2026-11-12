@@ -52,7 +52,11 @@ export type WatchSet = SetValues & {
 };
 
 /** How the Crown turns a value: from `min` to `max`, by `step`. */
-export type CrownRange = { min: number; max: number; step: number };
+/**
+ * How the Crown turns a value: from `min` to `max`, by `step`; with `fine`, by it while turned
+ * slowly and by `step` while turned fast (ADR 0125).
+ */
+export type CrownRange = { min: number; max: number; step: number; fine?: number };
 
 export type WatchExercise = {
   exerciseId: string;
@@ -152,6 +156,9 @@ export type WatchCommand = CommandBase &
     | { type: 'finish' }
   );
 
+/** The step of a weight turned slowly with the Crown, which reaches any common weight (ADR 0125). */
+const WEIGHT_FINE = 0.5;
+
 /**
  * The step of a distance turned with the Crown: finer than the plan editor's 100 m, as a set's
  * distance is what was done, not a round target.
@@ -159,9 +166,10 @@ export type WatchCommand = CommandBase &
 const METERS_STEP = 50;
 
 /**
- * How the Crown turns a set's values: the weight by what its equipment goes up by, down to none
- * only when it is added to the body, and the reps by one; for a timed set only its distance, by
- * 50 m, as the clock measures the time; each up to what a set can hold.
+ * How the Crown turns a set's values: the weight by half a kilo turned slowly and by what its
+ * equipment goes up by turned fast, down to none only when it is added to the body, and the reps
+ * by one; for a timed set only its distance, by 50 m, as the clock measures the time; each up to
+ * what a set can hold.
  */
 export function crownOf(
   kind: SetKind,
@@ -174,7 +182,12 @@ export function crownOf(
   }
   const step = weightStepOf(equipment);
   return {
-    weightKg: { min: kind.addedWeight ? 0 : step, max: SET_LIMITS.weightKg, step },
+    weightKg: {
+      min: kind.addedWeight ? 0 : step,
+      max: SET_LIMITS.weightKg,
+      step,
+      fine: WEIGHT_FINE,
+    },
     reps: { min: 1, max: SET_LIMITS.reps, step: 1 },
   };
 }

@@ -174,7 +174,7 @@ describe('stateOf', () => {
     expect(bench).toMatchObject({
       fields: ['weightKg', 'reps'],
       crown: {
-        weightKg: { min: 2.5, max: 999.75, step: 2.5 },
+        weightKg: { min: 2.5, max: 999.75, step: 2.5, fine: 0.5 },
         reps: { min: 1, max: 999, step: 1 },
       },
     });
@@ -190,7 +190,12 @@ describe('stateOf', () => {
 
   it('turns a weight added to the body down to none, and by the equipment’s step', () => {
     const pullUp = setKindOf(['reps'], { reps: { min: 8, max: 12 } });
-    expect(crownOf(pullUp, 'dumbbell').weightKg).toEqual({ min: 0, max: 999.75, step: 2 });
+    expect(crownOf(pullUp, 'dumbbell').weightKg).toEqual({
+      min: 0,
+      max: 999.75,
+      step: 2,
+      fine: 0.5,
+    });
   });
 
   it('says what each set still needs, as the phone does', () => {
