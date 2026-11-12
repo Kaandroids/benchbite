@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -8,6 +7,7 @@ import { closeThen } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useTheme } from '@/theme';
+import { openWorkout } from '@/workouts/open';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
@@ -42,9 +42,7 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
       <Button
         label={t('workout.held.seeExercises')}
         variant="secondary"
-        onPress={closeThen(onClose, () =>
-          router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } }),
-        )}
+        onPress={closeThen(onClose, () => openWorkout(workout.id))}
       />
       {/* Quiet and close under the buttons, as a way out rather than an offer. */}
       <Pressable

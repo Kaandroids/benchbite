@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -10,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { openWorkout } from '@/workouts/open';
 
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
@@ -70,11 +70,7 @@ export function WorkoutListItem({
               ? t('workout.todayLabel', { name })
               : name
         }
-        onPress={() =>
-          held && !inArchive
-            ? setShowingHeld(true)
-            : router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
-        }
+        onPress={() => (held && !inArchive ? setShowingHeld(true) : openWorkout(workout.id))}
         style={({ pressed }) => [
           styles.body,
           { gap: spacing.xs, opacity: (held ? HELD_OPACITY : 1) * (pressed ? 0.6 : 1) },

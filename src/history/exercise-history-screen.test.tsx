@@ -160,10 +160,10 @@ describe('ExerciseHistoryScreen', () => {
   it('opens a workout', async () => {
     await render(<ExerciseHistoryScreen id="bench" />);
     await fireEvent.press(screen.getByText(/^Chest day/));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/log/[id]',
-      params: { id: '1' },
-    });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/log/[id]', params: { id: '1' } },
+      { withAnchor: true },
+    );
   });
 
   it('reads an exercise no longer in the library from its sets', async () => {

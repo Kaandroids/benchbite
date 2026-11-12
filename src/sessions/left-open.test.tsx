@@ -59,10 +59,10 @@ describe('LeftOpenSaver', () => {
     );
     expect(screen.getByText('Push was saved')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'View' }));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/log/[id]',
-      params: { id: '42' },
-    });
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/workout/log/[id]', params: { id: '42' } },
+      { withAnchor: true },
+    );
   });
 
   it('leaves a workout alone while it can still be finished, or with nothing done', async () => {
