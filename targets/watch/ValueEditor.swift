@@ -49,6 +49,8 @@ private struct FieldEditor: View {
   private let empty: Bool
   /// The Crown's turn in detents, of which only the change counts, and when it last turned.
   @State private var turned = 0.0
+  /// The last whole detent the value was turned to, as the Crown may report a turn in between.
+  @State private var detent = 0.0
   @State private var lastTurn: Date?
   @FocusState private var focused: Bool
 
@@ -106,12 +108,17 @@ private struct FieldEditor: View {
       isContinuous: false, isHapticFeedbackEnabled: true
     )
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.
-    .onChange(of: turned) { before, after in
+    // Whole detents only, timed from one to the next, whatever the Crown reports in between.
+    .onChange(of: turned) {
+      let whole = turned.rounded()
+      guard whole != detent else { return }
+      let detents = whole - detent
+      detent = whole
       let now = Date()
       let fast = lastTurn.map { now.timeIntervalSince($0) < Self.fastWithin } ?? false
       lastTurn = now
       let previous = value
-      value = Self.turn(value, by: after - before, fast: fast, range: range)
+      value = Self.turn(value, by: detents, fast: fast, range: range)
       if value != previous { change(value) }
     }
     .onAppear {
@@ -141,15 +148,18 @@ private struct FieldEditor: View {
     let steps = Int(detents.magnitude.rounded())
     let up = detents > 0
     for _ in 0..<steps {
-      if let fine = range.fine, !fast {
-        next += up ? fine : -fine
-      } else if range.fine != nil {
+      guard let fine = range.fine else {
+        // A single step, from wherever the value is.
+        next += up ? range.step : -range.step
+        continue
+      }
+      if fast {
         // Onto the coarse grid, a whole step on from where it is.
         let place = next / range.step
         next = (up ? (place + 1e-9).rounded(.down) + 1 : (place - 1e-9).rounded(.up) - 1)
           * range.step
       } else {
-        next += up ? range.step : -range.step
+        next += up ? fine : -fine
       }
     }
     return (min(max(next, range.min), range.max) * 100).rounded() / 100
