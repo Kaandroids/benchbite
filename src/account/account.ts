@@ -196,6 +196,24 @@ async function savePassword(password: string) {
   }
 }
 
+/**
+ * Checks the signed-in account's password by signing in with it, from the phone, where Auth limits
+ * the tries by the phone's IP. A wrong password throws `Wrong`, as each screen tells it its own way.
+ */
+async function confirmPassword(
+  email: string | undefined,
+  password: string,
+  Wrong: new () => Error,
+) {
+  if (!email) {
+    throw new Error('No account is signed in');
+  }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    throw isAuthApiError(error) && error.code === 'invalid_credentials' ? new Wrong() : error;
+  }
+}
+
 const normalized = ({ email, password }: Credentials): Credentials => ({
   email: email.trim(),
   password,
@@ -332,15 +350,7 @@ export function useChangePassword() {
   const email = useUserEmail();
   return useMutation({
     mutationFn: async ({ current, password }: { current: string; password: string }) => {
-      if (!email) {
-        throw new Error('No account is signed in');
-      }
-      const signIn = await supabase.auth.signInWithPassword({ email, password: current });
-      if (signIn.error) {
-        throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
-          ? new WrongCurrentPassword()
-          : signIn.error;
-      }
+      await confirmPassword(email, current, WrongCurrentPassword);
       await savePassword(password);
     },
   });
@@ -381,8 +391,8 @@ export function useSendDeletionCode() {
 /**
  * Deletes the user on this device, guest or account, and all that is theirs (ADR 0087); the app
  * starts over as a new guest. An account brings a code from its email, or signs in with its
- * password just before, which delete-account takes as proof (ADR 0095, ADR 0127). Signing in from
- * the phone leaves Auth to limit the tries by the phone's IP, not one all users share (#531).
+ * password just before, which delete-account takes as proof (ADR 0095, ADR 0127): Auth then limits
+ * the tries by the phone's IP, not one all users share (#531).
  */
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
@@ -390,20 +400,11 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: async (proof?: DeletionProof) => {
       if (proof && 'password' in proof) {
-        if (!email) {
-          throw new Error('No account is signed in');
-        }
-        const signIn = await supabase.auth.signInWithPassword({ email, password: proof.password });
-        if (signIn.error) {
-          throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
-            ? new WrongPassword()
-            : signIn.error;
-        }
+        await confirmPassword(email, proof.password, WrongPassword);
+        await callFunction('delete-account', { signedIn: true });
+      } else {
+        await callFunction('delete-account', proof);
       }
-      await callFunction(
-        'delete-account',
-        proof && 'password' in proof ? { signedIn: true } : proof,
-      );
       await leaveDeletedUser();
     },
   });
