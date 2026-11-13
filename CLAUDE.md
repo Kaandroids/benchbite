@@ -60,8 +60,10 @@ and opens pull requests as the `benchbite-bot` GitHub App; the maintainer review
 - Pull requests are squash-merged, so the PR title becomes the commit on `main`.
 - Address every review comment with a new commit. Do not force-push a branch under review.
 - Every pull request Claude opens gets an automated review: after `gh pr create`, a hook in
-  `.claude/settings.json` asks Claude to run the `review-pr` skill, which reviews principles,
-  security, and logic and performance in parallel and posts one comment on the PR.
+  `.claude/settings.json` asks Claude to run the `review-pr` skill. It reviews principles,
+  security, and logic and performance in parallel, has the findings checked, fixes those with a
+  clear fix as new commits, reviews the fixes, and once CI is green posts one comment on the PR
+  with what was fixed and what the maintainer decides.
 - Do not implement a design before it is approved. For new screens and visible UI changes, Claude
   first proposes the design as an Artifact (a mock-up of the screens and their states); the
   maintainer approves it before any code is written.

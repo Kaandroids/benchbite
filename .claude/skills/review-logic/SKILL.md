@@ -16,6 +16,15 @@ stay on behaviour.
    the change meets code it did not touch.
 3. The PR description, to check that the code does what it claims, and its tests, to see which
    cases are covered.
+4. Every other place that writes or reads what the PR changes: for each table, column, SQL
+   function, Edge Function, query key or stored value it touches, search the codebase for its
+   other users, such as the notebook editing the notes a new tool changes. Bugs hide where an
+   existing flow meets the new one at the same moment or in the other order.
+
+When `review-pr` names a range of commits, as for the fixes of an earlier round, review what those
+commits change and how it meets the rest, not the whole PR again.
+
+Run the code where reading leaves doubt, as `.claude/skills/review-pr/running-code.md` describes.
 
 ## What to look for
 
@@ -32,6 +41,21 @@ stay on behaviour.
   `for update` where a row is read then written, triggers that miss an update path.
 - Tests that pass without testing the change: mocks that bypass the code, assertions that cannot
   fail.
+
+**Compatibility and deploy**
+
+- Apps already installed: an older app talking to the new database or Edge Function, or the new
+  app to the old one until the deploy, such as a new kind of card it does not show.
+- Migrations: their order, enum values used in the migration that adds them, data the change
+  leaves behind or needs to move, and whether it can be deployed in place.
+- Shared code: a change to `supabase/functions/_shared` or to a SQL function others call, and
+  every caller it reaches.
+
+**Tests**
+
+- Each new branch, refusal and error code of the change has a test: pgTAP for SQL, Deno for Edge
+  Functions, Jest for the app.
+- The cases that matter most are tested: the limit itself, another user, a row changed meanwhile.
 
 **Performance**
 
