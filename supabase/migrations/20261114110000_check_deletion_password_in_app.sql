@@ -6,6 +6,11 @@
 drop function public.take_account_deletion_password_try(uuid);
 -- It served only the count of all users' tries together.
 drop index public.account_deletion_tries_kind_created_at_idx;
+-- Password tries are no longer recorded.
+delete from public.account_deletion_tries where kind = 'password';
+alter table public.account_deletion_tries
+  drop constraint account_deletion_tries_kind_check,
+  add constraint account_deletion_tries_kind_check check (kind in ('code_sent', 'wrong_code'));
 
 -- Whether the user's password changed in the last day. A session that signed in recently can set a
 -- new password without the old (ADR 0093), so a password that new proves nothing about who asks.
