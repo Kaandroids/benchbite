@@ -1,7 +1,13 @@
-# The delete pages act on an account, so no other site may show the site in a frame.
+# Headers for every page (#537); the Content-Security-Policy of each page is in its <meta>, from
+# astro.config.mjs. The delete pages act on an account, so no other site may show the site in a
+# frame, which only a header can say. The link to delete an account holds its token in the
+# fragment, which a referrer never carries, but the site has no reason to send one at all.
 # X-Robots-Tag: the legal pages still hold placeholder text, so search engines stay away until it
 # is replaced; remove that line before the site goes live.
 /*
   Content-Security-Policy: frame-ancestors 'none'
   X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   X-Robots-Tag: noindex
