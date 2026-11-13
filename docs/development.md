@@ -257,6 +257,26 @@ applies only to the built site, so try a new script or style with `pnpm build` a
 (ADR 0129). Its text is in `src/i18n/`, one
 file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md).
 
+## Update dependencies
+
+Dependabot opens a pull request each week for newer versions of the app's and the website's
+packages, the Edge Functions' imports and the workflows' actions, once a version has been out for a
+week (`.github/dependabot.yml`, [ADR 0130](adr/0130-keep-dependencies-current-with-dependabot.md)).
+
+It leaves alone the packages Expo pins: those of `package.json` that
+`node_modules/expo/bundledNativeModules.json` names, with `expo` itself, and `@types/react` and
+`@react-native/*`, which are versioned with React and React Native. When `pnpm expo install` adds
+another package that list names, add it to the `ignore` list in `.github/dependabot.yml` too. They
+move together, with Expo:
+
+```bash
+pnpm expo install --check        # lists the Expo packages that have newer fixes for this SDK
+pnpm expo install expo@~<SDK>.0  # takes the SDK's newest fixes, <SDK> as in package.json, then
+pnpm expo install --fix          # moves the packages Expo pins to match
+```
+
+A new native version needs `pnpm native:dev` and a new development build.
+
 ## Scripts
 
 | Command                 | Description                                           |

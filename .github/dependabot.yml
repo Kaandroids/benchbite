@@ -1,0 +1,63 @@
+# Keeps the dependencies current (#538, ADR 0130): Dependabot opens a pull request each week for
+# what has a newer version, which CI checks like any other. A version must have been out for a week
+# first, beyond pnpm's own minimumReleaseAge, so that a compromised release is usually found and
+# pulled before it reaches us.
+version: 2
+updates:
+  # The app. The packages Expo pins move only with Expo, as an update of one alone would not fit
+  # the rest; docs/development.md ("Update dependencies") says which they are and when one is added.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: expo
+      - dependency-name: expo-*
+      - dependency-name: eslint-config-expo
+      - dependency-name: jest-expo
+      - dependency-name: react
+      - dependency-name: react-native
+      - dependency-name: react-native-gesture-handler
+      - dependency-name: react-native-reanimated
+      - dependency-name: react-native-safe-area-context
+      - dependency-name: react-native-screens
+      - dependency-name: react-native-svg
+      - dependency-name: react-native-worklets
+      - dependency-name: '@react-native/*'
+      - dependency-name: '@types/react'
+    groups:
+      # Tools for development only, in one pull request while they stay within a major version.
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  # The website, a package of its own. Vite is there only for loadEnv and follows the Vite that
+  # Astro brings (ADR 0129), so they move together.
+  - package-ecosystem: npm
+    directory: /website
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      astro:
+        patterns: [astro, '@astrojs/*', vite]
+
+  # The Edge Functions' imports in deno.json, among them @supabase/server, which checks every
+  # request's token. They are pinned to exact versions, so each release is a change to propose.
+  - package-ecosystem: deno
+    directory: /supabase/functions
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  # The workflows' actions, pinned to commits; Dependabot moves the commit and its version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7

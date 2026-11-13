@@ -1,12 +1,12 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/assert@1": "1.0.19",
+    "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
-    "jsr:@supabase/functions-js@2": "2.118.0",
-    "npm:@supabase/server@1": "1.9.2_@supabase+supabase-js@2.118.0",
+    "jsr:@supabase/functions-js@2.118.0": "2.118.0",
+    "npm:@supabase/server@1.9.2": "1.9.2_@supabase+supabase-js@2.118.0",
     "npm:openai@^4.52.5": "4.104.0_zod@4.6.7",
-    "npm:zod@4": "4.6.7"
+    "npm:zod@4.6.7": "4.6.7"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -309,10 +309,10 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@1",
-      "jsr:@supabase/functions-js@2",
-      "npm:@supabase/server@1",
-      "npm:zod@4"
+      "jsr:@std/assert@1.0.19",
+      "jsr:@supabase/functions-js@2.118.0",
+      "npm:@supabase/server@1.9.2",
+      "npm:zod@4.6.7"
     ]
   }
 }

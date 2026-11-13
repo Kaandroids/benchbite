@@ -145,3 +145,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0127](0127-check-the-deletion-password-on-the-phone.md)              | Check the password for deleting an account on the phone                                 | Accepted, amended by ADR-0128                        |
 | [0128](0128-sign-out-the-session-a-password-check-replaces.md)        | Sign out the session a password check replaces                                          | Accepted                                             |
 | [0129](0129-a-content-security-policy-for-the-website.md)             | A content security policy for the website                                               | Accepted                                             |
+| [0130](0130-keep-dependencies-current-with-dependabot.md)             | Keep dependencies current with Dependabot                                               | Accepted                                             |
