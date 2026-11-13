@@ -1,6 +1,6 @@
 # 0071. Bite keeps a notebook of the user, in its own table, read in every answer
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0133
 - **Date:** 2026-11-01
 
 ## Context
