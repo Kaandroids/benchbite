@@ -3,7 +3,11 @@
 // stops without it; a build without it, as locally and in CI, posts to the local stack. The pages
 // and the content security policy in astro.config.mjs both read it here, so they cannot differ.
 
-/** The functions' address for the variable as set, or the local stack's. */
+/**
+ * The functions' address for the variable as set, or the local stack's.
+ * @param {string | undefined} configured
+ * @returns {string}
+ */
 export function functionsUrl(configured) {
   return (configured || 'http://127.0.0.1:54321/functions/v1').replace(/\/$/, '');
 }
