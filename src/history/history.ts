@@ -135,12 +135,12 @@ type SummaryRow = Database['public']['Views']['workout_log_summaries']['Row'];
 
 function toSummary(row: SummaryRow): LogSummary {
   return {
-    id: row.id ?? 0,
+    id: row.id,
     workoutId: row.workout_id,
     name: row.name,
     type: row.type,
-    startedAt: new Date(row.started_at ?? 0),
-    finishedAt: new Date(row.finished_at ?? 0),
+    startedAt: new Date(row.started_at),
+    finishedAt: new Date(row.finished_at),
     exercises: row.exercises ?? 0,
     plannedExercises: row.planned_exercises,
     sets: row.sets ?? 0,
@@ -181,18 +181,12 @@ export async function recentLogs(
     .gte('finished_at', since.toISOString())
     .limit(20);
   if (error) throw error;
-  return data.flatMap((row) =>
-    row.id === null || !row.started_at || !row.finished_at
-      ? []
-      : [
-          {
-            id: row.id,
-            startedAt: new Date(row.started_at),
-            finishedAt: new Date(row.finished_at),
-            kcal: row.kcal,
-          },
-        ],
-  );
+  return data.map((row) => ({
+    id: row.id,
+    startedAt: new Date(row.started_at),
+    finishedAt: new Date(row.finished_at),
+    kcal: row.kcal,
+  }));
 }
 
 /** The latest `count` finished workouts, or the `count` before `after`, latest first. */
@@ -217,10 +211,7 @@ export async function fetchLogSummaries(count: number, after?: LogCursor): Promi
   return {
     logs: data.map(toSummary),
     // A short page is the last one.
-    next:
-      last && data.length === count
-        ? { finishedAt: last.finished_at ?? '', id: last.id ?? 0 }
-        : undefined,
+    next: last && data.length === count ? { finishedAt: last.finished_at, id: last.id } : undefined,
   };
 }
 
