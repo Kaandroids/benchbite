@@ -2538,6 +2538,7 @@ export type Database = {
         Returns: boolean;
       };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
+      inactive_guest_overdue_before: { Args: Record<PropertyKey, never>; Returns: string };
       inactive_guest_removal_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
       inactive_guest_removal_status: {
         Args: Record<PropertyKey, never>;
