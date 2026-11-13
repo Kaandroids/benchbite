@@ -26,21 +26,27 @@ so deleting the row in `auth.users` from SQL would leave them behind (ADR 0063, 
   of its creation, its last sign-in and the last refresh of any of its sessions
   (`last_active_at()`). Someone who opens the app at least once in three months keeps their data;
   90 days is long enough for a break from training, an injury or a season away. Accounts with an
-  email address are never removed this way.
-- **An Edge Function deletes them as deleting an account does.** `remove-inactive-guests` takes up
-  to 20 inactive guests from `inactive_guests()`, in random order so that guests whose removal
-  keeps failing cannot hold up the others, and deletes each with the same `deleteUser` as
+  email address are never removed this way. The period is written once, in
+  `guest_inactivity_period()`.
+- **An Edge Function deletes them as deleting an account does.** `remove-inactive-guests` takes
+  inactive guests from `inactive_guests()` 20 at a time, in random order so that guests whose
+  removal keeps failing cannot hold up the others, and deletes each with the same `deleteUser` as
   deleting an account: the exercise photos, then the user, whose rows go with it through their
-  foreign keys and whose chat photos go through the queue of ADR 0063. A guest that fails is
-  tried again on a later run.
-- **`pg_cron` calls the function every hour, as it calls `purge-coach-media`** (ADR 0063).
-  `request_inactive_guest_removal()` sends a request through `pg_net` only while there are
-  inactive guests, with the project URL and secret key it reads from Vault, and skips the call
-  with a warning while they are not set. It also warns while a guest has been inactive for over
-  91 days, as the removal then keeps failing. 20 guests an hour is 480 a day.
+  foreign keys and whose chat photos go through the queue of ADR 0063. It goes on until none are
+  left, a batch removes none, or 40 seconds have passed, within the call's 60-second timeout, so a
+  run is not capped at one batch. A guest that fails is tried again on a later run.
+- **`pg_cron` calls the function every hour.** `request_inactive_guest_removal()` calls it only
+  while there are inactive guests. It warns while a guest is still there a day after the period
+  ran out (`inactive_guest_removal_stalled()`): every run removes guests until none are left, so
+  only failing runs, or far more guests a day than the runs can remove, leave one that long.
+- **Scheduled jobs call Edge Functions through one helper.** `call_scheduled_function(name)` reads
+  the project URL and secret key from Vault when the job runs, skips the call with a warning while
+  they are not set, and sends the request through `pg_net`, as `request_coach_media_purge()` did on
+  its own (ADR 0063); that function now uses it too.
 - **Only the service role finds inactive guests, and only the secret key opens the function.**
-  Clients cannot call `inactive_guests()`, `last_active_at()` or the request function; the
-  function's JWT check is off, as the key is no JWT, and it accepts only the project's secret key.
+  Clients cannot call `inactive_guests()`, and no one but the database owner calls the other new
+  functions; the Edge Function's JWT check is off, as the key is no JWT, and it accepts only the
+  project's secret key.
 
 ## Alternatives considered
 
