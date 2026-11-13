@@ -13,7 +13,7 @@ import type { AccountRefusal } from '@shared/account_refusals';
 
 import { functionRefusal } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
-import { useSession, useUserEmail } from '@/providers/session-provider';
+import { useSession } from '@/providers/session-provider';
 
 import { PASSWORD_LIMITS } from './passwords';
 
@@ -197,21 +197,27 @@ async function savePassword(password: string) {
 }
 
 /**
- * Checks the signed-in account's password by signing in with it, from the phone, where Auth limits
- * the tries by the phone's IP. A wrong password throws `Wrong`, as each screen tells it its own way.
+ * Whether the password is the signed-in account's, checked by signing in with it from the phone,
+ * where Auth limits the tries by the phone's IP. The address is the one Auth has now: the session's
+ * can be one changed since on another device, with which the right password would fail (#528).
  */
-async function confirmPassword(
-  email: string | undefined,
-  password: string,
-  Wrong: new () => Error,
-) {
+async function isAccountPassword(password: string): Promise<boolean> {
+  const { data, error: readError } = await supabase.auth.getUser();
+  if (readError) {
+    throw readError;
+  }
+  const email = data.user.email;
   if (!email) {
     throw new Error('No account is signed in');
   }
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    throw isAuthApiError(error) && error.code === 'invalid_credentials' ? new Wrong() : error;
+  if (isAuthApiError(error) && error.code === 'invalid_credentials') {
+    return false;
   }
+  if (error) {
+    throw error;
+  }
+  return true;
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({
@@ -347,10 +353,11 @@ export function useSaveNewPassword() {
  * as Auth does not; Auth only refuses a session older than a day (ADR 0093).
  */
 export function useChangePassword() {
-  const email = useUserEmail();
   return useMutation({
     mutationFn: async ({ current, password }: { current: string; password: string }) => {
-      await confirmPassword(email, current, WrongCurrentPassword);
+      if (!(await isAccountPassword(current))) {
+        throw new WrongCurrentPassword();
+      }
       await savePassword(password);
     },
   });
@@ -396,11 +403,12 @@ export function useSendDeletionCode() {
  */
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
-  const email = useUserEmail();
   return useMutation({
     mutationFn: async (proof?: DeletionProof) => {
       if (proof && 'password' in proof) {
-        await confirmPassword(email, proof.password, WrongPassword);
+        if (!(await isAccountPassword(proof.password))) {
+          throw new WrongPassword();
+        }
         await callFunction('delete-account', { signedIn: true });
       } else {
         await callFunction('delete-account', proof);

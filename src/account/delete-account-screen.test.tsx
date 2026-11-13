@@ -10,7 +10,10 @@ import { DeleteAccountScreen } from './delete-account-screen';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
-  supabase: { functions: { invoke: jest.fn() }, auth: { signInWithPassword: jest.fn() } },
+  supabase: {
+    functions: { invoke: jest.fn() },
+    auth: { getUser: jest.fn(), signInWithPassword: jest.fn() },
+  },
 }));
 jest.mock('@/providers/session-provider', () => ({
   useSession: jest.fn(),
@@ -47,7 +50,16 @@ beforeEach(() => {
   given(true);
   answering();
   jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({ error: null } as never);
+  storedEmail('kaan@example.com');
 });
+
+/** The address Auth has for the account now, which may differ from the session's. */
+function storedEmail(email: string) {
+  jest.mocked(supabase.auth.getUser).mockResolvedValue({
+    data: { user: { email } },
+    error: null,
+  } as never);
+}
 
 /** Opens the sheet of an account and has the code sent. */
 async function sendCode() {
@@ -220,6 +232,22 @@ describe('an account', () => {
     });
     expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
       body: { signedIn: true },
+    });
+  });
+
+  it('signs in with the address Auth has now, not one the session still keeps', async () => {
+    storedEmail('new@example.com');
+    await sendCode();
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
+    );
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+
+    await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      password: 'secret',
     });
   });
 
