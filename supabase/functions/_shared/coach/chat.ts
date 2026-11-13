@@ -131,6 +131,7 @@ export type ChatReason =
   | 'request_too_large'
   | 'unpriced_model'
   | 'call_in_progress'
+  | 'service_paused'
   | 'unavailable'
   | 'blocked'
   | 'not_saved';

@@ -105,6 +105,7 @@ export type EstimateReason =
   | 'request_too_large'
   | 'unpriced_model'
   | 'call_in_progress'
+  | 'service_paused'
   | 'blocked'
   | 'unavailable';
 
