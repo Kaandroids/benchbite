@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -179,6 +179,36 @@ select is(
   ),
   'undoing puts it back in use'
 );
+
+-- A newer change keeps what the one it replaces changed and it does not.
+insert into ids select 'text', pg_temp.propose(
+  'note', jsonb_build_object('id', pg_temp.id('knee'), 'text', 'Knee hurts on deep squats only')
+);
+insert into ids select 'day', pg_temp.propose(
+  'note', jsonb_build_object('id', pg_temp.id('knee'), 'reviewOn', current_date + 14)
+);
+select is(
+  (select status from public.coach_proposals where id = pg_temp.id('text')), 'replaced',
+  'the newer change replaces the one before'
+);
+select is(
+  (select change from public.coach_proposals where id = pg_temp.id('day')),
+  jsonb_build_object(
+    'id', pg_temp.id('knee'), 'text', 'Knee hurts on deep squats only',
+    'reviewOn', current_date + 14
+  ),
+  'and keeps its text'
+);
+select pg_temp.decide(pg_temp.id('day'), 'keep');
+insert into ids select 'after kept', pg_temp.propose(
+  'note', jsonb_build_object('id', pg_temp.id('knee'), 'category', 'health')
+);
+select is(
+  (select change from public.coach_proposals where id = pg_temp.id('after kept')),
+  jsonb_build_object('id', pg_temp.id('knee'), 'category', 'health'),
+  'but not what the user kept as it is'
+);
+select pg_temp.decide(pg_temp.id('after kept'), 'keep');
 
 -- A newer proposal for the same note replaces one pending; one for another note stays.
 insert into ids select 'first', pg_temp.propose(
