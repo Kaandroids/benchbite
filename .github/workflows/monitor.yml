@@ -60,3 +60,45 @@ jobs:
             echo "::error::The photo purge of deleted chats is failing: it has stopped with folders over an hour old, or its latest call failed"
             exit 1
           fi
+
+  guest-removal:
+    name: Guest removal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # As the photo purge's check, with the same read-only token (ADR 0132).
+    if: github.ref == 'refs/heads/main'
+    environment: monitoring
+    steps:
+      # Runs inactive_guest_removal_status() as supabase_read_only_user. It returns only a count, an
+      # age and the latest run's status, and only those are printed.
+      - name: Check the removal of inactive guests
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          result="$RUNNER_TEMP/guest-removal-status.json"
+          http_status=$(curl --silent --show-error --max-time 60 \
+            --output "$result" --write-out '%{http_code}' \
+            --request POST "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query/read-only" \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data '{"query": "select * from public.inactive_guest_removal_status()"}')
+          # Any 2xx is a success; the query endpoint currently answers with 201.
+          if [[ "$http_status" != 2?? ]]; then
+            echo "::error::The status query failed with HTTP $http_status"
+            exit 1
+          fi
+
+          if ! status=$(jq --exit-status '.[0] | select(has("healthy"))' "$result"); then
+            echo "::error::The status query returned no status"
+            exit 1
+          fi
+          jq --raw-output '
+            "Guests overdue by more than a day: \(.overdue_guests)",
+            "Latest run: \(.latest_run_status // "none")\(if .latest_run_minutes == null then "" else ", \(.latest_run_minutes) minutes ago" end)"
+          ' <<< "$status"
+
+          if [[ "$(jq --raw-output '.healthy' <<< "$status")" != true ]]; then
+            echo "::error::The removal of inactive guests is failing: a guest is overdue, or the hourly job has not succeeded in the last two hours"
+            exit 1
+          fi
