@@ -142,4 +142,5 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0124](0124-time-a-set-on-the-watch.md)                               | Time a set on the watch                                                                 | Accepted                                             |
 | [0125](0125-turn-the-weight-by-the-speed-of-the-crown.md)             | Turn the weight by the speed of the Crown                                               | Accepted                                             |
 | [0126](0126-close-new-database-objects-to-clients.md)                 | Close new database objects to clients                                                   | Accepted                                             |
-| [0127](0127-check-the-deletion-password-on-the-phone.md)              | Check the password for deleting an account on the phone                                 | Accepted                                             |
+| [0127](0127-check-the-deletion-password-on-the-phone.md)              | Check the password for deleting an account on the phone                                 | Accepted, amended by ADR-0128                        |
+| [0128](0128-sign-out-the-session-a-password-check-replaces.md)        | Sign out the session a password check replaces                                          | Accepted                                             |
