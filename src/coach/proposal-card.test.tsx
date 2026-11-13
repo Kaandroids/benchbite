@@ -549,3 +549,88 @@ it('offers no Undo when only to read', async () => {
 
   expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
 });
+
+describe('a note change', () => {
+  const knee = { category: 'injury', text: 'Left knee hurts on squats' } as const;
+  const NOTE: Card = {
+    kind: 'note',
+    id: 12,
+    from: { ...knee, reviewOn: '2026-11-20' },
+    to: { ...knee, text: 'Left knee is a little sore on deep squats', reviewOn: '2026-12-04' },
+  };
+  const ARCHIVE: Card = { kind: 'note_archive', id: 13, ...knee, reason: 'The knee is fine again' };
+
+  it('shows the text it changes, struck through, and the day to ask again', async () => {
+    await render(<ProposalCard card={NOTE} state={pending} />);
+
+    expect(screen.getByText('Change this note?')).toBeOnTheScreen();
+    expect(screen.getByText('Injury')).toBeOnTheScreen();
+    expect(screen.getByText('Left knee hurts on squats')).toBeOnTheScreen();
+    expect(screen.getByText('Left knee is a little sore on deep squats')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Ask again: .+ instead of .+$/)).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Change note' })).toBeOnTheScreen();
+    expect(screen.queryByText('From today')).not.toBeOnTheScreen();
+  });
+
+  it('shows only what changes', async () => {
+    const card: Card = {
+      kind: 'note',
+      id: 14,
+      from: { ...knee, reviewOn: '2026-11-20' },
+      to: { ...knee, category: 'health', reviewOn: null },
+    };
+    await render(<ProposalCard card={card} state={pending} />);
+
+    expect(screen.getByText('Injury → Health')).toBeOnTheScreen();
+    expect(screen.getAllByText('Left knee hurts on squats')).toHaveLength(1);
+    expect(screen.getByLabelText(/^Ask again: none instead of .+$/)).toBeOnTheScreen();
+  });
+
+  it('changes the note and folds into a line with Undo', async () => {
+    decides('applied');
+    await render(<ProposalCard card={NOTE} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Change note' }));
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'decide_coach_proposal',
+      expect.objectContaining({ proposal_id: 12, decision: 'apply' }),
+    );
+    expect(await screen.findByText('Changed in notebook')).toBeOnTheScreen();
+    expect(
+      screen.getByText(/^Left knee is a little sore on deep squats · ask again .+$/),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+
+  it('shows a note to move to past notes, with why', async () => {
+    await render(<ProposalCard card={ARCHIVE} state={pending} />);
+
+    expect(screen.getByText('Move to past notes?')).toBeOnTheScreen();
+    expect(screen.getByText('Left knee hurts on squats')).toBeOnTheScreen();
+    expect(screen.getByText('The knee is fine again')).toBeOnTheScreen();
+    expect(
+      screen.getByText("Bite's answers leave past notes out. You can restore it in the notebook."),
+    ).toBeOnTheScreen();
+  });
+
+  it('moves the note and folds into a line with Undo', async () => {
+    decides('applied');
+    await render(<ProposalCard card={ARCHIVE} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Move' }));
+
+    expect(await screen.findByText('Moved to past notes')).toBeOnTheScreen();
+    expect(screen.getByText('Left knee hurts on squats')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+
+  it('keeps the note as it is', async () => {
+    decides('kept');
+    await render(<ProposalCard card={ARCHIVE} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep as is' }));
+
+    expect(await screen.findByText('Kept as it is')).toBeOnTheScreen();
+  });
+});
