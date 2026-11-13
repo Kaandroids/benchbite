@@ -15,6 +15,15 @@ from another. Design and correctness have their own reviews; stay on security.
 2. For every changed table, function, policy or bucket: the migrations that define it, so you
    judge the state after this PR, not the diff alone.
 3. The "Security" and "Architecture rules" sections of `CLAUDE.md`.
+4. Every other way to reach what the PR changes: the policies, grants and functions on the same
+   tables, and the Edge Functions that call them, so that a new path cannot do what an old one may
+   not.
+
+When `review-pr` names a range of commits, as for the fixes of an earlier round, review what those
+commits change and how it meets the rest, not the whole PR again.
+
+Where a policy or a `security definer` function leaves doubt, try it as another user in a
+transaction you roll back, as `.claude/skills/review-pr/running-code.md` describes.
 
 ## What to look for
 
