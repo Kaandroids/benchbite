@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(4);
+select plan(6);
 
 insert into auth.users (id, email, email_confirmed_at, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'kaan@example.com', now(), false),
@@ -35,6 +35,16 @@ select is(
   public.account_deletion_user('\xa1'),
   null,
   'Nor does a link sent before'
+);
+select is(
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xac', 'kaan@example.com'),
+  'address_changed',
+  'No code is kept for an address read before it changed'
+);
+select is(
+  public.start_account_deletion('kaan@example.com', '\x01', '\xa2'),
+  null,
+  'Nor a link for the old address'
 );
 select is(
   (select count(*)::int from public.account_deletion_codes

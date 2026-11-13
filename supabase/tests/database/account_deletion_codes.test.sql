@@ -22,12 +22,12 @@ $$;
 grant execute on all functions in schema pg_temp to public;
 
 select is(
-  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xaa'),
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xaa', 'kaan@example.com'),
   'sent',
   'A user gets a code'
 );
 select is(
-  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xbb'),
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xbb', 'kaan@example.com'),
   'too_soon',
   'Not a second one within a minute'
 );
@@ -44,7 +44,7 @@ select is(
 
 select pg_temp.later(2);
 select is(
-  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xcc'),
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xcc', 'kaan@example.com'),
   'sent',
   'A minute later a new code is sent'
 );
@@ -62,7 +62,7 @@ select is(
   'After 5 wrong codes, the right one no longer works either'
 );
 select pg_temp.later(2);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xdd');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xdd', 'kaan@example.com');
 select is(
   public.check_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xdd'),
   'too_many',
@@ -75,18 +75,18 @@ select is(
   'An hour later the tries are back, and the code has expired after 15 minutes'
 );
 
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe1');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe1', 'kaan@example.com');
 select pg_temp.later(2);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe2');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe2', 'kaan@example.com');
 select pg_temp.later(2);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe3');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe3', 'kaan@example.com');
 select pg_temp.later(2);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe4');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe4', 'kaan@example.com');
 select pg_temp.later(2);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe5');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe5', 'kaan@example.com');
 select pg_temp.later(2);
 select is(
-  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe6'),
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe6', 'kaan@example.com'),
   'too_many',
   'A sixth code within an hour is not sent'
 );
@@ -97,7 +97,7 @@ select is(
 );
 
 select pg_temp.later(61);
-select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1');
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1', 'kaan@example.com');
 select public.take_back_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1');
 select is(
   public.check_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1'),
@@ -105,7 +105,7 @@ select is(
   'A code taken back, as its email failed, does not work'
 );
 select is(
-  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf2'),
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf2', 'kaan@example.com'),
   'sent',
   'And another can be sent at once'
 );
@@ -158,7 +158,7 @@ select is(
 
 select ok(
   not has_function_privilege('authenticated', 'public.check_account_deletion_code(uuid, bytea)', 'execute')
-    and not has_function_privilege('authenticated', 'public.new_account_deletion_code(uuid, bytea)', 'execute')
+    and not has_function_privilege('authenticated', 'public.new_account_deletion_code(uuid, bytea, text)', 'execute')
     and not has_function_privilege('anon', 'public.password_changed_lately(uuid)', 'execute')
     and not has_function_privilege('authenticated', 'public.password_changed_lately(uuid)', 'execute'),
   'No client can make or check a code, or ask about a password'
