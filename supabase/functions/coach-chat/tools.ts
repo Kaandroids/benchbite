@@ -718,7 +718,10 @@ const TOOLS = [
       // or an entry read before: the entries may have changed meanwhile. The user reads their own
       // proposals and entries.
       const [stored, named] = await Promise.all([
-        supabase.from('coach_proposals').select('change, before').eq('id', proposed.data).single(),
+        storedProposal<{ changes: StoredFoodLogChange[] }, StoredFoodLogEntry[]>(
+          supabase,
+          proposed.data,
+        ),
         supabase
           .from('meal_entries')
           .select(`id, ${ENTRY_FOOD}`)
@@ -727,14 +730,10 @@ const TOOLS = [
             changes.map((c) => c.entryId),
           ),
       ]);
-      if (stored.error) throw stored.error;
       const entries = read(named);
       const name = await entryNames(supabase, language, entries);
       const names = new Map(entries.map((entry) => [entry.id, name(entry)]));
-      const { change, before } = stored.data as unknown as {
-        change: { changes: StoredFoodLogChange[] };
-        before: StoredFoodLogEntry[];
-      };
+      const { change, before } = stored;
       const proposal: ProposalCard = {
         kind: 'food_log',
         id: proposed.data,
@@ -878,7 +877,10 @@ const TOOLS = [
       });
       if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
       // As the database kept it, which applying sets: with what a proposal it replaced changed.
-      const { change: kept, before } = await storedNoteProposal(supabase, proposed.data);
+      const { change: kept, before } = await storedProposal<Partial<CardNote>, CardNote>(
+        supabase,
+        proposed.data,
+      );
       const proposal: ProposalCard = {
         kind: 'note',
         id: proposed.data,
@@ -914,7 +916,7 @@ const TOOLS = [
         today,
       });
       if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
-      const { before } = await storedNoteProposal(supabase, proposed.data);
+      const { before } = await storedProposal<unknown, CardNote>(supabase, proposed.data);
       const proposal: ProposalCard = {
         kind: 'note_archive',
         id: proposed.data,
@@ -928,20 +930,20 @@ const TOOLS = [
 ];
 
 /**
- * A note's proposal `id` as the database kept it: the change applying sets, and the note as it
- * was, which the user reads as their own proposal.
+ * The proposal `id` as the database kept it: the change applying sets, and what it replaces, which
+ * the user reads as their own proposal.
  */
-async function storedNoteProposal(
+async function storedProposal<Change, Before>(
   supabase: Client,
   id: number,
-): Promise<{ change: Partial<CardNote>; before: CardNote }> {
+): Promise<{ change: Change; before: Before }> {
   const stored = await supabase
     .from('coach_proposals')
     .select('change, before')
     .eq('id', id)
     .single();
   if (stored.error) throw stored.error;
-  return stored.data as unknown as { change: Partial<CardNote>; before: CardNote };
+  return stored.data as unknown as { change: Change; before: Before };
 }
 
 /** The kinds of proposal the tools offered to Bite make. */
