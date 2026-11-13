@@ -58,9 +58,11 @@ photo purge: it fails when a deleted chat's folder has waited over an hour and a
 it or no call succeeded in the last 15 minutes, or when the latest call to `purge-coach-media` was
 not answered with a 2xx while folders are queued. Its log shows only counts, ages and status codes; a
 401 usually means the secret key in Vault is outdated. It reads `SUPABASE_ACCESS_TOKEN` and
-`SUPABASE_PROJECT_ID` from the repository's `monitoring` environment, which holds the same values as
-`production`, allows only main and needs no approval. Start it from the Actions tab with **Run
-workflow** to check at once.
+`SUPABASE_PROJECT_ID` from the repository's `monitoring` environment, which allows only main and
+needs no approval ([ADR 0132](adr/0132-monitor-with-a-read-only-token.md)). Its token is not the
+deploy's: create it under Account → Access Tokens for this project alone, with no permission but
+**Database: Read**, and an expiry, such as a year; the Monitor fails once it expires, and a new one
+replaces it. Start it from the Actions tab with **Run workflow** to check at once.
 
 ## Install on an iPhone
 
