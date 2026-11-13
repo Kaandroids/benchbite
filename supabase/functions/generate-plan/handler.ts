@@ -7,10 +7,15 @@ import { Constants, type Database } from '../_shared/database.types.ts';
 import { MAX_TRAINING_DAYS, SESSION_MINUTES } from '../_shared/plan/limits.ts';
 import { buildPlan } from '../_shared/plan/plan.ts';
 import type { CatalogueEntry } from '../_shared/plan/types.ts';
+import { readJson, TOO_LARGE } from '../_shared/request.ts';
 
 // The allowed values come from the generated database types, so a new enum value is accepted
 // as soon as the types are regenerated.
 const { Enums } = Constants.public;
+
+// The answers take a few hundred bytes. Guests can call it too, so a larger body is not read, let
+// alone parsed (#533).
+const MAX_BODY_BYTES = 4096;
 
 const PlanRequest = z.object({
   goal: z.enum(Enums.goal_kind),
@@ -33,7 +38,12 @@ export async function handlePlanRequest(
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
 
-  const parsed = PlanRequest.safeParse(await req.json().catch(() => null));
+  const json = await readJson(req, MAX_BODY_BYTES);
+  if (json === TOO_LARGE) {
+    return Response.json({ error: 'too_large' }, { status: 413 });
+  }
+
+  const parsed = PlanRequest.safeParse(json);
   if (!parsed.success) {
     return Response.json(
       {
