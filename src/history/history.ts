@@ -181,18 +181,12 @@ export async function recentLogs(
     .gte('finished_at', since.toISOString())
     .limit(20);
   if (error) throw error;
-  return data.flatMap((row) =>
-    row.id === null || !row.started_at || !row.finished_at
-      ? []
-      : [
-          {
-            id: row.id,
-            startedAt: new Date(row.started_at),
-            finishedAt: new Date(row.finished_at),
-            kcal: row.kcal,
-          },
-        ],
-  );
+  return data.map((row) => ({
+    id: row.id,
+    startedAt: new Date(row.started_at),
+    finishedAt: new Date(row.finished_at),
+    kcal: row.kcal,
+  }));
 }
 
 /** The latest `count` finished workouts, or the `count` before `after`, latest first. */
