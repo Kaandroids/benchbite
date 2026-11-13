@@ -2539,6 +2539,15 @@ export type Database = {
       };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
       inactive_guest_removal_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
+      inactive_guest_removal_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          healthy: boolean;
+          latest_run_minutes: number;
+          latest_run_status: string;
+          overdue_guests: number;
+        }[];
+      };
       inactive_guests: { Args: { p_limit: number }; Returns: string[] };
       inactive_guests_since: { Args: { p_before: string; p_user?: string }; Returns: string[] };
       insert_workout_exercises: {
