@@ -26,6 +26,7 @@ export type Database = {
       account_deletion_codes: {
         Row: {
           code_hash: string;
+          email: string;
           expires_at: string;
           sent_at: string;
           user_id: string;
@@ -33,12 +34,14 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           code_hash: string;
+          email: string;
           expires_at: string;
           sent_at?: string;
           user_id: string;
         };
         Update: {
           code_hash?: string;
+          email?: string;
           expires_at?: string;
           sent_at?: string;
           user_id?: string;
@@ -48,6 +51,7 @@ export type Database = {
       account_deletion_links: {
         Row: {
           created_at: string;
+          email: string;
           expires_at: string;
           token_hash: string;
           user_id: string;
@@ -55,12 +59,14 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          email: string;
           expires_at: string;
           token_hash: string;
           user_id: string;
         };
         Update: {
           created_at?: string;
+          email?: string;
           expires_at?: string;
           token_hash?: string;
           user_id?: string;

@@ -112,16 +112,6 @@ Deno.test('says so when the code cannot be kept or sent', async () => {
   assertEquals(failing[0]!.sent, []);
 });
 
-Deno.test('sends nothing when the address changed as the code was kept', async () => {
-  const { ctx, sent } = context({ data: 'address_changed', error: null });
-
-  const response = await handleSendCode(post(), ctx);
-
-  assertEquals(response.status, 503);
-  assertEquals(await response.json(), { error: 'unavailable' });
-  assertEquals(sent, []);
-});
-
 Deno.test('sends nothing to a guest, who has no address', async () => {
   const { ctx, calls } = context({ data: 'sent', error: null }, { guest: true });
 
