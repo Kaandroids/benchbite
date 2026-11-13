@@ -10,7 +10,7 @@ const A = '00000000-0000-0000-0000-00000000000a';
 /** A stand-in for the service role client: the one call, its arguments and its answer. */
 function context(
   answer: { data: string | null; error: { message: string } | null },
-  { guest = false, accountLocale = 'en', sendFails = false } = {},
+  { guest = false, accountLocale = 'en', sendFails = false, email = 'kaan@example.com' } = {},
 ) {
   const calls: Record<string, string>[] = [];
   const takenBack: Record<string, string>[] = [];
@@ -25,6 +25,21 @@ function context(
       calls.push(args);
       return Promise.resolve(answer);
     },
+    auth: {
+      admin: {
+        getUserById: () =>
+          Promise.resolve({
+            data: {
+              user: {
+                is_anonymous: guest,
+                email: guest ? undefined : email,
+                user_metadata: { locale: accountLocale },
+              },
+            },
+            error: null,
+          }),
+      },
+    },
   } as unknown as Client;
   const send = (email: Email) => {
     sent.push(email);
@@ -34,7 +49,7 @@ function context(
     calls,
     takenBack,
     sent,
-    ctx: { admin, send, userId: A, email: guest ? undefined : 'kaan@example.com', accountLocale },
+    ctx: { admin, send, userId: A },
   };
 }
 
@@ -120,4 +135,12 @@ Deno.test('takes back a code whose email could not be sent', async () => {
 
   assertEquals(response.status, 503);
   assertEquals(takenBack, calls);
+});
+
+Deno.test('sends the code to the address as stored, not as the token had it', async () => {
+  const { ctx, sent } = context({ data: 'sent', error: null }, { email: 'new@example.com' });
+
+  await handleSendCode(post(), ctx);
+
+  assertEquals(sent[0]!.to, 'new@example.com');
 });
