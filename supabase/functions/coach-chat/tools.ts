@@ -230,12 +230,15 @@ const NOTE_REFUSALS = {
   log: 'A note could not be kept',
 } satisfies Refusals;
 
+/** What Bite is told of a note it cannot change. */
+const NO_NOTE = 'There is no such note in use; take its id from the snapshot.';
+
 /** Why a change to a note could not be proposed. */
 const NOTE_PROPOSAL_REFUSALS = {
   meanings: {
     BB038: REFUSALS.meanings.BB038,
-    P0002: 'There is no such note in use; take its id from the snapshot.',
-    '23514': `A note has text, of up to ${MAX_NOTE_LENGTH} characters, and an archived one says why.`,
+    P0002: NO_NOTE,
+    '23514': NOTE_REFUSALS.meanings['23514'],
   },
   otherwise: 'The change could not be proposed just now.',
   log: 'A note change could not be proposed',
@@ -252,9 +255,6 @@ const NOTE_TEXT = z
 
 /** The longest Bite waits to ask again whether a note still holds. */
 const MAX_REVIEW_DAYS = 180;
-
-/** What Bite is told of a note it cannot change. */
-const NO_NOTE = 'There is no such note in use; take its id from the snapshot.';
 
 /** Why a day to ask again on is refused: one is after today and within `MAX_REVIEW_DAYS`. */
 function reviewRefusal(day: string | null | undefined, today: string) {
@@ -864,8 +864,6 @@ const TOOLS = [
     run: async ({ id, category, text, reviewOn }, { supabase, today, threadId }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
-      const note = await noteInUse(supabase, id);
-      if ('error' in note) return note;
       const change = {
         id,
         ...(category && { category }),
@@ -879,14 +877,16 @@ const TOOLS = [
         today,
       });
       if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      // As the database kept it, which applying sets: with what a proposal it replaced changed.
+      const { change: kept, before } = await storedNoteProposal(supabase, proposed.data);
       const proposal: ProposalCard = {
         kind: 'note',
         id: proposed.data,
-        from: note,
+        from: { category: before.category, text: before.text, reviewOn: before.reviewOn },
         to: {
-          category: category ?? note.category,
-          text: text ?? note.text,
-          reviewOn: reviewOn === undefined ? note.reviewOn : reviewOn,
+          category: kept.category ?? before.category,
+          text: kept.text ?? before.text,
+          reviewOn: kept.reviewOn === undefined ? before.reviewOn : kept.reviewOn,
         },
       };
       return { proposal };
@@ -907,8 +907,6 @@ const TOOLS = [
         .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
     }),
     run: async ({ id, reason }, { supabase, today, threadId }) => {
-      const note = await noteInUse(supabase, id);
-      if ('error' in note) return note;
       const proposed = await supabase.rpc('propose_coach_change', {
         thread_id: threadId,
         kind: 'note_archive',
@@ -916,11 +914,12 @@ const TOOLS = [
         today,
       });
       if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      const { before } = await storedNoteProposal(supabase, proposed.data);
       const proposal: ProposalCard = {
         kind: 'note_archive',
         id: proposed.data,
-        category: note.category,
-        text: note.text,
+        category: before.category,
+        text: before.text,
         reason,
       };
       return { proposal };
@@ -929,20 +928,20 @@ const TOOLS = [
 ];
 
 /**
- * The note `id` as a card shows it, while it is in use: not archived, nor waiting for the user's
- * yes. Why not, when it is not.
+ * A note's proposal `id` as the database kept it: the change applying sets, and the note as it
+ * was, which the user reads as their own proposal.
  */
-async function noteInUse(supabase: Client, id: number): Promise<CardNote | { error: string }> {
-  const found = await supabase
-    .from('coach_notes')
-    .select('category, text, review_on')
+async function storedNoteProposal(
+  supabase: Client,
+  id: number,
+): Promise<{ change: Partial<CardNote>; before: CardNote }> {
+  const stored = await supabase
+    .from('coach_proposals')
+    .select('change, before')
     .eq('id', id)
-    .is('archived_at', null)
-    .eq('asked', false)
-    .maybeSingle();
-  if (found.error) return refused(found.error, NOTE_PROPOSAL_REFUSALS);
-  if (!found.data) return { error: NO_NOTE };
-  return { category: found.data.category, text: found.data.text, reviewOn: found.data.review_on };
+    .single();
+  if (stored.error) throw stored.error;
+  return stored.data as unknown as { change: Partial<CardNote>; before: CardNote };
 }
 
 /** The kinds of proposal the tools offered to Bite make. */
