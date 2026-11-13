@@ -27,3 +27,4 @@ The website is static. It runs one script, which puts the token from the link to
 - Inline event handlers, such as `onclick`, are blocked; scripts go in `<script>` tags.
 - Code blocks need Prism, not Shiki, if the site ever has them.
 - The policy cannot be tried in `astro dev`; `pnpm build` and `pnpm preview` show it.
+- `vite` is a dev dependency of the website only for `loadEnv`, and its range follows the Vite that Astro brings.
