@@ -7,6 +7,7 @@
 import { z } from 'zod';
 
 import type {
+  CardNote,
   CoachToolName,
   DayTargets,
   ExerciseChanges,
@@ -17,7 +18,7 @@ import type {
   ProposalCard,
   ProposalTarget,
 } from '../_shared/coach/chat.ts';
-import { Constants, type Database } from '../_shared/database.types.ts';
+import { Constants } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
@@ -229,6 +230,20 @@ const NOTE_REFUSALS = {
   log: 'A note could not be kept',
 } satisfies Refusals;
 
+/** What Bite is told of a note it cannot change. */
+const NO_NOTE = 'There is no such note in use; take its id from the snapshot.';
+
+/** Why a change to a note could not be proposed. */
+const NOTE_PROPOSAL_REFUSALS = {
+  meanings: {
+    BB038: REFUSALS.meanings.BB038,
+    P0002: NO_NOTE,
+    '23514': NOTE_REFUSALS.meanings['23514'],
+  },
+  otherwise: 'The change could not be proposed just now.',
+  log: 'A note change could not be proposed',
+} satisfies Refusals;
+
 const NOTE_ID = z.number().int().positive().describe("The note's id, as the snapshot lists it.");
 const NOTE_CATEGORY = z.enum(Constants.public.Enums.coach_note_category);
 const NOTE_TEXT = z
@@ -240,9 +255,6 @@ const NOTE_TEXT = z
 
 /** The longest Bite waits to ask again whether a note still holds. */
 const MAX_REVIEW_DAYS = 180;
-
-/** What Bite is told of a note it cannot change. */
-const NO_NOTE = 'There is no such note in use; take its id from the snapshot.';
 
 /** Why a day to ask again on is refused: one is after today and within `MAX_REVIEW_DAYS`. */
 function reviewRefusal(day: string | null | undefined, today: string) {
@@ -706,7 +718,10 @@ const TOOLS = [
       // or an entry read before: the entries may have changed meanwhile. The user reads their own
       // proposals and entries.
       const [stored, named] = await Promise.all([
-        supabase.from('coach_proposals').select('change, before').eq('id', proposed.data).single(),
+        storedProposal<{ changes: StoredFoodLogChange[] }, StoredFoodLogEntry[]>(
+          supabase,
+          proposed.data,
+        ),
         supabase
           .from('meal_entries')
           .select(`id, ${ENTRY_FOOD}`)
@@ -715,14 +730,10 @@ const TOOLS = [
             changes.map((c) => c.entryId),
           ),
       ]);
-      if (stored.error) throw stored.error;
       const entries = read(named);
       const name = await entryNames(supabase, language, entries);
       const names = new Map(entries.map((entry) => [entry.id, name(entry)]));
-      const { change, before } = stored.data as unknown as {
-        change: { changes: StoredFoodLogChange[] };
-        before: StoredFoodLogEntry[];
-      };
+      const { change, before } = stored;
       const proposal: ProposalCard = {
         kind: 'food_log',
         id: proposed.data,
@@ -834,8 +845,9 @@ const TOOLS = [
   }),
   tool({
     name: 'update_note',
+    proposes: 'note',
     description:
-      'Changes a note in the notebook that no longer says it right, as when the user corrects it or an injury is better but not gone; and moves or clears the day to ask again.',
+      'Proposes changing a note in the notebook that no longer says it right, as when the user corrects it or an injury is better but not gone, or moving or clearing the day to ask again. The user applies it on its card; it changes nothing itself.',
     args: z
       .object({
         id: NOTE_ID,
@@ -848,21 +860,45 @@ const TOOLS = [
       .refine((args) => args.category || args.text || args.reviewOn !== undefined, {
         message: 'Give what to change: the category, the text or the day to ask again.',
       }),
-    run: async ({ id, category, text, reviewOn }, { supabase, today }) => {
+    run: async ({ id, category, text, reviewOn }, { supabase, today, threadId }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
-      const patch = {
+      const change = {
+        id,
         ...(category && { category }),
         ...(text && { text }),
-        ...(reviewOn !== undefined && { review_on: reviewOn }),
+        ...(reviewOn !== undefined && { reviewOn }),
       };
-      return await changeNote(supabase, id, patch, 'updated');
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'note',
+        change,
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      // As the database kept it, which applying sets: with what a proposal it replaced changed.
+      const { change: kept, before } = await storedProposal<Partial<CardNote>, CardNote>(
+        supabase,
+        proposed.data,
+      );
+      const proposal: ProposalCard = {
+        kind: 'note',
+        id: proposed.data,
+        from: { category: before.category, text: before.text, reviewOn: before.reviewOn },
+        to: {
+          category: kept.category ?? before.category,
+          text: kept.text ?? before.text,
+          reviewOn: kept.reviewOn === undefined ? before.reviewOn : kept.reviewOn,
+        },
+      };
+      return { proposal };
     },
   }),
   tool({
     name: 'archive_note',
+    proposes: 'note_archive',
     description:
-      'Moves a note that no longer holds to past notes, which answers leave out, as an injury that healed or a goal whose date has passed. The user can restore it.',
+      'Proposes moving a note that no longer holds to past notes, which answers leave out, as an injury that healed or a goal whose date has passed. The user applies it on its card, and can restore the note later; it changes nothing itself.',
     args: z.object({
       id: NOTE_ID,
       reason: z
@@ -872,35 +908,42 @@ const TOOLS = [
         .max(MAX_NOTE_LENGTH)
         .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
     }),
-    run: async ({ id, reason }, { supabase }) => {
-      const patch = { archived_at: new Date().toISOString(), archive_reason: reason };
-      return await changeNote(supabase, id, patch, 'archived');
+    run: async ({ id, reason }, { supabase, today, threadId }) => {
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'note_archive',
+        change: { id, reason },
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      const { before } = await storedProposal<unknown, CardNote>(supabase, proposed.data);
+      const proposal: ProposalCard = {
+        kind: 'note_archive',
+        id: proposed.data,
+        category: before.category,
+        text: before.text,
+        reason,
+      };
+      return { proposal };
     },
   }),
 ];
 
 /**
- * Changes the note `id` by `patch`, only while it is in use: not archived, nor waiting for the
- * user's yes. Gives its card, saying it was `action`, or why it was not changed.
+ * The proposal `id` as the database kept it: the change applying sets, and what it replaces, which
+ * the user reads as their own proposal.
  */
-async function changeNote(
+async function storedProposal<Change, Before>(
   supabase: Client,
   id: number,
-  patch: Database['public']['Tables']['coach_notes']['Update'],
-  action: 'updated' | 'archived',
-) {
-  const changed = await supabase
-    .from('coach_notes')
-    .update(patch)
+): Promise<{ change: Change; before: Before }> {
+  const stored = await supabase
+    .from('coach_proposals')
+    .select('change, before')
     .eq('id', id)
-    .is('archived_at', null)
-    .eq('asked', false)
-    .select(NOTE_COLUMNS)
-    .maybeSingle();
-  if (changed.error) return refused(changed.error, NOTE_REFUSALS);
-  if (!changed.data) return { error: NO_NOTE };
-  const note: NoteCard = { ...changed.data, action };
-  return { note };
+    .single();
+  if (stored.error) throw stored.error;
+  return stored.data as unknown as { change: Change; before: Before };
 }
 
 /** The kinds of proposal the tools offered to Bite make. */

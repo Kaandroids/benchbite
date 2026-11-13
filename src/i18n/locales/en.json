@@ -2048,8 +2048,8 @@
       "propose_food_log_change": "Preparing a change to your meals…",
       "log_meal_card": "Preparing your meal…",
       "save_note": "Noting that down…",
-      "update_note": "Updating my notes…",
-      "archive_note": "Updating my notes…"
+      "update_note": "Preparing a change to my notes…",
+      "archive_note": "Preparing a change to my notes…"
     },
     "failures": {
       "unavailable": "Bite couldn't answer just now. Try again.",
@@ -2179,6 +2179,19 @@
       "switchBack_other": "{{exercises}} come back. {{from}} is kept, to use again.",
       "switchKept": "{{from}} is kept, to use again.",
       "switchEmpty": "{{to}} has no exercises yet, so {{workout}} will have none until you add some.",
+      "noteTitle": "Change this note?",
+      "archiveTitle": "Move to past notes?",
+      "changeNote": "Change note",
+      "move": "Move",
+      "askAgain": "Ask again",
+      "askAgainLabel": "Ask again: {{to}} instead of {{from}}",
+      "never": "none",
+      "changed": "{{from}} → {{to}}",
+      "why": "Why",
+      "archiveNote": "Bite's answers leave past notes out. You can restore it in the notebook.",
+      "noteChanged": "Changed in notebook",
+      "noteArchived": "Moved to past notes",
+      "noteDetail": "{{text}} · ask again {{day}}",
       "summary": {
         "swap": "{{to}} instead of {{from}}",
         "twoSwaps": "{{first}} and {{second}}",
@@ -2196,7 +2209,8 @@
         "outOfDate": "This is out of date",
         "underFloor": "This is now below the least we recommend — ask Bite again",
         "failed": "That didn't work. Try again.",
-        "closedDay": "That day can no longer be changed"
+        "closedDay": "That day can no longer be changed",
+        "notebookFull": "Your notebook has 50 notes in use. Remove one to bring this back."
       }
     },
     "mealCard": {

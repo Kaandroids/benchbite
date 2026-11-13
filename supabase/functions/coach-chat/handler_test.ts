@@ -1324,6 +1324,48 @@ Deno.test('tells Bite which food log changes it proposed earlier', async () => {
   });
 });
 
+Deno.test('tells Bite which note changes it proposed earlier', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const knee = { category: 'injury', text: 'Left knee hurts on squats' };
+  const proposals = [
+    {
+      kind: 'note',
+      id: 44,
+      from: { ...knee, reviewOn: '2026-11-06' },
+      to: { ...knee, text: 'Left knee is a little sore', reviewOn: null },
+    },
+    { kind: 'note_archive', id: 45, ...knee, reason: 'The knee is fine again' },
+  ];
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            ...proposals.map((proposal, index) => ({
+              type: 'toolResult',
+              name: index ? 'archive_note' : 'update_note',
+              result: { proposal },
+            })),
+            { type: 'text', text: '' },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0].parts[0], {
+    type: 'text',
+    text: '[[neutral]] (Proposed changing the note "Left knee hurts on squats" (injury, ask again on 2026-11-06) to "Left knee is a little sore" (injury).)\n(Proposed archiving the note "Left knee hurts on squats" (injury): The knee is fine again.)',
+  });
+});
+
 const MEAL_CARD = {
   id: 51,
   day: '2026-10-30',

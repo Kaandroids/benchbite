@@ -1018,6 +1018,8 @@ Deno.test('offers Bite no tool that proposes a change the app has no card for', 
     'alternative_switch',
     'targets',
     'food_log',
+    'note',
+    'note_archive',
   ]);
   for (const kind of PROPOSAL_KINDS) {
     assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
@@ -1554,44 +1556,152 @@ Deno.test('asks again about a note only on a day ahead, within half a year', asy
   assertEquals((writes[0].values as { review_on: string }).review_on, '2026-11-06');
 });
 
-Deno.test('changes and archives only a note in use, and says when there is none', async () => {
-  const changed = noteContext(true);
-  assertEquals(
-    await runTool('update_note', { id: 9, text: 'Allergic to kiwi and mango' }, changed.context),
-    { note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'updated' } },
-  );
-  assertEquals(changed.writes[0], {
-    op: 'update',
-    values: { text: 'Allergic to kiwi and mango' },
-    // Only a note in use: none archived, nor one waiting for the user's yes.
-    filters: [
-      ['id', 9],
-      ['archived_at', null],
-      ['asked', false],
-    ],
-  });
-  const cleared = noteContext(true);
-  await runTool('update_note', { id: 9, reviewOn: null }, cleared.context);
-  assertEquals(cleared.writes[0].values, { review_on: null });
-  assertEquals(
-    typeof ((await runTool('update_note', { id: 9 }, cleared.context)) as { error: string }).error,
-    'string',
-  );
+/**
+ * The database as the note proposals call it: proposing gives `proposed`, and the proposal kept
+ * holds `before` and the change it was given, or `kept` when it merged another in.
+ */
+function noteProposalContext(
+  proposed: { data?: unknown; error?: unknown } = { data: 31 },
+  kept?: Record<string, unknown>,
+) {
+  const before = {
+    id: 9,
+    category: 'injury',
+    text: 'Left knee hurts on squats',
+    reviewOn: '2026-11-06',
+    archived: false,
+  };
+  const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const read: [string, unknown][] = [];
+  const builder: Record<string, unknown> = {
+    select: () => builder,
+    eq: (column: string, value: unknown) => (read.push([column, value]), builder),
+    single: () =>
+      Promise.resolve({ data: { change: kept ?? calls.at(-1)?.args.change, before }, error: null }),
+  };
+  const supabase = {
+    from: (table: string) => (read.push(['from', table]), builder),
+    rpc: (name: string, args: Record<string, unknown>) => {
+      calls.push({ name, args });
+      return Promise.resolve({ data: null, error: null, ...proposed });
+    },
+  };
+  return { context: { ...context, supabase } as unknown as ToolContext, calls, read };
+}
 
-  const archived = noteContext(true);
-  assertEquals(await runTool('archive_note', { id: 9, reason: 'Healed' }, archived.context), {
-    note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'archived' },
-  });
-  assertEquals((archived.writes[0].values as { archive_reason: string }).archive_reason, 'Healed');
-  assertEquals(archived.writes[0].filters, [
-    ['id', 9],
-    ['archived_at', null],
-    ['asked', false],
+Deno.test(
+  'proposes changing a note, with how it was and will be as the database kept it',
+  async () => {
+    const { context, calls, read } = noteProposalContext();
+    assertEquals(
+      await runTool(
+        'update_note',
+        { id: 9, text: 'Left knee is a little sore on deep squats', reviewOn: '2026-11-20' },
+        context,
+      ),
+      {
+        proposal: {
+          kind: 'note',
+          id: 31,
+          from: { category: 'injury', text: 'Left knee hurts on squats', reviewOn: '2026-11-06' },
+          to: {
+            category: 'injury',
+            text: 'Left knee is a little sore on deep squats',
+            reviewOn: '2026-11-20',
+          },
+        },
+      },
+    );
+    assertEquals(calls, [
+      {
+        name: 'propose_coach_change',
+        args: {
+          thread_id: 7,
+          kind: 'note',
+          change: {
+            id: 9,
+            text: 'Left knee is a little sore on deep squats',
+            reviewOn: '2026-11-20',
+          },
+          today: '2026-10-30',
+        },
+      },
+    ]);
+    assertEquals(read, [
+      ['from', 'coach_proposals'],
+      ['id', 31],
+    ]);
+
+    // A day given as null clears it; one left out stays.
+    const cleared = noteProposalContext();
+    const result = await runTool('update_note', { id: 9, reviewOn: null }, cleared.context);
+    assertEquals((result as { proposal: { to: unknown } }).proposal.to, {
+      category: 'injury',
+      text: 'Left knee hurts on squats',
+      reviewOn: null,
+    });
+    assertEquals(cleared.calls[0].args.change, { id: 9, reviewOn: null });
+    assertEquals(
+      typeof ((await runTool('update_note', { id: 9 }, cleared.context)) as { error: string })
+        .error,
+      'string',
+    );
+  },
+);
+
+Deno.test(
+  'shows the change of a note proposal it replaced, as the database merged it',
+  async () => {
+    const { context } = noteProposalContext(undefined, {
+      id: 9,
+      text: 'Knee hurts on deep squats only',
+      reviewOn: '2026-11-20',
+    });
+    const result = await runTool('update_note', { id: 9, reviewOn: '2026-11-20' }, context);
+    assertEquals((result as { proposal: { to: unknown } }).proposal.to, {
+      category: 'injury',
+      text: 'Knee hurts on deep squats only',
+      reviewOn: '2026-11-20',
+    });
+  },
+);
+
+Deno.test('proposes archiving a note, with why', async () => {
+  const { context, calls } = noteProposalContext();
+  assertEquals(
+    await runTool('archive_note', { id: 9, reason: 'The knee is fine again' }, context),
+    {
+      proposal: {
+        kind: 'note_archive',
+        id: 31,
+        category: 'injury',
+        text: 'Left knee hurts on squats',
+        reason: 'The knee is fine again',
+      },
+    },
+  );
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_change',
+      args: {
+        thread_id: 7,
+        kind: 'note_archive',
+        change: { id: 9, reason: 'The knee is fine again' },
+        today: '2026-10-30',
+      },
+    },
   ]);
+});
 
-  const gone = noteContext(true, { data: null });
+Deno.test('says why a note change is refused', async () => {
+  const gone = noteProposalContext({ error: { code: 'P0002' } });
   assertEquals(await runTool('archive_note', { id: 4, reason: 'Healed' }, gone.context), {
     error: 'There is no such note in use; take its id from the snapshot.',
+  });
+
+  const busy = noteProposalContext({ error: { code: 'BB038' } });
+  assertEquals(await runTool('update_note', { id: 9, text: 'Knee is fine' }, busy.context), {
+    error: 'The user has too many changes waiting; ask them to decide those first.',
   });
 });
 

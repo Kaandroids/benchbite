@@ -2048,8 +2048,8 @@
       "propose_food_log_change": "Bereite eine Änderung deiner Mahlzeiten vor…",
       "log_meal_card": "Bereite deine Mahlzeit vor…",
       "save_note": "Ich notiere mir das…",
-      "update_note": "Ich aktualisiere meine Notizen…",
-      "archive_note": "Ich aktualisiere meine Notizen…"
+      "update_note": "Bereite eine Änderung meiner Notizen vor…",
+      "archive_note": "Bereite eine Änderung meiner Notizen vor…"
     },
     "failures": {
       "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",
@@ -2179,6 +2179,19 @@
       "switchBack_other": "{{exercises}} kommen zurück. {{from}} bleibt, um es wieder zu verwenden.",
       "switchKept": "{{from}} bleibt, um es wieder zu verwenden.",
       "switchEmpty": "{{to}} hat noch keine Übungen, also hat {{workout}} keine, bis du welche hinzufügst.",
+      "noteTitle": "Diese Notiz ändern?",
+      "archiveTitle": "Zu früheren Notizen verschieben?",
+      "changeNote": "Notiz ändern",
+      "move": "Verschieben",
+      "askAgain": "Nochmal fragen",
+      "askAgainLabel": "Nochmal fragen: {{to}} statt {{from}}",
+      "never": "keiner",
+      "changed": "{{from}} → {{to}}",
+      "why": "Warum",
+      "archiveNote": "Bite nutzt frühere Notizen nicht in Antworten. Du kannst sie im Notizbuch wiederherstellen.",
+      "noteChanged": "Im Notizbuch geändert",
+      "noteArchived": "Zu früheren Notizen verschoben",
+      "noteDetail": "{{text}} · nochmal fragen am {{day}}",
       "summary": {
         "swap": "{{to}} statt {{from}}",
         "twoSwaps": "{{first}} und {{second}}",
@@ -2196,7 +2209,8 @@
         "outOfDate": "Das ist nicht mehr aktuell",
         "underFloor": "Das liegt jetzt unter dem Minimum, das wir empfehlen – frag Bite noch einmal",
         "failed": "Das hat nicht geklappt. Versuch es noch einmal.",
-        "closedDay": "Dieser Tag kann nicht mehr geändert werden"
+        "closedDay": "Dieser Tag kann nicht mehr geändert werden",
+        "notebookFull": "Dein Notizbuch hat 50 Notizen in Gebrauch. Entferne eine, um diese zurückzuholen."
       }
     },
     "mealCard": {

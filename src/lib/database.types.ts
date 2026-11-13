@@ -3231,7 +3231,14 @@ export type Database = {
       coach_note_source: 'chat' | 'user' | 'onboarding';
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
       coach_proposal_kind:
-        'workout' | 'targets' | 'food_log' | 'workouts' | 'alternative' | 'alternative_switch';
+        | 'workout'
+        | 'targets'
+        | 'food_log'
+        | 'workouts'
+        | 'alternative'
+        | 'alternative_switch'
+        | 'note'
+        | 'note_archive';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone' | 'replaced';
       coach_role: 'user' | 'bite';
       equipment:
@@ -3531,6 +3538,8 @@ export const Constants = {
         'workouts',
         'alternative',
         'alternative_switch',
+        'note',
+        'note_archive',
       ],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone', 'replaced'],
       coach_role: ['user', 'bite'],

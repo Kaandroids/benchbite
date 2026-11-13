@@ -2048,8 +2048,8 @@
       "propose_food_log_change": "Öğünlerindeki değişikliği hazırlıyorum…",
       "log_meal_card": "Öğününü hazırlıyorum…",
       "save_note": "Bunu not ediyorum…",
-      "update_note": "Notlarımı güncelliyorum…",
-      "archive_note": "Notlarımı güncelliyorum…"
+      "update_note": "Notlarımdaki değişikliği hazırlıyorum…",
+      "archive_note": "Notlarımdaki değişikliği hazırlıyorum…"
     },
     "failures": {
       "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",
@@ -2179,6 +2179,19 @@
       "switchBack_other": "{{exercises}} geri gelir. {{from}} tekrar kullanmak için kalır.",
       "switchKept": "{{from}} tekrar kullanmak için kalır.",
       "switchEmpty": "{{to}} henüz egzersiz içermiyor; sen ekleyene kadar {{workout}} egzersizsiz kalır.",
+      "noteTitle": "Bu not değişsin mi?",
+      "archiveTitle": "Geçmiş notlara taşınsın mı?",
+      "changeNote": "Notu değiştir",
+      "move": "Taşı",
+      "askAgain": "Tekrar sor",
+      "askAgainLabel": "Tekrar sor: {{from}} yerine {{to}}",
+      "never": "yok",
+      "changed": "{{from}} → {{to}}",
+      "why": "Neden",
+      "archiveNote": "Bite geçmiş notları cevaplarda kullanmaz. Defterden geri yükleyebilirsin.",
+      "noteChanged": "Defterde güncellendi",
+      "noteArchived": "Geçmiş notlara taşındı",
+      "noteDetail": "{{text}} · {{day}} tekrar sor",
       "summary": {
         "swap": "{{from}} yerine {{to}}",
         "twoSwaps": "{{first}} ve {{second}}",
@@ -2196,7 +2209,8 @@
         "outOfDate": "Bunun süresi geçti",
         "underFloor": "Bu artık önerdiğimiz en düşük kalorinin altında — Bite'a yeniden sor",
         "failed": "Olmadı. Tekrar dene.",
-        "closedDay": "O gün artık değiştirilemez"
+        "closedDay": "O gün artık değiştirilemez",
+        "notebookFull": "Defterinde kullanımda 50 not var. Bunu geri getirmek için birini kaldır."
       }
     },
     "mealCard": {

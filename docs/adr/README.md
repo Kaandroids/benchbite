@@ -86,7 +86,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0068](0068-food-log-changes-are-proposals.md)                        | Changes to the food log are proposals, applied and undone only to entries as they were  | Accepted                                             |
 | [0069](0069-a-log-keeps-its-alternative.md)                           | A log keeps the alternative it was done with, as a copy made on insert                  | Accepted                                             |
 | [0070](0070-the-server-holds-bite-to-its-cards-and-its-last-round.md) | The server holds Bite to its cards and to its last round                                | Accepted                                             |
-| [0071](0071-bites-notebook.md)                                        | Bite keeps a notebook of the user, in its own table, read in every answer               | Accepted                                             |
+| [0071](0071-bites-notebook.md)                                        | Bite keeps a notebook of the user, in its own table, read in every answer               | Accepted, amended by ADR-0133                        |
 | [0072](0072-voice-messages-to-bite.md)                                | Voice messages to Bite are kept as photos are, with what was said as their text         | Accepted                                             |
 | [0073](0073-recording-and-playing-voice-messages.md)                  | Voice messages are held to record, in mono AAC, and played by one player per chat       | Accepted                                             |
 | [0074](0074-keep-fields-above-the-keyboard.md)                        | Keep fields above the keyboard with padding measured in the window                      | Accepted                                             |
@@ -148,3 +148,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0130](0130-keep-dependencies-current-with-dependabot.md)             | Keep dependencies current with Dependabot                                               | Accepted                                             |
 | [0131](0131-remove-guests-inactive-for-90-days.md)                    | Remove guests inactive for 90 days                                                      | Accepted                                             |
 | [0132](0132-monitor-with-a-read-only-token.md)                        | Monitor with a token that can only read the database                                    | Accepted                                             |
+| [0133](0133-bite-proposes-note-changes.md)                            | Bite proposes changes to a note, which the user applies                                 | Accepted                                             |
