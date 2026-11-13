@@ -1,12 +1,14 @@
-# Keeps the dependencies current (#538): Dependabot opens a pull request each week for what has a
-# newer version, which CI checks like any other. A version must have been out for a week first,
-# beyond pnpm's own minimumReleaseAge, so that a compromised release is usually found and pulled
-# before it reaches us.
+# Keeps the dependencies current (#538, ADR 0130): Dependabot opens a pull request each week for
+# what has a newer version, which CI checks like any other. A version must have been out for a week
+# first, beyond pnpm's own minimumReleaseAge, so that a compromised release is usually found and
+# pulled before it reaches us.
 version: 2
 updates:
   # The app. Expo pins the versions of its SDK, and of the React and React Native packages that go
-  # with it, so those move only with an SDK upgrade, through `pnpm expo install --fix`; Dependabot
-  # leaves them alone, as an update of one alone would not fit the rest.
+  # with it, so those move only with Expo, through `pnpm expo install --fix`; Dependabot leaves them
+  # alone, as an update of one alone would not fit the rest. The list is every package of
+  # package.json that node_modules/expo/bundledNativeModules.json names, with the SDK's own: add
+  # one here whenever `pnpm expo install` adds a package that list names.
   - package-ecosystem: npm
     directory: /
     schedule:

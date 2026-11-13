@@ -261,9 +261,20 @@ file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md
 
 Dependabot opens a pull request each week for newer versions of the app's and the website's
 packages, the Edge Functions' imports and the workflows' actions, once a version has been out for a
-week (`.github/dependabot.yml`). It leaves the Expo SDK alone, with the React and React Native
-packages that go with it: those move only together, in an SDK upgrade, with
-`pnpm expo install --fix`.
+week (`.github/dependabot.yml`, [ADR 0130](adr/0130-keep-dependencies-current-with-dependabot.md)).
+
+It leaves alone the packages Expo pins: the SDK, with the React and React Native packages that go
+with it. They are the packages of `package.json` that `node_modules/expo/bundledNativeModules.json`
+names; when `pnpm expo install` adds another of them, add it to the `ignore` list in
+`.github/dependabot.yml` too. They move together, with Expo:
+
+```bash
+pnpm expo install --check        # lists the Expo packages that have newer fixes for this SDK
+pnpm expo install expo@~58.0     # takes the SDK's newest fixes, then
+pnpm expo install --fix          # moves the packages Expo pins to match
+```
+
+A new native version needs `pnpm native:dev` and a new development build.
 
 ## Scripts
 
