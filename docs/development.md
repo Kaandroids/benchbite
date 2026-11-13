@@ -257,6 +257,14 @@ applies only to the built site, so try a new script or style with `pnpm build` a
 (ADR 0129). Its text is in `src/i18n/`, one
 file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md).
 
+## Update dependencies
+
+Dependabot opens a pull request each week for newer versions of the app's and the website's
+packages, the Edge Functions' imports and the workflows' actions, once a version has been out for a
+week (`.github/dependabot.yml`). It leaves the Expo SDK alone, with the React and React Native
+packages that go with it: those move only together, in an SDK upgrade, with
+`pnpm expo install --fix`.
+
 ## Scripts
 
 | Command                 | Description                                           |
