@@ -1,11 +1,11 @@
 -- The Monitor workflow asks coach_media_purge_status() whether the photo purge of deleted chats
 -- works (#368, ADR 0067): it is unhealthy when a folder has waited over an hour and a run failed
 -- it or no call succeeded lately, or when the latest call to purge-coach-media failed while a
--- folder is queued. Only the database owner can ask.
+-- folder is queued. Only the database owner and the Monitor's read-only role (ADR 0132) can ask.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(29);
 
 -- Answers from pg_net, made up here for requests with negative ids that pg_net never uses.
 create function pg_temp.answer(request_id bigint, status_code integer, minutes_ago integer)
@@ -152,7 +152,7 @@ select results_eq(
   'Old folders whose last successful call is over 15 minutes old make the purge unhealthy'
 );
 
--- The status shows no user ids or folders, and only the owner can ask for it.
+-- The status shows no user ids or folders, and only the owner and the read-only role can ask.
 select is(
   (select array_agg(attname::text order by attnum)
    from pg_attribute
@@ -168,6 +168,14 @@ select ok(
 )
 from (values ('anon'), ('authenticated'), ('service_role')) roles (role)
 cross join (values ('public.coach_media_purge_status()'), ('public.coach_media_purge_stalled()'))
+  functions (function);
+
+-- The Monitor workflow's token only reads, and its queries run as supabase_read_only_user (ADR 0132).
+select ok(
+  has_function_privilege('supabase_read_only_user', function, 'execute'),
+  'The read-only role can call ' || function
+)
+from (values ('public.coach_media_purge_status()'), ('public.coach_media_purge_stalled()'))
   functions (function);
 
 select ok(
