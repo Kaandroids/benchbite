@@ -200,6 +200,7 @@ async function savePassword(password: string) {
  * Whether the password is the signed-in account's, checked by signing in with it from the phone,
  * where Auth limits the tries by the phone's IP. The address is the one Auth has now: the session's
  * can be one changed since on another device, with which the right password would fail (#528).
+ * After a right password, the session the sign-in replaced is signed out (ADR 0128).
  */
 async function isAccountPassword(password: string): Promise<boolean> {
   const { data, error: readError } = await supabase.auth.getUser();
@@ -210,6 +211,7 @@ async function isAccountPassword(password: string): Promise<boolean> {
   if (!email) {
     throw new Error('No account is signed in');
   }
+  const previous = (await supabase.auth.getSession()).data.session?.access_token;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (isAuthApiError(error) && error.code === 'invalid_credentials') {
     return false;
@@ -217,7 +219,18 @@ async function isAccountPassword(password: string): Promise<boolean> {
   if (error) {
     throw error;
   }
+  signOutReplacedSession(previous);
   return true;
+}
+
+/**
+ * Signs out on the server the session a sign-in replaced on the phone, which no device holds any
+ * more (#532, ADR 0128). Despite `admin`, it needs no service role, only that session's token. It
+ * is only tidying, so nothing waits for it and a failure is left.
+ */
+function signOutReplacedSession(accessToken: string | undefined) {
+  if (!accessToken) return;
+  void supabase.auth.admin.signOut(accessToken, 'local').catch(() => {});
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({

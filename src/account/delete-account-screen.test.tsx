@@ -12,7 +12,12 @@ jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     functions: { invoke: jest.fn() },
-    auth: { getUser: jest.fn(), signInWithPassword: jest.fn() },
+    auth: {
+      getUser: jest.fn(),
+      getSession: jest.fn(),
+      signInWithPassword: jest.fn(),
+      admin: { signOut: jest.fn() },
+    },
   },
 }));
 jest.mock('@/providers/session-provider', () => ({
@@ -50,6 +55,11 @@ beforeEach(() => {
   given(true);
   answering();
   jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({ error: null } as never);
+  jest.mocked(supabase.auth.getSession).mockResolvedValue({
+    data: { session: { access_token: 'previous token' } },
+    error: null,
+  } as never);
+  jest.mocked(supabase.auth.admin.signOut).mockResolvedValue({ data: null, error: null });
   storedEmail('kaan@example.com');
 });
 
@@ -59,6 +69,15 @@ function storedEmail(email: string) {
     data: { user: { email } },
     error: null,
   } as never);
+}
+
+/** Turns to the password, types it and deletes, once the code was sent. */
+async function deleteWithPassword(password: string) {
+  await fireEvent.press(
+    await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
+  );
+  await fireEvent.changeText(screen.getByLabelText('Password'), password);
+  await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 }
 
 /** Opens the sheet of an account and has the code sent. */
@@ -219,11 +238,7 @@ describe('an account', () => {
 
   it('is deleted with the right password, signing in with it first', async () => {
     await sendCode();
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
-    );
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
-    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+    await deleteWithPassword('secret');
 
     await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
@@ -233,16 +248,15 @@ describe('an account', () => {
     expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
       body: { signedIn: true },
     });
+    // The session the sign-in replaced is signed out on the server, as no device holds it (#532);
+    // the change-password tests cover the rest of it.
+    expect(supabase.auth.admin.signOut).toHaveBeenCalledWith('previous token', 'local');
   });
 
   it('signs in with the address Auth has now, not one the session still keeps', async () => {
     storedEmail('new@example.com');
     await sendCode();
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
-    );
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
-    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+    await deleteWithPassword('secret');
 
     await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
@@ -256,11 +270,7 @@ describe('an account', () => {
       error: new AuthApiError('slow down', 429, 'over_request_rate_limit'),
     } as never);
     await sendCode();
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
-    );
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
-    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+    await deleteWithPassword('secret');
 
     expect(
       await screen.findByText('Too many tries. Wait a moment and try again.'),
@@ -271,11 +281,7 @@ describe('an account', () => {
   it('is pointed to the code when the password changed lately', async () => {
     answering({ 'delete-account': refused('password_recently_changed', 403) });
     await sendCode();
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
-    );
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'new one');
-    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+    await deleteWithPassword('new one');
 
     expect(
       await screen.findByText(

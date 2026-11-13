@@ -1,6 +1,6 @@
 # 0127. Check the password for deleting an account on the phone
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0128
 - **Date:** 2026-11-13
 
 ## Context
