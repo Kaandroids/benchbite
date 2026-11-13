@@ -1,4 +1,5 @@
-// Reading a request's body within a limit, for functions that take large bodies, as photos.
+// Reading a request's body within a limit, as every function does rather than req.json(), so that
+// no body is read or parsed past what it can need: a few KB for answers, more for photos.
 import { parseJson } from './json.ts';
 
 /**
