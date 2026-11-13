@@ -4,6 +4,10 @@
 -- account of kaan@kmail.com, while the link went to the typed address, another mailbox at a
 -- domain anyone could register. start_account_deletion() now answers with the stored address, or
 -- none when no link was made.
+--
+-- The rest is as before (ADR 0094): an address gets 3 requests an hour from each IP and 10 from
+-- all, so others cannot use up its owner's; an IP gets 10 an hour. Locks make requests for one
+-- address or IP wait their turn, so requests sent at the same moment cannot all pass the counts.
 drop function public.start_account_deletion(text, bytea, bytea);
 
 create function public.start_account_deletion(
@@ -53,6 +57,10 @@ begin
   return v_stored;
 end;
 $$;
+
+comment on function public.start_account_deletion(text, bytea, bytea) is
+  'Records a request to delete an account and makes a link for it. Returns the address stored for '
+  'the account, the one to send the link to, or null when no link was made.';
 
 -- Only the request-account-deletion function calls it, with the service role (ADR 0126).
 grant execute on function public.start_account_deletion(text, bytea, bytea) to service_role;
