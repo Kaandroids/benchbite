@@ -78,9 +78,10 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
       # Applies only the migrations the project does not have yet. A migration dated before the
-      # newest one applied is refused, which the checks prevent (ADR 0030).
+      # newest one applied is refused, which the checks prevent (ADR 0030). The CLI targets the
+      # local stack unless told the linked project with --remote.
       - name: Apply the migrations
-        run: pnpm supabase db push --yes
+        run: pnpm supabase db push --remote --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -95,7 +96,7 @@ jobs:
 
       - name: Upload the exercise images
         if: ${{ inputs.upload_images }}
-        run: pnpm supabase seed buckets --linked --yes
+        run: pnpm supabase seed buckets --remote --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
