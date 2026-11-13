@@ -3,7 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
-    "jsr:@supabase/functions-js@2.118.0": "2.118.0",
+    "jsr:@supabase/functions-js@2.119.0": "2.119.0",
     "npm:@supabase/server@1.9.2": "1.9.2_@supabase+supabase-js@2.118.0",
     "npm:openai@^4.52.5": "4.104.0_zod@4.6.7",
     "npm:zod@4.6.7": "4.6.7"
@@ -18,8 +18,8 @@
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
     },
-    "@supabase/functions-js@2.118.0": {
-      "integrity": "5f5494c5a288a7f03d0f9a2b591a39465d80cc7fcf44a85f5fb533b555b0580a",
+    "@supabase/functions-js@2.119.0": {
+      "integrity": "b2fe1ac6373ec1e59d7e3375e674e5c7f068cfe90abb7acc744f8a0501dd5ba3",
       "dependencies": [
         "npm:openai"
       ]
@@ -310,7 +310,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1.0.19",
-      "jsr:@supabase/functions-js@2.118.0",
+      "jsr:@supabase/functions-js@2.119.0",
       "npm:@supabase/server@1.9.2",
       "npm:zod@4.6.7"
     ]
