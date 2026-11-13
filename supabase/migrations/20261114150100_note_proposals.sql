@@ -158,7 +158,8 @@ $$;
 -- As before, checking the new kinds: a change to a note names its id and what to change, of its
 -- category, text and day to ask again; archiving one names its id and why. Either needs a note of
 -- the caller's in use (P0002). A change to a note keeps what the one it replaces changed and it
--- does not, so that a newer proposal never drops an earlier change the user has not applied.
+-- does not, while the note is as that one saw it, so that a newer proposal never drops an earlier
+-- change the user has not applied.
 create or replace function public.propose_coach_change(
   thread_id bigint,
   kind public.coach_proposal_kind,
@@ -276,6 +277,8 @@ begin
           and p.status = 'pending'
           and p.expires_at > now()
           and p.change -> 'id' = propose_coach_change.change -> 'id'
+          -- Only while the note is as it saw it, or it would undo what the user changed since.
+          and p.before = public.coach_proposal_state('note', propose_coach_change.change)
         order by p.id desc
         limit 1
       ), '{}') || propose_coach_change.change;
@@ -354,7 +357,8 @@ returns public.coach_proposal_status
 language plpgsql
 -- Writes proposals, which callers may only read. The changes run as the owner, through
 -- save_workout(), save_own_nutrition_targets(), the food log's and the alternatives' functions,
--- which keep to the caller's own rows by auth.uid() themselves, past the tables' policies.
+-- which keep to the caller's own rows by auth.uid() themselves, past the tables' policies, and
+-- for a note as updates of coach_notes that keep to the caller's own by auth.uid() too.
 security definer
 set search_path = ''
 as $$

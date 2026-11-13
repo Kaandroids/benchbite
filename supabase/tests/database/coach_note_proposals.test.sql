@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -209,6 +209,26 @@ select is(
   'but not what the user kept as it is'
 );
 select pg_temp.decide(pg_temp.id('after kept'), 'keep');
+
+-- Nor what a change saw before the user changed the note since.
+insert into ids select 'old text', pg_temp.propose(
+  'note', jsonb_build_object('id', pg_temp.id('knee'), 'text', 'Knee hurts on deep squats only')
+);
+update public.coach_notes set text = 'Knee hurts on lunges' where id = pg_temp.id('knee');
+insert into ids select 'new day', pg_temp.propose(
+  'note', jsonb_build_object('id', pg_temp.id('knee'), 'reviewOn', current_date + 14)
+);
+select is(
+  (select change from public.coach_proposals where id = pg_temp.id('new day')),
+  jsonb_build_object('id', pg_temp.id('knee'), 'reviewOn', current_date + 14),
+  'nor one made before the user changed the note'
+);
+select is(
+  (select status from public.coach_proposals where id = pg_temp.id('old text')), 'replaced',
+  'which is replaced all the same'
+);
+select pg_temp.decide(pg_temp.id('new day'), 'keep');
+update public.coach_notes set text = 'Left knee hurts on squats' where id = pg_temp.id('knee');
 
 -- A newer proposal for the same note replaces one pending; one for another note stays.
 insert into ids select 'first', pg_temp.propose(
