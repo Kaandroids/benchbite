@@ -10,11 +10,13 @@ select plan(15);
 delete from cron.job_run_details
 where jobid = (select jobid from cron.job where jobname = 'remove-inactive-guests');
 
-create function pg_temp.ran(status text, ended interval) returns void language sql as $$
+-- A run of the job that ended `ended` ago, which started a second before unless `started` is false.
+create function pg_temp.ran(status text, ended interval, started boolean default true)
+returns void language sql as $$
   -- With a run id of its own, as the sequence is pg_cron's.
   insert into cron.job_run_details (jobid, runid, status, start_time, end_time)
   select jobid, (select coalesce(max(runid), 0) + 1 from cron.job_run_details), status,
-    now() - ended - interval '1 second', now() - ended
+    case when started then now() - ended - interval '1 second' end, now() - ended
   from cron.job where jobname = 'remove-inactive-guests';
 $$;
 
@@ -48,13 +50,10 @@ select is(
   'So does no run in the last two hours'
 );
 
--- A run pg_cron failed before it started has no start, and is not the latest for good.
+-- A run pg_cron failed to start has no start time, and a later run still counts as the latest.
 delete from cron.job_run_details
 where jobid = (select jobid from cron.job where jobname = 'remove-inactive-guests');
-insert into cron.job_run_details (jobid, runid, status, return_message, end_time)
-select jobid, (select coalesce(max(runid), 0) + 1 from cron.job_run_details), 'failed',
-  'job startup timeout', now() - interval '20 days'
-from cron.job where jobname = 'remove-inactive-guests';
+select pg_temp.ran('failed', interval '20 days', started => false);
 select pg_temp.ran('succeeded', interval '10 minutes');
 select is(
   (select row(latest_run_status, healthy)::text from public.inactive_guest_removal_status()),
