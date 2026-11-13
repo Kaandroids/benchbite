@@ -7,7 +7,7 @@ import { clientIp, handleDeletionRequest } from './handler.ts';
 const SITE = 'https://www.benchbite.com';
 
 /** A stand-in for the service role client: the one call, its arguments and its answer. */
-function fakeAdmin(answer: { data: boolean | null; error: { message: string } | null }) {
+function fakeAdmin(answer: { data: string | null; error: { message: string } | null }) {
   const calls: { fn: string; args: Record<string, string> }[] = [];
   const admin = {
     rpc: (fn: string, args: Record<string, string>) => {
@@ -29,11 +29,12 @@ function post(fields: Record<string, string>, ip = '203.0.113.7') {
   });
 }
 
-function context(made: boolean | null, error: { message: string } | null = null) {
+/** The address the account has, as start_account_deletion() answers it; null when no link was made. */
+function context(stored: string | null, error: { message: string } | null = null) {
   const sent: Email[] = [];
   const waits: number[] = [];
   const background: Promise<unknown>[] = [];
-  const { admin, calls } = fakeAdmin({ data: made, error });
+  const { admin, calls } = fakeAdmin({ data: stored, error });
   return {
     sent,
     waits,
@@ -60,7 +61,7 @@ function context(made: boolean | null, error: { message: string } | null = null)
 Deno.test(
   'sends a link to an account, in the page’s language, with the token in the fragment',
   async () => {
-    const { ctx, sent, calls } = context(true);
+    const { ctx, sent, calls } = context('kaan@example.com');
     const response = await handleDeletionRequest(
       post({ email: ' Kaan@Example.com ', locale: 'de' }),
       ctx,
@@ -72,7 +73,8 @@ Deno.test(
     assertEquals(calls[0]!.args.p_email, 'Kaan@Example.com');
     assert(calls[0]!.args.p_ip_hash!.startsWith('\\x'));
     assertEquals(sent.length, 1);
-    assertEquals(sent[0]!.to, 'Kaan@Example.com');
+    // To the address the account has, not as it was typed.
+    assertEquals(sent[0]!.to, 'kaan@example.com');
     assertEquals(sent[0]!.subject, 'Lösche dein Benchbite-Konto');
     const link = sent[0]!.text.match(/https:\S+/)![0];
     const [page, token] = link.split('#token=');
@@ -86,7 +88,7 @@ Deno.test(
 Deno.test(
   'answers without waiting for the email, which could make only accounts slow',
   async () => {
-    const { ctx, background } = context(true);
+    const { ctx, background } = context('kaan@example.com');
     const response = await handleDeletionRequest(post({ email: 'kaan@example.com' }), {
       ...ctx,
       send: () => new Promise(() => {}),
@@ -115,14 +117,14 @@ Deno.test('limits by an IP the platform sets, never by the first X-Forwarded-For
 });
 
 Deno.test('answers the same, sending nothing, for an address without a link', async () => {
-  const { ctx, sent } = context(false);
+  const { ctx, sent } = context(null);
   const response = await handleDeletionRequest(post({ email: 'nobody@example.com' }), ctx);
   assertEquals(response.headers.get('location'), `${SITE}/delete-account/sent`);
   assertEquals(sent.length, 0);
 });
 
 Deno.test('takes the same time either way, by waiting out what is left of it', async () => {
-  const { ctx, waits } = context(false);
+  const { ctx, waits } = context(null);
   await handleDeletionRequest(post({ email: 'nobody@example.com' }), { ...ctx, minimumMs: 1500 });
   assertEquals(waits.length, 1);
   assert(waits[0]! > 1000 && waits[0]! <= 1500);
@@ -133,7 +135,7 @@ Deno.test('answers the same when the database or the email fails', async () => {
   const one = await handleDeletionRequest(post({ email: 'kaan@example.com' }), failing.ctx);
   assertEquals(one.headers.get('location'), `${SITE}/delete-account/sent`);
 
-  const { ctx, background } = context(true);
+  const { ctx, background } = context('kaan@example.com');
   const two = await handleDeletionRequest(post({ email: 'kaan@example.com' }), {
     ...ctx,
     send: () => Promise.reject(new Error('Sending an email failed with 500')),
@@ -146,7 +148,7 @@ Deno.test('answers the same when the database or the email fails', async () => {
 Deno.test(
   'asks the database nothing for what is no address, and falls back to English',
   async () => {
-    const { ctx, calls } = context(true);
+    const { ctx, calls } = context('kaan@example.com');
     const response = await handleDeletionRequest(
       post({ email: 'not an address', locale: 'xx' }),
       ctx,
@@ -157,7 +159,15 @@ Deno.test(
 );
 
 Deno.test('refuses anything but a form posted', async () => {
-  const { ctx } = context(true);
+  const { ctx } = context('kaan@example.com');
   const response = await handleDeletionRequest(new Request('http://localhost/'), ctx);
   assertEquals(response.status, 405);
+});
+
+Deno.test('sends the link to the stored address, not a look-alike spelling typed', async () => {
+  // The Kelvin sign (U+212A) that lower() folds into "k".
+  const { ctx, sent } = context('kaan@kmail.com');
+  await handleDeletionRequest(post({ email: 'kaan@\u212Amail.com' }), ctx);
+  assertEquals(sent.length, 1);
+  assertEquals(sent[0]!.to, 'kaan@kmail.com');
 });
