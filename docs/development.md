@@ -118,9 +118,10 @@ and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
 they need no key.
 
-A scheduled job calls `purge-coach-media`, which removes the photos of deleted chats, with the
-project URL and secret key it reads from Vault
-([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md)). Store the local stack's in its
+Scheduled jobs call `purge-coach-media`, which removes the photos of deleted chats, and
+`remove-inactive-guests`, which deletes guests inactive for 90 days, with the project URL and
+secret key they read from Vault ([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),
+[ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md)). Store the local stack's in its
 Vault once, and again after `pnpm supabase db reset`:
 
 ```bash

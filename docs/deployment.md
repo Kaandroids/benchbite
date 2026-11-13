@@ -13,10 +13,11 @@ the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJ
 secrets, such as `GEMINI_API_KEY` and `LETTERMINT_API_TOKEN` (a Lettermint project token, for the emails Edge Functions send, [ADR 0094](adr/0094-delete-an-account-from-the-website.md)), are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
 
-The scheduled photo purge reads the project URL and a secret API key from the project's Vault
-([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md)). Set them once, in the dashboard's
+The scheduled photo purge and the removal of inactive guests read the project URL and a secret
+API key from the project's Vault ([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),
+[ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md)). Set them once, in the dashboard's
 SQL editor, with the project's reference and its `default` secret key from Project Settings →
-API Keys, which `purge-coach-media` accepts:
+API Keys, which `purge-coach-media` and `remove-inactive-guests` accept:
 
 ```sql
 select vault.create_secret('https://<project-ref>.supabase.co', 'project_url');
