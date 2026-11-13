@@ -6,6 +6,7 @@ import type { Send } from '../_shared/email.ts';
 import { isObject } from '../_shared/json.ts';
 import { readJson } from '../_shared/request.ts';
 import { siteLocale } from '../_shared/site.ts';
+import { storedUser } from '../_shared/stored_user.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { deletionCodeEmail } from './email.ts';
 
@@ -13,26 +14,28 @@ export type SendCodeContext = {
   /** A client with the service role, which alone keeps codes. */
   admin: Client;
   send: Send;
-  /** The user the request's token belongs to. */
+  /**
+   * The user the request's token belongs to; their address, and the language the account was made
+   * in, are read as stored, so that a code never goes to an address changed since (#528).
+   */
   userId: string;
-  /** Their address; a guest has none. */
-  email: string | undefined;
-  /** The language the account was made in, for when the app names none. */
-  accountLocale: unknown;
 };
 
 export async function handleSendCode(
   req: Request,
-  { admin, send, userId, email, accountLocale }: SendCodeContext,
+  { admin, send, userId }: SendCodeContext,
 ): Promise<Response> {
   if (req.method !== 'POST') {
     return refused('method_not_allowed', 405);
   }
-  if (!email) {
+  const user = await storedUser(admin, userId);
+  if (!user) return refused('unavailable', 503);
+  if (user.gone || !user.email) {
     return refused('no_email', 400);
   }
+  const { email } = user;
   const body = await readJson(req, 1024);
-  const locale = siteLocale((isObject(body) && body.locale) || accountLocale);
+  const locale = siteLocale((isObject(body) && body.locale) || user.locale);
 
   const code = newCode();
   const hash = await codeHash(userId, code);
