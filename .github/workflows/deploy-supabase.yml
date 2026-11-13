@@ -87,8 +87,9 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
+      # CLI 3 asks before it deploys, and cannot ask in CI.
       - name: Deploy the Edge Functions
-        run: pnpm supabase functions deploy
+        run: pnpm supabase functions deploy --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
