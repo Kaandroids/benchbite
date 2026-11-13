@@ -39,12 +39,19 @@ export async function handleSendCode(
 
   const code = newCode();
   const hash = await codeHash(userId, code);
+  // The code is kept only while this is still the account's address, so that one mailed to an
+  // address that changed meanwhile is never kept (#563).
   const { data: answer, error } = await admin.rpc('new_account_deletion_code', {
     p_user: userId,
     p_code_hash: hash,
+    p_email: email,
   });
   if (error) {
     logError('Keeping a code to delete an account failed', error);
+    return refused('unavailable', 503);
+  }
+  if (answer === 'address_changed') {
+    // Trying again reads the new address.
     return refused('unavailable', 503);
   }
   if (answer !== 'sent') {

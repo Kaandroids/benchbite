@@ -2756,7 +2756,10 @@ export type Database = {
         }[];
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
-      new_account_deletion_code: { Args: { p_code_hash: string; p_user: string }; Returns: string };
+      new_account_deletion_code: {
+        Args: { p_code_hash: string; p_email: string; p_user: string };
+        Returns: string;
+      };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       outside_workout_limit: { Args: Record<PropertyKey, never>; Returns: number };
       password_changed_lately: { Args: { p_user: string }; Returns: boolean };
