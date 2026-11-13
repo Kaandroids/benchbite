@@ -62,8 +62,7 @@ not answered with a 2xx while folders are queued. Its log shows only counts, age
 needs no approval ([ADR 0132](adr/0132-monitor-with-a-read-only-token.md)). Its token is not the
 deploy's: create it under Account → Access Tokens for this project alone, with no permission but
 **Database: Read**, and an expiry, such as a year; the Monitor fails once it expires, and a new one
-replaces it. Start it from the Actions tab with **Run
-workflow** to check at once.
+replaces it. Start it from the Actions tab with **Run workflow** to check at once.
 
 ## Install on an iPhone
 
