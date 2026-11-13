@@ -43,7 +43,7 @@ const unavailable = () => refused('unavailable', 503);
 /** Why the request does not prove the owner of the account asks, or nothing when it does. */
 async function proofRefused(
   body: unknown,
-  email: string | undefined,
+  { email }: { email: string | undefined },
   { admin, userId, checkPassword }: DeleteContext,
 ): Promise<Response | undefined> {
   const { code, password } = isObject(body) ? body : {};
@@ -99,7 +99,7 @@ export async function handleDeleteRequest(req: Request, context: DeleteContext):
     return Response.json({ deleted: true });
   }
   if (!user.guest) {
-    const refusal = await proofRefused(await readJson(req, 4096), user.email, context);
+    const refusal = await proofRefused(await readJson(req, 4096), user, context);
     if (refusal) return refusal;
   }
   if (!(await deleteUser(context.admin, context.userId))) {
