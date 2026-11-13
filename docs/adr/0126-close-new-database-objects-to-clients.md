@@ -13,7 +13,8 @@ Supabase's default privileges grant `anon` and `authenticated` everything on eac
 - **A migration grants what it opens**, as most already did: `select`, `insert`, `update`, `delete` on a table that row level security guards, `execute` on a function the app calls.
 - **What clients held without meaning to is revoked:** writes on views, `truncate`, `references` and `trigger` on tables, and every trigger function. Existing grants that are meant stay as they are.
 - **The database tests check it:** the default privileges grant no client anything, no client may write to a view or truncate a table, no trigger function and no owner-rights function is open to `anon`, and a new table and function are closed.
-- **Database tests that call `pg_temp` helpers as a signed-in user open function execute again for themselves**, inside the transaction they roll back.
+- **Database tests that call `pg_temp` helpers as a signed-in user open just those helpers**, with `grant execute on all functions in schema pg_temp to public`, so the tests otherwise run under production's privileges.
+- **Tables use identity columns**, whose sequences need no grant; the tests check that every sequence backs one.
 
 ## Alternatives considered
 

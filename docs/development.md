@@ -65,10 +65,11 @@ After changing the schema, regenerate the TypeScript types with `pnpm db:types`.
 A new table, view, sequence or function in `public` is closed to the app until its migration
 grants what it opens ([ADR 0126](adr/0126-close-new-database-objects-to-clients.md)): `grant
 select, insert on public.x to authenticated` for a table that row level security guards, or `grant
-execute on function public.f(…) to authenticated` for a function the app calls with `rpc()`. A
-database test that calls a `pg_temp` helper as a signed-in user opens function execute again for
-itself (`alter default privileges for role postgres grant execute on functions to public`), as the
-test is rolled back.
+execute on function public.f(…) to authenticated` for a function the app calls with `rpc()`. Use
+identity columns (`generated always as identity`), which need no grant on their sequence; a
+`serial` column would also need `grant usage on sequence … to authenticated`. A database test that
+calls its `pg_temp` helpers as a signed-in user opens just them, with `grant execute on all
+functions in schema pg_temp to public` after creating them.
 
 ### Email
 
