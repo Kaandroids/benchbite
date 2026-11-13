@@ -39,7 +39,7 @@ function fakeAdmin(
     deleteError = null,
     rpc = {},
     gone,
-    stored = 'guest',
+    stored = 'account',
     email = 'kaan@example.com',
     readError,
   }: Options = {},
@@ -109,8 +109,11 @@ const post = (body?: unknown) =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-/** A guest's request, which needs no proof. */
-const guest = (admin: never, userId = A) => ({
+/**
+ * A request whose password must not be checked: a guest's, which needs no proof, or one that brings
+ * none. Whether the user is a guest is the fake admin's stored user, as the handler reads it.
+ */
+const noPassword = (admin: never, userId = A) => ({
   admin,
   userId,
   checkPassword: () => Promise.reject(new Error('A guest has no password')),
@@ -133,9 +136,9 @@ Deno.test('removes only the user’s photos, a page at a time, and then the user
     ...Array.from({ length: PAGE_SIZE + 10 }, (_, index) => `${A}/${index}.jpg`),
     `${B}/kept.jpg`,
   ]);
-  const { admin, calls } = fakeAdmin(objects);
+  const { admin, calls } = fakeAdmin(objects, { stored: 'guest' });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), { deleted: true });
@@ -144,9 +147,9 @@ Deno.test('removes only the user’s photos, a page at a time, and then the user
 });
 
 Deno.test('deletes a user without photos', async () => {
-  const { admin, calls } = fakeAdmin(new Set());
+  const { admin, calls } = fakeAdmin(new Set(), { stored: 'guest' });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 200);
   assertEquals(calls, [`delete ${A}`]);
@@ -154,9 +157,9 @@ Deno.test('deletes a user without photos', async () => {
 
 Deno.test('removes a photo uploaded while the user was being deleted', async () => {
   const objects = new Set<string>();
-  const { admin } = fakeAdmin(objects, { uploadedLate: `${A}/late.jpg` });
+  const { admin } = fakeAdmin(objects, { stored: 'guest', uploadedLate: `${A}/late.jpg` });
 
-  await handleDeleteRequest(post(), guest(admin));
+  await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals([...objects], []);
 });
@@ -164,18 +167,21 @@ Deno.test('removes a photo uploaded while the user was being deleted', async () 
 Deno.test(
   'answers that the user is deleted when only the last look at the photos fails',
   async () => {
-    const { admin } = fakeAdmin(new Set(), { storageErrorAfter: true });
+    const { admin } = fakeAdmin(new Set(), { stored: 'guest', storageErrorAfter: true });
 
-    const response = await handleDeleteRequest(post(), guest(admin));
+    const response = await handleDeleteRequest(post(), noPassword(admin));
 
     assertEquals(response.status, 200);
   },
 );
 
 Deno.test('keeps the user when the photos cannot be removed', async () => {
-  const { admin, calls } = fakeAdmin(new Set([`${A}/0.jpg`]), { storageError: true });
+  const { admin, calls } = fakeAdmin(new Set([`${A}/0.jpg`]), {
+    stored: 'guest',
+    storageError: true,
+  });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 503);
   assertEquals(await response.json(), { error: 'unavailable' });
@@ -183,27 +189,27 @@ Deno.test('keeps the user when the photos cannot be removed', async () => {
 });
 
 Deno.test('says so when the user cannot be deleted', async () => {
-  const { admin } = fakeAdmin(new Set(), { deleteError: { status: 500 } });
+  const { admin } = fakeAdmin(new Set(), { stored: 'guest', deleteError: { status: 500 } });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 503);
 });
 
 Deno.test('counts a user already gone as deleted', async () => {
-  const { admin } = fakeAdmin(new Set(), { deleteError: { status: 404 } });
+  const { admin } = fakeAdmin(new Set(), { stored: 'guest', deleteError: { status: 404 } });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 200);
 });
 
 Deno.test('takes only POST requests', async () => {
-  const { admin, calls } = fakeAdmin(new Set([`${A}/0.jpg`]));
+  const { admin, calls } = fakeAdmin(new Set([`${A}/0.jpg`]), { stored: 'guest' });
 
   const response = await handleDeleteRequest(
     new Request('http://localhost/delete-account'),
-    guest(admin),
+    noPassword(admin),
   );
 
   assertEquals(response.status, 405);
@@ -217,7 +223,6 @@ const DOWN = { data: null, error: { message: 'down' } };
 
 Deno.test('deletes an account with its code', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { check_account_deletion_code: RIGHT },
   });
 
@@ -232,7 +237,6 @@ Deno.test('deletes an account with its code', async () => {
 
 Deno.test('keeps an account whose code is wrong', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { check_account_deletion_code: answer('wrong') },
   });
 
@@ -246,7 +250,6 @@ Deno.test('keeps an account whose code is wrong', async () => {
 Deno.test('deletes an account with its password, counting the try first', async () => {
   const passwords: string[] = [];
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -262,7 +265,6 @@ Deno.test('deletes an account with its password, counting the try first', async 
 
 Deno.test('keeps an account whose password is wrong', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -276,7 +278,6 @@ Deno.test('keeps an account whose password is wrong', async () => {
 Deno.test('tries no password once the tries are used up', async () => {
   const passwords: string[] = [];
   const { admin } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { take_account_deletion_password_try: answer('too_many') },
   });
 
@@ -292,7 +293,7 @@ Deno.test('tries no password once the tries are used up', async () => {
 
 Deno.test('keeps an account that brings no proof', async () => {
   for (const body of [undefined, {}, { code: '12345' }, { code: 481027 }, { password: '' }]) {
-    const { admin, calls } = fakeAdmin(new Set(), { stored: 'account' });
+    const { admin, calls } = fakeAdmin(new Set());
 
     const response = await handleDeleteRequest(post(body), account(admin));
 
@@ -306,7 +307,6 @@ Deno.test('keeps an account when its proof cannot be checked', async () => {
   const failing = {
     ...account(
       fakeAdmin(new Set(), {
-        stored: 'account',
         rpc: { take_account_deletion_password_try: ALLOWED },
       }).admin,
     ),
@@ -317,7 +317,6 @@ Deno.test('keeps an account when its proof cannot be checked', async () => {
       { code: '481027' },
       account(
         fakeAdmin(new Set(), {
-          stored: 'account',
           rpc: { check_account_deletion_code: DOWN },
         }).admin,
       ),
@@ -326,7 +325,6 @@ Deno.test('keeps an account when its proof cannot be checked', async () => {
       { password: 'secret' },
       account(
         fakeAdmin(new Set(), {
-          stored: 'account',
           rpc: { take_account_deletion_password_try: DOWN },
         }).admin,
       ),
@@ -340,9 +338,9 @@ Deno.test('keeps an account when its proof cannot be checked', async () => {
 });
 
 Deno.test('asks a guest for no proof', async () => {
-  const { admin, calls } = fakeAdmin(new Set());
+  const { admin, calls } = fakeAdmin(new Set(), { stored: 'guest' });
 
-  const response = await handleDeleteRequest(post({ code: '000000' }), guest(admin));
+  const response = await handleDeleteRequest(post({ code: '000000' }), noPassword(admin));
 
   assertEquals(response.status, 200);
   assertEquals(calls, [`delete ${A}`]);
@@ -354,7 +352,6 @@ Deno.test('tells an expired code and too many wrong codes apart', async () => {
     ['too_many', 'too_many_tries', 429],
   ] as const) {
     const { admin, calls } = fakeAdmin(new Set(), {
-      stored: 'account',
       rpc: { check_account_deletion_code: answer(said) },
     });
 
@@ -373,7 +370,6 @@ Deno.test('tries no password that changed lately, or while all tries are taken',
   ] as const) {
     const passwords: string[] = [];
     const { admin } = fakeAdmin(new Set(), {
-      stored: 'account',
       rpc: { take_account_deletion_password_try: answer(said) },
     });
 
@@ -389,7 +385,6 @@ Deno.test('tries no password that changed lately, or while all tries are taken',
 
 Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -402,7 +397,6 @@ Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
 
 Deno.test('counts an account already gone as deleted, without asking for proof', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    stored: 'account',
     gone: true,
   });
 
@@ -415,9 +409,9 @@ Deno.test('counts an account already gone as deleted, without asking for proof',
 
 Deno.test('asks for proof when a token still says guest after the account was made', async () => {
   // The token's claims are not read: the stored user is an account, which needs proof.
-  const { admin, calls } = fakeAdmin(new Set(), { stored: 'account' });
+  const { admin, calls } = fakeAdmin(new Set());
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 400);
   assertEquals(await response.json(), { error: 'proof_required' });
@@ -427,7 +421,6 @@ Deno.test('asks for proof when a token still says guest after the account was ma
 Deno.test('checks the password against the address as stored', async () => {
   const passwords: string[] = [];
   const { admin } = fakeAdmin(new Set(), {
-    stored: 'account',
     email: 'new@example.com',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
@@ -440,7 +433,7 @@ Deno.test('checks the password against the address as stored', async () => {
 Deno.test('deletes nothing when Auth cannot say who the user is', async () => {
   const { admin, calls } = fakeAdmin(new Set(), { readError: true });
 
-  const response = await handleDeleteRequest(post(), guest(admin));
+  const response = await handleDeleteRequest(post(), noPassword(admin));
 
   assertEquals(response.status, 503);
   assertEquals(calls, []);
