@@ -38,6 +38,8 @@ as $$
     )
     when kind in ('alternative', 'alternative_switch') then
       public.coach_alternatives_state((change ->> 'workoutId')::bigint)
+    -- Named as a `note` change names it, the day to ask again even when there is none, so that
+    -- undoing a change applies it as it was.
     when kind in ('note', 'note_archive') then (
       select jsonb_build_object(
         'id', n.id,
@@ -147,6 +149,7 @@ begin
       update public.coach_notes n
       set archived_at = null, archive_reason = null
       where n.id = (change ->> 'id')::bigint and n.user_id = (select auth.uid());
+    -- A note's change too: what it replaces names every field it may change.
     else perform public.apply_coach_change(kind, before, today);
   end case;
 end;
@@ -154,7 +157,8 @@ $$;
 
 -- As before, checking the new kinds: a change to a note names its id and what to change, of its
 -- category, text and day to ask again; archiving one names its id and why. Either needs a note of
--- the caller's in use (P0002).
+-- the caller's in use (P0002). A change to a note keeps what the one it replaces changed and it
+-- does not, so that a newer proposal never drops an earlier change the user has not applied.
 create or replace function public.propose_coach_change(
   thread_id bigint,
   kind public.coach_proposal_kind,
@@ -175,6 +179,13 @@ declare
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  -- A note's row before the user's lock, in the order archiving one in the notebook takes them,
+  -- as check_coach_note_limit() takes the user's lock once the row is locked.
+  if kind in ('note', 'note_archive') then
+    perform 1 from public.coach_notes n
+    where n.id = (change ->> 'id')::bigint and n.user_id = caller_id
+    for update;
   end if;
   perform public.lock_user_limits(caller_id);
   if not exists (
@@ -257,6 +268,17 @@ begin
         ))
         || case when change ? 'reviewOn'
           then jsonb_build_object('reviewOn', change -> 'reviewOn') else '{}' end;
+      change := coalesce((
+        select p.change from public.coach_proposals p
+        where p.thread_id = propose_coach_change.thread_id
+          and p.user_id = caller_id
+          and p.kind = 'note'
+          and p.status = 'pending'
+          and p.expires_at > now()
+          and p.change -> 'id' = propose_coach_change.change -> 'id'
+        order by p.id desc
+        limit 1
+      ), '{}') || propose_coach_change.change;
     when 'note_archive' then
       if not coalesce(
         jsonb_typeof(change -> 'id') = 'number' and jsonb_typeof(change -> 'reason') = 'string',
@@ -321,7 +343,8 @@ begin
 end;
 $$;
 
--- As before, and locks the note a note's proposal changes.
+-- As before, and locks the note a note's proposal changes, first, as the notebook changes notes
+-- without the user's lock and archiving one takes it after the note's row.
 create or replace function public.decide_coach_proposal(
   proposal_id bigint,
   decision public.coach_proposal_decision,
@@ -338,6 +361,16 @@ as $$
 declare
   proposal public.coach_proposals;
 begin
+  -- A note's row before the user's lock, as propose_coach_change() takes them.
+  perform 1 from public.coach_notes n
+  where n.id = (
+      select (p.change ->> 'id')::bigint from public.coach_proposals p
+      where p.id = decide_coach_proposal.proposal_id
+        and p.user_id = (select auth.uid())
+        and p.kind in ('note', 'note_archive')
+    )
+    and n.user_id = (select auth.uid())
+  for update;
   -- The user's lock first, as save_workout() takes it, then the workout's row, so that nothing
   -- changes between the check and the change.
   perform public.lock_user_limits((select auth.uid()));
@@ -360,11 +393,6 @@ begin
     when 'food_log' then
       perform 1 from public.meal_entries e
       where e.id = any (public.food_log_entry_ids(proposal.change)) and e.user_id = proposal.user_id
-      for update;
-    -- The notebook changes notes without the user's lock.
-    when 'note', 'note_archive' then
-      perform 1 from public.coach_notes n
-      where n.id = (proposal.change ->> 'id')::bigint and n.user_id = proposal.user_id
       for update;
     else null;
   end case;
