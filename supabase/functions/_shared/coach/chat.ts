@@ -199,7 +199,8 @@ export type CardAlternative = { name: string | null; position: number };
  * A change Bite proposed (ADR 0058), as its card shows it, in data the app words and formats
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
  * user's language, the targets in use and the new ones, entries of the food log moved, resized or
- * removed (ADR 0068), or changes to several workouts and their alternatives (ADR 0075). Bite
+ * removed (ADR 0068), changes to several workouts and their alternatives (ADR 0075), or a note
+ * changed or archived (ADR 0133). Bite
  * proposes `workout` no more; its cards stay with the messages that have them. The user applies
  * it, keeps things as they are, or undoes it, by its `id` (decide_coach_proposal()).
  */
@@ -247,7 +248,25 @@ export type ProposalCard =
       to: CardAlternative;
       back: string[];
       empty: boolean;
+    }
+  | {
+      /** A note in use changed: its category, text or day to ask again, as it was and will be. */
+      kind: 'note';
+      id: number;
+      from: CardNote;
+      to: CardNote;
+    }
+  | {
+      /** A note in use moved to past notes, with why, in the user's language. */
+      kind: 'note_archive';
+      id: number;
+      category: NoteCategory;
+      text: string;
+      reason: string;
     };
+
+/** A note as a proposal's card shows it; `reviewOn` is the day to ask again, YYYY-MM-DD. */
+export type CardNote = { category: NoteCategory; text: string; reviewOn: string | null };
 
 /**
  * The kinds of proposal the chat shows a card for. coach-chat offers Bite a tool only for these,
@@ -260,6 +279,8 @@ export const SHOWN_PROPOSAL_KINDS = [
   'workouts',
   'alternative',
   'alternative_switch',
+  'note',
+  'note_archive',
 ] as const satisfies readonly ProposalCard['kind'][];
 
 /**
@@ -285,7 +306,8 @@ export type NoteCategory = Database['public']['Enums']['coach_note_category'];
 /**
  * A note Bite saved, changed or archived in its notebook (ADR 0071), as the chat shows it under
  * the answer: `asked` when the user has saving from chats off, so that the note waits for their
- * yes. The notebook reads where it stands from `coach_notes`, by its `id`.
+ * yes. The notebook reads where it stands from `coach_notes`, by its `id`. Bite proposes changes
+ * and archiving now (ADR 0133); `updated` and `archived` stay with the messages that have them.
  */
 export type NoteCard = {
   id: number;

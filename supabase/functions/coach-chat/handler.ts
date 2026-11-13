@@ -7,6 +7,7 @@ import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai
 import { Base64Data } from '../_shared/base64.ts';
 import { encodedBytes } from '../_shared/base64_bytes.ts';
 import {
+  type CardNote,
   type ChatEvent as Event,
   type ChatPhotoPart,
   type ChatVoicePart,
@@ -666,6 +667,14 @@ function proposalText(proposal: ProposalCard): string {
     return `(Proposed switching ${workoutName(proposal.workout)} from ${alternativeName(
       proposal.from,
     )} to ${alternativeName(proposal.to)}.)`;
+  }
+  if (proposal.kind === 'note') {
+    const { from, to } = proposal;
+    const day = (note: CardNote) => (note.reviewOn ? `, ask again on ${note.reviewOn}` : '');
+    return `(Proposed changing the note "${from.text}" (${from.category}${day(from)}) to "${to.text}" (${to.category}${day(to)}).)`;
+  }
+  if (proposal.kind === 'note_archive') {
+    return `(Proposed archiving the note "${proposal.text}" (${proposal.category}): ${proposal.reason}.)`;
   }
   const swaps = changesText({ swaps: proposal.swaps, removed: [], added: [] });
   return `(Proposed for ${workoutName(proposal.workout)}: ${swaps}.)`;
