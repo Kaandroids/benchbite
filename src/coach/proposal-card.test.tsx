@@ -625,6 +625,18 @@ describe('a note change', () => {
     expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
   });
 
+  it('says when the notebook is too full to bring a note back', async () => {
+    decides(null, 'BB046');
+    await render(<ProposalCard card={ARCHIVE} state={{ ...pending, status: 'applied' }} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+
+    expect(
+      await screen.findByText('Your notebook has 50 notes in use. Remove one to bring this back.'),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+
   it('keeps the note as it is', async () => {
     decides('kept');
     await render(<ProposalCard card={ARCHIVE} state={pending} />);

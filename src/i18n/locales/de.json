@@ -2209,7 +2209,8 @@
         "outOfDate": "Das ist nicht mehr aktuell",
         "underFloor": "Das liegt jetzt unter dem Minimum, das wir empfehlen – frag Bite noch einmal",
         "failed": "Das hat nicht geklappt. Versuch es noch einmal.",
-        "closedDay": "Dieser Tag kann nicht mehr geändert werden"
+        "closedDay": "Dieser Tag kann nicht mehr geändert werden",
+        "notebookFull": "Dein Notizbuch hat 50 Notizen in Gebrauch. Entferne eine, um diese zurückzuholen."
       }
     },
     "mealCard": {

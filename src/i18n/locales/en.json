@@ -2209,7 +2209,8 @@
         "outOfDate": "This is out of date",
         "underFloor": "This is now below the least we recommend — ask Bite again",
         "failed": "That didn't work. Try again.",
-        "closedDay": "That day can no longer be changed"
+        "closedDay": "That day can no longer be changed",
+        "notebookFull": "Your notebook has 50 notes in use. Remove one to bring this back."
       }
     },
     "mealCard": {

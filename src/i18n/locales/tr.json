@@ -2209,7 +2209,8 @@
         "outOfDate": "Bunun süresi geçti",
         "underFloor": "Bu artık önerdiğimiz en düşük kalorinin altında — Bite'a yeniden sor",
         "failed": "Olmadı. Tekrar dene.",
-        "closedDay": "O gün artık değiştirilemez"
+        "closedDay": "O gün artık değiştirilemez",
+        "notebookFull": "Defterinde kullanımda 50 not var. Bunu geri getirmek için birini kaldır."
       }
     },
     "mealCard": {
