@@ -159,7 +159,8 @@ select is(
 select ok(
   not has_function_privilege('authenticated', 'public.check_account_deletion_code(uuid, bytea)', 'execute')
     and not has_function_privilege('authenticated', 'public.new_account_deletion_code(uuid, bytea)', 'execute')
-    and not has_function_privilege('anon', 'public.password_changed_lately(uuid)', 'execute'),
+    and not has_function_privilege('anon', 'public.password_changed_lately(uuid)', 'execute')
+    and not has_function_privilege('authenticated', 'public.password_changed_lately(uuid)', 'execute'),
   'No client can make or check a code, or ask about a password'
 );
 select ok(
