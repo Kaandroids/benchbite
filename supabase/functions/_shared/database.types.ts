@@ -3038,7 +3038,7 @@ export type Database = {
       share_left: { Args: { budget: number; used: number }; Returns: number };
       start_account_deletion: {
         Args: { p_email: string; p_ip_hash: string; p_token_hash: string };
-        Returns: boolean;
+        Returns: string;
       };
       start_ai_call: {
         Args: {
