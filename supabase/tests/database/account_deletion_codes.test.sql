@@ -1,11 +1,10 @@
--- Codes and password tries that confirm deleting an account from the app (#438, ADR 0095): a code
--- a minute and 5 an hour, working for 15 minutes, 5 wrong codes an hour whatever the code, 5
--- password tries in 15 minutes and 20 for everyone in 5, no new password, and out of every
--- client's reach.
+-- Codes and passwords that confirm deleting an account from the app (#438, ADR 0095, ADR 0127): a
+-- code a minute and 5 an hour, working for 15 minutes, 5 wrong codes an hour whatever the code, no
+-- password changed in the last day, and out of every client's reach.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(22);
 
 insert into auth.users (id, email, email_confirmed_at, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'kaan@example.com', now(), false),
@@ -118,50 +117,35 @@ select is(
 );
 
 select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000a'),
-  'allowed',
-  'A password can be tried'
+  public.password_changed_lately('00000000-0000-0000-0000-00000000000b'),
+  false,
+  'A password not changed lately can confirm'
 );
-select public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000a')
-  from generate_series(1, 4);
-select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000a'),
-  'too_many',
-  'A sixth password try within 15 minutes is refused'
-);
-select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000b'),
-  'allowed',
-  'Other users keep theirs'
-);
-
-insert into public.account_deletion_tries (user_id, kind)
-  select '00000000-0000-0000-0000-00000000000a', 'password' from generate_series(1, 14);
-select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000b'),
-  'busy',
-  'All users together get 20 tries in 5 minutes'
-);
-
 update auth.users set encrypted_password = 'new' where id = '00000000-0000-0000-0000-00000000000b';
 select ok(
   exists (select from public.password_changes
           where user_id = '00000000-0000-0000-0000-00000000000b'),
   'A change of password is recorded'
 );
-delete from public.account_deletion_tries;
 select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000b'),
-  'recently_changed',
-  'A password changed within a day is refused'
+  public.password_changed_lately('00000000-0000-0000-0000-00000000000b'),
+  true,
+  'A password changed within a day cannot'
+);
+select is(
+  public.password_changed_lately('00000000-0000-0000-0000-00000000000a'),
+  false,
+  'Another user''s change does not count'
 );
 update public.password_changes set changed_at = now() - interval '25 hours';
 select is(
-  public.take_account_deletion_password_try('00000000-0000-0000-0000-00000000000b'),
-  'allowed',
-  'A day later it can be tried'
+  public.password_changed_lately('00000000-0000-0000-0000-00000000000b'),
+  false,
+  'A day later it can'
 );
 
+insert into public.account_deletion_tries (user_id, kind)
+  values ('00000000-0000-0000-0000-00000000000b', 'code_sent');
 delete from auth.users where id = '00000000-0000-0000-0000-00000000000b';
 select is(
   (select count(*)::int from public.account_deletion_tries
@@ -175,8 +159,9 @@ select is(
 select ok(
   not has_function_privilege('authenticated', 'public.check_account_deletion_code(uuid, bytea)', 'execute')
     and not has_function_privilege('authenticated', 'public.new_account_deletion_code(uuid, bytea)', 'execute')
-    and not has_function_privilege('anon', 'public.take_account_deletion_password_try(uuid)', 'execute'),
-  'No client can make or check a code'
+    and not has_function_privilege('anon', 'public.password_changed_lately(uuid)', 'execute')
+    and not has_function_privilege('authenticated', 'public.password_changed_lately(uuid)', 'execute'),
+  'No client can make or check a code, or ask about a password'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.account_deletion_codes', 'select')

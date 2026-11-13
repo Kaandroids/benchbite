@@ -1,6 +1,6 @@
 # 0095. Confirm deleting an account by email
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0127
 - **Date:** 2026-11-08
 
 ## Context

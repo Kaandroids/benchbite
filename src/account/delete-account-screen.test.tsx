@@ -1,4 +1,4 @@
-import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
+import { AuthApiError, FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 
 import { supabase } from '@/lib/supabase';
@@ -9,7 +9,12 @@ import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { DeleteAccountScreen } from './delete-account-screen';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
-jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    functions: { invoke: jest.fn() },
+    auth: { getUser: jest.fn(), signInWithPassword: jest.fn() },
+  },
+}));
 jest.mock('@/providers/session-provider', () => ({
   useSession: jest.fn(),
   useIsAccount: jest.fn(),
@@ -44,7 +49,17 @@ beforeEach(() => {
   jest.clearAllMocks();
   given(true);
   answering();
+  jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({ error: null } as never);
+  storedEmail('kaan@example.com');
 });
+
+/** The address Auth has for the account now, which may differ from the session's. */
+function storedEmail(email: string) {
+  jest.mocked(supabase.auth.getUser).mockResolvedValue({
+    data: { user: { email } },
+    error: null,
+  } as never);
+}
 
 /** Opens the sheet of an account and has the code sent. */
 async function sendCode() {
@@ -181,7 +196,9 @@ describe('an account', () => {
   });
 
   it('can use the password instead, and is told when it is wrong', async () => {
-    answering({ 'delete-account': refused('wrong_password', 403) });
+    jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+      error: new AuthApiError('wrong', 400, 'invalid_credentials'),
+    } as never);
     await sendCode();
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
@@ -191,14 +208,16 @@ describe('an account', () => {
     await fireEvent.changeText(screen.getByLabelText('Password'), 'guess');
     await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 
-    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
-      body: { password: 'guess' },
-    });
     expect(await screen.findByText('That isn’t your password.')).toBeOnTheScreen();
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'kaan@example.com',
+      password: 'guess',
+    });
+    expect(supabase.functions.invoke).not.toHaveBeenCalledWith('delete-account', expect.anything());
     expect(leaveDeletedUser).not.toHaveBeenCalled();
   });
 
-  it('is deleted with the right password', async () => {
+  it('is deleted with the right password, signing in with it first', async () => {
     await sendCode();
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
@@ -207,6 +226,46 @@ describe('an account', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 
     await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'kaan@example.com',
+      password: 'secret',
+    });
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
+      body: { signedIn: true },
+    });
+  });
+
+  it('signs in with the address Auth has now, not one the session still keeps', async () => {
+    storedEmail('new@example.com');
+    await sendCode();
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
+    );
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+
+    await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      password: 'secret',
+    });
+  });
+
+  it('is asked to wait when Auth takes no more tries', async () => {
+    jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+      error: new AuthApiError('slow down', 429, 'over_request_rate_limit'),
+    } as never);
+    await sendCode();
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
+    );
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+
+    expect(
+      await screen.findByText('Too many tries. Wait a moment and try again.'),
+    ).toBeOnTheScreen();
+    expect(leaveDeletedUser).not.toHaveBeenCalled();
   });
 
   it('is pointed to the code when the password changed lately', async () => {

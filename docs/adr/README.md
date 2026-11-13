@@ -110,7 +110,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0092](0092-reset-a-password-with-a-code.md)                          | Reset a password with a code                                                            | Accepted                                             |
 | [0093](0093-change-a-password-with-the-current-one.md)                | Change a password with the current one                                                  | Accepted                                             |
 | [0094](0094-delete-an-account-from-the-website.md)                    | Delete an account from the website                                                      | Accepted                                             |
-| [0095](0095-confirm-deleting-an-account-by-email.md)                  | Confirm deleting an account by email                                                    | Accepted                                             |
+| [0095](0095-confirm-deleting-an-account-by-email.md)                  | Confirm deleting an account by email                                                    | Accepted, amended by ADR-0127                        |
 | [0096](0096-develop-with-a-development-build.md)                      | Develop with a development build                                                        | Accepted                                             |
 | [0097](0097-read-workouts-from-apple-health-and-health-connect.md)    | Read workouts from Apple Health and Health Connect                                      | Accepted, amended by ADR-0105 and ADR-0108           |
 | [0098](0098-keep-a-summary-of-a-workouts-heart-rate.md)               | Keep a summary of a workout's heart rate                                                | Accepted, amended by ADR-0099                        |
@@ -142,3 +142,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0124](0124-time-a-set-on-the-watch.md)                               | Time a set on the watch                                                                 | Accepted                                             |
 | [0125](0125-turn-the-weight-by-the-speed-of-the-crown.md)             | Turn the weight by the speed of the Crown                                               | Accepted                                             |
 | [0126](0126-close-new-database-objects-to-clients.md)                 | Close new database objects to clients                                                   | Accepted                                             |
+| [0127](0127-check-the-deletion-password-on-the-phone.md)              | Check the password for deleting an account on the phone                                 | Accepted                                             |

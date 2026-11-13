@@ -10,6 +10,7 @@ import { ChangePasswordScreen } from './change-password-screen';
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
+      getUser: jest.fn(),
       signInWithPassword: jest.fn(),
       updateUser: jest.fn(),
       resetPasswordForEmail: jest.fn(),
@@ -44,6 +45,10 @@ beforeEach(() => {
   }
   jest.mocked(useSession).mockReturnValue(value);
   jest.mocked(useUserEmail).mockReturnValue('kaan@example.com');
+  auth.getUser.mockResolvedValue({
+    data: { user: { email: 'kaan@example.com' } },
+    error: null,
+  } as never);
   auth.signInWithPassword.mockResolvedValue({ data: {}, error: null } as never);
   auth.updateUser.mockResolvedValue({ data: {}, error: null } as never);
   auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null } as never);

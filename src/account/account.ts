@@ -13,7 +13,7 @@ import type { AccountRefusal } from '@shared/account_refusals';
 
 import { functionRefusal } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
-import { useSession, useUserEmail } from '@/providers/session-provider';
+import { useSession } from '@/providers/session-provider';
 
 import { PASSWORD_LIMITS } from './passwords';
 
@@ -85,16 +85,17 @@ const FUNCTION_ERRORS: Record<AccountRefusal, AccountError> = {
   proof_required: 'unknown',
   wrong_code: 'invalidCode',
   code_expired: 'invalidCode',
-  wrong_password: 'wrongPassword',
   password_recently_changed: 'passwordRecentlyChanged',
   too_many_tries: 'tooManyTries',
   too_many_codes: 'tooManyTries',
   too_soon: 'codeWait',
-  busy: 'rateLimited',
 };
 
 /** The current password given to change it was not the account's. */
 class WrongCurrentPassword extends Error {}
+
+/** The password given to confirm deleting the account was not its own. */
+class WrongPassword extends Error {}
 
 /** An Edge Function's answer that it did not do what was asked, with its reason. */
 class FunctionRefusal extends Error {
@@ -123,6 +124,9 @@ async function callFunction(name: string, body?: Record<string, unknown>) {
 export function accountError(error: unknown): AccountError {
   if (error instanceof WrongCurrentPassword) {
     return 'wrongCurrentPassword';
+  }
+  if (error instanceof WrongPassword) {
+    return 'wrongPassword';
   }
   if (error instanceof FunctionRefusal) {
     return (
@@ -190,6 +194,30 @@ async function savePassword(password: string) {
   if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
     throw error;
   }
+}
+
+/**
+ * Whether the password is the signed-in account's, checked by signing in with it from the phone,
+ * where Auth limits the tries by the phone's IP. The address is the one Auth has now: the session's
+ * can be one changed since on another device, with which the right password would fail (#528).
+ */
+async function isAccountPassword(password: string): Promise<boolean> {
+  const { data, error: readError } = await supabase.auth.getUser();
+  if (readError) {
+    throw readError;
+  }
+  const email = data.user.email;
+  if (!email) {
+    throw new Error('No account is signed in');
+  }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (isAuthApiError(error) && error.code === 'invalid_credentials') {
+    return false;
+  }
+  if (error) {
+    throw error;
+  }
+  return true;
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({
@@ -325,17 +353,10 @@ export function useSaveNewPassword() {
  * as Auth does not; Auth only refuses a session older than a day (ADR 0093).
  */
 export function useChangePassword() {
-  const email = useUserEmail();
   return useMutation({
     mutationFn: async ({ current, password }: { current: string; password: string }) => {
-      if (!email) {
-        throw new Error('No account is signed in');
-      }
-      const signIn = await supabase.auth.signInWithPassword({ email, password: current });
-      if (signIn.error) {
-        throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
-          ? new WrongCurrentPassword()
-          : signIn.error;
+      if (!(await isAccountPassword(current))) {
+        throw new WrongCurrentPassword();
       }
       await savePassword(password);
     },
@@ -376,13 +397,22 @@ export function useSendDeletionCode() {
 
 /**
  * Deletes the user on this device, guest or account, and all that is theirs (ADR 0087); the app
- * starts over as a new guest. An account brings a code from its email or its password (ADR 0095).
+ * starts over as a new guest. An account brings a code from its email, or signs in with its
+ * password just before, which delete-account takes as proof (ADR 0095, ADR 0127): Auth then limits
+ * the tries by the phone's IP, not one all users share (#531).
  */
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
   return useMutation({
     mutationFn: async (proof?: DeletionProof) => {
-      await callFunction('delete-account', proof);
+      if (proof && 'password' in proof) {
+        if (!(await isAccountPassword(proof.password))) {
+          throw new WrongPassword();
+        }
+        await callFunction('delete-account', { signedIn: true });
+      } else {
+        await callFunction('delete-account', proof);
+      }
       await leaveDeletedUser();
     },
   });
