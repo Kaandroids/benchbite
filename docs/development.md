@@ -249,9 +249,12 @@ pnpm install
 pnpm dev     # serves it on http://localhost:4321
 pnpm check   # type-checks the pages and the translations
 pnpm build   # writes the static site to website/dist
+pnpm preview # serves the built site on http://localhost:4321
 ```
 
-`pnpm dev` runs in the background; `pnpm astro dev stop` stops it. Its text is in `src/i18n/`, one
+`pnpm dev` runs in the background; `pnpm astro dev stop` stops it. The Content-Security-Policy
+applies only to the built site, so try a new script or style with `pnpm build` and `pnpm preview`
+(ADR 0129). Its text is in `src/i18n/`, one
 file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md).
 
 ## Scripts
