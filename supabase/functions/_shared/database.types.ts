@@ -2535,6 +2535,7 @@ export type Database = {
         Returns: boolean;
       };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
+      inactive_guests: { Args: { p_limit: number }; Returns: string[] };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
@@ -2561,6 +2562,7 @@ export type Database = {
       keep_streak_days: { Args: { through: string; today: string }; Returns: string };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
       kept_through: { Args: { latest: string; owner: string }; Returns: string };
+      last_active_at: { Args: { p_user: string }; Returns: string };
       last_day_closed_to_logging: { Args: Record<PropertyKey, never>; Returns: string };
       last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
@@ -2955,6 +2957,7 @@ export type Database = {
         Returns: undefined;
       };
       request_coach_media_purge: { Args: Record<PropertyKey, never>; Returns: number };
+      request_inactive_guest_removal: { Args: Record<PropertyKey, never>; Returns: number };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
