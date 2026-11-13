@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 -- The job's runs as this test sets them.
 delete from cron.job_run_details
@@ -46,6 +46,20 @@ select pg_temp.ran('succeeded', interval '3 hours');
 select is(
   (select healthy from public.inactive_guest_removal_status()), false,
   'So does no run in the last two hours'
+);
+
+-- A run pg_cron failed before it started has no start, and is not the latest for good.
+delete from cron.job_run_details
+where jobid = (select jobid from cron.job where jobname = 'remove-inactive-guests');
+insert into cron.job_run_details (jobid, runid, status, return_message, end_time)
+select jobid, (select coalesce(max(runid), 0) + 1 from cron.job_run_details), 'failed',
+  'job startup timeout', now() - interval '20 days'
+from cron.job where jobname = 'remove-inactive-guests';
+select pg_temp.ran('succeeded', interval '10 minutes');
+select is(
+  (select row(latest_run_status, healthy)::text from public.inactive_guest_removal_status()),
+  row('succeeded', true)::text,
+  'A later run is the latest, though an earlier one has no start'
 );
 
 -- A guest past the period by more than a day, one past it by less, and an account.

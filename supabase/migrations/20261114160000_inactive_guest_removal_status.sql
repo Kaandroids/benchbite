@@ -48,7 +48,8 @@ as $$
     from cron.job_run_details d
     join cron.job j on j.jobid = d.jobid
     where j.jobname = 'remove-inactive-guests'
-    order by d.start_time desc
+    -- By run id, never null, as pg_cron leaves the start of a run that failed to start empty.
+    order by d.runid desc
     limit 1
   )
   select
