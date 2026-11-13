@@ -53,11 +53,18 @@ engines away.
 
 The **Monitor** workflow checks the hosted project's scheduled jobs once a day and fails, which
 sends GitHub's usual email, when one stops working
-([ADR 0067](adr/0067-check-scheduled-jobs-from-github-actions.md)). For now it checks the
-photo purge: it fails when a deleted chat's folder has waited over an hour and a run failed to purge
-it or no call succeeded in the last 15 minutes, or when the latest call to `purge-coach-media` was
-not answered with a 2xx while folders are queued. Its log shows only counts, ages and status codes; a
-401 usually means the secret key in Vault is outdated. It reads `SUPABASE_ACCESS_TOKEN` and
+([ADR 0067](adr/0067-check-scheduled-jobs-from-github-actions.md)). It checks two jobs:
+
+- The photo purge: it fails when a deleted chat's folder has waited over an hour and a run failed
+  to purge it or no call succeeded in the last 15 minutes, or when the latest call to
+  `purge-coach-media` was not answered with a 2xx while folders are queued. A 401 usually means the
+  secret key in Vault is outdated.
+- The removal of inactive guests
+  ([ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md)): it fails when a guest is more than
+  a day past the 90 days, or the hourly `remove-inactive-guests` job has not succeeded in the last
+  two hours.
+
+Its log shows only counts, ages and status codes. It reads `SUPABASE_ACCESS_TOKEN` and
 `SUPABASE_PROJECT_ID` from the repository's `monitoring` environment, which allows only main and
 needs no approval ([ADR 0132](adr/0132-monitor-with-a-read-only-token.md)). Its token is not the
 deploy's: create it under Account → Access Tokens for this project alone, with no permission but
