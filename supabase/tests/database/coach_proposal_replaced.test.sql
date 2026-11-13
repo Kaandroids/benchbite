@@ -1,6 +1,9 @@
 -- A newer proposal for a workout replaces the ones still pending for it in the same thread (#402).
 begin;
 create extension if not exists pgtap with schema extensions;
+-- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
+-- PUBLIC by default (#529): opened again for this test, which is rolled back.
+alter default privileges for role postgres grant execute on functions to public;
 
 select plan(11);
 

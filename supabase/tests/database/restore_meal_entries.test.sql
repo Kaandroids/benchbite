@@ -1,6 +1,9 @@
 -- Undoing a removal: a removed entry comes back as it was, for its own user, for an hour.
 begin;
 create extension if not exists pgtap with schema extensions;
+-- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
+-- PUBLIC by default (#529): opened again for this test, which is rolled back.
+alter default privileges for role postgres grant execute on functions to public;
 
 select plan(10);
 
