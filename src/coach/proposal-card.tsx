@@ -1,4 +1,5 @@
 import type {
+  CardNote,
   CardWorkout,
   DayTargets,
   ExerciseChanges,
@@ -15,7 +16,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { Was } from '@/components/ui/was';
-import { daysBetween, fromIsoDate, useWeekdayFormat } from '@/i18n/dates';
+import { daysBetween, fromIsoDate, useShortDateFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useDayName } from '@/nutrition/day-name';
 import { spacing, useTheme, type ColorTokens } from '@/theme';
@@ -45,9 +46,9 @@ type ProposalCardProps = {
 };
 
 /**
- * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075):
- * what changes, from today, in the food log, or in a workout's alternatives, to apply or keep as
- * it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
+ * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075,
+ * 0133): what changes, from today, in the food log, in a workout's alternatives, or in a note, to
+ * apply or keep as it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
  * and 11b).
  */
 export function ProposalCard({
@@ -58,8 +59,7 @@ export function ProposalCard({
 }: ProposalCardProps) {
   const { t } = useTranslation();
   const decide = useDecideProposal(card);
-  const summary = useSummary();
-  const foodLogDetail = useFoodLogDetail();
+  const applied = useApplied();
   // What the user decided here wins over where it stood when loaded: states loading again, as for
   // a new proposal, may still hold it as it was before.
   const [decided, setDecided] = useState<ProposalStatus>();
@@ -84,8 +84,7 @@ export function ProposalCard({
         <DecidedLine
           icon="check"
           iconColor="success"
-          text={t('bite.proposal.applied', { summary: summary(card) })}
-          detail={card.kind === 'food_log' ? foodLogDetail(card) : undefined}
+          {...applied(card)}
           action={
             // Undo stands as long as nothing changed what applying left, on a day still open.
             readOnly || !canUndo(refused) ? undefined : (
@@ -155,6 +154,10 @@ function applyLabel(card: Proposal) {
       return 'bite.proposal.useIt';
     case 'alternative_switch':
       return 'bite.proposal.switch';
+    case 'note':
+      return 'bite.proposal.changeNote';
+    case 'note_archive':
+      return 'bite.proposal.move';
     default:
       return 'bite.proposal.apply';
   }
@@ -180,6 +183,10 @@ function ProposalBody({ card }: { card: Proposal }) {
       return <TargetsChange card={card} />;
     case 'food_log':
       return <FoodLogChanges card={card} />;
+    case 'note':
+      return <NoteChange card={card} />;
+    case 'note_archive':
+      return <NoteArchive card={card} />;
   }
 }
 
@@ -522,13 +529,158 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
   );
 }
 
+/** The title of a card for a note, after the notebook's mark, with the note's category. */
+function NoteHeader({
+  icon,
+  title,
+  category,
+}: {
+  icon: 'notebook' | 'archive';
+  title: string;
+  category: string;
+}) {
+  const { colors, radii, spacing } = useTheme();
+  return (
+    <View style={[styles.marked, { gap: spacing.md }]}>
+      <View style={[styles.icon, { borderRadius: radii.md, backgroundColor: colors.primaryWash }]}>
+        <Icon name={icon} size={18} color="primaryText" />
+      </View>
+      <View style={styles.flex}>
+        <Text variant="label" accessibilityRole="header">
+          {title}
+        </Text>
+        <Text variant="caption" color="textMuted">
+          {category}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A change to a note (ADR 0133): its text as it was, struck through, over the new, and the day
+ * Bite asks again, as it was and will be, each only when it changes.
+ */
+function NoteChange({ card }: { card: Extract<Proposal, { kind: 'note' }> }) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const date = useShortDateFormat(new Date());
+  const { from, to } = card;
+  const category = (note: CardNote) => t(`bite.notebook.categories.${note.category}`);
+  const day = (note: CardNote) =>
+    note.reviewOn ? date(fromIsoDate(note.reviewOn)) : t('bite.proposal.never');
+  const chip = { borderRadius: radii.full, paddingHorizontal: spacing.sm };
+  return (
+    <>
+      <NoteHeader
+        icon="notebook"
+        title={t('bite.proposal.noteTitle')}
+        category={
+          from.category === to.category
+            ? category(to)
+            : t('bite.proposal.changed', { from: category(from), to: category(to) })
+        }
+      />
+      <View style={styles.row}>
+        {from.text === to.text ? null : (
+          <Text variant="bodyStrong" color="textMuted" style={styles.struck}>
+            {from.text}
+          </Text>
+        )}
+        <Text variant="bodyStrong">{to.text}</Text>
+      </View>
+      {from.reviewOn === to.reviewOn ? null : (
+        <View
+          accessible
+          accessibilityLabel={t('bite.proposal.askAgainLabel', { from: day(from), to: day(to) })}
+          style={[styles.chips, { gap: spacing.xs + 2 }]}
+        >
+          <Text variant="captionStrong" color="textMuted">
+            {t('bite.proposal.askAgain')}
+          </Text>
+          <Text variant="caption" color="textMuted" style={styles.struck}>
+            {day(from)}
+          </Text>
+          <Icon name="arrow" size={14} color="textMuted" />
+          <View style={[chip, { backgroundColor: colors.inverseSurface }]}>
+            <Text variant="captionStrong" color="onInverse">
+              {day(to)}
+            </Text>
+          </View>
+        </View>
+      )}
+    </>
+  );
+}
+
+/** A note moved to past notes (ADR 0133): which, why, and that it can be restored. */
+function NoteArchive({ card }: { card: Extract<Proposal, { kind: 'note_archive' }> }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <NoteHeader
+        icon="archive"
+        title={t('bite.proposal.archiveTitle')}
+        category={t(`bite.notebook.categories.${card.category}`)}
+      />
+      <Text variant="bodyStrong">{card.text}</Text>
+      <View style={styles.row}>
+        <Text variant="captionStrong" color="textMuted">
+          {t('bite.proposal.why')}
+        </Text>
+        <Text variant="caption">{card.reason}</Text>
+      </View>
+      <Text variant="caption" color="textMuted">
+        {t('bite.proposal.archiveNote')}
+      </Text>
+    </>
+  );
+}
+
+/**
+ * What the line an applied proposal folds into says: what it changed in short, or for a note that
+ * it changed in the notebook or moved to past notes, with the note under it.
+ */
+function useApplied() {
+  const { t } = useTranslation();
+  const summary = useSummary();
+  const foodLogDetail = useFoodLogDetail();
+  const date = useShortDateFormat(new Date());
+  return (card: Proposal): { text: string; detail?: string } => {
+    switch (card.kind) {
+      case 'note': {
+        const { from, to } = card;
+        return {
+          text: t('bite.proposal.noteChanged'),
+          detail:
+            to.reviewOn && to.reviewOn !== from.reviewOn
+              ? t('bite.proposal.noteDetail', {
+                  text: to.text,
+                  day: date(fromIsoDate(to.reviewOn)),
+                })
+              : to.text,
+        };
+      }
+      case 'note_archive':
+        return { text: t('bite.proposal.noteArchived'), detail: card.text };
+      case 'food_log':
+        return {
+          text: t('bite.proposal.applied', { summary: summary(card) }),
+          detail: foodLogDetail(card),
+        };
+      default:
+        return { text: t('bite.proposal.applied', { summary: summary(card) }) };
+    }
+  };
+}
+
 /** A short summary of what a proposal changes, for the line it folds into once applied. */
 function useSummary() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
-  return (card: Proposal) => {
+  return (card: Exclude<Proposal, { kind: 'note' | 'note_archive' }>) => {
     switch (card.kind) {
       case 'workouts': {
         const only = onlyWorkout(card);
@@ -737,5 +889,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
+  },
+  icon: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

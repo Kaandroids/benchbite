@@ -18,6 +18,7 @@ import { reloadTargets } from '@/nutrition/targets';
 import { reloadPlan } from '@/workouts/workouts';
 
 import { cardFailure, cardStatesKey, toolResultField } from './cards';
+import { NOTES_KEY } from './notebook';
 import type { ChatMessage } from './use-chat';
 
 export const PROPOSALS_KEY = ['coach-proposals'];
@@ -140,7 +141,7 @@ export function useDecideProposal(card: ShownProposal) {
 
 /**
  * Loads again what a proposal applied or undone changed: the plan with its alternatives, the
- * targets, or each day of the food log it moved entries from or to.
+ * targets, each day of the food log it moved entries from or to, or the notebook.
  */
 function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
   switch (card.kind) {
@@ -154,6 +155,9 @@ function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
     case 'food_log': {
       return Promise.all(foodLogDays(card).map((day) => reloadDay(queryClient, day)));
     }
+    case 'note':
+    case 'note_archive':
+      return queryClient.invalidateQueries({ queryKey: NOTES_KEY });
   }
 }
 
