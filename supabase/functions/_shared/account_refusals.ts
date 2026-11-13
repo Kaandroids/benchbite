@@ -10,10 +10,8 @@ export type AccountRefusal =
   | 'proof_required'
   | 'wrong_code'
   | 'code_expired'
-  | 'wrong_password'
   | 'password_recently_changed'
-  | 'too_many_tries'
-  | 'busy';
+  | 'too_many_tries';
 
 /** The answer that refuses, with why. */
 export function refused(reason: AccountRefusal, status: number): Response {

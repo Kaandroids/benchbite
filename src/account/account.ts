@@ -85,16 +85,17 @@ const FUNCTION_ERRORS: Record<AccountRefusal, AccountError> = {
   proof_required: 'unknown',
   wrong_code: 'invalidCode',
   code_expired: 'invalidCode',
-  wrong_password: 'wrongPassword',
   password_recently_changed: 'passwordRecentlyChanged',
   too_many_tries: 'tooManyTries',
   too_many_codes: 'tooManyTries',
   too_soon: 'codeWait',
-  busy: 'rateLimited',
 };
 
 /** The current password given to change it was not the account's. */
 class WrongCurrentPassword extends Error {}
+
+/** The password given to confirm deleting the account was not its own. */
+class WrongPassword extends Error {}
 
 /** An Edge Function's answer that it did not do what was asked, with its reason. */
 class FunctionRefusal extends Error {
@@ -123,6 +124,9 @@ async function callFunction(name: string, body?: Record<string, unknown>) {
 export function accountError(error: unknown): AccountError {
   if (error instanceof WrongCurrentPassword) {
     return 'wrongCurrentPassword';
+  }
+  if (error instanceof WrongPassword) {
+    return 'wrongPassword';
   }
   if (error instanceof FunctionRefusal) {
     return (
@@ -376,13 +380,30 @@ export function useSendDeletionCode() {
 
 /**
  * Deletes the user on this device, guest or account, and all that is theirs (ADR 0087); the app
- * starts over as a new guest. An account brings a code from its email or its password (ADR 0095).
+ * starts over as a new guest. An account brings a code from its email, or signs in with its
+ * password just before, which delete-account takes as proof (ADR 0095, ADR 0127). Signing in from
+ * the phone leaves Auth to limit the tries by the phone's IP, not one all users share (#531).
  */
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
+  const email = useUserEmail();
   return useMutation({
     mutationFn: async (proof?: DeletionProof) => {
-      await callFunction('delete-account', proof);
+      if (proof && 'password' in proof) {
+        if (!email) {
+          throw new Error('No account is signed in');
+        }
+        const signIn = await supabase.auth.signInWithPassword({ email, password: proof.password });
+        if (signIn.error) {
+          throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
+            ? new WrongPassword()
+            : signIn.error;
+        }
+      }
+      await callFunction(
+        'delete-account',
+        proof && 'password' in proof ? { signedIn: true } : proof,
+      );
       await leaveDeletedUser();
     },
   });
