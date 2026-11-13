@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 -- The job's runs as this test sets them.
 delete from cron.job_run_details
@@ -59,6 +59,10 @@ select is(
   row(1::bigint, false)::text,
   'A guest overdue by more than a day makes it unhealthy; one the next run removes and accounts do not'
 );
+select ok(
+  public.inactive_guest_removal_stalled(),
+  'The scheduled job''s warning sees the same guest overdue'
+);
 
 -- Only the Monitor's read-only role runs it.
 select ok(
@@ -77,7 +81,8 @@ select ok(
   format('The read-only role may run %s, which the status calls', function)
 )
 from unnest(array[
-  'public.inactive_guests_since(timestamptz, uuid)', 'public.guest_inactivity_period()'
+  'public.inactive_guests_since(timestamptz, uuid)', 'public.guest_inactivity_period()',
+  'public.inactive_guest_overdue_before()'
 ]) function;
 
 select ok(

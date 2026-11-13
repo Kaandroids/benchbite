@@ -1,6 +1,30 @@
 -- Where the removal of inactive guests stands (#535, ADR 0131), for the Monitor workflow (ADR 0067)
 -- to check once a day: it only warns in the Postgres logs when it falls behind.
 
+-- When a guest last active before it is overdue: past the period by more than a day, which the
+-- hourly job removes in time while it works. The scheduled job's warning and the Monitor's check
+-- both read it, so that they agree.
+create function public.inactive_guest_overdue_before()
+returns timestamptz
+language sql
+stable
+set search_path = ''
+as $$
+  select now() - public.guest_inactivity_period() - interval '1 day';
+$$;
+
+-- As before (20261114130000_remove_inactive_guests.sql), by the cutoff above.
+create or replace function public.inactive_guest_removal_stalled()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select exists (
+    select from public.inactive_guests_since(public.inactive_guest_overdue_before())
+  );
+$$;
+
 -- How many guests are past the period by more than a day, which the hourly job removes in time
 -- while it works, and when and how its latest run ended. Healthy while none is overdue and the job
 -- succeeded within the last two hours. Only counts, ages and the run's status are returned.
@@ -17,9 +41,7 @@ set search_path = ''
 as $$
   with overdue as (
     select count(*) as guests
-    from public.inactive_guests_since(
-      now() - public.guest_inactivity_period() - interval '1 day'
-    )
+    from public.inactive_guests_since(public.inactive_guest_overdue_before())
   ),
   latest as (
     select d.status, d.end_time
@@ -45,3 +67,6 @@ revoke execute on function public.inactive_guest_removal_status()
 grant execute on function public.inactive_guest_removal_status() to supabase_read_only_user;
 grant execute on function public.inactive_guests_since(timestamptz, uuid) to supabase_read_only_user;
 grant execute on function public.guest_inactivity_period() to supabase_read_only_user;
+revoke execute on function public.inactive_guest_overdue_before()
+  from public, anon, authenticated, service_role;
+grant execute on function public.inactive_guest_overdue_before() to supabase_read_only_user;
