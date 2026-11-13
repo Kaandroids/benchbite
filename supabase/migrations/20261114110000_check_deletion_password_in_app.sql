@@ -4,6 +4,8 @@
 -- The function now only asks whether the token's password sign-in is recent, and whether the
 -- password changed in the last day, so the count of its tries goes.
 drop function public.take_account_deletion_password_try(uuid);
+-- It served only the count of all users' tries together.
+drop index public.account_deletion_tries_kind_created_at_idx;
 
 -- Whether the user's password changed in the last day. A session that signed in recently can set a
 -- new password without the old (ADR 0093), so a password that new proves nothing about who asks.
