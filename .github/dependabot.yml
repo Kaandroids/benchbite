@@ -4,11 +4,8 @@
 # pulled before it reaches us.
 version: 2
 updates:
-  # The app. Expo pins the versions of its SDK, and of the React and React Native packages that go
-  # with it, so those move only with Expo, through `pnpm expo install --fix`; Dependabot leaves them
-  # alone, as an update of one alone would not fit the rest. The list is every package of
-  # package.json that node_modules/expo/bundledNativeModules.json names, with the SDK's own: add
-  # one here whenever `pnpm expo install` adds a package that list names.
+  # The app. The packages Expo pins move only with Expo, as an update of one alone would not fit
+  # the rest; docs/development.md ("Update dependencies") says which they are and when one is added.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -18,8 +15,6 @@ updates:
     ignore:
       - dependency-name: expo
       - dependency-name: expo-*
-      - dependency-name: '@expo/*'
-      - dependency-name: babel-preset-expo
       - dependency-name: eslint-config-expo
       - dependency-name: jest-expo
       - dependency-name: react
@@ -51,7 +46,7 @@ updates:
         patterns: [astro, '@astrojs/*', vite]
 
   # The Edge Functions' imports in deno.json, among them @supabase/server, which checks every
-  # request's token.
+  # request's token. They are pinned to exact versions, so each release is a change to propose.
   - package-ecosystem: deno
     directory: /supabase/functions
     schedule:
