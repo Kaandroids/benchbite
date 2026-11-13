@@ -31,21 +31,16 @@ export type ListedOutsideWorkout = {
 
 type Row = Database['public']['Views']['outside_workout_list']['Row'];
 
-const toListed = (row: Row): ListedOutsideWorkout[] =>
-  row.store && row.source_id && row.activity && row.started_at && row.ended_at && row.started_on
-    ? [
-        {
-          key: `${row.store}:${row.source_id}`,
-          activity: activityOf(row.activity),
-          startedAt: new Date(row.started_at),
-          endedAt: new Date(row.ended_at),
-          startedOn: row.started_on,
-          activeKcal: row.active_kcal,
-          heartRateAvg: row.heart_rate_avg,
-          source: row.source,
-        },
-      ]
-    : [];
+const toListed = (row: Row): ListedOutsideWorkout => ({
+  key: `${row.store}:${row.source_id}`,
+  activity: activityOf(row.activity),
+  startedAt: new Date(row.started_at),
+  endedAt: new Date(row.ended_at),
+  startedOn: row.started_on,
+  activeKcal: row.active_kcal,
+  heartRateAvg: row.heart_rate_avg,
+  source: row.source,
+});
 
 const listQuery = () => supabase.from('outside_workout_list').select('*');
 
@@ -62,7 +57,7 @@ async function listed(
       .order('source_id')
       .range(first, first + PAGE - 1);
     if (error) throw error;
-    workouts.push(...data.flatMap(toListed));
+    workouts.push(...data.map(toListed));
     if (data.length < PAGE) break;
   }
   return workouts;
