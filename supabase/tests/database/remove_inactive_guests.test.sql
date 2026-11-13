@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(16);
 
 -- A: a guest last seen 100 days ago. B: the same, but its session was refreshed yesterday.
 -- C: a guest created yesterday. D: an account inactive for 100 days. E: a guest that signed in
@@ -50,16 +50,33 @@ select ok(
 );
 
 select ok(
-  not bool_or(has_function_privilege(role, 'public.last_active_at(uuid)', 'execute')),
-  'No client reads when a user was last active'
+  not bool_or(has_function_privilege(role, 'public.' || fn, 'execute')),
+  'No client calls ' || fn
 )
-from (values ('anon'), ('authenticated'), ('service_role')) roles (role);
+from (values ('anon'), ('authenticated'), ('service_role')) roles (role)
+cross join (values
+  ('last_active_at(uuid)'),
+  ('inactive_guest_removal_stalled()'),
+  ('call_scheduled_function(text)')
+) fns (fn)
+group by fn
+order by fn;
 
 select ok(
   not bool_or(has_function_privilege(role, 'public.request_inactive_guest_removal()', 'execute')),
   'Only the scheduled job calls remove-inactive-guests'
 )
 from (values ('anon'), ('authenticated'), ('service_role')) roles (role);
+
+-- A at 100 days is past the period by more than a day, which only a removal that keeps failing or
+-- falls far behind leaves; at 91 days less a minute it is not yet.
+select ok(public.inactive_guest_removal_stalled(), 'A guest a day past the period means it stalled');
+update auth.sessions set updated_at = now() - interval '91 days' + interval '1 minute'
+  where user_id = '00000000-0000-0000-0000-00000000000a';
+select ok(
+  not public.inactive_guest_removal_stalled(),
+  'A guest within a day of the period is no sign that it stalled'
+);
 
 -- Without the Vault secrets nothing is sent, and with them the function is called with the key.
 delete from vault.secrets where name in ('project_url', 'secret_key');
