@@ -7,6 +7,7 @@
 import { z } from 'zod';
 
 import type {
+  CardNote,
   CoachToolName,
   DayTargets,
   ExerciseChanges,
@@ -17,7 +18,7 @@ import type {
   ProposalCard,
   ProposalTarget,
 } from '../_shared/coach/chat.ts';
-import { Constants, type Database } from '../_shared/database.types.ts';
+import { Constants } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
@@ -227,6 +228,17 @@ const NOTE_REFUSALS = {
   },
   otherwise: 'The note could not be kept just now.',
   log: 'A note could not be kept',
+} satisfies Refusals;
+
+/** Why a change to a note could not be proposed. */
+const NOTE_PROPOSAL_REFUSALS = {
+  meanings: {
+    BB038: REFUSALS.meanings.BB038,
+    P0002: 'There is no such note in use; take its id from the snapshot.',
+    '23514': `A note has text, of up to ${MAX_NOTE_LENGTH} characters, and an archived one says why.`,
+  },
+  otherwise: 'The change could not be proposed just now.',
+  log: 'A note change could not be proposed',
 } satisfies Refusals;
 
 const NOTE_ID = z.number().int().positive().describe("The note's id, as the snapshot lists it.");
@@ -834,8 +846,9 @@ const TOOLS = [
   }),
   tool({
     name: 'update_note',
+    proposes: 'note',
     description:
-      'Changes a note in the notebook that no longer says it right, as when the user corrects it or an injury is better but not gone; and moves or clears the day to ask again.',
+      'Proposes changing a note in the notebook that no longer says it right, as when the user corrects it or an injury is better but not gone, or moving or clearing the day to ask again. The user applies it on its card; it changes nothing itself.',
     args: z
       .object({
         id: NOTE_ID,
@@ -848,21 +861,42 @@ const TOOLS = [
       .refine((args) => args.category || args.text || args.reviewOn !== undefined, {
         message: 'Give what to change: the category, the text or the day to ask again.',
       }),
-    run: async ({ id, category, text, reviewOn }, { supabase, today }) => {
+    run: async ({ id, category, text, reviewOn }, { supabase, today, threadId }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
-      const patch = {
+      const note = await noteInUse(supabase, id);
+      if ('error' in note) return note;
+      const change = {
+        id,
         ...(category && { category }),
         ...(text && { text }),
-        ...(reviewOn !== undefined && { review_on: reviewOn }),
+        ...(reviewOn !== undefined && { reviewOn }),
       };
-      return await changeNote(supabase, id, patch, 'updated');
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'note',
+        change,
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      const proposal: ProposalCard = {
+        kind: 'note',
+        id: proposed.data,
+        from: note,
+        to: {
+          category: category ?? note.category,
+          text: text ?? note.text,
+          reviewOn: reviewOn === undefined ? note.reviewOn : reviewOn,
+        },
+      };
+      return { proposal };
     },
   }),
   tool({
     name: 'archive_note',
+    proposes: 'note_archive',
     description:
-      'Moves a note that no longer holds to past notes, which answers leave out, as an injury that healed or a goal whose date has passed. The user can restore it.',
+      'Proposes moving a note that no longer holds to past notes, which answers leave out, as an injury that healed or a goal whose date has passed. The user applies it on its card, and can restore the note later; it changes nothing itself.',
     args: z.object({
       id: NOTE_ID,
       reason: z
@@ -872,35 +906,43 @@ const TOOLS = [
         .max(MAX_NOTE_LENGTH)
         .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
     }),
-    run: async ({ id, reason }, { supabase }) => {
-      const patch = { archived_at: new Date().toISOString(), archive_reason: reason };
-      return await changeNote(supabase, id, patch, 'archived');
+    run: async ({ id, reason }, { supabase, today, threadId }) => {
+      const note = await noteInUse(supabase, id);
+      if ('error' in note) return note;
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'note_archive',
+        change: { id, reason },
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, NOTE_PROPOSAL_REFUSALS);
+      const proposal: ProposalCard = {
+        kind: 'note_archive',
+        id: proposed.data,
+        category: note.category,
+        text: note.text,
+        reason,
+      };
+      return { proposal };
     },
   }),
 ];
 
 /**
- * Changes the note `id` by `patch`, only while it is in use: not archived, nor waiting for the
- * user's yes. Gives its card, saying it was `action`, or why it was not changed.
+ * The note `id` as a card shows it, while it is in use: not archived, nor waiting for the user's
+ * yes. Why not, when it is not.
  */
-async function changeNote(
-  supabase: Client,
-  id: number,
-  patch: Database['public']['Tables']['coach_notes']['Update'],
-  action: 'updated' | 'archived',
-) {
-  const changed = await supabase
+async function noteInUse(supabase: Client, id: number): Promise<CardNote | { error: string }> {
+  const found = await supabase
     .from('coach_notes')
-    .update(patch)
+    .select('category, text, review_on')
     .eq('id', id)
     .is('archived_at', null)
     .eq('asked', false)
-    .select(NOTE_COLUMNS)
     .maybeSingle();
-  if (changed.error) return refused(changed.error, NOTE_REFUSALS);
-  if (!changed.data) return { error: NO_NOTE };
-  const note: NoteCard = { ...changed.data, action };
-  return { note };
+  if (found.error) return refused(found.error, NOTE_PROPOSAL_REFUSALS);
+  if (!found.data) return { error: NO_NOTE };
+  return { category: found.data.category, text: found.data.text, reviewOn: found.data.review_on };
 }
 
 /** The kinds of proposal the tools offered to Bite make. */

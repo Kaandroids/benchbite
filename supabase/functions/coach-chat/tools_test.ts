@@ -1018,6 +1018,8 @@ Deno.test('offers Bite no tool that proposes a change the app has no card for', 
     'alternative_switch',
     'targets',
     'food_log',
+    'note',
+    'note_archive',
   ]);
   for (const kind of PROPOSAL_KINDS) {
     assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
@@ -1554,44 +1556,131 @@ Deno.test('asks again about a note only on a day ahead, within half a year', asy
   assertEquals((writes[0].values as { review_on: string }).review_on, '2026-11-06');
 });
 
-Deno.test('changes and archives only a note in use, and says when there is none', async () => {
-  const changed = noteContext(true);
-  assertEquals(
-    await runTool('update_note', { id: 9, text: 'Allergic to kiwi and mango' }, changed.context),
-    { note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'updated' } },
-  );
-  assertEquals(changed.writes[0], {
-    op: 'update',
-    values: { text: 'Allergic to kiwi and mango' },
-    // Only a note in use: none archived, nor one waiting for the user's yes.
-    filters: [
-      ['id', 9],
-      ['archived_at', null],
-      ['asked', false],
-    ],
-  });
-  const cleared = noteContext(true);
-  await runTool('update_note', { id: 9, reviewOn: null }, cleared.context);
-  assertEquals(cleared.writes[0].values, { review_on: null });
-  assertEquals(
-    typeof ((await runTool('update_note', { id: 9 }, cleared.context)) as { error: string }).error,
-    'string',
-  );
+/**
+ * The notebook as the note proposals read it, with `note` in use (none when null), and the
+ * database proposing as `proposed` gives; what each read filtered and each call sent.
+ */
+function noteProposalContext(
+  note: Record<string, unknown> | null = {
+    category: 'injury',
+    text: 'Left knee hurts on squats',
+    review_on: '2026-11-06',
+  },
+  proposed: { data?: unknown; error?: unknown } = { data: 31 },
+) {
+  const filters: [string, unknown][] = [];
+  const calls: { name: string; args: unknown }[] = [];
+  const builder: Record<string, unknown> = {
+    select: () => builder,
+    eq: (column: string, value: unknown) => (filters.push([column, value]), builder),
+    is: (column: string, value: unknown) => (filters.push([column, value]), builder),
+    maybeSingle: () => Promise.resolve({ data: note, error: null }),
+  };
+  const supabase = {
+    from: () => builder,
+    rpc: (name: string, args: unknown) => {
+      calls.push({ name, args });
+      return Promise.resolve({ data: null, error: null, ...proposed });
+    },
+  };
+  return { context: { ...context, supabase } as unknown as ToolContext, filters, calls };
+}
 
-  const archived = noteContext(true);
-  assertEquals(await runTool('archive_note', { id: 9, reason: 'Healed' }, archived.context), {
-    note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'archived' },
-  });
-  assertEquals((archived.writes[0].values as { archive_reason: string }).archive_reason, 'Healed');
-  assertEquals(archived.writes[0].filters, [
+Deno.test('proposes changing a note in use, with how it was and will be', async () => {
+  const { context, filters, calls } = noteProposalContext();
+  assertEquals(
+    await runTool(
+      'update_note',
+      { id: 9, text: 'Left knee is a little sore on deep squats', reviewOn: '2026-11-20' },
+      context,
+    ),
+    {
+      proposal: {
+        kind: 'note',
+        id: 31,
+        from: { category: 'injury', text: 'Left knee hurts on squats', reviewOn: '2026-11-06' },
+        to: {
+          category: 'injury',
+          text: 'Left knee is a little sore on deep squats',
+          reviewOn: '2026-11-20',
+        },
+      },
+    },
+  );
+  // Only a note in use: none archived, nor one waiting for the user's yes.
+  assertEquals(filters, [
     ['id', 9],
     ['archived_at', null],
     ['asked', false],
   ]);
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_change',
+      args: {
+        thread_id: 7,
+        kind: 'note',
+        change: {
+          id: 9,
+          text: 'Left knee is a little sore on deep squats',
+          reviewOn: '2026-11-20',
+        },
+        today: '2026-10-30',
+      },
+    },
+  ]);
 
-  const gone = noteContext(true, { data: null });
+  // A day given as null clears it; one left out stays.
+  const cleared = noteProposalContext();
+  const result = await runTool('update_note', { id: 9, reviewOn: null }, cleared.context);
+  assertEquals((result as { proposal: { to: unknown } }).proposal.to, {
+    category: 'injury',
+    text: 'Left knee hurts on squats',
+    reviewOn: null,
+  });
+  assertEquals((cleared.calls[0].args as { change: unknown }).change, { id: 9, reviewOn: null });
+  assertEquals(
+    typeof ((await runTool('update_note', { id: 9 }, cleared.context)) as { error: string }).error,
+    'string',
+  );
+});
+
+Deno.test('proposes archiving a note in use, with why', async () => {
+  const { context, calls } = noteProposalContext();
+  assertEquals(
+    await runTool('archive_note', { id: 9, reason: 'The knee is fine again' }, context),
+    {
+      proposal: {
+        kind: 'note_archive',
+        id: 31,
+        category: 'injury',
+        text: 'Left knee hurts on squats',
+        reason: 'The knee is fine again',
+      },
+    },
+  );
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_change',
+      args: {
+        thread_id: 7,
+        kind: 'note_archive',
+        change: { id: 9, reason: 'The knee is fine again' },
+        today: '2026-10-30',
+      },
+    },
+  ]);
+});
+
+Deno.test('proposes nothing for a note not in use, and says why one is refused', async () => {
+  const gone = noteProposalContext(null);
   assertEquals(await runTool('archive_note', { id: 4, reason: 'Healed' }, gone.context), {
     error: 'There is no such note in use; take its id from the snapshot.',
+  });
+  assertEquals(gone.calls, []);
+
+  const busy = noteProposalContext(undefined, { error: { code: 'BB038' } });
+  assertEquals(await runTool('update_note', { id: 9, text: 'Knee is fine' }, busy.context), {
+    error: 'The user has too many changes waiting; ask them to decide those first.',
   });
 });
 
