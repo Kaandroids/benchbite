@@ -12,7 +12,12 @@ jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     functions: { invoke: jest.fn() },
-    auth: { getUser: jest.fn(), signInWithPassword: jest.fn() },
+    auth: {
+      getUser: jest.fn(),
+      getSession: jest.fn(),
+      signInWithPassword: jest.fn(),
+      admin: { signOut: jest.fn() },
+    },
   },
 }));
 jest.mock('@/providers/session-provider', () => ({
@@ -50,6 +55,11 @@ beforeEach(() => {
   given(true);
   answering();
   jest.mocked(supabase.auth.signInWithPassword).mockResolvedValue({ error: null } as never);
+  jest.mocked(supabase.auth.getSession).mockResolvedValue({
+    data: { session: { access_token: 'previous token' } },
+    error: null,
+  } as never);
+  jest.mocked(supabase.auth.admin.signOut).mockResolvedValue({ data: null, error: null });
   storedEmail('kaan@example.com');
 });
 
@@ -214,6 +224,7 @@ describe('an account', () => {
       password: 'guess',
     });
     expect(supabase.functions.invoke).not.toHaveBeenCalledWith('delete-account', expect.anything());
+    expect(supabase.auth.admin.signOut).not.toHaveBeenCalled();
     expect(leaveDeletedUser).not.toHaveBeenCalled();
   });
 
@@ -233,6 +244,20 @@ describe('an account', () => {
     expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
       body: { signedIn: true },
     });
+    // The session the sign-in replaced is signed out on the server, as no device holds it (#532).
+    expect(supabase.auth.admin.signOut).toHaveBeenCalledWith('previous token', 'local');
+  });
+
+  it('is deleted even when the session the sign-in replaced cannot be signed out', async () => {
+    jest.mocked(supabase.auth.admin.signOut).mockRejectedValue(new Error('offline'));
+    await sendCode();
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
+    );
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
+
+    await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
   });
 
   it('signs in with the address Auth has now, not one the session still keeps', async () => {

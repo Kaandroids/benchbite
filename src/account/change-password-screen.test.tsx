@@ -11,7 +11,9 @@ jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       getUser: jest.fn(),
+      getSession: jest.fn(),
       signInWithPassword: jest.fn(),
+      admin: { signOut: jest.fn() },
       updateUser: jest.fn(),
       resetPasswordForEmail: jest.fn(),
     },
@@ -49,6 +51,11 @@ beforeEach(() => {
     data: { user: { email: 'kaan@example.com' } },
     error: null,
   } as never);
+  auth.getSession.mockResolvedValue({
+    data: { session: { access_token: 'previous token' } },
+    error: null,
+  } as never);
+  auth.admin.signOut.mockResolvedValue({ data: null, error: null });
   auth.signInWithPassword.mockResolvedValue({ data: {}, error: null } as never);
   auth.updateUser.mockResolvedValue({ data: {}, error: null } as never);
   auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null } as never);
@@ -68,6 +75,16 @@ describe('ChangePasswordScreen', () => {
     expect(auth.signInWithPassword.mock.invocationCallOrder[0]).toBeLessThan(
       auth.updateUser.mock.invocationCallOrder[0]!,
     );
+    // The session the sign-in replaced is signed out on the server, as no device holds it (#532).
+    expect(auth.admin.signOut).toHaveBeenCalledWith('previous token', 'local');
+  });
+
+  it('changes the password even when the replaced session cannot be signed out', async () => {
+    auth.admin.signOut.mockRejectedValue(new Error('offline'));
+    await renderScreen();
+    await fill('the old one', 'a new one!');
+    await save();
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
   });
 
   it('waits for the current password and a new one long enough', async () => {
@@ -91,6 +108,7 @@ describe('ChangePasswordScreen', () => {
     await save();
     expect(await screen.findByText('That isn’t your current password.')).toBeOnTheScreen();
     expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(auth.admin.signOut).not.toHaveBeenCalled();
     expect(onChanged).not.toHaveBeenCalled();
     await fireEvent.changeText(screen.getByLabelText('Current password'), 'the old one');
     expect(screen.queryByText('That isn’t your current password.')).not.toBeOnTheScreen();

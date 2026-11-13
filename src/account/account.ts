@@ -210,6 +210,7 @@ async function isAccountPassword(password: string): Promise<boolean> {
   if (!email) {
     throw new Error('No account is signed in');
   }
+  const previous = (await supabase.auth.getSession()).data.session?.access_token;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (isAuthApiError(error) && error.code === 'invalid_credentials') {
     return false;
@@ -217,7 +218,24 @@ async function isAccountPassword(password: string): Promise<boolean> {
   if (error) {
     throw error;
   }
+  if (previous) {
+    await signOutReplaced(previous);
+  }
   return true;
+}
+
+/**
+ * Signs out on the server the session a sign-in with the password replaced on the phone, which no
+ * device holds any more (#532, ADR 0128). A sign-in always starts a session of its own, so this is
+ * never the new one. Auth takes it with the old session's token and the publishable key, as a
+ * sign-out of that session alone. It is only tidying, so a failure is left: the password was right.
+ */
+async function signOutReplaced(accessToken: string) {
+  try {
+    await supabase.auth.admin.signOut(accessToken, 'local');
+  } catch {
+    // Nothing to do: the session stays until it expires, as before.
+  }
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({
