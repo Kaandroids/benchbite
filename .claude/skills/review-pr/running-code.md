@@ -10,9 +10,10 @@ change. They never change files, never post to GitHub, and never change the main
 run the code there. Without one, read the PR with `gh pr diff` and `gh pr view`, and run nothing
 that needs the branch. Never run `git checkout` or `git switch` in the main checkout.
 
-Run a PR's code only when `review-pr` says to: it does so only for the project's own pull
-requests. A PR from a fork or from anyone else is read, never run, as its tests, scripts or
-migrations may be written to do harm on this machine.
+Run code only in the worktree `review-pr` gives you: it gives one only for the project's own pull
+requests. Without one, run nothing, not even the PR's SQL in a transaction rolled back, which
+can still reach the machine as `postgres`: a PR from a fork or from anyone else is read, never
+run, as its tests, scripts or migrations may be written to do harm here.
 
 ## The database
 
