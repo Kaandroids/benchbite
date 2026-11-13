@@ -1,6 +1,6 @@
 # 0093. Change a password with the current one
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0128
 - **Date:** 2026-11-07
 
 ## Context
