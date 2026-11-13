@@ -102,3 +102,46 @@ jobs:
             echo "::error::The removal of inactive guests is failing: a guest is overdue, or the hourly job has not succeeded in the last two hours"
             exit 1
           fi
+
+  ai-spend:
+    name: AI spend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # As the other checks, with the same read-only token (ADR 0132).
+    if: github.ref == 'refs/heads/main'
+    environment: monitoring
+    steps:
+      # Runs ai_spend_status() as supabase_read_only_user. The log of a public repository is
+      # public, so it says only whether the month's AI spend is past the share it warns at (ADR 0134).
+      - name: Check this month's AI spend against the provider's limit
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          result="$RUNNER_TEMP/ai-spend-status.json"
+          http_status=$(curl --silent --show-error --max-time 60 \
+            --output "$result" --write-out '%{http_code}' \
+            --request POST "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query/read-only" \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data '{"query": "select * from public.ai_spend_status()"}')
+          # Any 2xx is a success; the query endpoint currently answers with 201.
+          if [[ "$http_status" != 2?? ]]; then
+            echo "::error::The status query failed with HTTP $http_status"
+            exit 1
+          fi
+
+          if ! status=$(jq --exit-status '.[0] | select(has("healthy"))' "$result"); then
+            echo "::error::The status query returned no status"
+            exit 1
+          fi
+
+          if [[ "$(jq --raw-output '.paused' <<< "$status")" == true ]]; then
+            echo "::error::Bite is paused for everyone: this month's AI spend has reached the limit"
+            exit 1
+          fi
+          if [[ "$(jq --raw-output '.healthy' <<< "$status")" != true ]]; then
+            echo "::error::This month's AI spend is past the share of the limit the Monitor warns at"
+            exit 1
+          fi
+          echo "This month's AI spend is below the share of the limit the Monitor warns at"
