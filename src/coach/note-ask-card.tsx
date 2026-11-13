@@ -3,12 +3,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { dbErrorMessage } from '@/lib/errors';
 import { useTheme } from '@/theme';
 
+import { NoteHeader } from './note-header';
 import { type NoteCard, useAnswerNote } from './notes';
 
 type NoteAskCardProps = {
@@ -25,28 +25,17 @@ type NoteAskCardProps = {
  */
 export function NoteAskCard({ note, waiting = false, readOnly = false }: NoteAskCardProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const answer = useAnswerNote(note);
   return (
     <Card>
-      <View style={[styles.row, { gap: spacing.md }]}>
-        <View
-          style={[styles.icon, { borderRadius: radii.md, backgroundColor: colors.primaryWash }]}
-        >
-          <Icon name="notebook" size={18} color="primaryText" />
-        </View>
-        <View style={styles.flex}>
-          <Text variant="label" accessibilityRole="header">
-            {t('bite.notes.ask.title')}
-          </Text>
-          <Text variant="caption" color="textMuted">
-            {t('bite.notes.ask.note', {
-              category: t(`bite.notebook.categories.${note.category}`),
-              text: note.text,
-            })}
-          </Text>
-        </View>
-      </View>
+      <NoteHeader
+        title={t('bite.notes.ask.title')}
+        caption={t('bite.notes.ask.note', {
+          category: t(`bite.notebook.categories.${note.category}`),
+          text: note.text,
+        })}
+      />
       {answer.isError ? (
         <Text color="danger">
           {answer.variables === 'decline'
@@ -89,11 +78,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  icon: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

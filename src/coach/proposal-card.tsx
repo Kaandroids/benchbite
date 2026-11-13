@@ -26,6 +26,7 @@ import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import { canUndo, cardFailure, refusalOf } from './cards';
 import { CardRefusal as Refusal, DecidedLine } from './decided-line';
+import { NoteHeader } from './note-header';
 import {
   foodLogDays,
   type ProposalDecision,
@@ -529,34 +530,6 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
   );
 }
 
-/** The title of a card for a note, after the notebook's mark, with the note's category. */
-function NoteHeader({
-  icon,
-  title,
-  category,
-}: {
-  icon: 'notebook' | 'archive';
-  title: string;
-  category: string;
-}) {
-  const { colors, radii, spacing } = useTheme();
-  return (
-    <View style={[styles.marked, { gap: spacing.md }]}>
-      <View style={[styles.icon, { borderRadius: radii.md, backgroundColor: colors.primaryWash }]}>
-        <Icon name={icon} size={18} color="primaryText" />
-      </View>
-      <View style={styles.flex}>
-        <Text variant="label" accessibilityRole="header">
-          {title}
-        </Text>
-        <Text variant="caption" color="textMuted">
-          {category}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
 /**
  * A change to a note (ADR 0133): its text as it was, struck through, over the new, and the day
  * Bite asks again, as it was and will be, each only when it changes.
@@ -573,9 +546,8 @@ function NoteChange({ card }: { card: Extract<Proposal, { kind: 'note' }> }) {
   return (
     <>
       <NoteHeader
-        icon="notebook"
         title={t('bite.proposal.noteTitle')}
-        category={
+        caption={
           from.category === to.category
             ? category(to)
             : t('bite.proposal.changed', { from: category(from), to: category(to) })
@@ -621,7 +593,7 @@ function NoteArchive({ card }: { card: Extract<Proposal, { kind: 'note_archive' 
       <NoteHeader
         icon="archive"
         title={t('bite.proposal.archiveTitle')}
-        category={t(`bite.notebook.categories.${card.category}`)}
+        caption={t(`bite.notebook.categories.${card.category}`)}
       />
       <Text variant="bodyStrong">{card.text}</Text>
       <View style={styles.row}>
@@ -889,11 +861,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-  },
-  icon: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
