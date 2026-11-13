@@ -17,6 +17,9 @@ reviews (review-logic, review-security); stay on design.
 3. `CLAUDE.md` (architecture rules, project structure) and the ADRs in `docs/adr/` that the
    change touches.
 
+When `review-pr` names a range of commits, as for the fixes of an earlier round, review what those
+commits change and how it fits the rest, not the whole PR again.
+
 ## What to look for
 
 **SOLID**
@@ -50,6 +53,8 @@ reviews (review-logic, review-security); stay on design.
 - Schema changes only through migrations; generated database types never edited by hand.
 - Routes only in `src/app/`; components, hooks and other code elsewhere.
 - Comments, names and copy in English, matching the density and tone of the surrounding code.
+- Copy shown in the app in every language the app has (`src/i18n/locales`).
+- An ADR for a significant decision, and the ADRs, `README.md` and `docs/` it changes kept true.
 
 ## Report
 

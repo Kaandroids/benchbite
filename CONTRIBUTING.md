@@ -8,8 +8,9 @@ Benchbite uses an AI-assisted workflow:
 
 1. The maintainer and [Claude Code](https://claude.com/claude-code) plan a change, usually as a GitHub issue.
 2. Claude implements it on a branch and opens a pull request as the `benchbite-bot` GitHub App.
-3. Claude reviews the pull request for design, security, and logic and performance, posts the
-   findings on it and fixes the ones that hold.
+3. Claude reviews the pull request for design, security, and logic and performance, fixes the
+   findings that hold and have a clear fix, and once CI is green posts what it fixed and what is
+   left for the maintainer to decide.
 4. The maintainer reviews the pull request and leaves feedback.
 5. Claude addresses the feedback with new commits until the pull request is approved.
 6. The maintainer squash-merges it into `main`.
