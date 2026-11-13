@@ -11,10 +11,11 @@ found, what was fixed and in which commit, and what the maintainer decides.
 ## 0. Whose pull request, and the worktree
 
 Read `gh pr view $ARGUMENTS --json author,isCrossRepository`. Running a PR's code, fixing it and
-pushing to it are only for the project's own PRs: not from a fork, and opened by `benchbite-bot`
-or the maintainer. Any other PR may carry code written to steal what this machine holds, such as
-the bot's key: review it from `gh pr diff` only, tell the reviews to run nothing, skip steps 3
-and 4, and report the findings for the maintainer.
+pushing to it are only for the project's own PRs: `isCrossRepository` false, and `author.login`
+`app/benchbite-bot` or the maintainer's, `Kaandroids`. Any other PR may carry code written to steal
+what this machine holds, such as the bot's key: review it from `gh pr diff` only, give the reviews
+and `review-verify` no worktree and tell them to run nothing, skip steps 3 and 4, and report the
+findings for the maintainer.
 
 For the project's own PRs, find the worktree with the PR's branch checked out
 (`git worktree list`). Without one, add one beside the main checkout,
@@ -51,17 +52,22 @@ For each `fix` finding, most severe first, in the worktree:
 2. Run the checks the change touches:
    - app code: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm check:locales`, and
      `pnpm test` for the folders it changes;
-   - Edge Functions: `pnpm functions:check`;
-   - migrations or SQL tests: apply new migrations with `pnpm supabase migration up`, and a
-     migration of this PR changed after it was applied by running its file through `psql`
-     (`running-code.md`); then `pnpm db:types` when the schema changed, `pnpm check:plans` and
-     `pnpm supabase test db`. Unlike the reviews, the fix applies the PR's migrations for good, but
-     never with `supabase db reset`, which empties the local database others use.
+   - Edge Functions: `pnpm functions:check`, and `pnpm check:plans` for a change to
+     `generate-plan` or `_shared/plan`;
+   - migrations or SQL tests: apply new migrations with `pnpm supabase migration up`, with
+     `--include-all` when the PR's own sort before one the local database has already; run a
+     migration of this PR changed after it was applied into `psql -v ON_ERROR_STOP=1 -1`
+     on its standard input (`running-code.md`), and mark the finding `ask` if the file cannot be run again; then
+     `pnpm db:types` when the schema changed, `pnpm check:plans` and `pnpm supabase test db`.
+     Unlike the reviews, the fix applies the PR's migrations for good, but never with
+     `supabase db reset`, which empties the local database others use.
 
-   A test that fails on `main` too is not the fix's doing: say so in the report.
+   `pnpm check:plans` calls the functions the local stack serves, usually the main checkout's:
+   serve them from the worktree first, or leave the check to CI and say so in the report. A test that fails on `main` too is not the fix's doing: say so in the report.
 
-3. Commit it on its own, as Conventional Commits, as the PR's other commits are made: as the bot
-   with `~/.config/benchbite-bot/commit.sh "<subject>" ["<body>"]` when it exists.
+3. Stage it and commit it on its own, as Conventional Commits, as the PR's other commits are
+   made: as the bot with `~/.config/benchbite-bot/commit.sh "<subject>" ["<body>"]` when it
+   exists.
 
 A fix that grows past the finding, or that needs a decision after all, is not made: mark it
 `ask`. Push the commits once all fixes are made; never force-push. If the branch moved meanwhile,
@@ -102,7 +108,8 @@ Write it in English, as Markdown, to a file:
 
 1. **[Low · Principles]** `src/…:7`: what is wrong. **Question:** what to decide, with the options.
 
-Reviewed in 2 rounds. Checks: typecheck, lint, format, tests, functions, database. CI is green.
+Reviewed in 2 rounds. Checks: typecheck, lint, format, locales, tests, functions, plans, database.
+CI is green.
 
 <sub>Reviewed with the review-principles, review-security, review-logic and review-verify skills.</sub>
 ```
