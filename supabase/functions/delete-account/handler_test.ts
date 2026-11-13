@@ -3,7 +3,7 @@ import { assertEquals } from '@std/assert';
 import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import { codeHash } from '../_shared/deletion_code.ts';
 import { PAGE_SIZE } from '../_shared/storage.ts';
-import { handleDeleteRequest, type PasswordCheck } from './handler.ts';
+import { handleDeleteRequest, passwordSignInAt } from './handler.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
@@ -16,7 +16,7 @@ type Options = {
   uploadedLate?: string;
   deleteError?: { status: number } | null;
   /** The answers of the database's functions, by name. */
-  rpc?: Record<string, { data: string | null; error: { message: string } | null }>;
+  rpc?: Record<string, { data: string | boolean | null; error: { message: string } | null }>;
   /** The user is gone already, as after a try whose answer was lost. */
   gone?: boolean;
   /** The user as Auth stores them: a guest, or an account with its address. */
@@ -109,27 +109,22 @@ const post = (body?: unknown) =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
+/** Now, in seconds since 1970, as the token's times are. */
+const now = () => Math.floor(Date.now() / 1000);
+
 /**
- * A request whose password must not be checked: a guest's, which needs no proof, or one that brings
- * none. Whether the user is a guest is the fake admin's stored user, as the handler reads it.
+ * A request whose session did not sign in with a password: a guest's, which needs no proof, or an
+ * account's that brings none. Whether the user is a guest is the fake admin's stored user, as the
+ * handler reads it.
  */
 const noPassword = (admin: never, userId = A) => ({
   admin,
   userId,
-  checkPassword: () => Promise.reject(new Error('A guest has no password')),
+  passwordSignInAt: undefined,
 });
 
-/** An account's request, whose password is `secret`; Auth is busy for `busy`. */
-const account = (admin: never, passwords: string[] = []) => ({
-  admin,
-  userId: A,
-  checkPassword: (email: string, password: string) => {
-    passwords.push(`${email} ${password}`);
-    return Promise.resolve<PasswordCheck>(
-      password === 'secret' ? 'right' : password === 'busy' ? 'busy' : 'wrong',
-    );
-  },
-});
+/** An account's request, whose session signed in with its password a second ago, or `at`. */
+const account = (admin: never, at = now() - 1) => ({ admin, userId: A, passwordSignInAt: at });
 
 Deno.test('removes only the user’s photos, a page at a time, and then the user', async () => {
   const objects = new Set([
@@ -218,7 +213,7 @@ Deno.test('takes only POST requests', async () => {
 
 const answer = (data: string) => ({ data, error: null });
 const RIGHT = answer('right');
-const ALLOWED = answer('allowed');
+const CHANGED = (data: boolean) => ({ data, error: null });
 const DOWN = { data: null, error: { message: 'down' } };
 
 Deno.test('deletes an account with its code', async () => {
@@ -247,52 +242,57 @@ Deno.test('keeps an account whose code is wrong', async () => {
   assertEquals(calls.length, 1);
 });
 
-Deno.test('deletes an account with its password, counting the try first', async () => {
-  const passwords: string[] = [];
+Deno.test('deletes an account that signed in with its password just before', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: ALLOWED },
+    rpc: { password_changed_lately: CHANGED(false) },
   });
 
-  const response = await handleDeleteRequest(
-    post({ password: 'secret' }),
-    account(admin, passwords),
-  );
+  const response = await handleDeleteRequest(post({ signedIn: true }), account(admin));
 
   assertEquals(response.status, 200);
-  assertEquals(passwords, ['kaan@example.com secret']);
-  assertEquals(calls, [`take_account_deletion_password_try ${A}`, `delete ${A}`]);
+  assertEquals(calls, [`password_changed_lately ${A}`, `delete ${A}`]);
 });
 
-Deno.test('keeps an account whose password is wrong', async () => {
+Deno.test('keeps an account whose sign-in with the password is not recent', async () => {
+  for (const at of [now() - 6 * 60, undefined]) {
+    const { admin, calls } = fakeAdmin(new Set(), {
+      rpc: { password_changed_lately: CHANGED(false) },
+    });
+
+    const response = await handleDeleteRequest(post({ signedIn: true }), {
+      ...account(admin),
+      passwordSignInAt: at,
+    });
+
+    assertEquals(response.status, 400);
+    assertEquals(await response.json(), { error: 'proof_required' });
+    assertEquals(calls, []);
+  }
+});
+
+Deno.test('keeps an account whose password changed lately', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: ALLOWED },
+    rpc: { password_changed_lately: CHANGED(true) },
   });
 
-  const response = await handleDeleteRequest(post({ password: 'guess' }), account(admin));
+  const response = await handleDeleteRequest(post({ signedIn: true }), account(admin));
 
   assertEquals(response.status, 403);
-  assertEquals(await response.json(), { error: 'wrong_password' });
-  assertEquals(calls, [`take_account_deletion_password_try ${A}`]);
-});
-
-Deno.test('tries no password once the tries are used up', async () => {
-  const passwords: string[] = [];
-  const { admin } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: answer('too_many') },
-  });
-
-  const response = await handleDeleteRequest(
-    post({ password: 'secret' }),
-    account(admin, passwords),
-  );
-
-  assertEquals(response.status, 429);
-  assertEquals(await response.json(), { error: 'too_many_tries' });
-  assertEquals(passwords, []);
+  assertEquals(await response.json(), { error: 'password_recently_changed' });
+  assertEquals(calls, [`password_changed_lately ${A}`]);
 });
 
 Deno.test('keeps an account that brings no proof', async () => {
-  for (const body of [undefined, {}, { code: '12345' }, { code: 481027 }, { password: '' }]) {
+  // A session that signed in with the password just before proves nothing unless the request says
+  // it confirms with it, so a request sent by mistake deletes nothing.
+  for (const body of [
+    undefined,
+    {},
+    { code: '12345' },
+    { code: 481027 },
+    { password: 'secret' },
+    { signedIn: 'yes' },
+  ]) {
     const { admin, calls } = fakeAdmin(new Set());
 
     const response = await handleDeleteRequest(post(body), account(admin));
@@ -304,36 +304,16 @@ Deno.test('keeps an account that brings no proof', async () => {
 });
 
 Deno.test('keeps an account when its proof cannot be checked', async () => {
-  const failing = {
-    ...account(
-      fakeAdmin(new Set(), {
-        rpc: { take_account_deletion_password_try: ALLOWED },
-      }).admin,
-    ),
-    checkPassword: () => Promise.reject(new Error('Auth is down')),
-  };
-  for (const [body, context] of [
-    [
-      { code: '481027' },
-      account(
-        fakeAdmin(new Set(), {
-          rpc: { check_account_deletion_code: DOWN },
-        }).admin,
-      ),
-    ],
-    [
-      { password: 'secret' },
-      account(
-        fakeAdmin(new Set(), {
-          rpc: { take_account_deletion_password_try: DOWN },
-        }).admin,
-      ),
-    ],
-    [{ password: 'secret' }, failing],
+  for (const [body, rpc] of [
+    [{ code: '481027' }, { check_account_deletion_code: DOWN }],
+    [{ signedIn: true }, { password_changed_lately: DOWN }],
   ] as const) {
-    const response = await handleDeleteRequest(post(body), context);
+    const { admin, calls } = fakeAdmin(new Set(), { rpc });
+
+    const response = await handleDeleteRequest(post(body), account(admin));
 
     assertEquals(response.status, 503);
+    assertEquals(calls.length, 1);
   }
 });
 
@@ -363,38 +343,6 @@ Deno.test('tells an expired code and too many wrong codes apart', async () => {
   }
 });
 
-Deno.test('tries no password that changed lately, or while all tries are taken', async () => {
-  for (const [said, refusal] of [
-    ['recently_changed', 'password_recently_changed'],
-    ['busy', 'busy'],
-  ] as const) {
-    const passwords: string[] = [];
-    const { admin } = fakeAdmin(new Set(), {
-      rpc: { take_account_deletion_password_try: answer(said) },
-    });
-
-    const response = await handleDeleteRequest(
-      post({ password: 'secret' }),
-      account(admin, passwords),
-    );
-
-    assertEquals(await response.json(), { error: refusal });
-    assertEquals(passwords, []);
-  }
-});
-
-Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
-  const { admin, calls } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: ALLOWED },
-  });
-
-  const response = await handleDeleteRequest(post({ password: 'busy' }), account(admin));
-
-  assertEquals(response.status, 429);
-  assertEquals(await response.json(), { error: 'busy' });
-  assertEquals(calls, [`take_account_deletion_password_try ${A}`]);
-});
-
 Deno.test('counts an account already gone as deleted, without asking for proof', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
     gone: true,
@@ -418,18 +366,6 @@ Deno.test('asks for proof when a token still says guest after the account was ma
   assertEquals(calls, []);
 });
 
-Deno.test('checks the password against the address as stored', async () => {
-  const passwords: string[] = [];
-  const { admin } = fakeAdmin(new Set(), {
-    email: 'new@example.com',
-    rpc: { take_account_deletion_password_try: ALLOWED },
-  });
-
-  await handleDeleteRequest(post({ password: 'secret' }), account(admin, passwords));
-
-  assertEquals(passwords, ['new@example.com secret']);
-});
-
 Deno.test('deletes nothing when Auth cannot say who the user is', async () => {
   const { admin, calls } = fakeAdmin(new Set(), { readError: true });
 
@@ -437,4 +373,26 @@ Deno.test('deletes nothing when Auth cannot say who the user is', async () => {
 
   assertEquals(response.status, 503);
   assertEquals(calls, []);
+});
+
+Deno.test('reads when the session signed in with a password from the token’s claims', () => {
+  assertEquals(
+    passwordSignInAt({
+      amr: [
+        { method: 'otp', timestamp: 1 },
+        { method: 'password', timestamp: 2 },
+      ],
+    }),
+    2,
+  );
+  for (const claims of [
+    null,
+    {},
+    { amr: 'password' },
+    { amr: [{ method: 'otp', timestamp: 1 }] },
+    { amr: [{ method: 'password', timestamp: '2' }] },
+    { amr: [null] },
+  ]) {
+    assertEquals(passwordSignInAt(claims), undefined);
+  }
 });
