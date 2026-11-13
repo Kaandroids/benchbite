@@ -189,6 +189,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_spend_limit: {
+        Row: {
+          alert_share: number;
+          id: boolean;
+          monthly_cap_usd: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          alert_share: number;
+          id?: boolean;
+          monthly_cap_usd: number;
+        };
+        Update: {
+          alert_share?: number;
+          id?: boolean;
+          monthly_cap_usd?: number;
+        };
+        Relationships: [];
+      };
+      ai_spend_months: {
+        Row: {
+          cost_usd: number;
+          month: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cost_usd?: number;
+          month: string;
+        };
+        Update: {
+          cost_usd?: number;
+          month?: string;
+        };
+        Relationships: [];
+      };
       ai_usage: {
         Row: {
           cached_input_tokens: number;
@@ -2135,6 +2170,17 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      ai_month_spend_usd: { Args: Record<PropertyKey, never>; Returns: number };
+      ai_spend_paused: { Args: Record<PropertyKey, never>; Returns: boolean };
+      ai_spend_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          alert_percent: number;
+          healthy: boolean;
+          paused: boolean;
+          used_percent: number;
+        }[];
+      };
       ai_windows: {
         Args: { user_id: string };
         Returns: Database['public']['CompositeTypes']['ai_windows'];
@@ -3230,7 +3276,8 @@ export type Database = {
         | 'limit_reached'
         | 'request_too_large'
         | 'unpriced_model'
-        | 'call_in_progress';
+        | 'call_in_progress'
+        | 'service_paused';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       billing_period: 'monthly' | 'yearly';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
@@ -3532,6 +3579,7 @@ export const Constants = {
         'request_too_large',
         'unpriced_model',
         'call_in_progress',
+        'service_paused',
       ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       billing_period: ['monthly', 'yearly'],
