@@ -2759,6 +2759,7 @@ export type Database = {
       new_account_deletion_code: { Args: { p_code_hash: string; p_user: string }; Returns: string };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       outside_workout_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      password_changed_lately: { Args: { p_user: string }; Returns: boolean };
       plan_by_weekdays: {
         Args: { from_day: string; owner: string; to_day: string };
         Returns: {
@@ -3085,7 +3086,6 @@ export type Database = {
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
-      take_account_deletion_password_try: { Args: { p_user: string }; Returns: string };
       take_back_account_deletion_code: {
         Args: { p_code_hash: string; p_user: string };
         Returns: undefined;
