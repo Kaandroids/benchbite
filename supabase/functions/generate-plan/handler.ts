@@ -13,6 +13,10 @@ import { readJson, TOO_LARGE } from '../_shared/request.ts';
 // as soon as the types are regenerated.
 const { Enums } = Constants.public;
 
+// The answers take a few hundred bytes. Guests can call it too, so a larger body is not read, let
+// alone parsed (#533).
+const MAX_BODY_BYTES = 4096;
+
 const PlanRequest = z.object({
   goal: z.enum(Enums.goal_kind),
   experience: z.enum(Enums.experience),
@@ -34,9 +38,7 @@ export async function handlePlanRequest(
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
 
-  // The answers take a few hundred bytes. Guests can call it too, so a larger body is not read, let
-  // alone parsed (#533).
-  const json = await readJson(req, 4096);
+  const json = await readJson(req, MAX_BODY_BYTES);
   if (json === TOO_LARGE) {
     return Response.json({ error: 'too_large' }, { status: 413 });
   }
