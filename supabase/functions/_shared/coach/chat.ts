@@ -200,9 +200,9 @@ export type CardAlternative = { name: string | null; position: number };
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
  * user's language, the targets in use and the new ones, entries of the food log moved, resized or
  * removed (ADR 0068), changes to several workouts and their alternatives (ADR 0075), or a note
- * changed or archived (ADR 0133). Bite
- * proposes `workout` no more; its cards stay with the messages that have them. The user applies
- * it, keeps things as they are, or undoes it, by its `id` (decide_coach_proposal()).
+ * changed or archived (ADR 0133). Bite proposes `workout` no more; its cards stay with the
+ * messages that have them. The user applies it, keeps things as they are, or undoes it, by its
+ * `id` (decide_coach_proposal()).
  */
 export type ProposalCard =
   | {

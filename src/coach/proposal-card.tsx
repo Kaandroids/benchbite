@@ -48,8 +48,8 @@ type ProposalCardProps = {
 /**
  * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075,
  * 0133): what changes, from today, in the food log, in a workout's alternatives, or in a note, to
- * apply or keep as it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
- * and 11b).
+ * apply or keep as it is. Once decided it folds into a line that says so, and an applied one
+ * offers Undo (boards 5 and 11b).
  */
 export function ProposalCard({
   card,
