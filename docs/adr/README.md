@@ -149,3 +149,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0131](0131-remove-guests-inactive-for-90-days.md)                    | Remove guests inactive for 90 days                                                      | Accepted                                             |
 | [0132](0132-monitor-with-a-read-only-token.md)                        | Monitor with a token that can only read the database                                    | Accepted                                             |
 | [0133](0133-bite-proposes-note-changes.md)                            | Bite proposes changes to a note, which the user applies                                 | Accepted                                             |
+| [0134](0134-pause-bite-at-the-providers-spend-limit.md)               | Pause Bite at the provider's spend limit, and warn before it                            | Accepted                                             |
