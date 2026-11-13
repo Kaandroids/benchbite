@@ -200,6 +200,8 @@ async function savePassword(password: string) {
  * Whether the password is the signed-in account's, checked by signing in with it from the phone,
  * where Auth limits the tries by the phone's IP. The address is the one Auth has now: the session's
  * can be one changed since on another device, with which the right password would fail (#528).
+ * After a right password it also signs out on the server the session the sign-in replaced, which no
+ * device holds any more (#532, ADR 0128).
  */
 async function isAccountPassword(password: string): Promise<boolean> {
   const { data, error: readError } = await supabase.auth.getUser();
@@ -219,23 +221,13 @@ async function isAccountPassword(password: string): Promise<boolean> {
     throw error;
   }
   if (previous) {
-    await signOutReplaced(previous);
+    // A sign-in always starts a session of its own, so this is never the new one. Despite `admin`,
+    // it needs no service role: Auth signs out the session the old token belongs to, with the
+    // publishable key. It is only tidying, so the action does not wait for it, and an error it
+    // answers with is left; it throws only for a wrong scope.
+    void supabase.auth.admin.signOut(previous, 'local').catch(() => {});
   }
   return true;
-}
-
-/**
- * Signs out on the server the session a sign-in with the password replaced on the phone, which no
- * device holds any more (#532, ADR 0128). A sign-in always starts a session of its own, so this is
- * never the new one. Auth takes it with the old session's token and the publishable key, as a
- * sign-out of that session alone. It is only tidying, so a failure is left: the password was right.
- */
-async function signOutReplaced(accessToken: string) {
-  try {
-    await supabase.auth.admin.signOut(accessToken, 'local');
-  } catch {
-    // Nothing to do: the session stays until it expires, as before.
-  }
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({

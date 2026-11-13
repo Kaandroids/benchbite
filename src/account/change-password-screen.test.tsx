@@ -80,7 +80,10 @@ describe('ChangePasswordScreen', () => {
   });
 
   it('changes the password even when the replaced session cannot be signed out', async () => {
-    auth.admin.signOut.mockRejectedValue(new Error('offline'));
+    auth.admin.signOut.mockResolvedValue({
+      data: null,
+      error: new AuthRetryableFetchError('Failed to fetch', 0),
+    });
     await renderScreen();
     await fill('the old one', 'a new one!');
     await save();

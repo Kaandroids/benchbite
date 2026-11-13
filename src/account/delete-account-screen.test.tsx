@@ -1,4 +1,9 @@
-import { AuthApiError, FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
+import {
+  AuthApiError,
+  AuthRetryableFetchError,
+  FunctionsFetchError,
+  FunctionsHttpError,
+} from '@supabase/supabase-js';
 import { router } from 'expo-router';
 
 import { supabase } from '@/lib/supabase';
@@ -249,7 +254,10 @@ describe('an account', () => {
   });
 
   it('is deleted even when the session the sign-in replaced cannot be signed out', async () => {
-    jest.mocked(supabase.auth.admin.signOut).mockRejectedValue(new Error('offline'));
+    jest.mocked(supabase.auth.admin.signOut).mockResolvedValue({
+      data: null,
+      error: new AuthRetryableFetchError('Failed to fetch', 0),
+    });
     await sendCode();
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Can’t open your email? Use your password' }),
