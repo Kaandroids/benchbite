@@ -1,6 +1,6 @@
 # 0067. Check the scheduled jobs from a daily GitHub Actions workflow
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0132
 - **Date:** 2026-10-31
 
 ## Context
