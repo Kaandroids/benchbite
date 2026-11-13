@@ -33,7 +33,9 @@ export type DeleteContext = {
 };
 
 /** When the token's claims say its session signed in with a password, from their `amr`. */
-export function passwordSignInAt(claims: Record<string, unknown> | null): number | undefined {
+export function passwordSignInFromClaims(
+  claims: Record<string, unknown> | null,
+): number | undefined {
   const methods = claims?.amr;
   if (!Array.isArray(methods)) return undefined;
   const password = methods.find((method) => isObject(method) && method.method === 'password');

@@ -3,7 +3,7 @@ import { assertEquals } from '@std/assert';
 import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import { codeHash } from '../_shared/deletion_code.ts';
 import { PAGE_SIZE } from '../_shared/storage.ts';
-import { handleDeleteRequest, passwordSignInAt } from './handler.ts';
+import { handleDeleteRequest, passwordSignInFromClaims } from './handler.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
@@ -377,7 +377,7 @@ Deno.test('deletes nothing when Auth cannot say who the user is', async () => {
 
 Deno.test('reads when the session signed in with a password from the token’s claims', () => {
   assertEquals(
-    passwordSignInAt({
+    passwordSignInFromClaims({
       amr: [
         { method: 'otp', timestamp: 1 },
         { method: 'password', timestamp: 2 },
@@ -393,6 +393,6 @@ Deno.test('reads when the session signed in with a password from the token’s c
     { amr: [{ method: 'password', timestamp: '2' }] },
     { amr: [null] },
   ]) {
-    assertEquals(passwordSignInAt(claims), undefined);
+    assertEquals(passwordSignInFromClaims(claims), undefined);
   }
 });
