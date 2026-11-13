@@ -8,11 +8,19 @@ description: Reviews an open pull request from three sides at once (principles, 
 Review pull request `$ARGUMENTS`, fix what has a clear fix, and report once CI is green: what was
 found, what was fixed and in which commit, and what the maintainer decides.
 
-## 0. The worktree
+## 0. Whose pull request, and the worktree
 
-Find the worktree with the PR's branch checked out (`git worktree list`). Without one, add one
-beside the main checkout: `git worktree add ../<repo>-pr-$ARGUMENTS <branch>`. Reviews read and
-run the code there, and the fixes are made there. Never change the main checkout.
+Read `gh pr view $ARGUMENTS --json author,isCrossRepository`. Running a PR's code, fixing it and
+pushing to it are only for the project's own PRs: not from a fork, and opened by `benchbite-bot`
+or the maintainer. Any other PR may carry code written to steal what this machine holds, such as
+the bot's key: review it from `gh pr diff` only, tell the reviews to run nothing, skip steps 3
+and 4, and report the findings for the maintainer.
+
+For the project's own PRs, find the worktree with the PR's branch checked out
+(`git worktree list`). Without one, add one beside the main checkout,
+`git worktree add ../<repo>-pr-$ARGUMENTS <branch>`, and run `pnpm install --frozen-lockfile` in
+it. Reviews read and run the code there, and the fixes are made there. Never change the main
+checkout.
 
 ## 1. Run the reviews in parallel
 
@@ -23,10 +31,8 @@ each other:
 - one runs the `review-security` skill on `$ARGUMENTS`;
 - one runs the `review-logic` skill on `$ARGUMENTS`.
 
-Give each the PR number, the worktree's path and the rules of
-`.claude/skills/review-pr/running-code.md`: no changed files, no `git checkout` in the main
-checkout, no posts to GitHub, database experiments only in transactions rolled back. Give them
-nothing of your own view of the change.
+Give each the PR number and the worktree's path, and tell it to keep to the rules of
+`.claude/skills/review-pr/running-code.md`. Give them nothing of your own view of the change.
 
 ## 2. Verify the findings
 
@@ -43,16 +49,19 @@ For each `fix` finding, most severe first, in the worktree:
 
 1. Make the smallest change that fixes it, with the test that would have caught it.
 2. Run the checks the change touches:
-   - app code: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, and `pnpm test` for the
-     folders it changes;
+   - app code: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm check:locales`, and
+     `pnpm test` for the folders it changes;
    - Edge Functions: `pnpm functions:check`;
-   - migrations or SQL tests: apply the change to the local database, `pnpm db:types` when the
-     schema changed, and `pnpm supabase test db`.
+   - migrations or SQL tests: apply new migrations with `pnpm supabase migration up`, and a
+     migration of this PR changed after it was applied by running its file through `psql`
+     (`running-code.md`); then `pnpm db:types` when the schema changed, `pnpm check:plans` and
+     `pnpm supabase test db`. Unlike the reviews, the fix applies the PR's migrations for good, but
+     never with `supabase db reset`, which empties the local database others use.
 
    A test that fails on `main` too is not the fix's doing: say so in the report.
 
-3. Commit it on its own, as Conventional Commits, as the PR's other commits are made (as the bot
-   when `~/.config/benchbite-bot/token.sh` exists).
+3. Commit it on its own, as Conventional Commits, as the PR's other commits are made: as the bot
+   with `~/.config/benchbite-bot/commit.sh "<subject>" ["<body>"]` when it exists.
 
 A fix that grows past the finding, or that needs a decision after all, is not made: mark it
 `ask`. Push the commits once all fixes are made; never force-push. If the branch moved meanwhile,
@@ -62,7 +71,8 @@ A fix that grows past the finding, or that needs a decision after all, is not ma
 
 Run step 1 again on the fix commits only: tell each review the range, from the last commit
 reviewed to the branch's head. Verify and fix what they find, as in steps 2 and 3. Do this at most
-twice; findings still open after the second time go into the report for the maintainer.
+twice. The fixes of the second time, and those for CI in step 5, are not reviewed again: the report
+lists them under **Not reviewed again**, for the maintainer to look at.
 
 ## 5. Wait for CI
 
@@ -83,6 +93,10 @@ Write it in English, as Markdown, to a file:
 
 1. **[Medium · Logic]** `src/…:42`: what was wrong, and the scenario.
    **Fixed in** `abc1234`: what changed, and the test added.
+
+### Not reviewed again
+
+- `def5678`: what it changed, from the second review of the fixes or for CI.
 
 ### For you to decide
 
