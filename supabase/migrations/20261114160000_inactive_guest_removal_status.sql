@@ -1,8 +1,8 @@
 -- Where the removal of inactive guests stands (#535, ADR 0131), for the Monitor workflow (ADR 0067)
 -- to check once a day: it only warns in the Postgres logs when it falls behind.
 
--- When a guest last active before it is overdue: past the period by more than a day, which the
--- hourly job removes in time while it works. The scheduled job's warning and the Monitor's check
+-- The time before which a guest's last activity makes them overdue: past the period by more than a
+-- day, which the hourly job removes in time while it works. The scheduled job's warning and the Monitor's check
 -- both read it, so that they agree.
 create function public.inactive_guest_overdue_before()
 returns timestamptz
