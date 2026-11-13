@@ -39,9 +39,12 @@ export async function handleSendCode(
 
   const code = newCode();
   const hash = await codeHash(userId, code);
+  // The code keeps the address it is mailed to, and works only while that is still the account's,
+  // so one mailed to an address that changes meanwhile deletes nothing (#563).
   const { data: answer, error } = await admin.rpc('new_account_deletion_code', {
     p_user: userId,
     p_code_hash: hash,
+    p_email: email,
   });
   if (error) {
     logError('Keeping a code to delete an account failed', error);

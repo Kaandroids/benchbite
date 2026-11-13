@@ -71,7 +71,9 @@ Deno.test('emails the account a code in the app’s language and keeps only its 
   const code = sent[0]!.subject.match(/^\d{6}/)![0];
   assert(sent[0]!.subject.includes('Benchbite-Kontos'));
   assert(sent[0]!.html.includes(`>${code}</p>`));
-  assertEquals(calls, [{ p_user: A, p_code_hash: await codeHash(A, code) }]);
+  assertEquals(calls, [
+    { p_user: A, p_code_hash: await codeHash(A, code), p_email: 'kaan@example.com' },
+  ]);
 });
 
 Deno.test('writes in the account’s language when the app names none', async () => {
@@ -134,7 +136,7 @@ Deno.test('takes back a code whose email could not be sent', async () => {
   const response = await handleSendCode(post(), ctx);
 
   assertEquals(response.status, 503);
-  assertEquals(takenBack, calls);
+  assertEquals(takenBack, [{ p_user: A, p_code_hash: calls[0]!.p_code_hash! }]);
 });
 
 Deno.test('sends the code to the address as stored, not as the token had it', async () => {
