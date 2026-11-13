@@ -34,7 +34,7 @@
     "i18next": "^26.5.3",
     "intl-pluralrules": "^2.0.1",
     "react": "19.3.0",
-    "react-i18next": "^17.1.0",
+    "react-i18next": "^17.1.13",
     "react-native": "0.88.1",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-health-connect": "^4.1.3",
