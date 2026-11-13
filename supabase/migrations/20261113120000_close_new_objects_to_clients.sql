@@ -16,7 +16,8 @@ alter default privileges for role postgres revoke execute on functions from publ
 -- API today, but each would be the first step of a mistake.
 
 -- Writes on views, which cannot be written to, and the table rights no client needs: truncate
--- skips row level security, references and triggers belong to migrations.
+-- skips row level security, references and triggers belong to migrations. The table-wide revoke
+-- covers truncate on views too.
 do $$
 declare
   view_name text;
@@ -26,7 +27,7 @@ begin
     where n.nspname = 'public' and c.relkind = 'v'
   loop
     execute format(
-      'revoke insert, update, delete, truncate on public.%I from anon, authenticated', view_name
+      'revoke insert, update, delete on public.%I from anon, authenticated', view_name
     );
   end loop;
 end;
@@ -46,10 +47,3 @@ begin
   end loop;
 end;
 $$;
-
--- Helpers of the AI budget that 20261102220000_ai_budget_windows.sql closed, again, as a database
--- was found with them open.
-revoke all on function public.plan_grace() from public, anon, authenticated;
-revoke all on function public.ai_call_refusal(
-  public.ai_feature_limits, public.ai_model_prices, integer, numeric, numeric, boolean
-) from public, anon, authenticated;

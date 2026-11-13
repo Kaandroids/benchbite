@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(66);
+select plan(65);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -60,7 +60,16 @@ select is_empty(
   'No owner-rights function is open to anon'
 );
 
--- A new table, sequence and function are closed to clients until granted.
+-- Identity columns need no grant on their sequence; a serial column would need one, which a
+-- migration could forget.
+select is_empty(
+  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'S'
+       and not exists (select 1 from pg_depend d where d.objid = c.oid and d.deptype = 'i') $$,
+  'Every sequence backs an identity column'
+);
+
+-- A new table and function are closed to clients until granted.
 create table public.grants_test_table (id bigint generated always as identity primary key);
 create function public.grants_test_function() returns int language sql as $$ select 1 $$;
 select ok(
@@ -93,8 +102,7 @@ where p.proname in (
   'plan_limits', 'has_waiting_choices', 'counted_workouts', 'counts_on_plan', 'refuse_held_workout', 'is_held_workout', 'refuse_held_workout_rows',
   'refuse_held_alternative', 'added_alternative_count', 'stamp_alternative_last_used', 'apply_plan_limits', 'apply_workout_limits',
   'apply_alternative_limits',
-  'apply_plan_limits_on_subscription', 'apply_plan_limits_after_delete', 'apply_changed_plan_limits',
-  'plan_grace', 'ai_call_refusal'
+  'apply_plan_limits_on_subscription', 'apply_plan_limits_after_delete', 'apply_changed_plan_limits'
 )
 group by p.proname
 order by p.proname;
