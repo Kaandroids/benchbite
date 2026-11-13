@@ -11,10 +11,11 @@ import { storedUser } from '../_shared/stored_user.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /**
- * How long a sign-in with the password proves its owner asks. The app signs in just before it calls
- * the function, so a few minutes leave room only for a slow network.
+ * How long a sign-in with the password proves its owner asks, in seconds. The app signs in just
+ * before it calls the function, so a minute is enough; any sign-in counts, an ordinary one too, so
+ * a longer time would only give whoever takes the session after it more.
  */
-const PASSWORD_SIGN_IN_PROVES_FOR = 5 * 60;
+const PASSWORD_SIGN_IN_PROVES_FOR = 60;
 
 export type DeleteContext = {
   /** A client with the service role, which alone deletes users. */

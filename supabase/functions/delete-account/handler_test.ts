@@ -254,7 +254,7 @@ Deno.test('deletes an account that signed in with its password just before', asy
 });
 
 Deno.test('keeps an account whose sign-in with the password is not recent', async () => {
-  for (const at of [now() - 6 * 60, undefined]) {
+  for (const at of [now() - 61, undefined]) {
     const { admin, calls } = fakeAdmin(new Set(), {
       rpc: { password_changed_lately: CHANGED(false) },
     });

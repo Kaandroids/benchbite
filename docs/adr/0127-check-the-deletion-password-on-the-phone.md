@@ -10,7 +10,7 @@ An account confirms deleting itself with a code from its email or its password (
 ## Decision
 
 - **The app checks the password by signing in with it, from the phone.** Auth then counts the tries against the phone's IP, as for any sign-in, and the function never sees the password.
-- **`delete-account` takes a recent sign-in with the password as proof.** The app asks for it with `{ signedIn: true }`. The function reads when the token's session signed in with a password from its `amr` claim, and takes it within 5 minutes. Auth keeps that time as the token is refreshed, so an older session does not become new by refreshing it. The flag keeps a request sent without proof, just after an ordinary sign-in, from deleting the account.
+- **`delete-account` takes a recent sign-in with the password as proof.** The app asks for it with `{ signedIn: true }`. The function reads when the token's session signed in with a password from its `amr` claim, and takes it within a minute: the app calls the function right after signing in, and any sign-in counts, an ordinary one too, so a longer time would only give more to whoever takes the session after it. Auth keeps that time as the token is refreshed, so an older session does not become new by refreshing it. The flag keeps a request sent without proof, just after an ordinary sign-in, from deleting the account.
 - **A password changed in the last day is still refused** (ADR 0095). `password_changed_lately()` answers it in place of `take_account_deletion_password_try()`, which counted the tries and goes.
 - **The code is unchanged.**
 
