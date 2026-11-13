@@ -14,18 +14,23 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- A day of this week, 1 for Monday to 7 for Sunday. Sunday is never before today, so a move to it
 -- always fits, whatever day the tests run on.
 create function pg_temp.day(weekday integer) returns date language sql as $$
   select date_trunc('week', current_date)::date + weekday - 1;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A day next to three days ago in the same week, on which workout 912 is planned.
 create function pg_temp.late_planned() returns date language sql as $$
   select case when extract(isodow from current_date - 3) = 1 then current_date - 2
     else current_date - 4 end;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A day next to today in the same week, on which workout 914 is planned, so that a log started
 -- today can carry its move to today, whatever day the tests run on.
@@ -33,6 +38,7 @@ create function pg_temp.next_to_today() returns date language sql as $$
   select case when extract(isodow from current_date) = 7 then current_date - 1
     else current_date + 1 end;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- User a's workouts: one on Mondays and Thursdays, one archived on Mondays, one on weekends, one
 -- on the day next to three days ago, and one on the day next to today. Saved before this week,
@@ -151,6 +157,7 @@ create function pg_temp.log(workout_id integer, move jsonb) returns jsonb langua
     'move', move
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select public.log_workout(pg_temp.log(914,
   jsonb_build_object('from', pg_temp.next_to_today(), 'to', current_date)));

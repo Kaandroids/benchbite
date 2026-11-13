@@ -13,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.hip_thrust(more jsonb default '{}') returns jsonb language sql as $$
   select jsonb_build_object(
@@ -25,6 +28,7 @@ create function pg_temp.hip_thrust(more jsonb default '{}') returns jsonb langua
     'instructions', jsonb_build_array('Sit with your back on the pad.', ' ', 'Drive up.')
   ) || more;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select results_eq(
   $$ select public, allowed_mime_types from storage.buckets where id = 'exercise-photos' $$,

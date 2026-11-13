@@ -62,6 +62,15 @@ See [ADR 0003](adr/0003-local-first-database-development.md) for how database ch
 
 After changing the schema, regenerate the TypeScript types with `pnpm db:types`.
 
+A new table, view, sequence or function in `public` is closed to the app until its migration
+grants what it opens ([ADR 0126](adr/0126-close-new-database-objects-to-clients.md)): `grant
+select, insert on public.x to authenticated` for a table that row level security guards, or `grant
+execute on function public.f(…) to authenticated` for a function the app calls with `rpc()`. Use
+identity columns (`generated always as identity`), which need no grant on their sequence; a
+`serial` column would also need `grant usage on sequence … to authenticated`. A database test that
+calls its `pg_temp` helpers as a signed-in user opens just them, with `grant execute on all
+functions in schema pg_temp to public` after creating them.
+
 ### Email
 
 Locally, Auth sends email to Mailpit and not to anyone: read codes at <http://127.0.0.1:54324>. After

@@ -141,3 +141,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0123](0123-translate-the-watch-app.md)                               | Translate the watch app                                                                 | Accepted                                             |
 | [0124](0124-time-a-set-on-the-watch.md)                               | Time a set on the watch                                                                 | Accepted                                             |
 | [0125](0125-turn-the-weight-by-the-speed-of-the-crown.md)             | Turn the weight by the speed of the Crown                                               | Accepted                                             |
+| [0126](0126-close-new-database-objects-to-clients.md)                 | Close new database objects to clients                                                   | Accepted                                             |

@@ -13,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- A two-minute session of workout 101 that started at `started`.
 create function pg_temp.log(started timestamptz) returns jsonb language sql as $$
@@ -26,6 +29,7 @@ create function pg_temp.log(started timestamptz) returns jsonb language sql as $
         jsonb_build_object('seconds', 45))))
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A has four workouts on the free plan, which allows three.
 set local session_replication_role = replica;

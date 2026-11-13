@@ -15,6 +15,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- A workout of `minutes` that started `hours_ago`, as the app sends it: on the day it started,
 -- which for one started 30 hours ago is not always yesterday.
@@ -32,6 +35,7 @@ returns jsonb language sql as $$
   ) || extra
   from (select now() - make_interval(secs => hours_ago * 3600) as start) as workout;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.import(workouts jsonb, store text default 'appleHealth') returns integer
 language sql as $$
@@ -40,6 +44,7 @@ language sql as $$
     current_date
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 

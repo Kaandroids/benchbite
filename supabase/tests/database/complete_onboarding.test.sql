@@ -13,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- Answers and a plan for three training days: a workout on two of them, and one that ends with
 -- conditioning on the third.
@@ -25,6 +28,7 @@ create function pg_temp.answers(changes jsonb default '{}') returns jsonb langua
     'sessionMinutes', 45, 'weightUnit', 'kg', 'heightUnit', 'cm'
   ) || changes;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.plan(exercise_id text default 'Barbell_Squat') returns jsonb language sql as $$
   select jsonb_build_object('sessions', jsonb_build_array(
@@ -42,6 +46,7 @@ create function pg_temp.plan(exercise_id text default 'Barbell_Squat') returns j
           'target', jsonb_build_object('seconds', 240), 'restSeconds', 0)))
   ));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 

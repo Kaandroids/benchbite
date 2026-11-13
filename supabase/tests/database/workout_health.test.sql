@@ -21,12 +21,16 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.kept(log bigint) returns table (avg smallint, max smallint, kcal integer, source text)
 language sql as $$
   select heart_rate_avg, heart_rate_max, active_kcal, health_source
   from public.workout_log_summaries where id = log;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 

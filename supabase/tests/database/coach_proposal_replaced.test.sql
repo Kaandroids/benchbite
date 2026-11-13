@@ -10,6 +10,9 @@ create function pg_temp.sign_in() returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert on ids to authenticated;
@@ -39,9 +42,11 @@ insert into ids select unnest(array['thread', 'other']), unnest(array[min(id), m
 create function pg_temp.id(key text) returns bigint language sql as $$
   select id from ids where name = key;
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.status(key text) returns text language sql as $$
   select status::text from public.coach_proposals where id = pg_temp.id(key);
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.propose(thread text, workout text, removed text) returns bigint
 language sql as $$
   select public.propose_coach_workouts(
@@ -50,6 +55,7 @@ language sql as $$
     current_date
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in();
 insert into ids select 'first', pg_temp.propose('thread', 'legs', 'Plank');

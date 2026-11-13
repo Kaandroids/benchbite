@@ -14,6 +14,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- User a weighs 72 kg, so 50 minutes burn about 300 kcal at 5 METs.
 insert into public.weight_entries (user_id, weight_kg) values ('00000000-0000-0000-0000-00000000000a', 72);
@@ -42,11 +45,13 @@ language sql as $$
     ))
   ) || more;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.one_set(exercise_id text, set_values jsonb) returns jsonb language sql as $$
   select jsonb_build_array(
     jsonb_build_object('exerciseId', exercise_id, 'sets', jsonb_build_array(set_values)));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(

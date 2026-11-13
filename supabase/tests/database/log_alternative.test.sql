@@ -17,6 +17,9 @@ create temporary table ids (name text primary key, id bigint) on commit drop;
 create function pg_temp.id(name text) returns bigint language sql as $$
   select i.id from ids i where i.name = $1;
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- A log of the workout with one set of squats, an hour long, ending `ago` before now.
 create function pg_temp.log(workout_id bigint, ago interval) returns bigint language sql as $$
@@ -29,12 +32,14 @@ create function pg_temp.log(workout_id bigint, ago interval) returns bigint lang
       'sets', jsonb_build_array(jsonb_build_object('weightKg', 60, 'reps', 8))))
   ));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.alternative(log_id bigint) returns table (name text, "position" smallint)
 language sql as $$
   select s.alternative_name, s.alternative_position from public.workout_log_summaries s
   where s.id = log_id;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 insert into ids select 'legs', public.save_workout(
   '{"name": "Legs", "weekdays": [], "exercises": [

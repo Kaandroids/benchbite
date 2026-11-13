@@ -20,6 +20,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert on ids to authenticated;
@@ -27,6 +30,7 @@ grant select, insert on ids to authenticated;
 create function pg_temp.id(name text) returns bigint language sql as $$
   select i.id from ids i where i.name = $1;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A's Legs is planned on every day since three days ago, its plan kept through then, so that the
 -- days in between are kept when an empty alternative is put in use.
@@ -50,21 +54,25 @@ create function pg_temp.gym() returns jsonb language sql as $$
     {"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"seconds": 45}}
   ]'::jsonb;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.home() returns jsonb language sql as $$
   select '[
     {"exerciseId": "Bodyweight_Walking_Lunge", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 10, "max": 12}}}
   ]'::jsonb;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- The caller's workout as saved_workout() reads it, which clients may not call.
 create function pg_temp.saved(workout_id bigint) returns jsonb language sql security definer as $$
   select public.saved_workout(workout_id);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.exercises_of(alternative_id bigint) returns jsonb language sql as $$
   select a.exercises from public.workout_alternatives a where a.id = alternative_id;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- B has a workout with alternatives too.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');

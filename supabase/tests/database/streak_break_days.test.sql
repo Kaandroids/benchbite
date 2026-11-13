@@ -14,6 +14,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- Within the week before today: day x and the next day y, in the same week, so that a workout
 -- can move from x to y, and two more days, whatever day the tests run on.
@@ -21,17 +24,21 @@ create function pg_temp.x() returns date language sql as $$
   select min(d)::date from generate_series(current_date - 7, current_date - 2, interval '1 day') d
   where date_trunc('week', d) = date_trunc('week', d + interval '1 day');
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.y() returns date language sql as $$ select pg_temp.x() + 1; $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.other(n integer) returns date language sql as $$
   select d::date from generate_series(current_date - 7, current_date - 1, interval '1 day') d
   where d::date not in (pg_temp.x(), pg_temp.y())
   order by d offset n - 1 limit 1;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.workout(id bigint, name text, type public.workout_type, skipped boolean)
 returns public.break_workout language sql as $$
   select row(id, name, type, skipped)::public.break_workout;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 set local session_replication_role = replica;
 
@@ -59,6 +66,7 @@ create function pg_temp.eat(owner uuid, on_day date, kcal integer) returns void 
   insert into public.meal_entries (user_id, day, meal, food_id, grams, kcal_per_100g)
   values (owner, on_day, 'lunch', (select id from public.foods order by id limit 1), kcal, 100);
 $$;
+grant execute on all functions in schema pg_temp to public;
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.x(), 1500);
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.y(), 1500);
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.other(2), 2400);
@@ -79,6 +87,7 @@ set local session_replication_role = origin;
 create function pg_temp.days() returns date[] language sql as $$
   select array[pg_temp.x(), pg_temp.y(), pg_temp.other(1), pg_temp.other(2)];
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 

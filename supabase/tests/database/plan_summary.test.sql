@@ -20,6 +20,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.used(
   user_id uuid, cost numeric, at timestamptz, free boolean default false, given boolean default null
 ) returns void language sql as $$
@@ -29,6 +32,7 @@ create function pg_temp.used(
   values (gen_random_uuid(), user_id, public.ai_counted_feature(), 'test-flash', 0, 0, 0, 0, cost,
     at, free, given);
 $$;
+grant execute on all functions in schema pg_temp to public;
 insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)
   values ('test-flash', '2000-01-01', 0, 0, 0);
 

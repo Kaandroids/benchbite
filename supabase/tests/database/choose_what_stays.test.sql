@@ -16,9 +16,13 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.open_for(user_id uuid) returns boolean language sql as $$
   select a.choice_open from public.applied_plans a where a.user_id = open_for.user_id;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A has four active workouts and one archived, with alternatives on two; B two active, one with an
 -- alternative; C four active, two of them planned yesterday; D one with three alternatives.
