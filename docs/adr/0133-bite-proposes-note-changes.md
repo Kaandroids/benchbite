@@ -22,9 +22,11 @@ see a line under the answer saying it changed (#534).
 - **The same proposal rules as the others.** A proposal is made only for a note of the user's in
   use: not archived and not waiting for their yes (`P0002`). It keeps the note as it was, so that
   `decide_coach_proposal()` applies it only while the note is still so (`BB035`). Undo puts the
-  note back as it was, or back in use. The notebook changes notes without the user's lock, so
-  deciding locks the note's row. A newer proposal for the same note in the thread replaces one
-  still pending (ADR 0077).
+  note back as it was, or back in use. The notebook changes notes without the user's lock, and
+  archiving one there takes it after the note's row, so proposing and deciding lock the note's row
+  first, in the same order. A newer proposal for the same note in the thread replaces one still
+  pending (ADR 0077), and a change keeps what the change it replaces changed and it does not, so
+  that asking for a later day never drops a new text the user has not applied yet.
 - **Cards as in the approved mock-up.** "Change this note?" shows the text as it was, struck
   through, over the new one, and the day to ask again when it changes. "Move to past notes?" shows
   the note, why, and that it can be restored. Applied, the card folds into "Changed in notebook"
