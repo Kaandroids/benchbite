@@ -61,20 +61,22 @@ export async function handleDeletionRequest(
   if (email.includes('@') && email.length <= 254) {
     try {
       const token = newToken();
-      // The database decides what counts as the same address, and hashes it for the limits.
-      const { data: made, error } = await admin.rpc('start_account_deletion', {
+      // The database decides what counts as the same address, and hashes it for the limits. It
+      // answers with the address the account has, which the link goes to rather than the typed
+      // one: the two can differ, as with a look-alike character the match folds (#530).
+      const { data: stored, error } = await admin.rpc('start_account_deletion', {
         p_email: email,
         p_ip_hash: await sha256Hex(clientIp(req.headers)),
         p_token_hash: await sha256Hex(token),
       });
       if (error) {
         logError('Starting the deletion of an account failed', error);
-      } else if (made) {
+      } else if (stored) {
         // In the fragment, which browsers never send to a server, so no log holds the token.
         const link = `${sitePage(siteUrl, locale, 'delete-account/confirm')}#token=${token}`;
         // Sent after the answer: waiting for it would make only addresses with an account slow.
         inBackground(
-          send(deletionEmail(locale, email, link)).catch((cause) =>
+          send(deletionEmail(locale, stored, link)).catch((cause) =>
             logError('Sending the link to delete an account failed', cause),
           ),
         );
