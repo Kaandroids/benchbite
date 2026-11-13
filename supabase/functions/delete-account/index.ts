@@ -21,14 +21,12 @@ async function checkPassword(email: string, password: string): Promise<PasswordC
 
 export default {
   // Only signed-in users, anonymous ones included, can call it, and it deletes only the user the
-  // token belongs to. Deleting a user takes the service role. CORS is off, because only the native
+  // token belongs to, a guest or an account as stored, whatever the token says (#528). Deleting a user takes the service role. CORS is off, because only the native
   // app calls the function.
   fetch: withSupabase<Database>({ auth: 'user', cors: 'disabled' }, (req, ctx) =>
     handleDeleteRequest(req, {
       admin: ctx.supabaseAdmin,
       userId: ctx.userClaims!.id,
-      guest: ctx.jwtClaims?.is_anonymous === true,
-      email: ctx.userClaims!.email || undefined,
       checkPassword,
     }),
   ),

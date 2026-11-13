@@ -6,6 +6,7 @@ import { codeHash, isCode } from '../_shared/deletion_code.ts';
 import { deleteUser } from '../_shared/delete_user.ts';
 import { isObject } from '../_shared/json.ts';
 import { readJson } from '../_shared/request.ts';
+import { storedUser } from '../_shared/stored_user.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** What signing in with a password said: right, wrong, or that Auth takes no more tries for now. */
@@ -14,12 +15,11 @@ export type PasswordCheck = 'right' | 'wrong' | 'busy';
 export type DeleteContext = {
   /** A client with the service role, which alone deletes users. */
   admin: Client;
-  /** The user the request's token belongs to, the only one it may delete. */
+  /**
+   * The user the request's token belongs to, the only one it may delete. Whether they are a guest,
+   * and their address, are read as stored, not from the token (#528).
+   */
   userId: string;
-  /** Whether that user is a guest. */
-  guest: boolean;
-  /** Their address; a guest has none. */
-  email: string | undefined;
   /** Checks the password by signing in with it; throws when Auth fails. */
   checkPassword: (email: string, password: string) => Promise<PasswordCheck>;
 };
@@ -43,7 +43,8 @@ const unavailable = () => refused('unavailable', 503);
 /** Why the request does not prove the owner of the account asks, or nothing when it does. */
 async function proofRefused(
   body: unknown,
-  { admin, userId, email, checkPassword }: DeleteContext,
+  email: string | undefined,
+  { admin, userId, checkPassword }: DeleteContext,
 ): Promise<Response | undefined> {
   const { code, password } = isObject(body) ? body : {};
 
@@ -90,14 +91,15 @@ export async function handleDeleteRequest(req: Request, context: DeleteContext):
   if (req.method !== 'POST') {
     return refused('method_not_allowed', 405);
   }
-  if (!context.guest) {
-    // Deleted already, as when the answer to a try that deleted it was lost: what was asked for is
-    // done, and its code went with it, so no proof could be checked.
-    const { error } = await context.admin.auth.admin.getUserById(context.userId);
-    if (error?.status === 404) {
-      return Response.json({ deleted: true });
-    }
-    const refusal = await proofRefused(await readJson(req, 4096), context);
+  const user = await storedUser(context.admin, context.userId);
+  if (!user) return unavailable();
+  // Deleted already, as when the answer to a try that deleted it was lost: what was asked for is
+  // done, and its code went with it, so no proof could be checked.
+  if (user.gone) {
+    return Response.json({ deleted: true });
+  }
+  if (!user.guest) {
+    const refusal = await proofRefused(await readJson(req, 4096), user.email, context);
     if (refusal) return refusal;
   }
   if (!(await deleteUser(context.admin, context.userId))) {

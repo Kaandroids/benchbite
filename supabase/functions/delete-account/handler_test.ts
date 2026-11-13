@@ -19,6 +19,11 @@ type Options = {
   rpc?: Record<string, { data: string | null; error: { message: string } | null }>;
   /** The user is gone already, as after a try whose answer was lost. */
   gone?: boolean;
+  /** The user as Auth stores them: a guest, or an account with its address. */
+  stored?: 'guest' | 'account';
+  email?: string;
+  /** Auth cannot say who the user is. */
+  readError?: boolean;
 };
 
 /**
@@ -34,6 +39,9 @@ function fakeAdmin(
     deleteError = null,
     rpc = {},
     gone,
+    stored = 'guest',
+    email = 'kaan@example.com',
+    readError,
   }: Options = {},
 ) {
   const calls: string[] = [];
@@ -69,7 +77,19 @@ function fakeAdmin(
       admin: {
         getUserById: () =>
           Promise.resolve(
-            gone ? { data: null, error: { status: 404 } } : { data: {}, error: null },
+            gone
+              ? { data: null, error: { status: 404 } }
+              : readError
+                ? { data: null, error: { status: 500 } }
+                : {
+                    data: {
+                      user: {
+                        is_anonymous: stored === 'guest',
+                        email: stored === 'account' ? email : undefined,
+                      },
+                    },
+                    error: null,
+                  },
           ),
         deleteUser: (id: string) => {
           calls.push(`delete ${id}`);
@@ -93,8 +113,6 @@ const post = (body?: unknown) =>
 const guest = (admin: never, userId = A) => ({
   admin,
   userId,
-  guest: true,
-  email: undefined,
   checkPassword: () => Promise.reject(new Error('A guest has no password')),
 });
 
@@ -102,8 +120,6 @@ const guest = (admin: never, userId = A) => ({
 const account = (admin: never, passwords: string[] = []) => ({
   admin,
   userId: A,
-  guest: false,
-  email: 'kaan@example.com',
   checkPassword: (email: string, password: string) => {
     passwords.push(`${email} ${password}`);
     return Promise.resolve<PasswordCheck>(
@@ -200,7 +216,10 @@ const ALLOWED = answer('allowed');
 const DOWN = { data: null, error: { message: 'down' } };
 
 Deno.test('deletes an account with its code', async () => {
-  const { admin, calls } = fakeAdmin(new Set(), { rpc: { check_account_deletion_code: RIGHT } });
+  const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
+    rpc: { check_account_deletion_code: RIGHT },
+  });
 
   const response = await handleDeleteRequest(post({ code: '481027' }), account(admin));
 
@@ -213,6 +232,7 @@ Deno.test('deletes an account with its code', async () => {
 
 Deno.test('keeps an account whose code is wrong', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
     rpc: { check_account_deletion_code: answer('wrong') },
   });
 
@@ -226,6 +246,7 @@ Deno.test('keeps an account whose code is wrong', async () => {
 Deno.test('deletes an account with its password, counting the try first', async () => {
   const passwords: string[] = [];
   const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -241,6 +262,7 @@ Deno.test('deletes an account with its password, counting the try first', async 
 
 Deno.test('keeps an account whose password is wrong', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -254,6 +276,7 @@ Deno.test('keeps an account whose password is wrong', async () => {
 Deno.test('tries no password once the tries are used up', async () => {
   const passwords: string[] = [];
   const { admin } = fakeAdmin(new Set(), {
+    stored: 'account',
     rpc: { take_account_deletion_password_try: answer('too_many') },
   });
 
@@ -269,7 +292,7 @@ Deno.test('tries no password once the tries are used up', async () => {
 
 Deno.test('keeps an account that brings no proof', async () => {
   for (const body of [undefined, {}, { code: '12345' }, { code: 481027 }, { password: '' }]) {
-    const { admin, calls } = fakeAdmin(new Set());
+    const { admin, calls } = fakeAdmin(new Set(), { stored: 'account' });
 
     const response = await handleDeleteRequest(post(body), account(admin));
 
@@ -282,18 +305,31 @@ Deno.test('keeps an account that brings no proof', async () => {
 Deno.test('keeps an account when its proof cannot be checked', async () => {
   const failing = {
     ...account(
-      fakeAdmin(new Set(), { rpc: { take_account_deletion_password_try: ALLOWED } }).admin,
+      fakeAdmin(new Set(), {
+        stored: 'account',
+        rpc: { take_account_deletion_password_try: ALLOWED },
+      }).admin,
     ),
     checkPassword: () => Promise.reject(new Error('Auth is down')),
   };
   for (const [body, context] of [
     [
       { code: '481027' },
-      account(fakeAdmin(new Set(), { rpc: { check_account_deletion_code: DOWN } }).admin),
+      account(
+        fakeAdmin(new Set(), {
+          stored: 'account',
+          rpc: { check_account_deletion_code: DOWN },
+        }).admin,
+      ),
     ],
     [
       { password: 'secret' },
-      account(fakeAdmin(new Set(), { rpc: { take_account_deletion_password_try: DOWN } }).admin),
+      account(
+        fakeAdmin(new Set(), {
+          stored: 'account',
+          rpc: { take_account_deletion_password_try: DOWN },
+        }).admin,
+      ),
     ],
     [{ password: 'secret' }, failing],
   ] as const) {
@@ -318,6 +354,7 @@ Deno.test('tells an expired code and too many wrong codes apart', async () => {
     ['too_many', 'too_many_tries', 429],
   ] as const) {
     const { admin, calls } = fakeAdmin(new Set(), {
+      stored: 'account',
       rpc: { check_account_deletion_code: answer(said) },
     });
 
@@ -336,6 +373,7 @@ Deno.test('tries no password that changed lately, or while all tries are taken',
   ] as const) {
     const passwords: string[] = [];
     const { admin } = fakeAdmin(new Set(), {
+      stored: 'account',
       rpc: { take_account_deletion_password_try: answer(said) },
     });
 
@@ -351,6 +389,7 @@ Deno.test('tries no password that changed lately, or while all tries are taken',
 
 Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
     rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
@@ -362,11 +401,47 @@ Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
 });
 
 Deno.test('counts an account already gone as deleted, without asking for proof', async () => {
-  const { admin, calls } = fakeAdmin(new Set(), { gone: true });
+  const { admin, calls } = fakeAdmin(new Set(), {
+    stored: 'account',
+    gone: true,
+  });
 
   const response = await handleDeleteRequest(post({ code: '481027' }), account(admin));
 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), { deleted: true });
+  assertEquals(calls, []);
+});
+
+Deno.test('asks for proof when a token still says guest after the account was made', async () => {
+  // The token's claims are not read: the stored user is an account, which needs proof.
+  const { admin, calls } = fakeAdmin(new Set(), { stored: 'account' });
+
+  const response = await handleDeleteRequest(post(), guest(admin));
+
+  assertEquals(response.status, 400);
+  assertEquals(await response.json(), { error: 'proof_required' });
+  assertEquals(calls, []);
+});
+
+Deno.test('checks the password against the address as stored', async () => {
+  const passwords: string[] = [];
+  const { admin } = fakeAdmin(new Set(), {
+    stored: 'account',
+    email: 'new@example.com',
+    rpc: { take_account_deletion_password_try: ALLOWED },
+  });
+
+  await handleDeleteRequest(post({ password: 'secret' }), account(admin, passwords));
+
+  assertEquals(passwords, ['new@example.com secret']);
+});
+
+Deno.test('deletes nothing when Auth cannot say who the user is', async () => {
+  const { admin, calls } = fakeAdmin(new Set(), { readError: true });
+
+  const response = await handleDeleteRequest(post(), guest(admin));
+
+  assertEquals(response.status, 503);
   assertEquals(calls, []);
 });
