@@ -2221,6 +2221,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      call_scheduled_function: { Args: { p_name: string }; Returns: number };
       calorie_floor:
         | {
             Args: {
@@ -2489,6 +2490,8 @@ export type Database = {
         };
         Returns: undefined;
       };
+      guest_inactivity_period: { Args: Record<PropertyKey, never>; Returns: string };
+      guest_still_inactive: { Args: { p_user: string }; Returns: boolean };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
@@ -2535,6 +2538,9 @@ export type Database = {
         Returns: boolean;
       };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
+      inactive_guest_removal_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
+      inactive_guests: { Args: { p_limit: number }; Returns: string[] };
+      inactive_guests_since: { Args: { p_before: string; p_user?: string }; Returns: string[] };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
@@ -2955,6 +2961,7 @@ export type Database = {
         Returns: undefined;
       };
       request_coach_media_purge: { Args: Record<PropertyKey, never>; Returns: number };
+      request_inactive_guest_removal: { Args: Record<PropertyKey, never>; Returns: number };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
