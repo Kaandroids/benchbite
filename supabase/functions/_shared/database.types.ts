@@ -1950,14 +1950,14 @@ export type Database = {
       outside_workout_list: {
         Row: {
           active_kcal: number | null;
-          activity: string | null;
-          ended_at: string | null;
+          activity: string;
+          ended_at: string;
           heart_rate_avg: number | null;
           source: string | null;
-          source_id: string | null;
-          started_at: string | null;
-          started_on: string | null;
-          store: Database['public']['Enums']['health_store'] | null;
+          source_id: string;
+          started_at: string;
+          started_on: string;
+          store: Database['public']['Enums']['health_store'];
         };
         ComputedFields: never;
         Insert: {
@@ -1991,7 +1991,7 @@ export type Database = {
           grams: number | null;
           kcal: number | null;
           protein_g: number | null;
-          recipe_id: number | null;
+          recipe_id: number;
           serving_grams: number | null;
         };
         ComputedFields: never;
@@ -2004,11 +2004,11 @@ export type Database = {
           alternative_position: number | null;
           estimated_kcal: number | null;
           exercises: number | null;
-          finished_at: string | null;
+          finished_at: string;
           health_source: string | null;
           heart_rate_avg: number | null;
           heart_rate_max: number | null;
-          id: number | null;
+          id: number;
           kcal: number | null;
           kcal_source: Database['public']['Enums']['kcal_source'] | null;
           kilograms: number | null;
@@ -2017,7 +2017,7 @@ export type Database = {
           planned_exercises: number | null;
           planned_sets: number | null;
           sets: number | null;
-          started_at: string | null;
+          started_at: string;
           type: Database['public']['Enums']['workout_type'] | null;
           workout_id: number | null;
         };
