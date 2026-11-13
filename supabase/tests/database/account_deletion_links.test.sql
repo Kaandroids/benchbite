@@ -75,6 +75,7 @@ select is(
 
 select ok(
   not has_function_privilege('authenticated', 'public.start_account_deletion(text, bytea, bytea)', 'execute')
+    and not has_function_privilege('anon', 'public.start_account_deletion(text, bytea, bytea)', 'execute')
     and not has_function_privilege('anon', 'public.account_deletion_user(bytea)', 'execute'),
   'No client can make or read a link'
 );
