@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(29);
 
 -- Answers from pg_net, made up here for requests with negative ids that pg_net never uses.
 create function pg_temp.answer(request_id bigint, status_code integer, minutes_ago integer)
@@ -168,6 +168,14 @@ select ok(
 )
 from (values ('anon'), ('authenticated'), ('service_role')) roles (role)
 cross join (values ('public.coach_media_purge_status()'), ('public.coach_media_purge_stalled()'))
+  functions (function);
+
+-- The Monitor workflow's token only reads, and its queries run as supabase_read_only_user (ADR 0132).
+select ok(
+  has_function_privilege('supabase_read_only_user', function, 'execute'),
+  'The read-only role can call ' || function
+)
+from (values ('public.coach_media_purge_status()'), ('public.coach_media_purge_stalled()'))
   functions (function);
 
 select ok(
