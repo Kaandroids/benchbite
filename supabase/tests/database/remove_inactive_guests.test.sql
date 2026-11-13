@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(20);
 
 -- A: a guest last seen 100 days ago. B: the same, but its session was refreshed yesterday.
 -- C: a guest created yesterday. D: an account inactive for 100 days. E: a guest that signed in
@@ -20,10 +20,14 @@ insert into auth.sessions (id, user_id, created_at, updated_at) values
   (gen_random_uuid(), '00000000-0000-0000-0000-00000000000a', now() - interval '100 days', now() - interval '95 days'),
   (gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', now() - interval '100 days', now() - interval '1 day');
 
-select is(
-  public.last_active_at('00000000-0000-0000-0000-00000000000a'),
-  now() - interval '95 days',
+select results_eq(
+  $$ select g from public.inactive_guests_since(now() - interval '94 days') g $$,
+  $$ values ('00000000-0000-0000-0000-00000000000a'::uuid) $$,
   'A session''s last refresh is the last activity when it is later than the sign-in'
+);
+select is_empty(
+  $$ select from public.inactive_guests_since(now() - interval '95 days') $$,
+  'A guest refreshed after the given time is not inactive'
 );
 
 select results_eq(
@@ -45,8 +49,22 @@ select ok(
 from (values ('anon'), ('authenticated')) roles (role);
 
 select ok(
-  has_function_privilege('service_role', 'public.inactive_guests(integer)', 'execute'),
-  'remove-inactive-guests can list inactive guests'
+  not bool_or(has_function_privilege(role, 'public.guest_still_inactive(uuid)', 'execute')),
+  'Clients cannot check whether a guest is inactive'
+)
+from (values ('anon'), ('authenticated')) roles (role);
+
+select ok(
+  has_function_privilege('service_role', 'public.inactive_guests(integer)', 'execute')
+    and has_function_privilege('service_role', 'public.guest_still_inactive(uuid)', 'execute'),
+  'remove-inactive-guests can list inactive guests and check one again'
+);
+
+select ok(
+  public.guest_still_inactive('00000000-0000-0000-0000-00000000000a')
+    and not public.guest_still_inactive('00000000-0000-0000-0000-00000000000b')
+    and not public.guest_still_inactive('00000000-0000-0000-0000-00000000000d'),
+  'A guest is still inactive only while no activity came since, and an account never is'
 );
 
 select ok(
@@ -55,7 +73,8 @@ select ok(
 )
 from (values ('anon'), ('authenticated'), ('service_role')) roles (role)
 cross join (values
-  ('last_active_at(uuid)'),
+  ('guest_inactivity_period()'),
+  ('inactive_guests_since(timestamptz, uuid)'),
   ('inactive_guest_removal_stalled()'),
   ('call_scheduled_function(text)')
 ) fns (fn)

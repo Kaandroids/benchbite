@@ -13,25 +13,29 @@ as $$
   select interval '90 days';
 $$;
 
--- When the user was last active: signing in sets last_sign_in_at, and each refresh of a session,
--- which the app makes whenever it is opened after its token expired, sets the session's updated_at.
-create function public.last_active_at(p_user uuid)
-returns timestamptz
+-- The guests last active before p_before, or only p_user when it is given. A guest's last activity
+-- is the latest of their creation, their sign-in, which sets last_sign_in_at, and each refresh of a
+-- session, which the app makes whenever it is opened after its token expired and which sets the
+-- session's updated_at. Every rule about inactive guests asks this function.
+create function public.inactive_guests_since(p_before timestamptz, p_user uuid default null)
+returns setof uuid
 language sql
 stable
 set search_path = ''
 as $$
-  select greatest(
-    u.created_at,
-    u.last_sign_in_at,
-    (select max(s.updated_at) from auth.sessions s where s.user_id = u.id)
-  )
+  select u.id
   from auth.users u
-  where u.id = p_user;
+  where u.is_anonymous
+    and (p_user is null or u.id = p_user)
+    and greatest(
+      u.created_at,
+      u.last_sign_in_at,
+      (select max(s.updated_at) from auth.sessions s where s.user_id = u.id)
+    ) < p_before;
 $$;
 
 revoke execute on function public.guest_inactivity_period() from service_role;
-revoke execute on function public.last_active_at(uuid) from service_role;
+revoke execute on function public.inactive_guests_since(timestamptz, uuid) from service_role;
 
 -- Up to p_limit guests inactive for longer than the period, in random order, so that guests whose
 -- removal keeps failing cannot hold up the others.
@@ -42,18 +46,31 @@ stable
 security definer
 set search_path = ''
 as $$
-  select u.id
-  from auth.users u
-  where u.is_anonymous
-    and public.last_active_at(u.id) < now() - public.guest_inactivity_period()
+  select g
+  from public.inactive_guests_since(now() - public.guest_inactivity_period()) g
   order by random()
   limit p_limit;
 $$;
 
+-- Whether the guest is still inactive, asked right before they are deleted, as they may have come
+-- back since they were found.
+create function public.guest_still_inactive(p_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select from public.inactive_guests_since(now() - public.guest_inactivity_period(), p_user)
+  );
+$$;
+
 grant execute on function public.inactive_guests(integer) to service_role;
+grant execute on function public.guest_still_inactive(uuid) to service_role;
 
 comment on function public.inactive_guests(integer) is
-  'Guests inactive for 90 days, which remove-inactive-guests deletes.';
+  'Guests inactive for longer than guest_inactivity_period(), which remove-inactive-guests deletes.';
 
 -- Whether the removal has stopped working: a guest is still there a day after the period ran out,
 -- though every hourly run removes guests until none are left or its time is up. Only failing runs,
@@ -65,10 +82,9 @@ stable
 set search_path = ''
 as $$
   select exists (
-    select from auth.users u
-    where u.is_anonymous
-      and public.last_active_at(u.id)
-        < now() - public.guest_inactivity_period() - interval '1 day'
+    select from public.inactive_guests_since(
+      now() - public.guest_inactivity_period() - interval '1 day'
+    )
   );
 $$;
 

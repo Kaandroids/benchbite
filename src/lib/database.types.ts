@@ -2491,6 +2491,7 @@ export type Database = {
         Returns: undefined;
       };
       guest_inactivity_period: { Args: Record<PropertyKey, never>; Returns: string };
+      guest_still_inactive: { Args: { p_user: string }; Returns: boolean };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
@@ -2539,6 +2540,7 @@ export type Database = {
       in_use_alternative: { Args: { state: Json }; Returns: Json };
       inactive_guest_removal_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
       inactive_guests: { Args: { p_limit: number }; Returns: string[] };
+      inactive_guests_since: { Args: { p_before: string; p_user?: string }; Returns: string[] };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
@@ -2565,7 +2567,6 @@ export type Database = {
       keep_streak_days: { Args: { through: string; today: string }; Returns: string };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
       kept_through: { Args: { latest: string; owner: string }; Returns: string };
-      last_active_at: { Args: { p_user: string }; Returns: string };
       last_day_closed_to_logging: { Args: Record<PropertyKey, never>; Returns: string };
       last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
