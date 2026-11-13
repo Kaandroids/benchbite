@@ -2,9 +2,6 @@
 -- changed, and undone only while the entries are as logged (ADR 0062).
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(43);
 
@@ -16,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert on ids to authenticated;
@@ -39,15 +39,18 @@ create function pg_temp.items() returns jsonb language sql as $$
       'carbs_g', 14, 'fat_g', 7)
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.add(items jsonb, day date default current_date) returns bigint
 language sql as $$
   select public.add_coach_meal_card((select id from ids where name = 'thread'), day, 'dinner', items);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.card(name text) returns public.coach_meal_cards language sql as $$
   select * from public.coach_meal_cards where id = (select id from ids where ids.name = card.name);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
@@ -216,6 +219,7 @@ create function pg_temp.own(name text) returns jsonb language sql as $$
   select jsonb_build_array(jsonb_build_object('name', name, 'grams', 250, 'kcal', 36,
     'protein_g', 1.7, 'carbs_g', 2.5, 'fat_g', 2));
 $$;
+grant execute on all functions in schema pg_temp to public;
 insert into ids select 'ayran card', pg_temp.add(pg_temp.own('Ayran'));
 select public.log_coach_meal_card((select id from ids where name = 'ayran card'));
 insert into public.meal_entries (day, meal, custom_food_id, grams)

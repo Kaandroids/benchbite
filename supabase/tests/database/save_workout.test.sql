@@ -2,9 +2,6 @@
 -- limits, checks each target against what the exercise records, and estimates the length. Users delete only their own workouts.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(29);
 
@@ -16,16 +13,21 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.exercise(exercise_id text, target jsonb, sets integer default 3) returns jsonb
 language sql as $$
   select jsonb_build_object('exerciseId', exercise_id, 'sets', sets, 'target', target, 'restSeconds', 60);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.workout(exercises jsonb, more jsonb default '{}') returns jsonb language sql as $$
   select jsonb_build_object('name', 'Arms', 'weekdays', jsonb_build_array(2), 'exercises', exercises)
     || more;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- Hammer curls record reps, planks a time, and stationary rowing a distance and a time.
 create function pg_temp.valid() returns jsonb language sql as $$
@@ -35,6 +37,7 @@ create function pg_temp.valid() returns jsonb language sql as $$
     pg_temp.exercise('Rowing_Stationary', '{"seconds": null, "meters": 2000}', 1)
   ));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(

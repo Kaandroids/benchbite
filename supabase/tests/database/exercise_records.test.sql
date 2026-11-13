@@ -2,9 +2,6 @@
 -- caller's records of it, the kinds following what the exercise records.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(13);
 
@@ -16,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 insert into public.workouts (id, user_id, name, type, estimated_minutes)
   overriding system value values (900, '00000000-0000-0000-0000-00000000000a', null, 'push', 45);
@@ -25,6 +25,7 @@ insert into public.workouts (id, user_id, name, type, estimated_minutes)
 create function pg_temp.started(days integer) returns timestamptz language sql as $$
   select now() - make_interval(days => days, mins => 60);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A workout days ago with one exercise and its sets.
 create function pg_temp.log(days integer, exercise_id text, sets jsonb) returns bigint
@@ -36,6 +37,7 @@ language sql as $$
     'exercises', jsonb_build_array(jsonb_build_object('exerciseId', exercise_id, 'sets', sets))
   ));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select pg_temp.log(10, 'Barbell_Bench_Press_-_Medium_Grip', '[

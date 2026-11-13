@@ -4,9 +4,6 @@
 -- kept once they are final. Users read only their own streak, and only the functions write it.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(44);
 
@@ -22,11 +19,15 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- The Monday two weeks ago: a week that is past whatever day the tests run on.
 create function pg_temp.w(offset_days integer) returns date language sql as $$
   select date_trunc('week', current_date)::date - 14 + offset_days;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- Written as the database, without the triggers that check and copy, so that each day eats
 -- exactly the calories given: `kcal` grams of a food of 100 kcal per 100 g.
@@ -40,6 +41,7 @@ create function pg_temp.eat(owner uuid, on_day date, kcal integer) returns void 
   insert into public.meal_entries (user_id, day, meal, food_id, grams, kcal_per_100g)
   values (owner, on_day, 'lunch', (select id from public.foods order by id limit 1), kcal, 100);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- User a: a workout planned on Monday to Thursday of that week, kept as planned (ADR 0041).
 insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes)
@@ -61,6 +63,7 @@ create function pg_temp.done(workout_id bigint, on_day date) returns void langua
   values ('00000000-0000-0000-0000-00000000000a', workout_id, workout_id, 'Push',
     on_day + time '18:00', on_day + time '19:00', on_day);
 $$;
+grant execute on all functions in schema pg_temp to public;
 select pg_temp.done(920, d) from unnest(array[pg_temp.w(0), pg_temp.w(4), pg_temp.w(2)]) d;
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.w(d), 1500)
 from generate_series(0, 4) d;
@@ -402,10 +405,12 @@ create function pg_temp.log(started_on date) returns jsonb language sql as $$
       'exerciseId', 'Plank', 'sets', jsonb_build_array(jsonb_build_object('seconds', 60))))
   ));
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.last_started_on() returns date language sql as $$
   select started_on from public.workout_logs order by id desc limit 1;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select public.log_workout(pg_temp.log(((now() - interval '10 minutes') at time zone 'UTC')::date + 1));
 select is(

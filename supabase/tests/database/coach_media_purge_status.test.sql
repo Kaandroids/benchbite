@@ -4,9 +4,6 @@
 -- folder is queued. Only the database owner can ask.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(27);
 
@@ -18,6 +15,9 @@ returns void language sql as $$
   insert into net._http_response (id, status_code, timed_out, created)
     values (request_id, status_code, status_code is null, now() - make_interval(mins => minutes_ago));
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 delete from public.coach_media_deletions;
 delete from public.coach_media_purge_requests;

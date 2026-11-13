@@ -2,9 +2,6 @@
 -- the plan as it is, applied and undone only while it is as the proposal saw it.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(52);
 
@@ -21,6 +18,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert, update on ids to authenticated;
@@ -53,17 +53,21 @@ create function pg_temp.id(key text) returns bigint language sql as $$
     (select (card ->> 'id')::bigint from cards where name = key)
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.card(key text) returns jsonb language sql as $$
   select card - 'id' from cards where name = key;
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.exercises(workout text) returns text[] language sql as $$
   select array_agg(exercise_id order by position) from public.workout_exercises
   where workout_id = pg_temp.id(workout);
 $$;
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.decide(proposal text, decision public.coach_proposal_decision)
 returns public.coach_proposal_status language sql as $$
   select public.decide_coach_proposal(pg_temp.id(proposal), decision, current_date);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- Several workouts in one proposal, with exercises swapped, removed and added.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');

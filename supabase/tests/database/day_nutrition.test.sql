@@ -2,9 +2,6 @@
 -- targets each day kept (ADR 0040, ADR 0046). Only the caller's own.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(13);
 
@@ -16,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- Written as the database, so that each entry holds exactly the values given.
 set local session_replication_role = replica;
@@ -26,6 +26,7 @@ create function pg_temp.eat(owner uuid, on_day date, grams integer) returns void
   values (owner, on_day, 'lunch', (select id from public.foods order by id limit 1), grams, 100, 10,
     10, 5);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- User a ate 1,000 kcal three days ago in two entries and 500 yesterday; three days ago kept the
 -- targets it had, today follows the ones in use.

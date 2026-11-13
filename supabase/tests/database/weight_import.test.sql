@@ -3,9 +3,6 @@
 -- weights a person can have; log_weight() makes a day the user's own again.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(28);
 
@@ -17,14 +14,19 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.day(days_ago int) returns date language sql as $$
   select current_date - days_ago;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.weights(rows jsonb) returns integer language sql as $$
   select public.import_weights(rows, current_date);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select public.log_weight(85.0, pg_temp.day(1));

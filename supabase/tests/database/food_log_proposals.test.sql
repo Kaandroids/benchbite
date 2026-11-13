@@ -2,9 +2,6 @@
 -- entries as Bite saw them (ADR 0068).
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(45);
 
@@ -16,6 +13,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert on ids to authenticated;
@@ -23,24 +23,28 @@ grant select, insert on ids to authenticated;
 create function pg_temp.id(name text) returns bigint language sql as $$
   select id from ids where ids.name = id.name;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.propose(changes jsonb) returns bigint language sql as $$
   select public.propose_coach_change(
     pg_temp.id('thread'), 'food_log', jsonb_build_object('changes', changes), current_date
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.decide(name text, decision text) returns text language sql as $$
   select public.decide_coach_proposal(
     pg_temp.id(name), decision::public.coach_proposal_decision, current_date
   )::text;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- An entry of the caller's as it is now, or null when it is gone.
 create function pg_temp.entry(name text) returns record language sql as $$
   select (e.day, e.meal, e.grams, e.portion_unit, e.portion_count)
   from public.meal_entries e where e.id = pg_temp.id(name);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 reset role;
 insert into public.coach_threads (user_id) values ('00000000-0000-0000-0000-00000000000a');

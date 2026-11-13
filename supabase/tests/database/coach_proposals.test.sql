@@ -1,9 +1,6 @@
 -- Bite proposes; the user applies, keeps or undoes, and only to what Bite saw (ADR 0058).
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(36);
 
@@ -23,6 +20,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert on ids to authenticated;
@@ -31,24 +31,28 @@ grant select, insert on ids to authenticated;
 create function pg_temp.workout() returns jsonb language sql security definer as $$
   select public.saved_workout((select id from ids where name = 'workout'));
 $$;
+grant execute on all functions in schema pg_temp to public;
 grant execute on function pg_temp.workout() to authenticated;
 
 -- That workout with squats swapped for leg presses.
 create function pg_temp.swapped() returns jsonb language sql as $$
   select jsonb_set(pg_temp.workout(), '{exercises,0,exerciseId}', '"Leg_Press"');
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.propose(kind text, change jsonb) returns bigint language sql as $$
   select public.propose_coach_change(
     (select id from ids where name = 'thread'), kind::public.coach_proposal_kind, change, current_date
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.decide(name text, decision text) returns text language sql as $$
   select public.decide_coach_proposal(
     (select id from ids where ids.name = decide.name), decision::public.coach_proposal_decision, current_date
   )::text;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 insert into ids select 'workout', public.save_workout(

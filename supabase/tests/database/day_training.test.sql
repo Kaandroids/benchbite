@@ -3,9 +3,6 @@
 -- (ADR 0044, ADR 0047). Only the caller's own.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(11);
 
@@ -17,6 +14,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- Written as the database, so that each log keeps exactly the day and times given.
 set local session_replication_role = replica;
@@ -29,6 +29,7 @@ returns void language sql as $$
   values (id, owner, workout_id, workout_id, 'Push', on_day + time '18:00',
     on_day + time '18:00' + make_interval(mins => minutes), on_day);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- User a's streak starts ten days ago. Push is planned on the weekday of today, and was planned
 -- three and two days ago, and twelve days ago, before the streak started.

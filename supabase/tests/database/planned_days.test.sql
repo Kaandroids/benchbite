@@ -2,9 +2,6 @@
 -- days only. Only the database writes them, and planned_workouts() reads them with the plan.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(46);
 
@@ -19,16 +16,21 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 
 -- How many days a user's plan kept.
 create function pg_temp.kept(owner uuid) returns integer language sql as $$
   select count(*)::integer from public.planned_days p where p.user_id = owner;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- The last day a user's plan is kept through.
 create function pg_temp.through(owner uuid) returns date language sql as $$
   select k.through from public.planned_days_kept k where k.user_id = owner;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A and B have trained since two weeks ago (A) and five days ago (B), on every day of the week, so
 -- that the tests do not depend on today's weekday. The plan is set up as it was then, without
@@ -280,6 +282,7 @@ create function pg_temp.fits(workout_id bigint, to_day integer) returns boolean 
   from public.workouts w, (select date_trunc('week', current_date)::date - 7 as monday) m
   where w.id = fits.workout_id;
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 select ok(pg_temp.fits(909, null), 'A workout a kept day planned can be skipped there, though its weekdays changed');
 select ok(pg_temp.fits(909, 4), 'and moved to a later free day');
@@ -356,6 +359,7 @@ insert into auth.users (id, email) values
 create function pg_temp.days() returns jsonb language sql as $$
   select jsonb_agg(d) from generate_series(1, 7) d where d <> extract(isodow from current_date);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 create function pg_temp.onboard(today date) returns void language sql as $$
   select public.complete_onboarding(
@@ -373,6 +377,7 @@ create function pg_temp.onboard(today date) returns void language sql as $$
         'target', jsonb_build_object('seconds', 30), 'restSeconds', 45)))))
   );
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- F1's device is a day behind the server, as in an evening west of UTC.
 select pg_temp.sign_in('00000000-0000-0000-0000-0000000000f1');

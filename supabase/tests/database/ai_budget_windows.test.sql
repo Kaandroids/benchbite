@@ -3,9 +3,6 @@
 -- user's photo estimates counted by number behind a backstop of what they did cost.
 begin;
 create extension if not exists pgtap with schema extensions;
--- Its helpers in pg_temp are called as the signed-in user, while new functions are closed to
--- PUBLIC by default (#529): opened again for this test, which is rolled back.
-alter default privileges for role postgres grant execute on functions to public;
 
 select plan(28);
 
@@ -49,6 +46,9 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+-- Its helpers are called as the signed-in user, while new functions are closed to clients
+-- (#529, ADR 0126): only they are opened, and go with the test's session.
+grant execute on all functions in schema pg_temp to public;
 create function pg_temp.used(
   user_id uuid, feature public.ai_feature, cost numeric, at timestamptz,
   free boolean default false, given boolean default null
@@ -58,6 +58,7 @@ create function pg_temp.used(
      thinking_tokens, cost_usd, created_at, free, given)
   values (gen_random_uuid(), user_id, feature, 'test-flash', 0, 0, 0, 0, cost, at, free, given);
 $$;
+grant execute on all functions in schema pg_temp to public;
 
 -- A model whose price never changes, and one whose answer costs more than a free week's backstop.
 insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)
