@@ -63,6 +63,21 @@ Deno.test('refuses answers that are not valid, and a body that is not JSON', asy
   }
 });
 
+Deno.test('refuses a body too large, by its length or as it is read', async () => {
+  for (const req of [
+    post({ ...ANSWERS, padding: 'x'.repeat(5000) }),
+    new Request('http://localhost/generate-plan', {
+      method: 'POST',
+      headers: { 'content-length': '100000' },
+      body: JSON.stringify(ANSWERS),
+    }),
+  ]) {
+    const response = await handlePlanRequest(req, database({ data: ROWS, error: null }));
+    assertEquals(response.status, 413);
+    assertEquals(await response.json(), { error: 'too_large' });
+  }
+});
+
 Deno.test('says so when the catalogue cannot be read', async () => {
   const error = console.error;
   console.error = () => {};
