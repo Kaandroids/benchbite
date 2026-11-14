@@ -40,7 +40,8 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
 3. Give the status bar a fixed time and full bars:
    `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`.
 4. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
-   1200 px high: `sips -Z 1200 <file>.png`.
+   1200 px high: `sips -Z 1200 <file>.png`. With a watch or a second iPhone simulator booted, put
+   the iPhone's id from `xcrun simctl list devices booted` in place of `booted`, here and in step 3.
 5. For `bite.png`, ask Bite "Just had 3 eggs, two slices of toast and a coffee with milk for
    lunch. Can you log it?", and leave the card unadded. For `bite-proposal.png`, ask in the same
    chat "My left shoulder hurts on overhead presses. Can you swap them out of my upper body
@@ -52,7 +53,8 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
 
 With [idb](https://fbidb.io), [ffmpeg](https://ffmpeg.org) and [gifski](https://gif.ski)
 installed, record the onboarding with the app on the welcome screen as a new guest, then making a
-workout with the app on the Workouts tab:
+workout with the app on the Workouts tab. They record the booted iPhone simulator; with several
+booted, set `UDID` to the one to record.
 
 ```bash
 scripts/record-onboarding.sh onboarding.mov
