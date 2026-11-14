@@ -25,7 +25,8 @@ warned the maintainer before that (#555).
 - **At the limit, `ai_access()` refuses with a new reason, `service_paused`,** after the user's own
   reasons, so a guest still needs an account and a used-up month stays used up. `start_ai_call()`
   asks it, so no call starts until the next month. The app shows "Bite is taking a short break",
-  with no amount, percentage or date: users never see what AI costs, only how much of their own budget is left, as a share.
+  with no amount, percentage or date: users never see what AI costs, only how much of their own
+  budget is left, as a share.
 - **The Monitor warns** (ADR 0067). Its **AI spend** job runs `ai_spend_status()` with the
   read-only token (ADR 0132). It fails at 80 % of the limit, and again once Bite is paused. Its log
   says only which, never how much, as the log of a public repository is public.
