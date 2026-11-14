@@ -91,33 +91,47 @@ select is_empty(
   'An underscore in a search matches only itself'
 );
 
--- The names a search looks at come from the trigram index on their key (#545).
+-- The names a search looks at come from the trigram index on their key (#545). The function's own
+-- body is planned as it runs, without knowing its arguments: a condition that takes the term
+-- through a join, as from a `with`, would scan every name.
 reset role;
-create function pg_temp.plan(query text) returns text language plpgsql as $$
+create function pg_temp.search_plan(query text) returns text language plpgsql as $$
 declare
+  body text;
   line text;
   plan text := '';
 begin
-  for line in execute 'explain (costs off) ' || query loop
+  select replace(replace(replace(p.prosrc,
+      'search_foods.query', '$1'), 'search_foods.language', '$2'), 'search_foods.recipes', '$3')
+    into body
+  from pg_proc p
+  where p.proname = 'search_foods' and p.pronamespace = 'public'::regnamespace;
+  execute 'prepare search_body(text, text, boolean) as ' || body;
+  for line in execute format('explain (costs off) execute search_body(%L, %L, true)', query, 'de')
+  loop
     plan := plan || line || E'\n';
   end loop;
+  deallocate search_body;
   return plan;
 end;
 $$;
+set local plan_cache_mode = force_generic_plan;
+set local pg_trgm.strict_word_similarity_threshold = 0.4;
+-- The library is small here, where a scan would be cheaper: only a plan that cannot use the
+-- index scans.
 set local enable_seqscan = off;
 select matches(
-  pg_temp.plan($$ select food_id from public.food_names n
-    where n.name_key like '%apfel%' $$),
-  'Bitmap Index Scan on food_names_name_key_trgm',
+  pg_temp.search_plan('apfel'),
+  'Index Cond: \(name_key ~~ ',
   'A name that holds the search is found through the index'
 );
 select matches(
-  pg_temp.plan($$ select food_id from public.food_names n
-    where 'apfel' operator(extensions.<<%) n.name_key $$),
-  'Bitmap Index Scan on food_names_name_key_trgm',
+  pg_temp.search_plan('apfel'),
+  'Index Cond: \(name_key %>> ',
   'and so is one with a word close to it'
 );
 reset enable_seqscan;
+reset plan_cache_mode;
 
 select set_config('role', 'anon', true);
 
