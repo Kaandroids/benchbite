@@ -10,11 +10,12 @@ OUT=${1:-workout.mov}
 # shellcheck source=lib/simulator.sh
 source "$(dirname "$0")/lib/simulator.sh"
 
-# Searches the library, picks the exercise with this name and clears the search.
+# Searches the library, picks the exercise with this name and clears the search. It erases a few
+# more characters than it typed, as a backspace sent right after a tap can be lost.
 pick() {
   type_text "$1"; sleep 1.4
   tap_label "$2"; sleep 1
-  erase 20
+  erase $((${#1} + 5))
 }
 
 start_recording "$OUT"
