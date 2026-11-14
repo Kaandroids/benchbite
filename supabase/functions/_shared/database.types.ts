@@ -2171,7 +2171,7 @@ export type Database = {
         };
       };
       ai_month_spend_usd: { Args: Record<PropertyKey, never>; Returns: number };
-      ai_spend_paused: { Args: Record<PropertyKey, never>; Returns: boolean };
+      ai_spend_paused: { Args: { spend?: number }; Returns: boolean };
       ai_spend_status: {
         Args: Record<PropertyKey, never>;
         Returns: {

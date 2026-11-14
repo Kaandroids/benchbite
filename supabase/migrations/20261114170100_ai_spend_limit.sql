@@ -77,14 +77,15 @@ as $$
     ), 0);
 $$;
 
--- Whether this month's spend has reached the limit, so that no call starts until the next month.
-create function public.ai_spend_paused()
+-- Whether this month's spend, or `spend` when worked out already, has reached the limit, so that
+-- no call starts until the next month. ai_access() and the Monitor's status both ask it.
+create function public.ai_spend_paused(spend numeric default public.ai_month_spend_usd())
 returns boolean
 language sql
 stable
 set search_path = ''
 as $$
-  select public.ai_month_spend_usd() >= l.monthly_cap_usd from public.ai_spend_limit l;
+  select ai_spend_paused.spend >= l.monthly_cap_usd from public.ai_spend_limit l;
 $$;
 
 -- As before, and refused as service_paused once the month's spend of all users has reached the
@@ -173,17 +174,18 @@ as $$
   select
     floor(100 * s.spend / l.monthly_cap_usd)::integer,
     round(100 * l.alert_share)::integer,
-    s.spend >= l.monthly_cap_usd,
+    public.ai_spend_paused(s.spend),
     s.spend < l.alert_share * l.monthly_cap_usd
   from public.ai_spend_limit l, lateral (select public.ai_month_spend_usd() as spend) s;
 $$;
 
 revoke execute on function public.ai_month_spend_usd()
   from public, anon, authenticated, service_role;
-revoke execute on function public.ai_spend_paused()
+revoke execute on function public.ai_spend_paused(numeric)
   from public, anon, authenticated, service_role;
 revoke execute on function public.ai_spend_status()
   from public, anon, authenticated, service_role;
 -- Only the Monitor's read-only role runs the status, with what it calls (ADR 0132).
 grant execute on function public.ai_spend_status() to supabase_read_only_user;
 grant execute on function public.ai_month_spend_usd() to supabase_read_only_user;
+grant execute on function public.ai_spend_paused(numeric) to supabase_read_only_user;
