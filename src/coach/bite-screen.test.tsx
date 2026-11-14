@@ -291,6 +291,74 @@ it('lets a user without a plan read a chat, with a way to premium to go on', asy
   expect(router.push).toHaveBeenCalledWith('/premium');
 });
 
+it('reads older messages once the user scrolls up near the top, and puts them first', async () => {
+  mockParams = { thread: '7', fresh: '' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: {
+      title: 'Lunch',
+      messages: [
+        { id: 'stored-40', role: 'user', text: 'And tomorrow?' },
+        { id: 'stored-41', role: 'bite', text: 'Rest day.' },
+      ],
+      older: { threadId: 7, before: 40 },
+    },
+    isFetchedAfterMount: true,
+  } as never);
+  // The page before message 40, latest first as the database gives it.
+  const page = {
+    data: [
+      {
+        id: 39,
+        role: 'bite',
+        content: [{ type: 'text', text: 'Legs today.' }],
+        expression: null,
+        interrupted: null,
+        created_at: '2026-11-14T08:01:00Z',
+      },
+      {
+        id: 38,
+        role: 'user',
+        content: [{ type: 'text', text: 'What do I train today?' }],
+        expression: null,
+        interrupted: null,
+        created_at: '2026-11-14T08:00:00Z',
+      },
+    ],
+    error: null,
+  };
+  const query: Record<string, jest.Mock> = {};
+  for (const name of ['select', 'eq', 'lt', 'order', 'in']) query[name] = jest.fn(() => query);
+  query.limit = jest.fn(() => Promise.resolve(page));
+  jest.mocked(supabase.from).mockReturnValue(query as never);
+  await renderBite();
+  await screen.findByText('Rest day.');
+
+  const scroll = screen.getByTestId('bite-chat');
+  // Opening at the top reads nothing: only the user scrolling up does.
+  await fireEvent.scroll(scroll, {
+    nativeEvent: {
+      contentOffset: { y: 0 },
+      layoutMeasurement: { height: 600 },
+      contentSize: { height: 2000 },
+    },
+  });
+  expect(query.lt).not.toHaveBeenCalled();
+
+  await fireEvent(scroll, 'scrollBeginDrag');
+  await fireEvent.scroll(scroll, {
+    nativeEvent: {
+      contentOffset: { y: 100 },
+      layoutMeasurement: { height: 600 },
+      contentSize: { height: 2000 },
+    },
+  });
+
+  expect(await screen.findByText('What do I train today?')).toBeOnTheScreen();
+  expect(query.lt).toHaveBeenCalledWith('id', 40);
+  const texts = screen.getAllByText(/today|tomorrow|Rest day/).map((node) => node.props.children);
+  expect(texts).toEqual(['What do I train today?', 'Legs today.', 'And tomorrow?', 'Rest day.']);
+});
+
 it('opens the last chat of a user without a plan however old it is', async () => {
   mockParams = {};
   access('plan_required');
