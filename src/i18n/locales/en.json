@@ -2070,6 +2070,10 @@
       "account_required": {
         "title": "Bite needs an account",
         "message": "Create a free account to chat with Bite. Your data comes with you."
+      },
+      "service_paused": {
+        "title": "Bite is taking a short break",
+        "message": "I'll be back soon. Your plan, meals and workouts keep working as usual."
       }
     },
     "stopped": "Stopped",

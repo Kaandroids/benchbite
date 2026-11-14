@@ -70,6 +70,7 @@ const STATUS: Record<EstimateReason, number> = {
   request_too_large: 413,
   unpriced_model: 503,
   call_in_progress: 409,
+  service_paused: 503,
   blocked: 422,
   unavailable: 503,
 };

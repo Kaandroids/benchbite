@@ -321,6 +321,20 @@ Deno.test('says why when the user may not use Bite, and keeps nothing of it', as
   assertEquals([inserted, deleted], [[], []]);
 });
 
+Deno.test(
+  "says when Bite is paused for everyone, as the month's AI spend reached the limit",
+  async () => {
+    const { ctx, inserted } = context(new FakeModel(), {
+      ai_access: { allowed: false, reason: 'service_paused' },
+    });
+
+    assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+      { event: 'error', reason: 'service_paused' },
+    ]);
+    assertEquals(inserted, []);
+  },
+);
+
 Deno.test('goes on with a thread, reading its earlier messages as text', async () => {
   const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
   const { ctx, inserted } = context(

@@ -2070,6 +2070,10 @@
       "account_required": {
         "title": "Für Bite brauchst du ein Konto",
         "message": "Erstelle ein kostenloses Konto, um mit Bite zu chatten. Deine Daten kommen mit."
+      },
+      "service_paused": {
+        "title": "Bite macht eine kurze Pause",
+        "message": "Ich bin bald zurück. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
       }
     },
     "stopped": "Gestoppt",

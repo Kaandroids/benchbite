@@ -63,6 +63,11 @@ sends GitHub's usual email, when one stops working
   ([ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md)): it fails when a guest is more than
   a day past the 90 days, or the hourly `remove-inactive-guests` job has not succeeded in the last
   two hours.
+- The AI spend ([ADR 0134](adr/0134-pause-bite-at-the-providers-spend-limit.md)): it fails once
+  all users' AI calls this month cost 80 % of the provider's monthly limit, and once they reach it,
+  when Bite pauses for everyone until the next month. Its log says only which, never how much.
+  The limit is kept in `ai_spend_limit`, in dollars; when the provider's limit changes, change it
+  there with a migration.
 
 Its log shows only counts, ages and status codes. It reads `SUPABASE_ACCESS_TOKEN` and
 `SUPABASE_PROJECT_ID` from the repository's `monitoring` environment, which allows only main and

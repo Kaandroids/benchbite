@@ -243,6 +243,17 @@ it('shows why the user cannot chat in place of the composer', async () => {
   expect(screen.queryByRole('button', { name: 'How was my week?' })).toBeNull();
 });
 
+it('says Bite is taking a break, without numbers, once the AI spend of all users is used up', async () => {
+  access('service_paused');
+  await renderBite();
+
+  expect(await screen.findByText('Bite is taking a short break')).toBeOnTheScreen();
+  expect(
+    screen.getByText("I'll be back soon. Your plan, meals and workouts keep working as usual."),
+  ).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
+});
+
 it('shows what premium adds to a user without a plan or a chat', async () => {
   access('plan_required');
   await renderBite();

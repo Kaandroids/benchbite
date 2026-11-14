@@ -11,11 +11,15 @@ export const ACCESS_KEY = ['ai', 'access'];
 type AccessReason = Database['public']['Enums']['ai_access_reason'];
 type Feature = Database['public']['Enums']['ai_feature'];
 
-/** Why the user may not use AI at all now, as ai_access() says. */
+/**
+ * Why the user may not use AI at all now, as ai_access() says: `service_paused` once all users
+ * together have reached the month's AI spend limit (ADR 0134), which no plan lifts.
+ */
 export const REFUSALS = [
   'account_required',
   'plan_required',
   'limit_reached',
+  'service_paused',
 ] as const satisfies readonly AccessReason[];
 export type Refusal = (typeof REFUSALS)[number];
 

@@ -19,7 +19,8 @@ type RefusalCardProps = {
 
 /**
  * Why the user cannot use Bite now, in place of what asks it: the month's use is up (board 12), in
- * the chat too; on meal photos, the plan has no Bite (board 12b) or a guest needs an account.
+ * the chat too; on meal photos, the plan has no Bite (board 12b) or a guest needs an account; or,
+ * once all users together reach the month's AI spend limit, Bite is taking a short break (ADR 0134).
  */
 export function RefusalCard({ refusal, resetsAt }: RefusalCardProps) {
   const { t } = useTranslation();

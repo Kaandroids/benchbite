@@ -2070,6 +2070,10 @@
       "account_required": {
         "title": "Bite için hesap gerekiyor",
         "message": "Bite ile konuşmak için ücretsiz bir hesap aç. Verilerin seninle gelir."
+      },
+      "service_paused": {
+        "title": "Bite kısa bir mola veriyor",
+        "message": "Yakında geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       }
     },
     "stopped": "Durduruldu",
