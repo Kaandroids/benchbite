@@ -34,22 +34,24 @@
 - **Workouts that remember.** An exercise library with pictures, exercises of one's own, last
   time's sets beside each set, a rest timer that notifies in the background, records and history
   per exercise, and alternatives of a workout for days with other gear.
-- **On the wrist.** An Apple Watch app follows the workout in progress or runs it on its own: tick
-  and edit sets, time a hold, feel the rest end, see the heart rate, and log with the iPhone out
+- **On the wrist.** An Apple Watch app follows the workout started on the phone: tick and edit
+  sets, time a hold, feel the rest end, see the heart rate, and keep logging with the iPhone out
   of reach.
-- **With Apple Health and Health Connect.** Workouts are saved to the health app, and workouts
+- **With Apple Health and Health Connect.** Workouts can be saved to the health app, and workouts
   from other apps, steps, weight and a workout's heart rate are read back into the day.
 - **Nutrition without the busywork.** A food library of the German BLS 4.0 in English, German and
   Turkish, recipes and foods of one's own, frequent and favourite foods, a meal estimated from a
-  photo, water, and targets that follow the weight.
+  photo (a few a week on the free plan, with an account), water, and targets that follow the
+  weight.
 - **Bite, the coach.** A chat, typed or spoken, that knows the plan, the meals and the workouts,
   and keeps a notebook of what matters, such as an injury. Bite turns a meal described or
   photographed into a card to add with a tap, and proposes changes to workouts, targets, the food
   log and its notes as cards the user applies or undoes.
 - **Progress and streaks.** Weight over time, monthly summaries, and a daily streak with freezes
   for the days life gets in the way.
-- **Free, with a premium plan.** The plan, logging and the health apps are free; Bite and more
-  workouts come with premium, with a seven-day trial.
+- **Free, with a premium plan to come.** The plan, logging and the health apps are free. Bite and
+  more workouts are planned for premium, with a free trial for accounts; purchases open with the
+  release.
 - **Made to be used every day.** English, German and Turkish, light and dark mode, and reminders
   planned from the week.
 
@@ -105,6 +107,7 @@ flowchart LR
   gemini["Gemini"]
 
   watch <-- "the workout in progress" --> app
+  watch -- "heart rate, calories" --> health
   app <-- "workouts, steps, weight,<br/>heart rate" --> health
   app -- "queries and rpc()" --> db
   app --> auth
@@ -139,8 +142,8 @@ flowchart LR
 - **Checked on every pull request.** CI runs types, lint, formatting, the app's tests,
   translations and the Edge Functions' checks, and on a local Supabase stack the database tests,
   the generated types and every plan the plan builder can make.
-- **Watched after release too.** A daily workflow checks the scheduled jobs and the month's AI
-  spend, and Dependabot keeps dependencies current.
+- **Watched in production.** A daily workflow checks the hosted project's scheduled jobs and the
+  month's AI spend, and Dependabot keeps dependencies current.
 - **Security first.** Row level security on every table, schema changes only through migrations,
   only the publishable key in the app, and photo metadata stripped on the device.
 
