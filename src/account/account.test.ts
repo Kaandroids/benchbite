@@ -23,7 +23,9 @@ const LOCALE = { locale: 'en' };
 function given(status: 'ready' | 'ended') {
   jest
     .mocked(useSession)
-    .mockReturnValue(sessionValue(status === 'ready' ? 'guest' : { status }, { signOut }));
+    .mockReturnValue(
+      sessionValue(status === 'ready' ? 'guest' : { status, reason: 'guest' }, { signOut }),
+    );
 }
 
 const apiError = (code: string) => new AuthApiError('refused', 422, code);
