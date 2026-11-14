@@ -4,6 +4,7 @@
 import {
   type InfiniteData,
   keepPreviousData,
+  skipToken,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -195,6 +196,37 @@ export async function messagePage(
   };
 }
 
+/** A thread's name, latest messages and first question, as `useThreadMessages` gives them. */
+async function readThread(threadId: number) {
+  const [thread, page, first] = await Promise.all([
+    supabase.from('coach_threads').select('title').eq('id', threadId).maybeSingle(),
+    messagePage(threadId),
+    supabase
+      .from('coach_messages')
+      .select(MESSAGE_COLUMNS)
+      .eq('thread_id', threadId)
+      .eq('role', 'user')
+      .order('id')
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (thread.error) {
+    throw thread.error;
+  }
+  if (first.error) {
+    throw first.error;
+  }
+  // Gone, as when it was deleted elsewhere: the chat starts a new one.
+  if (!thread.data) {
+    return null;
+  }
+  return {
+    title: thread.data.title,
+    ...page,
+    first: first.data ? storedMessages([first.data])[0] : undefined,
+  };
+}
+
 /**
  * A thread's name, its latest messages as the chat shows them, oldest first, where older ones
  * begin, and its first question, which names an untitled chat; null for a thread that is gone.
@@ -202,38 +234,9 @@ export async function messagePage(
 export function useThreadMessages(threadId: number | undefined) {
   return useQuery({
     queryKey: [...THREADS_KEY, 'messages', threadId],
-    enabled: threadId !== undefined,
     // Always read again when a chat opens: an answer may have been saved after it closed.
     staleTime: 0,
-    queryFn: async () => {
-      const [thread, page, first] = await Promise.all([
-        supabase.from('coach_threads').select('title').eq('id', threadId!).maybeSingle(),
-        messagePage(threadId!),
-        supabase
-          .from('coach_messages')
-          .select(MESSAGE_COLUMNS)
-          .eq('thread_id', threadId!)
-          .eq('role', 'user')
-          .order('id')
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      if (thread.error) {
-        throw thread.error;
-      }
-      if (first.error) {
-        throw first.error;
-      }
-      // Gone, as when it was deleted elsewhere: the chat starts a new one.
-      if (!thread.data) {
-        return null;
-      }
-      return {
-        title: thread.data.title,
-        ...page,
-        first: first.data ? storedMessages([first.data])[0] : undefined,
-      };
-    },
+    queryFn: threadId === undefined ? skipToken : () => readThread(threadId),
   });
 }
 
