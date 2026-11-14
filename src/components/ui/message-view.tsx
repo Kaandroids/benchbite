@@ -11,9 +11,14 @@ type MessageViewProps = {
   icon: IconName;
   title: string;
   message: string;
-  /** The icon's colours: the brand's, or danger's for what was lost, as a session that ended. */
-  tone?: 'primary' | 'danger';
+  /** The icon's colours: the brand's, or danger's for something lost. */
+  tone?: keyof typeof TONES;
 };
+
+const TONES = {
+  primary: { color: 'primary', background: 'iconBackground' },
+  danger: { color: 'danger', background: 'dangerBackground' },
+} as const;
 
 /**
  * A large icon with a title and a short message in the middle of the screen, for screens that
@@ -24,11 +29,7 @@ export function MessageView({ icon, title, message, tone = 'primary' }: MessageV
   return (
     <View style={[styles.content, { gap: spacing.lg }]}>
       <Animated.View entering={ZoomIn.duration(400)}>
-        <IconTile
-          name={icon}
-          size={88}
-          {...(tone === 'danger' && { color: 'danger', background: 'dangerBackground' })}
-        />
+        <IconTile name={icon} size={88} {...TONES[tone]} />
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(150).duration(400)} style={{ gap: spacing.md }}>
         <Text variant="title" align="center">
