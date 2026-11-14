@@ -116,18 +116,17 @@ begin
 end;
 $$;
 set local plan_cache_mode = force_generic_plan;
-set local pg_trgm.strict_word_similarity_threshold = 0.4;
--- The library is small here, where a scan would be cheaper: only a plan that cannot use the
--- index scans.
+-- The library is small here, where a scan would be cheaper. Each condition must be on the
+-- argument itself, `$1`: one on a term from a join only uses the index once scans are off.
 set local enable_seqscan = off;
 select matches(
   pg_temp.search_plan('apfel'),
-  'Index Cond: \(name_key ~~ ',
+  'Index Cond: \(name_key ~~ .*\$1',
   'A name that holds the search is found through the index'
 );
 select matches(
   pg_temp.search_plan('apfel'),
-  'Index Cond: \(name_key %>> ',
+  'Index Cond: \(name_key %>> .*\$1',
   'and so is one with a word close to it'
 );
 reset enable_seqscan;
