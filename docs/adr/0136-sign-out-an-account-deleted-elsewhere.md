@@ -15,8 +15,9 @@ signed out by a password change elsewhere (ADR 0128).
 ## Decision
 
 - **The app asks whether its user still exists** with `getUser()` when it opens and whenever it
-  comes back from the background, not when a sheet of the system only made it inactive. When Auth answers `user_not_found`, it signs out on this device
-  (`scope: 'local'`). Any other error, such as being offline, changes nothing.
+  comes back from the background, not when a sheet of the system only made it inactive. When Auth
+  answers `user_not_found`, it signs out on this device (`scope: 'local'`). Any other error, such
+  as being offline, changes nothing.
 - **The device remembers whether its last user had an account**, beside the user's id. A session
   that ends says why (`EndedReason`):
   - `deleted`: an account found deleted while its token still worked. The screen says "Your

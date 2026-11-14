@@ -127,10 +127,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, [startAnonymousSession]);
 
   // An account deleted elsewhere, as on the website, keeps a token that works for up to an hour,
-  // with which every read comes back empty. The user is asked for when the app opens and comes back
-  // from the background, and an account no longer there is signed out on this device. A guest removed
-  // after 90 days ends as a guest's session does (ADR 0131). Offline, nothing is known, and nothing
-  // changes.
+  // with which every read comes back empty. The user is asked for when the app opens and comes
+  // back from the background, and an account no longer there is signed out on this device. A guest
+  // removed after 90 days ends as a guest's session does (ADR 0131). Offline, nothing is known, and
+  // nothing changes.
   const userId = state.status === 'ready' ? state.session.user.id : undefined;
   useEffect(() => {
     if (!userId) return;
