@@ -1,4 +1,4 @@
-import type { Session } from '@supabase/supabase-js';
+import { AuthApiError, type Session } from '@supabase/supabase-js';
 import { Storage } from 'expo-sqlite/kv-store';
 import { AppState, type AppStateStatus } from 'react-native';
 
@@ -43,14 +43,17 @@ const ACCOUNT = { access_token: 'token', user: { id: 'user-1', is_anonymous: fal
 const userGone = () =>
   auth.getUser.mockResolvedValue({
     data: { user: null },
-    error: { code: 'user_not_found', status: 403 },
+    error: new AuthApiError('User not found', 403, 'user_not_found'),
   } as never);
 
 let appStateListeners: ((state: AppStateStatus) => void)[] = [];
-// The check it starts finishes inside the act, so that nothing updates after it.
-const comeToForeground = () =>
+// The app goes through `states`; a check it starts finishes inside the act, so that nothing
+// updates after it.
+const goThrough = (...states: AppStateStatus[]) =>
   act(async () => {
-    for (const listener of appStateListeners) listener('active');
+    for (const state of states) {
+      for (const listener of appStateListeners) listener(state);
+    }
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
@@ -205,10 +208,13 @@ describe('SessionProvider', () => {
   it('asks again whether the account exists when the app comes to the foreground', async () => {
     const { result } = await renderSession();
     await emit(ACCOUNT);
-    await waitFor(() => expect(auth.getUser).toHaveBeenCalled());
+    await waitFor(() => expect(auth.getUser).toHaveBeenCalledTimes(1));
     expect(auth.signOut).not.toHaveBeenCalled();
     userGone();
-    await comeToForeground();
+    // A sheet of the system, as Face ID, is no return to the foreground.
+    await goThrough('inactive', 'active');
+    expect(auth.getUser).toHaveBeenCalledTimes(1);
+    await goThrough('background', 'active');
     expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     await emit(null, 'SIGNED_OUT');
     expect(result.current).toMatchObject({ status: 'ended', reason: 'deleted' });
