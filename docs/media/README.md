@@ -15,7 +15,6 @@ The screenshots and GIFs in the README. They are taken on the iOS Simulator
 | `bite-proposal.png`    | Bite noting an injury and proposing to swap an exercise         |
 | `workout-active.png`   | A workout in progress, with last time's sets and the rest timer |
 | `workout-finished.png` | A finished workout, with the watch's heart rate and its sets    |
-| `watch.png`            | The Apple Watch app offering to follow the workout on the phone |
 | `today-dark.png`       | Today in dark mode                                              |
 
 ## The demo account
@@ -48,11 +47,6 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    workout?", and keep the plan as it is. For `workout-finished.png`, open the last workout in the
    history. For `workout-active.png`, start Upper body and tick the first set; discard the workout
    afterwards.
-6. For `watch.png`, pair an Apple Watch simulator with the iPhone one and install the watch app
-   as [Development](../development.md#the-apple-watch-app) says, then open the phone app again so
-   that it sees the watch app. Start Upper body on the phone and take the watch with
-   `xcrun simctl io <watch simulator id> screenshot watch.png`. The simulators pass the phone's
-   workout to the watch, but not the watch's commands to the phone, so joining it stops there.
 
 ## Recording the GIFs
 

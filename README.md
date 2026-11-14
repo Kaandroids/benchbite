@@ -83,14 +83,14 @@
     <td align="center">After a workout</td>
   </tr>
   <tr>
-    <td valign="top"><img src="docs/media/watch.png" width="200" alt="The Apple Watch app offering to follow the workout running on the iPhone"></td>
-    <td valign="top"><img src="docs/media/today-dark.png" width="200" alt="Today in dark mode"></td>
+    <td><img src="docs/media/today-dark.png" width="200" alt="Today in dark mode"></td>
+    <td></td>
     <td></td>
     <td></td>
   </tr>
   <tr>
-    <td align="center">On the watch</td>
     <td align="center">Dark mode</td>
+    <td></td>
     <td></td>
     <td></td>
   </tr>
