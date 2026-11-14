@@ -125,16 +125,7 @@ export type ChatRefusal =
  * and `not_saved` for an answer that could not be kept.
  */
 export type ChatReason =
-  | 'account_required'
-  | 'plan_required'
-  | 'limit_reached'
-  | 'request_too_large'
-  | 'unpriced_model'
-  | 'call_in_progress'
-  | 'service_paused'
-  | 'unavailable'
-  | 'blocked'
-  | 'not_saved';
+  Database['public']['Enums']['ai_access_reason'] | 'unavailable' | 'blocked' | 'not_saved';
 
 /**
  * Why an answer stopped before its end: the model failed, the user may not go on, the request was

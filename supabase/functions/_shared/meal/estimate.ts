@@ -1,5 +1,6 @@
 // What the app and estimate-meal tell each other (#299, ADR 0059), shared by both, so that they
 // agree. This file imports only what the app can bundle too.
+import type { Database } from '../database.types.ts';
 import type { FoodRef } from '../foods.ts';
 
 /** The kinds of photo the function takes; the app scales them down before it sends them. */
@@ -97,15 +98,9 @@ export type EstimateResponse = { isFood: boolean; items: EstimateItem[]; note?: 
  * an answer the function cannot read included.
  */
 export type EstimateReason =
+  | Database['public']['Enums']['ai_access_reason']
   | 'invalid_request'
   | 'photos_too_large'
-  | 'account_required'
-  | 'plan_required'
-  | 'limit_reached'
-  | 'request_too_large'
-  | 'unpriced_model'
-  | 'call_in_progress'
-  | 'service_paused'
   | 'blocked'
   | 'unavailable';
 
