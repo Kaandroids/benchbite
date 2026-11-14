@@ -79,7 +79,8 @@ export type CardStates = {
  * to play with what was said under them, Bite's as text after its face, with the meals it
  * estimated and the changes it proposed under it. Bite's last message thinks while it waits, with
  * what it is looking up, at or listening to, and talks while its text comes (boards 2, 3, 6b and
- * 8). A photo opens large when tapped.
+ * 8). A photo opens large when tapped. Its messages are children of the scroll view it is put in,
+ * which spaces them.
  */
 export function ChatMessages({
   messages,
