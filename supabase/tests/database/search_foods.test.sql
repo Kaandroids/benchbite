@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(17);
 
 select set_config('role', 'authenticated', true),
   set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
@@ -80,6 +80,44 @@ select is_empty(
   $$ select * from public.search_foods('Haferflocken', 'de') where food_id = 'C133000' $$,
   'Archived foods are not found'
 );
+
+-- A search's wildcards are the characters themselves, as names are matched by `like`.
+select is_empty(
+  $$ select * from public.search_foods('%%', 'de') $$,
+  'A percent sign in a search matches only itself'
+);
+select is_empty(
+  $$ select * from public.search_foods('E_', 'de') $$,
+  'An underscore in a search matches only itself'
+);
+
+-- The names a search looks at come from the trigram index on their key (#545).
+reset role;
+create function pg_temp.plan(query text) returns text language plpgsql as $$
+declare
+  line text;
+  plan text := '';
+begin
+  for line in execute 'explain (costs off) ' || query loop
+    plan := plan || line || E'\n';
+  end loop;
+  return plan;
+end;
+$$;
+set local enable_seqscan = off;
+select matches(
+  pg_temp.plan($$ select food_id from public.food_names n
+    where n.name_key like '%apfel%' $$),
+  'Bitmap Index Scan on food_names_name_key_trgm',
+  'A name that holds the search is found through the index'
+);
+select matches(
+  pg_temp.plan($$ select food_id from public.food_names n
+    where 'apfel' operator(extensions.<<%) n.name_key $$),
+  'Bitmap Index Scan on food_names_name_key_trgm',
+  'and so is one with a word close to it'
+);
+reset enable_seqscan;
 
 select set_config('role', 'anon', true);
 
