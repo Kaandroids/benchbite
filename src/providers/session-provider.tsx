@@ -1,4 +1,4 @@
-import type { Session } from '@supabase/supabase-js';
+import { isAuthApiError, type Session } from '@supabase/supabase-js';
 import {
   createContext,
   use,
@@ -49,6 +49,9 @@ const LAST_USER_ACCOUNT_KEY = 'session.last-user-account';
 
 const lastUser = () => readItem(LAST_USER_KEY);
 const lastUserHadAccount = () => readItem(LAST_USER_ACCOUNT_KEY) === 'true';
+/** Why the last user's session ended: `deleted` when it was found so, else whose it was. */
+const endedReason = (deleted: boolean): EndedReason =>
+  deleted ? 'deleted' : lastUserHadAccount() ? 'account' : 'guest';
 const rememberUser = (user: Session['user'] | null) => {
   writeItem(LAST_USER_KEY, user?.id ?? null);
   writeItem(LAST_USER_ACCOUNT_KEY, user ? String(user.is_anonymous === false) : null);
@@ -113,8 +116,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       }
       setRecovering(false);
       if (lastUser()) {
-        const reason = deleted.current ? 'deleted' : lastUserHadAccount() ? 'account' : 'guest';
-        setState({ status: 'ended', reason });
+        setState({ status: 'ended', reason: endedReason(deleted.current) });
         return;
       }
       // There is no stored session (first launch) or the session ended. Calling Supabase inside
@@ -125,8 +127,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, [startAnonymousSession]);
 
   // An account deleted elsewhere, as on the website, keeps a token that works for up to an hour,
-  // with which every read comes back empty. The user is asked for when the app opens and comes to
-  // the foreground, and an account no longer there is signed out on this device. A guest removed
+  // with which every read comes back empty. The user is asked for when the app opens and comes back
+  // from the background, and an account no longer there is signed out on this device. A guest removed
   // after 90 days ends as a guest's session does (ADR 0131). Offline, nothing is known, and nothing
   // changes.
   const userId = state.status === 'ready' ? state.session.user.id : undefined;
@@ -134,17 +136,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (!userId) return;
     const check = async () => {
       const { error } = await supabase.auth.getUser();
-      if ((error as { code?: string } | null)?.code !== 'user_not_found') return;
+      if (!isAuthApiError(error) || error.code !== 'user_not_found') return;
       deleted.current = lastUserHadAccount();
       // The session that ends says why, in onAuthStateChange.
       const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
       if (signOutError) {
-        setState({ status: 'ended', reason: deleted.current ? 'deleted' : 'guest' });
+        setState({ status: 'ended', reason: endedReason(deleted.current) });
       }
     };
     void check();
+    // Only on coming back from the background: a sheet of the system, as Face ID or the Control
+    // Center, makes the app inactive and active again without leaving it.
+    let previous = AppState.currentState;
     const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'active') void check();
+      if (previous === 'background' && next === 'active') void check();
+      previous = next;
     });
     return () => subscription.remove();
   }, [userId]);
