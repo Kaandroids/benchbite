@@ -163,9 +163,46 @@ export function firstMedia(messages: ChatMessage[]): FirstMedia {
   };
 }
 
+/** How many messages of a thread are read at a time: the latest first, then older ones on scroll. */
+export const MESSAGE_PAGE = 30;
+
+const MESSAGE_COLUMNS = 'id, role, content, expression, interrupted, created_at';
+
+/** Where the messages before those read so far begin: before the stored message `before`. */
+export type OlderMessages = { threadId: number; before: number };
+
 /**
- * A thread's name and its messages as the chat shows them, oldest first; null for a thread that is
- * gone.
+ * A page of a thread's messages before `before`, or its latest without one, oldest first, and
+ * where those before it begin, if any. `next` is the role of the message after the page, which
+ * says whether its last question was answered.
+ */
+async function messagePage(
+  threadId: number,
+  before?: number,
+  next?: ChatMessage['role'],
+): Promise<{ messages: ChatMessage[]; older?: OlderMessages }> {
+  let query = supabase.from('coach_messages').select(MESSAGE_COLUMNS).eq('thread_id', threadId);
+  if (before !== undefined) query = query.lt('id', before);
+  // One more than a page, to know whether there are more.
+  const { data, error } = await query.order('id', { ascending: false }).limit(MESSAGE_PAGE + 1);
+  if (error) {
+    throw error;
+  }
+  const rows = data.slice(0, MESSAGE_PAGE).reverse();
+  return {
+    messages: storedMessages(rows, next),
+    ...(data.length > MESSAGE_PAGE && rows[0] && { older: { threadId, before: rows[0].id } }),
+  };
+}
+
+/** The page of messages before those read so far, as `older` says, oldest first. */
+export function olderMessages(older: OlderMessages, next: ChatMessage['role'] | undefined) {
+  return messagePage(older.threadId, older.before, next);
+}
+
+/**
+ * A thread's name, its latest messages as the chat shows them, oldest first, where older ones
+ * begin, and its first question, which names an untitled chat; null for a thread that is gone.
  */
 export function useThreadMessages(threadId: number | undefined) {
   return useQuery({
@@ -174,25 +211,33 @@ export function useThreadMessages(threadId: number | undefined) {
     // Always read again when a chat opens: an answer may have been saved after it closed.
     staleTime: 0,
     queryFn: async () => {
-      const [thread, messages] = await Promise.all([
+      const [thread, page, first] = await Promise.all([
         supabase.from('coach_threads').select('title').eq('id', threadId!).maybeSingle(),
+        messagePage(threadId!),
         supabase
           .from('coach_messages')
-          .select('id, role, content, expression, interrupted, created_at')
+          .select(MESSAGE_COLUMNS)
           .eq('thread_id', threadId!)
-          .order('id'),
+          .eq('role', 'user')
+          .order('id')
+          .limit(1)
+          .maybeSingle(),
       ]);
       if (thread.error) {
         throw thread.error;
       }
-      if (messages.error) {
-        throw messages.error;
+      if (first.error) {
+        throw first.error;
       }
       // Gone, as when it was deleted elsewhere: the chat starts a new one.
       if (!thread.data) {
         return null;
       }
-      return { title: thread.data.title, messages: storedMessages(messages.data) };
+      return {
+        title: thread.data.title,
+        ...page,
+        first: first.data ? storedMessages([first.data])[0] : undefined,
+      };
     },
   });
 }
@@ -206,9 +251,10 @@ type StoredMessage = Pick<
  * A thread's messages, oldest first, as the chat shows them, Bite's with the changes it proposed,
  * the meals it estimated and the notes it kept.
  * An answer that stopped short says so, as it did when it came. A question no answer of Bite's
- * followed, as one that failed, is shown as not answered, to ask again.
+ * followed, as one that failed, is shown as not answered, to ask again; `next` is the role of the
+ * message after the last, for a page of them.
  */
-export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
+export function storedMessages(rows: StoredMessage[], next?: ChatMessage['role']): ChatMessage[] {
   return rows.map((row, index) => {
     const proposals = row.role === 'bite' ? messageProposals(row.content) : [];
     const mealCards = row.role === 'bite' ? messageMealCards(row.content) : [];
@@ -227,7 +273,8 @@ export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
       ...(proposals.length > 0 && { proposals }),
       ...(mealCards.length > 0 && { mealCards }),
       ...(notes.length > 0 && { notes }),
-      ...(row.role === 'user' && rows[index + 1]?.role !== 'bite' && { unanswered: true }),
+      ...(row.role === 'user' &&
+        (rows[index + 1]?.role ?? next) !== 'bite' && { unanswered: true }),
     };
   });
 }
