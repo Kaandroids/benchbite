@@ -176,7 +176,7 @@ export type OlderMessages = { threadId: number; before: number };
  * where those before it begin, if any. `next` is the role of the message after the page, which
  * says whether its last question was answered.
  */
-async function messagePage(
+export async function messagePage(
   threadId: number,
   before?: number,
   next?: ChatMessage['role'],
@@ -193,11 +193,6 @@ async function messagePage(
     messages: storedMessages(rows, next),
     ...(data.length > MESSAGE_PAGE && rows[0] && { older: { threadId, before: rows[0].id } }),
   };
-}
-
-/** The page of messages before those read so far, as `older` says, oldest first. */
-export function olderMessages(older: OlderMessages, next: ChatMessage['role'] | undefined) {
-  return messagePage(older.threadId, older.before, next);
 }
 
 /**

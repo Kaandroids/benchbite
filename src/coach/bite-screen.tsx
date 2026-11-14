@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -21,7 +21,7 @@ import { useTheme } from '@/theme';
 
 import { BitePremiumScreen } from './bite-premium-screen';
 import { ChatComposer, type RefusedDraft } from './chat-composer';
-import { useMediaUrls } from './chat-media';
+import { mediaPaths, useMediaUrls } from './chat-media';
 import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { LockedComposer } from './locked-composer';
@@ -100,7 +100,7 @@ export function BiteScreen() {
       title={
         threadText.title({
           title: saved.data.title,
-          ...firstMedia(saved.data.first ? [saved.data.first] : saved.data.messages),
+          ...firstMedia(saved.data.first ? [saved.data.first] : []),
         }) ?? undefined
       }
       start={{ threadId: threadId!, messages: saved.data.messages, older: saved.data.older }}
@@ -177,42 +177,23 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
   const opening = (Object.keys(states) as (keyof typeof states)[])
     .filter((kind) => openedWith[kind])
     .map((kind) => states[kind]);
-  // The photos and voice messages the chat kept, read back once for all of them when it opens.
-  // Only those it opened with: its messages are read again after each one sent, whose photos and
-  // voice show from the device, and a new list would ask for every address again.
-  const [keptMedia] = useState(() =>
-    (start?.messages ?? []).flatMap((message) => [
-      ...(message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
-      ...(message.voice?.path ? [message.voice.path] : []),
-    ]),
-  );
-  const keptUrls = useMediaUrls(start?.threadId, keptMedia);
-  // Those of the older messages read since, apart, so that each page asks only for its own.
-  const olderMedia = useMemo(
-    () =>
-      chat.messages.flatMap((message) =>
-        [
-          ...(message.photos ?? []).map((photo) => photo.path),
-          ...(message.voice ? [message.voice.path] : []),
-        ].filter((path): path is string => !!path && !keptMedia.includes(path)),
-      ),
-    [chat.messages, keptMedia],
-  );
-  const olderUrls = useMediaUrls(start?.threadId, olderMedia);
-  const mediaUrls = useMemo(
-    () =>
-      olderUrls.data || keptUrls.data
-        ? new Map([...(olderUrls.data ?? []), ...(keptUrls.data ?? [])])
-        : undefined,
-    [olderUrls.data, keptUrls.data],
-  );
+  // The photos and voice messages the chat kept, read back once for all of them when it opens,
+  // then a page of older messages at a time as they are read. Only those: its messages are read
+  // again after each one sent, whose photos and voice show from the device, and a new list would
+  // ask for every address again.
+  const [keptMedia] = useState(() => mediaPaths(start?.messages ?? []));
+  const mediaUrls = useMediaUrls(start?.threadId, [keptMedia, ...chat.olderMedia]);
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   // Older messages are read once the user scrolls up near the top, not as the chat opens there.
   const dragged = useRef(false);
   const { loadOlder } = chat;
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollProps.onScroll(event);
-    if (dragged.current && event.nativeEvent.contentOffset.y < NEAR_TOP && chat.older === 'idle') {
+    if (
+      dragged.current &&
+      event.nativeEvent.contentOffset.y < NEAR_TOP &&
+      chat.olderStatus === 'idle'
+    ) {
       void loadOlder();
     }
   };
@@ -277,9 +258,9 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
             <LoadState queries={opening} />
           ) : (
             <>
-              {chat.older === 'loading' ? (
+              {chat.olderStatus === 'loading' ? (
                 <ActivityIndicator accessibilityLabel={t('common.loading')} />
-              ) : chat.older === 'failed' ? (
+              ) : chat.olderStatus === 'failed' ? (
                 <TextLink
                   label={t('common.tryAgain')}
                   align="center"

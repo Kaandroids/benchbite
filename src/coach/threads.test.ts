@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-import { firstMedia, MESSAGE_PAGE, messageText, olderMessages, storedMessages } from './threads';
+import { firstMedia, MESSAGE_PAGE, messagePage, messageText, storedMessages } from './threads';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -190,7 +190,7 @@ it('reads a voice message kept with a chat, with what was said in it', () => {
   });
 });
 
-describe('olderMessages', () => {
+describe('messagePage', () => {
   const row = (id: number, role: 'user' | 'bite') => ({
     id,
     role,
@@ -213,7 +213,7 @@ describe('olderMessages', () => {
       row(100 - index, index % 2 ? 'user' : 'bite'),
     );
     const query = reads(rows);
-    const page = await olderMessages({ threadId: 7, before: 101 }, 'user');
+    const page = await messagePage(7, 101, 'user');
 
     expect(query.lt).toHaveBeenCalledWith('id', 101);
     expect(query.limit).toHaveBeenCalledWith(MESSAGE_PAGE + 1);
@@ -225,7 +225,7 @@ describe('olderMessages', () => {
 
   it('reads the first page of a thread without more, by what comes after it', async () => {
     reads([row(2, 'user'), row(1, 'bite')]);
-    const page = await olderMessages({ threadId: 7, before: 3 }, 'bite');
+    const page = await messagePage(7, 3, 'bite');
 
     expect(page.older).toBeUndefined();
     // The question at its end was answered by the message after the page.

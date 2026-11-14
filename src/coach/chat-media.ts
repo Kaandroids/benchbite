@@ -1,9 +1,11 @@
 // The addresses of the photos (ADR 0062) and voice messages (ADR 0073) a chat with Bite keeps in
 // `coach-media`, read when the chat is opened again.
 import { MEDIA_BUCKET } from '@shared/coach/media';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
+
+import type { ChatMessage } from './use-chat';
 
 /**
  * How long an address lasts. The addresses are kept in the query cache alone, by chat,
@@ -30,14 +32,39 @@ export async function mediaUrls(paths: string[]): Promise<Map<string, string>> {
   );
 }
 
-/** The addresses of the photos and voice messages a chat keeps, read once as it opens. */
-export function useMediaUrls(threadId: number | undefined, paths: string[]) {
-  return useQuery({
-    queryKey: ['coach-media', threadId, paths],
-    enabled: paths.length > 0,
-    queryFn: () => mediaUrls(paths),
-    staleTime: RENEW_MS,
-    refetchInterval: RENEW_MS,
-    gcTime: KEPT_AFTER_CLOSE_MS,
+/** The paths of the photos and voice messages kept with `messages`, in order. */
+export function mediaPaths(messages: ChatMessage[]): string[] {
+  return messages.flatMap((message) => [
+    ...(message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
+    ...(message.voice?.path ? [message.voice.path] : []),
+  ]);
+}
+
+/**
+ * The addresses of the photos and voice messages a chat keeps, by path, read a page of messages at
+ * a time: those it opened with, then each page of older ones as it is read (#544). A page read
+ * later asks only for its own, and the addresses read before stay while it is asked for.
+ */
+export function useMediaUrls(threadId: number | undefined, pages: string[][]) {
+  return useQueries({
+    queries: pages.map((paths) => ({
+      queryKey: ['coach-media', threadId, paths],
+      enabled: paths.length > 0,
+      queryFn: () => mediaUrls(paths),
+      staleTime: RENEW_MS,
+      refetchInterval: RENEW_MS,
+      gcTime: KEPT_AFTER_CLOSE_MS,
+    })),
+    combine: byPath,
   });
+}
+
+/**
+ * The addresses of every page read so far, in one map. A function of its own, the same each
+ * render, so that the map is made again only when an answer changes.
+ */
+function byPath(results: { data?: Map<string, string> }[]) {
+  return results.some((result) => result.data)
+    ? new Map(results.flatMap((result) => [...(result.data ?? [])]))
+    : undefined;
 }

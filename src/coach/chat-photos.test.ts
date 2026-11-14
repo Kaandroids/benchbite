@@ -3,7 +3,7 @@ import { MAX_PHOTO_BYTES } from '@shared/photos';
 
 import { discardPhotos, preparePhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { act, createTestQueryClient, renderHook } from '@/test/render';
+import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { mediaUrls, useMediaUrls } from './chat-media';
 import { localTime, messagePhotos, photosToSend, prepareChatPhoto } from './chat-photos';
@@ -117,12 +117,39 @@ describe("the addresses of a chat's photos", () => {
     await expect(mediaUrls(['u/1/a.jpg'])).rejects.toThrow('denied');
   });
 
+  it('asks for a page read later only for its own, and keeps the addresses read before', async () => {
+    const queryClient = createTestQueryClient();
+    createSignedUrls.mockImplementation((paths: string[]) =>
+      Promise.resolve({
+        data: paths.map((path) => ({ path, signedUrl: `https://x/${path}` })),
+        error: null,
+      }),
+    );
+    const { result, rerender } = await renderHook(
+      ({ pages }: { pages: string[][] }) => useMediaUrls(7, pages),
+      { queryClient, initialProps: { pages: [['u/7/a.jpg'], ['u/7/b.jpg']] } },
+    );
+    await waitFor(() => expect(result.current?.size).toBe(2));
+
+    let answer: (value: unknown) => void = () => {};
+    createSignedUrls.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    await rerender({ pages: [['u/7/a.jpg'], ['u/7/b.jpg'], ['u/7/c.jpg']] });
+
+    expect(createSignedUrls).toHaveBeenLastCalledWith(['u/7/c.jpg'], expect.any(Number));
+    // The pages read before keep theirs while the new one is asked for.
+    expect(result.current?.get('u/7/b.jpg')).toBe('https://x/u/7/b.jpg');
+    await act(async () =>
+      answer({ data: [{ path: 'u/7/c.jpg', signedUrl: 'https://x/c' }], error: null }),
+    );
+    await waitFor(() => expect(result.current?.get('u/7/c.jpg')).toBe('https://x/c'));
+  });
+
   it('asks again before they end, open or opened again, and keeps them for a chat reopened soon', async () => {
     jest.useFakeTimers();
     const queryClient = createTestQueryClient();
     // The address shown, read as the chat reads it, while it renders.
     const open = () =>
-      renderHook(() => useMediaUrls(7, ['u/7/a.jpg']).data?.get('u/7/a.jpg'), { queryClient });
+      renderHook(() => useMediaUrls(7, [['u/7/a.jpg']])?.get('u/7/a.jpg'), { queryClient });
     const url = (hook: Awaited<ReturnType<typeof open>>) => hook.result.current;
 
     // Lets the requests asked for answer, without moving the clock.

@@ -22,7 +22,8 @@ import type { MealCard } from './meal-cards';
 import type { NoteCard } from './notes';
 import { isShownProposal, type ShownProposal } from './proposals';
 import { NOTES_KEY } from './notebook';
-import { olderMessages, type OlderMessages, THREADS_KEY } from './threads';
+import { mediaPaths } from './chat-media';
+import { messagePage, type OlderMessages, THREADS_KEY } from './threads';
 
 /** How soon after a stop a message refused as one at a time is sent again, and when. */
 const RETRY_WITHIN_MS = 5_000;
@@ -132,6 +133,8 @@ export function useChat(
   // Where the messages not read yet begin, and whether a page of them is being read or failed.
   const [older, setOlder] = useState(start?.older);
   const [olderStatus, setOlderStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
+  // The photos and voice messages of each page of older messages read, for their addresses.
+  const [olderMedia, setOlderMedia] = useState<string[][]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [tool, setTool] = useState<string>();
   const [failure, setFailure] = useState<Failure>();
@@ -352,8 +355,9 @@ export function useChat(
     if (!older || olderStatus === 'loading') return;
     setOlderStatus('loading');
     try {
-      const page = await olderMessages(older, messages[0]?.role);
+      const page = await messagePage(older.threadId, older.before, messages[0]?.role);
       setMessages((all) => [...page.messages, ...all]);
+      setOlderMedia((pages) => [...pages, mediaPaths(page.messages)]);
       setOlder(page.older);
       setOlderStatus('idle');
     } catch {
@@ -364,7 +368,9 @@ export function useChat(
   return {
     messages,
     /** Whether the thread has messages before those shown, and how reading them goes. */
-    older: older ? olderStatus : undefined,
+    olderStatus: older ? olderStatus : undefined,
+    /** The photos and voice messages of each page of older messages read, by page. */
+    olderMedia,
     loadOlder,
     /** The thread the chat goes on in, once it has one. */
     thread,
