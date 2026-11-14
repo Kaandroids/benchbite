@@ -3,17 +3,20 @@
 The screenshots and GIFs in the README. They are taken on the iOS Simulator
 (iPhone 17 Pro) against the local Supabase stack, with a demo account and no real data.
 
-| File                 | Shows                                                           |
-| -------------------- | --------------------------------------------------------------- |
-| `onboarding.gif`     | The onboarding, from the welcome screen to the finished plan    |
-| `workout-create.gif` | Making a workout: name, days, exercises from the library, sets  |
-| `today.png`          | Today: the week, the daily target and the next workout          |
-| `workout.png`        | Workouts: the active workouts and this week's history           |
-| `nutrition.png`      | Nutrition: the day's meals, macros and water                    |
-| `progress.png`       | Progress: the weight over three months and last month's summary |
-| `bite.png`           | Bite turning a message into a meal card                         |
-| `workout-active.png` | A workout in progress, with last time's sets and the rest timer |
-| `today-dark.png`     | Today in dark mode                                              |
+| File                   | Shows                                                           |
+| ---------------------- | --------------------------------------------------------------- |
+| `onboarding.gif`       | The onboarding, from the welcome screen to the finished plan    |
+| `workout-create.gif`   | Making a workout: name, days, exercises from the library, sets  |
+| `today.png`            | Today: the week, the daily target and the next workout          |
+| `workout.png`          | Workouts: the active workouts and this week's history           |
+| `nutrition.png`        | Nutrition: the day's meals, macros and water                    |
+| `progress.png`         | Progress: the weight over three months and last month's summary |
+| `bite.png`             | Bite turning a message into a meal card                         |
+| `bite-proposal.png`    | Bite noting an injury and proposing to swap an exercise         |
+| `workout-active.png`   | A workout in progress, with last time's sets and the rest timer |
+| `workout-finished.png` | A finished workout, with the watch's heart rate and its sets    |
+| `watch.png`            | The Apple Watch app offering to follow the workout on the phone |
+| `today-dark.png`       | Today in dark mode                                              |
 
 ## The demo account
 
@@ -35,11 +38,21 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    `pnpm start --no-dev --minify`. In the development build's menu, turn off the tools button.
 2. Log in as the demo account in the simulator (Settings → Log in). After running the seed again,
    log out first: the old session belongs to the deleted account.
-3. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
+3. Give the status bar a fixed time and full bars:
+   `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`.
+4. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
    1200 px high: `sips -Z 1200 <file>.png`.
-4. For `bite.png`, ask Bite "Just had 3 eggs, two slices of toast and a coffee with milk for
-   lunch. Can you log it?". For `workout-active.png`, start Upper body and tick the first set;
-   discard the workout afterwards.
+5. For `bite.png`, ask Bite "Just had 3 eggs, two slices of toast and a coffee with milk for
+   lunch. Can you log it?", and leave the card unadded. For `bite-proposal.png`, ask in the same
+   chat "My left shoulder hurts on overhead presses. Can you swap them out of my upper body
+   workout?", and keep the plan as it is. For `workout-finished.png`, open the last workout in the
+   history. For `workout-active.png`, start Upper body and tick the first set; discard the workout
+   afterwards.
+6. For `watch.png`, pair an Apple Watch simulator with the iPhone one and install the watch app
+   as [Development](../development.md#the-apple-watch-app) says, then open the phone app again so
+   that it sees the watch app. Start Upper body on the phone and take the watch with
+   `xcrun simctl io <watch simulator id> screenshot watch.png`. The simulators pass the phone's
+   workout to the watch, but not the watch's commands to the phone, so joining it stops there.
 
 ## Recording the GIFs
 
