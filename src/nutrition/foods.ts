@@ -7,6 +7,7 @@ import { refOfRow, type FoodRef } from '@shared/foods';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
+import { FOOD_KEY, FOOD_SEARCH_KEY } from './food-keys';
 import { totalsOf, type Totals } from './meals';
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
@@ -138,7 +139,7 @@ export function useSettledQuery(value: string): string {
 export function useFoodSearch(term: string, { recipes = true }: { recipes?: boolean } = {}) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food-search', i18n.language, term, recipes],
+    queryKey: [...FOOD_SEARCH_KEY, i18n.language, term, recipes],
     enabled: term.length >= MIN_QUERY_LENGTH,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<FoodResult[]> => {
@@ -168,7 +169,7 @@ export function useFoodSearch(term: string, { recipes = true }: { recipes?: bool
 export function useFood(ref: FoodRef) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food', i18n.language, refKey(ref)],
+    queryKey: [...FOOD_KEY, i18n.language, refKey(ref)],
     queryFn: async (): Promise<Food | null> => {
       switch (ref.kind) {
         case 'library':

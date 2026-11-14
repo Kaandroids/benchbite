@@ -277,7 +277,19 @@ type CoachTool<A extends z.ZodType> = {
   run: (args: z.infer<A>, context: ToolContext) => Promise<unknown>;
 };
 
-const tool = <A extends z.ZodType>(definition: CoachTool<A>) => definition;
+/**
+ * A tool with a way to call it with arguments not checked yet, checked against its own schema,
+ * so that a list of tools of different arguments calls each without a cast. Arguments that are
+ * wrong say so in the result, for the model to correct.
+ */
+const tool = <A extends z.ZodType>(definition: CoachTool<A>) => ({
+  ...definition,
+  call: (args: unknown, context: ToolContext): Promise<unknown> => {
+    const parsed = definition.args.safeParse(args);
+    if (!parsed.success) return Promise.resolve({ error: z.prettifyError(parsed.error) });
+    return definition.run(parsed.data, context);
+  },
+});
 
 const TOOLS = [
   tool({
@@ -967,11 +979,8 @@ export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) 
 export async function runTool(name: string, args: unknown, context: ToolContext): Promise<unknown> {
   const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return { error: `There is no tool ${name}.` };
-  const parsed = tool.args.safeParse(args);
-  if (!parsed.success) return { error: z.prettifyError(parsed.error) };
   try {
-    // deno-lint-ignore no-explicit-any
-    return await tool.run(parsed.data as any, context);
+    return await tool.call(args, context);
   } catch (error) {
     logError(`The tool ${name} failed`, error);
     return { error: 'The data could not be read just now.' };

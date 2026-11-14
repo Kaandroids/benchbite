@@ -17,6 +17,9 @@ import { supabase } from '@/lib/supabase';
 
 import { exerciseImageUrl } from './images';
 
+/** The query key of the addresses of exercise photos. */
+const PHOTOS_KEY = ['exercise-photos'];
+
 const MAX_WIDTH = 1080;
 /** A signed URL lasts an hour; it is asked for again a little before it runs out. */
 const SIGNED_SECONDS = 3600;
@@ -98,7 +101,7 @@ export async function removePhotos(paths: string[]) {
 export function usePictureUrls(paths: readonly string[]): Record<string, string> {
   const photos = paths.filter(isUserPhoto);
   const signed = useQuery({
-    queryKey: ['exercise-photos', ...photos],
+    queryKey: [...PHOTOS_KEY, ...photos],
     queryFn: async () => {
       const { data, error } = await supabase.storage
         .from(EXERCISE_PHOTOS_BUCKET)

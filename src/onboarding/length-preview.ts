@@ -10,6 +10,9 @@ import { planRequest } from './plan-request';
 import { SESSION_MINUTES } from './training';
 import type { OnboardingAnswers } from './types';
 
+/** The query key of the workout lengths the onboarding offers. */
+const LENGTH_PREVIEW_KEY = ['onboarding', 'length-preview'];
+
 export type LengthPreview = { work: SessionWork; time: SessionTime };
 
 /** The first workout of a plan, as the length step shows it. */
@@ -55,7 +58,7 @@ export function useLengthPreview(answers: OnboardingAnswers, sessionMinutes: Ses
     queries: SESSION_MINUTES.map((minutes) => {
       const request = planRequest({ ...answers, sessionMinutes: minutes });
       return {
-        queryKey: ['onboarding', 'length-preview', request],
+        queryKey: [...LENGTH_PREVIEW_KEY, request],
         queryFn: async () => previewOf(await generatePlan(request)),
         staleTime: Infinity,
         retry: false,

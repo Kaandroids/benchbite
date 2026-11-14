@@ -19,14 +19,27 @@ const SAFE_AREA = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
+/** The query clients made for the test running, which are cleared after it. */
+const clients = new Set<QueryClient>();
+
+// A query of a shorter gcTime of its own, as the chat's media addresses, leaves a timer to remove
+// it once it is unused, which would keep Jest's worker alive after the tests: clearing the cache
+// takes the timers with it.
+afterEach(() => {
+  for (const client of clients) client.clear();
+  clients.clear();
+});
+
 /** A query client that fails at once instead of retrying, so error states can be tested. */
 export function createTestQueryClient() {
-  return new QueryClient({
+  const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: Infinity },
       mutations: { retry: false, gcTime: Infinity },
     },
   });
+  clients.add(client);
+  return client;
 }
 
 function wrapperWith(queryClient: QueryClient) {

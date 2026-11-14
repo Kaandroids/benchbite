@@ -8,6 +8,7 @@ import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
 import { foodColumns, type Amount, type FoodRef } from './foods';
+import { FREQUENT_FOODS_KEY, PAST_MEAL_KEY } from './food-keys';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 import { useReloadFoods } from './quick-foods';
 import { dayTargetsKey } from './targets';
@@ -34,8 +35,8 @@ export function reloadDay(queryClient: QueryClient, day: string) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
     queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
-    queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
-    queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
+    queryClient.invalidateQueries({ queryKey: FREQUENT_FOODS_KEY }),
+    queryClient.invalidateQueries({ queryKey: PAST_MEAL_KEY }),
     queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
     queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
   ]);

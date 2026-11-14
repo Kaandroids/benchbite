@@ -14,13 +14,24 @@ import {
   type FoodRef,
   type FoodResult,
 } from './foods';
+import {
+  ENTRIES_KEY,
+  FAVOURITE_FOODS_KEY,
+  FOOD_KEY,
+  FOOD_SEARCH_KEY,
+  FREQUENT_FOODS_KEY,
+  MY_FOODS_KEY,
+  PAST_MEAL_KEY,
+  RECIPE_KEY,
+  RECIPES_KEY,
+} from './food-keys';
 import { totalsOf, type Meal } from './meals';
 
 /** A food logged often at a meal: how often, and the amount it was logged with last. */
 export type FrequentFood = FoodResult & { times: number; amount: Amount };
 
 /** The query keys of the lists of the add screen. */
-export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-foods'], ['recipes']];
+export const QUICK_FOOD_KEYS = [FREQUENT_FOODS_KEY, FAVOURITE_FOODS_KEY, MY_FOODS_KEY, RECIPES_KEY];
 
 /**
  * Everything that shows a food or a recipe by its name or values: search, the food and recipe
@@ -29,14 +40,9 @@ export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-fo
  */
 export function reloadFoods(queryClient: QueryClient) {
   return Promise.all(
-    [
-      ['food-search'],
-      ['food'],
-      ['recipe'],
-      ['meal-entries'],
-      ['past-meal'],
-      ...QUICK_FOOD_KEYS,
-    ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+    [FOOD_SEARCH_KEY, FOOD_KEY, RECIPE_KEY, ENTRIES_KEY, PAST_MEAL_KEY, ...QUICK_FOOD_KEYS].map(
+      (queryKey) => queryClient.invalidateQueries({ queryKey }),
+    ),
   );
 }
 
@@ -50,7 +56,7 @@ export function useReloadFoods() {
 export function useFrequentFoods(meal: Meal) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['frequent-foods', meal, i18n.language],
+    queryKey: [...FREQUENT_FOODS_KEY, meal, i18n.language],
     queryFn: async (): Promise<FrequentFood[]> => {
       const { data, error } = await supabase.rpc('frequent_foods', {
         for_meal: meal,
@@ -78,7 +84,7 @@ export function useFrequentFoods(meal: Meal) {
 export function useFavouriteFoods() {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['favourite-foods', i18n.language],
+    queryKey: [...FAVOURITE_FOODS_KEY, i18n.language],
     queryFn: async (): Promise<FoodResult[]> => {
       const { data, error } = await supabase.rpc('list_favourite_foods', {
         language: i18n.language,
@@ -124,14 +130,14 @@ export function useSetFavourite() {
         throw error;
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['favourite-foods'] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: FAVOURITE_FOODS_KEY }),
   });
 }
 
 /** The user's own foods that can still be logged, by name. */
 export function useMyFoods() {
   return useQuery({
-    queryKey: ['my-foods'],
+    queryKey: MY_FOODS_KEY,
     queryFn: async (): Promise<FoodResult[]> => {
       const { data, error } = await supabase
         .from('custom_foods')

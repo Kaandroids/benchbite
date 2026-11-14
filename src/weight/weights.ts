@@ -12,8 +12,10 @@ import { supabase } from '@/lib/supabase';
 import { reloadTargets } from '@/nutrition/targets';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 
-/** The query keys of the weights, which logging one reloads. */
-export const WEIGHTS_KEY = ['weights'];
+import { WEIGHTS_KEY } from './weights-key';
+
+/** The query key of the unit weights are shown in. */
+const WEIGHT_UNIT_KEY = ['profile', 'weight-unit'];
 
 export type WeightEntry = {
   weightKg: number;
@@ -39,7 +41,7 @@ const toEntry = (row: {
 /** The unit the signed-in user chose for weights in the onboarding; kilograms without a profile. */
 export function useWeightUnit() {
   return useQuery({
-    queryKey: ['profile', 'weight-unit'],
+    queryKey: WEIGHT_UNIT_KEY,
     queryFn: async (): Promise<WeightUnit> => {
       const { data, error } = await supabase.from('profiles').select('weight_unit').maybeSingle();
       if (error) {

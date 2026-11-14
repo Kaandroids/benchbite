@@ -17,6 +17,10 @@ import { offerRestAlarm } from './rest-alarm';
 import { startSession, type ExerciseBests, type LastSets } from './session';
 import { useStartMove } from './start-move';
 
+/** The query keys of the last sets and the bests of the exercises a workout starts with. */
+const LAST_SETS_KEY = ['last-sets'];
+const BESTS_KEY = ['bests'];
+
 /**
  * Whether a workout has exercises to start. One without them opens its screen instead, which says
  * so and leads to Edit (ADR 0064).
@@ -80,7 +84,7 @@ export function useStartWorkout() {
     const [last, bests] = await Promise.all([
       queryClient
         .fetchQuery({
-          queryKey: ['last-sets', ...ids],
+          queryKey: [...LAST_SETS_KEY, ...ids],
           queryFn: () => fetchLastSets(ids),
           staleTime: 0,
         })
@@ -90,7 +94,7 @@ export function useStartWorkout() {
         }),
       queryClient
         .fetchQuery({
-          queryKey: ['bests', ...ids],
+          queryKey: [...BESTS_KEY, ...ids],
           queryFn: () => fetchBests(ids),
           staleTime: 0,
         })

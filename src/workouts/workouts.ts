@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import { WEIGHTS_KEY } from '@/weight/weights-key';
 
 import { reloadMoves } from './moves';
 
@@ -252,7 +253,7 @@ export type WorkoutDraft = {
 export function useKcalPerMinute() {
   return useQuery({
     // Under the weights, so that a new weight updates it.
-    queryKey: ['weights', 'kcal-per-minute'],
+    queryKey: [...WEIGHTS_KEY, 'kcal-per-minute'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('my_strength_kcal_per_minute');
       if (error) {
