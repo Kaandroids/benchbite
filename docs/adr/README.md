@@ -50,7 +50,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0032](0032-animated-splash-over-a-static-native-splash.md)           | Animate the splash in the app, over a static native splash                              | Accepted                                             |
 | [0033](0033-food-library-from-bls.md)                                 | Build the food library from the BLS 4.0                                                 | Accepted                                             |
 | [0034](0034-meal-entries-with-copied-values.md)                       | Log meals as entries with copied values, per local day and fixed meal                   | Accepted                                             |
-| [0035](0035-search-foods-in-postgres.md)                              | Search foods in Postgres, by name in the user's language and in English                 | Accepted                                             |
+| [0035](0035-search-foods-in-postgres.md)                              | Search foods in Postgres, by name in the user's language and in English                 | Accepted, amended by ADR-0135                        |
 | [0036](0036-foods-of-ones-own.md)                                     | Let people add foods of their own, private and archived on delete                       | Accepted                                             |
 | [0037](0037-frequent-and-favourite-foods.md)                          | Count frequent foods from the entries, and keep favourites in a table                   | Accepted                                             |
 | [0038](0038-recipes.md)                                               | Sum recipes from their ingredients and log them by the serving                          | Accepted                                             |
@@ -150,3 +150,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0132](0132-monitor-with-a-read-only-token.md)                        | Monitor with a token that can only read the database                                    | Accepted                                             |
 | [0133](0133-bite-proposes-note-changes.md)                            | Bite proposes changes to a note, which the user applies                                 | Accepted                                             |
 | [0134](0134-pause-bite-at-the-providers-spend-limit.md)               | Pause Bite at the provider's spend limit, and warn before it                            | Accepted                                             |
+| [0135](0135-search-food-names-through-a-trigram-index.md)             | Search food names through a trigram index                                               | Accepted                                             |
