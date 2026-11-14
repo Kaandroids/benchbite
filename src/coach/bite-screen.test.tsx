@@ -359,6 +359,57 @@ it('reads older messages once the user scrolls up near the top, and puts them fi
   expect(texts).toEqual(['What do I train today?', 'Legs today.', 'And tomorrow?', 'Rest day.']);
 });
 
+it('offers to read older messages again when they could not be read', async () => {
+  mockParams = { thread: '7', fresh: '' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: {
+      title: 'Lunch',
+      messages: [
+        { id: 'stored-40', role: 'user', text: 'And tomorrow?' },
+        { id: 'stored-41', role: 'bite', text: 'Rest day.' },
+      ],
+      older: { threadId: 7, before: 40 },
+    },
+    isFetchedAfterMount: true,
+  } as never);
+  const older = {
+    data: [
+      {
+        id: 39,
+        role: 'user',
+        content: [{ type: 'text', text: 'What do I train today?' }],
+        expression: null,
+        interrupted: null,
+        created_at: '2026-11-14T08:00:00Z',
+      },
+    ],
+    error: null,
+  };
+  const query: Record<string, jest.Mock> = {};
+  for (const name of ['select', 'eq', 'lt', 'order', 'in']) query[name] = jest.fn(() => query);
+  query.limit = jest
+    .fn()
+    .mockResolvedValueOnce({ data: null, error: new Error('offline') })
+    .mockResolvedValue(older);
+  jest.mocked(supabase.from).mockReturnValue(query as never);
+  await renderBite();
+  await screen.findByText('Rest day.');
+
+  const scroll = screen.getByTestId('bite-chat');
+  await fireEvent(scroll, 'scrollBeginDrag');
+  await fireEvent.scroll(scroll, {
+    nativeEvent: {
+      contentOffset: { y: 100 },
+      layoutMeasurement: { height: 600 },
+      contentSize: { height: 2000 },
+    },
+  });
+
+  await fireEvent.press(await screen.findByRole('button', { name: 'Try again' }));
+  expect(await screen.findByText('What do I train today?')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+});
+
 it('opens the last chat of a user without a plan however old it is', async () => {
   mockParams = {};
   access('plan_required');
