@@ -2498,6 +2498,8 @@ export type Database = {
       food_log_entries: { Args: { entry_ids: number[] }; Returns: Json };
       food_log_entry_ids: { Args: { change: Json }; Returns: number[] };
       food_name_key: { Args: { name: string }; Returns: string };
+      food_name_pattern: { Args: { term: string }; Returns: string };
+      food_search_term: { Args: { query: string }; Returns: string };
       free_count_left: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
         Returns: number;

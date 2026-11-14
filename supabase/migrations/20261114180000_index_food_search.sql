@@ -10,6 +10,19 @@ alter table public.food_names
 create index food_names_name_key_trgm
   on public.food_names using gin (name_key extensions.gin_trgm_ops);
 
+-- A search's term as names are compared with it.
+create function public.food_search_term(query text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select public.food_name_key(trim(query));
+$$;
+
+revoke execute on function public.food_search_term(text) from public, anon;
+grant execute on function public.food_search_term(text) to authenticated;
+
 -- A `like` pattern for the names that hold `term`, its wildcards matching only themselves.
 create function public.food_name_pattern(term text)
 returns text
@@ -54,7 +67,7 @@ set search_path = ''
 set pg_trgm.strict_word_similarity_threshold = 0.4
 as $$
   with search as (
-    select public.food_name_key(trim(search_foods.query)) as term
+    select public.food_search_term(search_foods.query) as term
   ),
   -- The library's names in the user's language and in English, and the user's foods and recipes.
   names as (
@@ -66,10 +79,10 @@ as $$
       -- The term is worked out here from the argument, not taken from `search`: the function's
       -- plan does not know the argument, and only a condition on it can use the index.
       and (
-        n.name_key like public.food_name_pattern(public.food_name_key(trim(search_foods.query)))
+        n.name_key like public.food_name_pattern(public.food_search_term(search_foods.query))
         or (
-          length(public.food_name_key(trim(search_foods.query))) >= 4
-          and public.food_name_key(trim(search_foods.query))
+          length(public.food_search_term(search_foods.query)) >= 4
+          and public.food_search_term(search_foods.query)
             operator(extensions.<<%) n.name_key
         )
       )
