@@ -1,7 +1,7 @@
 # 0136. Sign out an account deleted elsewhere, and say why a session ended
 
 - **Status:** Accepted
-- **Date:** 2026-11-15
+- **Date:** 2026-11-14
 
 ## Context
 
@@ -15,7 +15,7 @@ signed out by a password change elsewhere (ADR 0128).
 ## Decision
 
 - **The app asks whether its user still exists** with `getUser()` when it opens and whenever it
-  comes to the foreground. When Auth answers `user_not_found`, it signs out on this device
+  comes back from the background, not when a sheet of the system only made it inactive. When Auth answers `user_not_found`, it signs out on this device
   (`scope: 'local'`). Any other error, such as being offline, changes nothing.
 - **The device remembers whether its last user had an account**, beside the user's id. A session
   that ends says why (`EndedReason`):
@@ -41,6 +41,6 @@ signed out by a password change elsewhere (ADR 0128).
 
 - An account deleted on the website signs out the next time the app opens or comes to the
   foreground, within the hour that its token lasts. Later, it shows the `account` screen.
-- Each open and each return to the foreground costs one request to Auth.
+- Each open and each return from the background costs one request to Auth.
 - An account signed out by a password change elsewhere is told to log in, rather than to start
   again as a guest.
