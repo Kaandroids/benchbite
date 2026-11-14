@@ -34,14 +34,16 @@ returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  spent_in date := date_trunc('month', new.created_at at time zone 'UTC')::date;
 begin
-  insert into public.ai_spend_months (month, cost_usd)
-  values (
-    date_trunc('month', new.created_at at time zone 'UTC')::date,
-    new.cost_usd - case when tg_op = 'UPDATE' then old.cost_usd else 0 end
+  -- The month's row first, then the change, which is less when a call records below its most.
+  insert into public.ai_spend_months (month) values (spent_in) on conflict (month) do nothing;
+  update public.ai_spend_months m
+  set cost_usd = greatest(
+    m.cost_usd + new.cost_usd - case when tg_op = 'UPDATE' then old.cost_usd else 0 end, 0
   )
-  on conflict (month) do update
-    set cost_usd = greatest(public.ai_spend_months.cost_usd + excluded.cost_usd, 0);
+  where m.month = spent_in;
   return null;
 end;
 $$;
