@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs the status function `$1` of the hosted project through the Management API's read-only query,
 # as supabase_read_only_user (ADR 0132), and writes its one row, which has `healthy`, to `$2` as
-# JSON. Fails with an error annotation when the query fails or returns no status. Reads
+# JSON. Fails with an error annotation when the query fails or returns no status: the row goes to a
+# file, not to standard output, which a caller capturing it would keep the annotation in. Reads
 # SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_ID, which the runner masks as secrets.
 set -euo pipefail
 
