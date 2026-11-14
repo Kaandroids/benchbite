@@ -1,4 +1,6 @@
-import { firstMedia, messageText, storedMessages } from './threads';
+import { supabase } from '@/lib/supabase';
+
+import { firstMedia, MESSAGE_PAGE, messageText, olderMessages, storedMessages } from './threads';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -185,5 +187,65 @@ it('reads a voice message kept with a chat, with what was said in it', () => {
   expect(message).toMatchObject({
     text: 'Had a chicken rice bowl.',
     voice: { path: 'u/1/c.m4a', durationMs: 4200 },
+  });
+});
+
+describe('olderMessages', () => {
+  const row = (id: number, role: 'user' | 'bite') => ({
+    id,
+    role,
+    content: [{ type: 'text', text: `Message ${id}` }],
+    expression: null,
+    interrupted: null,
+    created_at: '2026-10-30T12:00:00Z',
+  });
+  const reads = (rows: ReturnType<typeof row>[]) => {
+    const query: Record<string, jest.Mock> = {};
+    for (const name of ['select', 'eq', 'lt', 'order']) query[name] = jest.fn(() => query);
+    query.limit = jest.fn(() => Promise.resolve({ data: rows, error: null }));
+    (supabase as { from?: unknown }).from = jest.fn(() => query);
+    return query;
+  };
+
+  it('reads the page before the messages shown, oldest first, and says where more begin', async () => {
+    // Latest first, one more than a page, as the database gives it.
+    const rows = Array.from({ length: MESSAGE_PAGE + 1 }, (_, index) =>
+      row(100 - index, index % 2 ? 'user' : 'bite'),
+    );
+    const query = reads(rows);
+    const page = await olderMessages({ threadId: 7, before: 101 }, 'user');
+
+    expect(query.lt).toHaveBeenCalledWith('id', 101);
+    expect(query.limit).toHaveBeenCalledWith(MESSAGE_PAGE + 1);
+    expect(page.messages).toHaveLength(MESSAGE_PAGE);
+    expect(page.messages[0]?.id).toBe(`stored-${100 - MESSAGE_PAGE + 1}`);
+    expect(page.messages.at(-1)?.id).toBe('stored-100');
+    expect(page.older).toEqual({ threadId: 7, before: 100 - MESSAGE_PAGE + 1 });
+  });
+
+  it('reads the first page of a thread without more, by what comes after it', async () => {
+    reads([row(2, 'user'), row(1, 'bite')]);
+    const page = await olderMessages({ threadId: 7, before: 3 }, 'bite');
+
+    expect(page.older).toBeUndefined();
+    // The question at its end was answered by the message after the page.
+    expect(page.messages.at(-1)).not.toHaveProperty('unanswered');
+  });
+});
+
+describe('storedMessages with what comes after', () => {
+  const row = (id: number, role: 'user' | 'bite') => ({
+    id,
+    role,
+    content: [{ type: 'text', text: `Message ${id}` }],
+    expression: null,
+    interrupted: null,
+    created_at: '2026-10-30T12:00:00Z',
+  });
+
+  it('tells a question answered after the page from one left unanswered', () => {
+    expect(storedMessages([row(1, 'user')], 'bite')[0]).not.toHaveProperty('unanswered');
+    expect(storedMessages([row(1, 'user')], 'user')[0]?.unanswered).toBe(true);
+    expect(storedMessages([row(1, 'user')])[0]?.unanswered).toBe(true);
   });
 });
