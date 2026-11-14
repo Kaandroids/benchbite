@@ -819,17 +819,20 @@ export type Database = {
           food_id: string;
           language: string;
           name: string;
+          name_key: string | null;
         };
         ComputedFields: never;
         Insert: {
           food_id: string;
           language: string;
           name: string;
+          name_key?: never;
         };
         Update: {
           food_id?: string;
           language?: string;
           name?: string;
+          name_key?: never;
         };
         Relationships: [
           {
