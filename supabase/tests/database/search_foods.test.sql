@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(17);
 
 select set_config('role', 'authenticated', true),
   set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
@@ -80,6 +80,57 @@ select is_empty(
   $$ select * from public.search_foods('Haferflocken', 'de') where food_id = 'C133000' $$,
   'Archived foods are not found'
 );
+
+-- A search's wildcards are the characters themselves, as names are matched by `like`.
+select is_empty(
+  $$ select * from public.search_foods('%%', 'de') $$,
+  'A percent sign in a search matches only itself'
+);
+select is_empty(
+  $$ select * from public.search_foods('E_', 'de') $$,
+  'An underscore in a search matches only itself'
+);
+
+-- The names a search looks at come from the trigram index on their key (#545). The function's own
+-- body is planned as it runs, without knowing its arguments: a condition that takes the term
+-- through a join, as from a `with`, would scan every name.
+reset role;
+create function pg_temp.search_plan(query text) returns text language plpgsql as $$
+declare
+  body text;
+  line text;
+  plan text := '';
+begin
+  select replace(replace(replace(p.prosrc,
+      'search_foods.query', '$1'), 'search_foods.language', '$2'), 'search_foods.recipes', '$3')
+    into body
+  from pg_proc p
+  where p.proname = 'search_foods' and p.pronamespace = 'public'::regnamespace;
+  execute 'prepare search_body(text, text, boolean) as ' || body;
+  for line in execute format('explain (costs off) execute search_body(%L, %L, true)', query, 'de')
+  loop
+    plan := plan || line || E'\n';
+  end loop;
+  deallocate search_body;
+  return plan;
+end;
+$$;
+set local plan_cache_mode = force_generic_plan;
+-- The library is small here, where a scan would be cheaper. Each condition must be on the
+-- argument itself, `$1`: one on a term from a join only uses the index once scans are off.
+set local enable_seqscan = off;
+select matches(
+  pg_temp.search_plan('apfel'),
+  'Index Cond: \(name_key ~~ .*\$1',
+  'A name that holds the search is found through the index'
+);
+select matches(
+  pg_temp.search_plan('apfel'),
+  'Index Cond: \(name_key %>> .*\$1',
+  'and so is one with a word close to it'
+);
+reset enable_seqscan;
+reset plan_cache_mode;
 
 select set_config('role', 'anon', true);
 

@@ -1,6 +1,6 @@
 # 0035. Search foods in Postgres, by name in the user's language and in English
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0135
 - **Date:** 2026-10-27
 
 ## Context
