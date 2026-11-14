@@ -1,7 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { type AiAccess, needsPremium, useChatAccess } from '@/ai/access';
 import { LoadState } from '@/components/load-state';
@@ -93,10 +100,10 @@ export function BiteScreen() {
       title={
         threadText.title({
           title: saved.data.title,
-          ...firstMedia(saved.data.messages),
+          ...firstMedia(saved.data.first ? [saved.data.first] : saved.data.messages),
         }) ?? undefined
       }
-      start={{ threadId: threadId!, messages: saved.data.messages }}
+      start={{ threadId: threadId!, messages: saved.data.messages, older: saved.data.older }}
     />
   ) : (
     <Chat
@@ -179,8 +186,36 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
       ...(message.voice?.path ? [message.voice.path] : []),
     ]),
   );
-  const mediaUrls = useMediaUrls(start?.threadId, keptMedia);
+  const keptUrls = useMediaUrls(start?.threadId, keptMedia);
+  // Those of the older messages read since, apart, so that each page asks only for its own.
+  const olderMedia = useMemo(
+    () =>
+      chat.messages.flatMap((message) =>
+        [
+          ...(message.photos ?? []).map((photo) => photo.path),
+          ...(message.voice ? [message.voice.path] : []),
+        ].filter((path): path is string => !!path && !keptMedia.includes(path)),
+      ),
+    [chat.messages, keptMedia],
+  );
+  const olderUrls = useMediaUrls(start?.threadId, olderMedia);
+  const mediaUrls = useMemo(
+    () =>
+      olderUrls.data || keptUrls.data
+        ? new Map([...(olderUrls.data ?? []), ...(keptUrls.data ?? [])])
+        : undefined,
+    [olderUrls.data, keptUrls.data],
+  );
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
+  // Older messages are read once the user scrolls up near the top, not as the chat opens there.
+  const dragged = useRef(false);
+  const { loadOlder } = chat;
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollProps.onScroll(event);
+    if (dragged.current && event.nativeEvent.contentOffset.y < NEAR_TOP && chat.older === 'idle') {
+      void loadOlder();
+    }
+  };
   const refusal = chat.refusal ?? access?.refusal;
   const readOnly = needsPremium(refusal);
   const busy = chat.status !== 'idle';
@@ -216,6 +251,13 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
       <KeyboardAvoiding>
         <ScrollView
           {...scrollProps}
+          onScroll={onScroll}
+          onScrollBeginDrag={() => {
+            dragged.current = true;
+          }}
+          // The older messages put before the ones read leave them where they are.
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+          testID="bite-chat"
           style={styles.flex}
           contentContainerStyle={[
             styles.content,
@@ -234,18 +276,29 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
             // As a decided card folds into a line, rather than offering Apply or Add a moment.
             <LoadState queries={opening} />
           ) : (
-            <ChatMessages
-              messages={chat.messages}
-              cards={{ ...cards, readOnly }}
-              mediaUrls={mediaUrls.data}
-              player={playback.player}
-              playingId={playback.active}
-              onPlay={playback.toggle}
-              status={chat.status}
-              tool={chat.tool}
-              onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
-              onOpenNotebook={fromNotebook ? undefined : openNotebookHere}
-            />
+            <>
+              {chat.older === 'loading' ? (
+                <ActivityIndicator accessibilityLabel={t('common.loading')} />
+              ) : chat.older === 'failed' ? (
+                <TextLink
+                  label={t('common.tryAgain')}
+                  align="center"
+                  onPress={() => void loadOlder()}
+                />
+              ) : null}
+              <ChatMessages
+                messages={chat.messages}
+                cards={{ ...cards, readOnly }}
+                mediaUrls={mediaUrls}
+                player={playback.player}
+                playingId={playback.active}
+                onPlay={playback.toggle}
+                status={chat.status}
+                tool={chat.tool}
+                onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
+                onOpenNotebook={fromNotebook ? undefined : openNotebookHere}
+              />
+            </>
           )}
           {chat.failure ? (
             <View style={[styles.failure, { gap: spacing.sm }]}>
@@ -286,6 +339,9 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
     </Screen>
   );
 }
+
+/** How close to the top of the chat its older messages are read. */
+const NEAR_TOP = 400;
 
 const styles = StyleSheet.create({
   actions: {

@@ -93,7 +93,6 @@ export function ChatMessages({
   onPlay,
   onOpenNotebook,
 }: ChatMessagesProps) {
-  const { spacing } = useTheme();
   const [viewing, setViewing] = useState<string>();
   const moment = useMomentFormat();
   // Bite thinks on under a card it gave before a word.
@@ -102,8 +101,10 @@ export function ChatMessages({
   const first = messages[0]?.createdAt;
   const days =
     first !== undefined && messages.some((m) => m.createdAt && !sameDay(m.createdAt, first));
+  // Each message is a child of the chat's scroll view itself, which spaces them, so that it keeps
+  // the ones read where they are as older ones come before them.
   return (
-    <View style={{ gap: spacing.lg }}>
+    <>
       {messages.map((message, index) => {
         const before = messages[index - 1]?.createdAt;
         const startsDay =
@@ -140,7 +141,7 @@ export function ChatMessages({
         <ToolLine tool={tool} indent />
       ) : null}
       {viewing ? <PhotoViewer uri={viewing} onClose={() => setViewing(undefined)} /> : null}
-    </View>
+    </>
   );
 }
 
