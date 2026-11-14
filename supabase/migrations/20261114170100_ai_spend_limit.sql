@@ -171,11 +171,11 @@ stable
 set search_path = ''
 as $$
   select
-    floor(100 * public.ai_month_spend_usd() / l.monthly_cap_usd)::integer,
+    floor(100 * s.spend / l.monthly_cap_usd)::integer,
     round(100 * l.alert_share)::integer,
-    public.ai_spend_paused(),
-    public.ai_month_spend_usd() < l.alert_share * l.monthly_cap_usd
-  from public.ai_spend_limit l;
+    s.spend >= l.monthly_cap_usd,
+    s.spend < l.alert_share * l.monthly_cap_usd
+  from public.ai_spend_limit l, lateral (select public.ai_month_spend_usd() as spend) s;
 $$;
 
 revoke execute on function public.ai_month_spend_usd()
@@ -187,4 +187,3 @@ revoke execute on function public.ai_spend_status()
 -- Only the Monitor's read-only role runs the status, with what it calls (ADR 0132).
 grant execute on function public.ai_spend_status() to supabase_read_only_user;
 grant execute on function public.ai_month_spend_usd() to supabase_read_only_user;
-grant execute on function public.ai_spend_paused() to supabase_read_only_user;
