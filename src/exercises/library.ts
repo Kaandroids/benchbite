@@ -5,6 +5,10 @@ import type { Database } from '@/lib/database.types';
 import { fetchAllPages } from '@/lib/paging';
 import { supabase } from '@/lib/supabase';
 
+/** The query keys of the exercise library and of an exercise's instructions. */
+export const EXERCISES_KEY = ['exercises'];
+export const INSTRUCTIONS_KEY = ['exercise-instructions'];
+
 type Enums = Database['public']['Enums'];
 
 export type LibraryExercise = {
@@ -103,7 +107,7 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
 export function useExerciseLibrary({ enabled = true }: { enabled?: boolean } = {}) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['exercises', i18n.language],
+    queryKey: [...EXERCISES_KEY, i18n.language],
     queryFn: () => fetchLibrary(i18n.language),
     staleTime: Infinity,
     enabled,
@@ -159,7 +163,7 @@ export type ExerciseDetails = LibraryExercise & { instructions: string[] };
 export function useExerciseDetails(id: string) {
   const library = useExerciseLibrary();
   const instructions = useQuery({
-    queryKey: ['exercise-instructions', id],
+    queryKey: [...INSTRUCTIONS_KEY, id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exercises')

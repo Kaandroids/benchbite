@@ -14,6 +14,9 @@ import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './
 
 import type { NutritionTargets } from './targets';
 
+/** The query key of a meal logged before, to log again. */
+export const PAST_MEAL_KEY = ['past-meal'];
+
 export type Meal = Database['public']['Enums']['meal'];
 
 /** What a meal or a day adds up to, in the units of the targets. */
@@ -203,7 +206,7 @@ export function usePastMeal(day: string, meal: Meal) {
   const { i18n } = useTranslation();
   return useQuery({
     // Not under the day's key: it changes with the entries of the days before, which reload it.
-    queryKey: ['past-meal', meal, day, i18n.language],
+    queryKey: [...PAST_MEAL_KEY, meal, day, i18n.language],
     queryFn: async (): Promise<PastMeal | null> => {
       const { data, error } = await entriesQuery()
         .eq('meal', meal)

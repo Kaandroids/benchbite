@@ -10,6 +10,9 @@ import { isHealthConnected, useHealthConnected } from './connection';
 import { workoutStats } from './platform';
 import type { WorkoutStats } from './types';
 
+/** The query key of what the health store says of the workouts in a range. */
+const WORKOUT_HEALTH_KEY = ['workout-health'];
+
 /** How long after a workout its data is looked for. */
 export const READ_FOR_MS = 24 * 3600 * 1000;
 
@@ -59,7 +62,7 @@ export async function keepWorkoutHealth(logId: number, stats: WorkoutStats): Pro
 export function useWorkoutHealth(from: number, to: number) {
   const connected = useHealthConnected();
   return useQuery({
-    queryKey: ['workout-health', from, to],
+    queryKey: [...WORKOUT_HEALTH_KEY, from, to],
     queryFn: () => readWorkoutHealth(new Date(from), new Date(to)),
     enabled: connected && from > 0 && to > from,
     staleTime: 60_000,

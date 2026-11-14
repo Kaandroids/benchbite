@@ -18,6 +18,10 @@ import {
 import { NOTHING, scaled, totalOf, totalsOf, type Totals } from './meals';
 import { useReloadFoods } from './quick-foods';
 
+/** The query keys of one recipe and of the user's recipes. */
+const RECIPE_KEY = ['recipe'];
+const RECIPES_KEY = ['recipes'];
+
 /** How many servings a recipe makes at most, and how many ingredients it has, as the database allows. */
 export const MAX_SERVINGS = 50;
 export const MAX_INGREDIENTS = 50;
@@ -60,7 +64,7 @@ export function recipeTotals({
 export function useRecipe(id: number) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['recipe', id, i18n.language],
+    queryKey: [...RECIPE_KEY, id, i18n.language],
     queryFn: async (): Promise<Recipe | null> => {
       const { data, error } = await supabase
         .from('recipes')
@@ -109,7 +113,7 @@ export function useRecipe(id: number) {
  */
 export function useRecipes({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ['recipes'],
+    queryKey: RECIPES_KEY,
     enabled,
     queryFn: async (): Promise<FoodResult[]> => {
       const { data, error } = await supabase.rpc('list_recipes');

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { LOGS_KEY } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
@@ -53,7 +54,7 @@ export function useLogWorkout() {
     // A log can bring a move with it, and count its day for the streak.
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['workout-logs'] }),
+        queryClient.invalidateQueries({ queryKey: LOGS_KEY }),
         reloadMoves(queryClient),
       ]),
   });

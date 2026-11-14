@@ -9,6 +9,10 @@ import { supabase } from '@/lib/supabase';
 
 import { totalsOf, type Totals } from './meals';
 
+/** The query keys of a food search and of one food. */
+const FOOD_SEARCH_KEY = ['food-search'];
+const FOOD_KEY = ['food'];
+
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
 export type Portion = { unit: PortionUnit; grams: number };
@@ -138,7 +142,7 @@ export function useSettledQuery(value: string): string {
 export function useFoodSearch(term: string, { recipes = true }: { recipes?: boolean } = {}) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food-search', i18n.language, term, recipes],
+    queryKey: [...FOOD_SEARCH_KEY, i18n.language, term, recipes],
     enabled: term.length >= MIN_QUERY_LENGTH,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<FoodResult[]> => {
@@ -168,7 +172,7 @@ export function useFoodSearch(term: string, { recipes = true }: { recipes?: bool
 export function useFood(ref: FoodRef) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food', i18n.language, refKey(ref)],
+    queryKey: [...FOOD_KEY, i18n.language, refKey(ref)],
     queryFn: async (): Promise<Food | null> => {
       switch (ref.kind) {
         case 'library':

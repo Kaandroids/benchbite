@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase';
 
 import type { ChatMessage } from './use-chat';
 
+/** The query key of the addresses of a chat's photos and voice messages. */
+const MEDIA_KEY = ['coach-media'];
+
 /**
  * How long an address lasts. The addresses are kept in the query cache alone, by chat,
  * with one policy that never shows one that has ended: while the chat is open they are asked for
@@ -51,7 +54,7 @@ export function useMediaUrls(threadId: number | undefined, pages: string[][]) {
     queries: pages
       .filter((paths) => paths.length > 0)
       .map((paths) => ({
-        queryKey: ['coach-media', threadId, paths],
+        queryKey: [...MEDIA_KEY, threadId, paths],
         queryFn: () => mediaUrls(paths),
         staleTime: RENEW_MS,
         refetchInterval: RENEW_MS,

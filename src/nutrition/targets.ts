@@ -7,6 +7,9 @@ import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
 
+/** The query key of the targets, and of what they are worked out from. */
+const TARGETS_KEY = ['nutrition-targets'];
+
 export type NutritionTargets = {
   calories: number;
   proteinG: number;
@@ -35,7 +38,7 @@ export function targetsFrom(row: TargetsRow): NutritionTargets | null {
  */
 export function useNutritionTargets() {
   return useQuery({
-    queryKey: ['nutrition-targets'],
+    queryKey: TARGETS_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('my_nutrition_targets');
       if (error) {
@@ -73,7 +76,7 @@ export function useDayTargets(day: string) {
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */
 export function useCalculatedTargets() {
   return useQuery({
-    queryKey: ['nutrition-targets', 'calculated'],
+    queryKey: [...TARGETS_KEY, 'calculated'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('calculated_nutrition_targets');
       if (error) {
@@ -87,7 +90,7 @@ export function useCalculatedTargets() {
 /** The targets the user set themselves, and whether they are in use; null before any are set. */
 export function useOwnTargets() {
   return useQuery({
-    queryKey: ['nutrition-targets', 'own'],
+    queryKey: [...TARGETS_KEY, 'own'],
     queryFn: async (): Promise<{ targets: NutritionTargets; inUse: boolean } | null> => {
       const { data, error } = await supabase
         .from('own_nutrition_targets')
@@ -118,7 +121,7 @@ export function useOwnTargets() {
 export function reloadTargets(queryClient: QueryClient) {
   // Today's calories are counted for the streak and charted against the targets in use.
   return Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
+    queryClient.invalidateQueries({ queryKey: TARGETS_KEY }),
     queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
     queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
   ]);
@@ -188,7 +191,7 @@ export type TargetBasis = {
 /** The saved goal, activity, height and floor the targets come from; null before the onboarding. */
 export function useTargetBasis() {
   return useQuery({
-    queryKey: ['nutrition-targets', 'basis'],
+    queryKey: [...TARGETS_KEY, 'basis'],
     queryFn: async (): Promise<TargetBasis | null> => {
       const [goal, profile, pace] = await Promise.all([
         supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import type { LibraryExercise } from './library';
+import { EXERCISES_KEY, INSTRUCTIONS_KEY, type LibraryExercise } from './library';
 import { isUserPhoto, removePhotos, uploadPhoto } from './photos';
 
 type Enums = Database['public']['Enums'];
@@ -162,7 +162,7 @@ export function useCreateExercise() {
           archived: false,
         };
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exercises'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: EXERCISES_KEY }),
   });
 }
 
@@ -188,8 +188,8 @@ export function useEditExercise(id: string) {
     },
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['exercises'] }),
-        queryClient.invalidateQueries({ queryKey: ['exercise-instructions', id] }),
+        queryClient.invalidateQueries({ queryKey: EXERCISES_KEY }),
+        queryClient.invalidateQueries({ queryKey: [...INSTRUCTIONS_KEY, id] }),
       ]),
   });
 }
@@ -204,7 +204,7 @@ export function useArchiveExercise(id: string) {
         throw error;
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exercises'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: EXERCISES_KEY }),
   });
 }
 
@@ -225,7 +225,7 @@ const isUsedIn = async (table: 'logged_sets' | 'workout_exercises', id: string) 
 /** Whether what an exercise records can still change, as edit_exercise() decides. */
 export function useKindLock(id: string) {
   return useQuery({
-    queryKey: ['exercises', id, 'kind-lock'],
+    queryKey: [...EXERCISES_KEY, id, 'kind-lock'],
     queryFn: async (): Promise<KindLock> => {
       const [logged, inWorkout] = await Promise.all([
         isUsedIn('logged_sets', id),
