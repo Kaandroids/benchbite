@@ -1,12 +1,15 @@
 # Helpers for the scripts that record the app on the booted iOS Simulator for the README
 # (docs/media/README.md). They tap with idb (https://fbidb.io); coordinates are points on an
-# iPhone 17 Pro, and `idb ui describe-all` shows them on another simulator.
+# iPhone 17 Pro, and `idb ui describe-all` shows them on another simulator. They use the booted
+# iPhone simulator, or the one whose id is in UDID when several are booted.
 
-UDID=$(xcrun simctl list devices booted -j | python3 -c '
+UDID=${UDID:-$(xcrun simctl list devices booted -j | python3 -c '
 import json, sys
-booted = [d for ds in json.load(sys.stdin)["devices"].values() for d in ds]
-if not booted: sys.exit("No booted simulator.")
-print(booted[0]["udid"])')
+booted = [d for ds in json.load(sys.stdin)["devices"].values() for d in ds
+          if d["name"].startswith("iPhone")]
+if not booted: sys.exit("No booted iPhone simulator.")
+if len(booted) > 1: sys.exit("Several iPhone simulators are booted; set UDID to one of them.")
+print(booted[0]["udid"])')}
 
 tap() { idb ui tap --udid "$UDID" "$1" "$2"; }
 swipe() { idb ui swipe --udid "$UDID" "$1" "$2" "$3" "$4" --duration "${5:-1.2}"; sleep 1; }
