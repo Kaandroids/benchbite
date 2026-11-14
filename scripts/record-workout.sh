@@ -10,10 +10,11 @@ OUT=${1:-workout.mov}
 # shellcheck source=lib/simulator.sh
 source "$(dirname "$0")/lib/simulator.sh"
 
-# Searches the library and picks the result at this height.
+# Searches the library, picks the exercise with this name and clears the search.
 pick() {
   type_text "$1"; sleep 1.4
-  tap 221 "$2"; sleep 1
+  tap_label "$2"; sleep 1
+  erase 20
 }
 
 start_recording "$OUT"
@@ -22,11 +23,11 @@ tap_label "New workout"; sleep 1.6
 tap 201 174; sleep 0.6; type_text "Push day"; sleep 0.8
 tap 300 234; sleep 0.6                              # close the keyboard
 tap 150 272; sleep 0.5; tap 303 272; sleep 1        # Wednesday and Saturday
-tap_label "add, Add exercises"; sleep 1.6
+tap_label "Add exercises"; sleep 1.6
 tap 215 138; sleep 0.6
-pick "bench press" 336; erase 11
-pick "shoulder press" 409; erase 14
-pick "pushdown" 482
+pick "bench press" "Barbell Bench Press - Medium Grip"
+pick "shoulder press" "Barbell Shoulder Press"
+pick "pushdown" "Triceps Pushdown"
 tap 350 779; sleep 1                                # close the keyboard
 tap_label "Add 3 exercises"; sleep 1.8
 tap 219 427; sleep 1.4                              # the bench press
