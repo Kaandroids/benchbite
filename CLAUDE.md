@@ -40,6 +40,7 @@ src/app/      # Expo Router screens and layouts only
 src/          # components, hooks and other app code
 modules/      # Expo modules of the app's own, in native code (a change needs a new dev build)
 targets/      # Apple targets beside the app, such as the Apple Watch app (a change needs a new dev build)
+.github/scripts/  # scripts the workflows run
 assets/       # images and icons
 website/      # the website, a package of its own
 docs/adr/     # Architecture Decision Records
