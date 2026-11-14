@@ -14,7 +14,8 @@ import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
 import { useTargetBasis } from '@/nutrition/targets';
 import { SettingsButton } from '@/settings/settings-button';
 import { WeightCard } from '@/weight/weight-card';
-import { useLatestWeight, useWeightUnit, WEIGHTS_KEY } from '@/weight/weights';
+import { useLatestWeight, useWeightUnit } from '@/weight/weights';
+import { WEIGHTS_KEY } from '@/weight/weights-key';
 
 import { NutritionCard } from './nutrition-card';
 import { RecordsButton } from './records-button';
