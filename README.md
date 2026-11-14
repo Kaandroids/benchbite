@@ -23,25 +23,33 @@
   </tr>
 </table>
 
-> **Status:** in development, with no release yet. Workouts, nutrition, progress and the AI
-> coach work end to end; see the [roadmap](#roadmap).
+> **Status:** in development, with no release yet. Workouts, nutrition, progress, the AI coach,
+> the health apps and the Apple Watch app work end to end; see the [roadmap](#roadmap).
 
 ## Highlights
 
 - **A plan from a few questions.** The onboarding asks for the goal, body data and training
   preferences, then sets daily calorie and macro targets and builds a weekly workout plan that
   fits the chosen workout length. No account needed: people start as guests and sign up later.
-- **Workouts that remember.** About 870 exercises with pictures, last time's sets beside each set,
-  a rest timer that notifies in the background, records and progress charts per exercise, and
-  alternatives of a workout for days with other gear.
+- **Workouts that remember.** An exercise library with pictures, exercises of one's own, last
+  time's sets beside each set, a rest timer that notifies in the background, records and history
+  per exercise, and alternatives of a workout for days with other gear.
+- **On the wrist.** An Apple Watch app follows the workout in progress or runs it on its own: tick
+  and edit sets, time a hold, feel the rest end, see the heart rate, and log with the iPhone out
+  of reach.
+- **With Apple Health and Health Connect.** Workouts are saved to the health app, and workouts
+  from other apps, steps, weight and a workout's heart rate are read back into the day.
 - **Nutrition without the busywork.** A food library of the German BLS 4.0 in English, German and
-  Turkish, recipes and foods of one's own, frequent and favourite foods, water, and targets that
-  follow the weight.
-- **Bite, the coach.** A chat that knows the plan, the meals and the workouts. Describe a meal or
-  send a photo of it and Bite turns it into a card to add with a tap; it proposes changes to
-  workouts, targets and the food log, and the user decides.
+  Turkish, recipes and foods of one's own, frequent and favourite foods, a meal estimated from a
+  photo, water, and targets that follow the weight.
+- **Bite, the coach.** A chat, typed or spoken, that knows the plan, the meals and the workouts,
+  and keeps a notebook of what matters, such as an injury. Bite turns a meal described or
+  photographed into a card to add with a tap, and proposes changes to workouts, targets, the food
+  log and its notes as cards the user applies or undoes.
 - **Progress and streaks.** Weight over time, monthly summaries, and a daily streak with freezes
   for the days life gets in the way.
+- **Free, with a premium plan.** The plan, logging and the health apps are free; Bite and more
+  workouts come with premium, with a seven-day trial.
 - **Made to be used every day.** English, German and Turkish, light and dark mode, and reminders
   planned from the week.
 
@@ -85,6 +93,8 @@ functions ([ADR 0001](docs/adr/0001-react-native-and-supabase.md)).
 
 ```mermaid
 flowchart LR
+  watch["Apple Watch app<br/>SwiftUI"]
+  health["Apple Health ·<br/>Health Connect"]
   app["Mobile app<br/>Expo · React Native"]
   subgraph supabase["Supabase"]
     db[("Postgres<br/>row level security,<br/>functions, triggers, pg_cron")]
@@ -94,6 +104,8 @@ flowchart LR
   end
   gemini["Gemini"]
 
+  watch <-- "the workout in progress" --> app
+  app <-- "workouts, steps, weight,<br/>heart rate" --> health
   app -- "queries and rpc()" --> db
   app --> auth
   app -- "photos" --> storage
@@ -106,9 +118,11 @@ flowchart LR
 | Layer             | Technology                                                                |
 | ----------------- | ------------------------------------------------------------------------- |
 | Mobile            | React Native with Expo, Expo Router, TanStack Query, i18next              |
+| Watch             | SwiftUI, built as a target beside the app, linked with WatchConnectivity  |
 | Backend           | Supabase: Postgres with row level security, Auth, Storage, Edge Functions |
 | Server-side logic | Postgres functions, triggers and pg_cron; Edge Functions in Deno          |
 | AI                | Gemini, behind an interface of our own                                    |
+| Website           | Astro, on Netlify                                                         |
 | Tests             | Jest and React Native Testing Library, pgTAP, Deno test                   |
 
 ## How it is built
@@ -119,11 +133,14 @@ flowchart LR
 - **AI-assisted, reviewed by a person.** Work is planned with
   [Claude Code](https://claude.com/claude-code), implemented in pull requests by the
   `benchbite-bot` GitHub App, reviewed automatically for design, security, and logic and
-  performance with the [review skills](.claude/skills/), and merged by the maintainer.
+  performance with the [review skills](.claude/skills/), which fix what has a clear fix before
+  they report, and merged by the maintainer.
   [CONTRIBUTING.md](CONTRIBUTING.md) describes the flow.
 - **Checked on every pull request.** CI runs types, lint, formatting, the app's tests,
   translations and the Edge Functions' checks, and on a local Supabase stack the database tests,
   the generated types and every plan the plan builder can make.
+- **Watched after release too.** A daily workflow checks the scheduled jobs and the month's AI
+  spend, and Dependabot keeps dependencies current.
 - **Security first.** Row level security on every table, schema changes only through migrations,
   only the publishable key in the app, and photo metadata stripped on the device.
 
