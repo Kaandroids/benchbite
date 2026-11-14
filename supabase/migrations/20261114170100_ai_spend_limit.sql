@@ -57,7 +57,9 @@ select date_trunc('month', u.created_at at time zone 'UTC')::date, sum(u.cost_us
 from public.ai_usage u
 group by 1;
 
--- What this month's calls of all users cost so far, those running counted at their most.
+-- What this month's calls of all users cost so far, those running counted at their most. Only those
+-- started this month: a call left behind is recorded in the month it started, by its user's next
+-- call, which may never come.
 create function public.ai_month_spend_usd()
 returns numeric
 language sql
@@ -69,7 +71,10 @@ as $$
       select m.cost_usd from public.ai_spend_months m
       where m.month = date_trunc('month', now() at time zone 'UTC')::date
     ), 0)
-    + coalesce((select sum(c.reserved_usd) from public.ai_calls_in_flight c), 0);
+    + coalesce((
+      select sum(c.reserved_usd) from public.ai_calls_in_flight c
+      where c.started_at >= date_trunc('month', now() at time zone 'UTC') at time zone 'UTC'
+    ), 0);
 $$;
 
 -- Whether this month's spend has reached the limit, so that no call starts until the next month.

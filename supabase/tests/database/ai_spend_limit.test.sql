@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(14);
 
 -- A, whose own budget is untouched, and B, whose calls make up the month's spend of all users.
 insert into auth.users (id, email) values
@@ -74,6 +74,15 @@ select is(
   (select row(used_percent, paused, healthy)::text from public.ai_spend_status()),
   row(85, false, false)::text,
   'Past the warning share, running calls included, it is not healthy'
+);
+delete from public.ai_calls_in_flight;
+
+-- A call left behind in an earlier month is recorded there, not counted toward this one.
+insert into public.ai_calls_in_flight (user_id, feature, model, reserved_usd, started_at)
+values ('00000000-0000-0000-0000-00000000000b', 'meal_photo', 'test', 4.5, now() - interval '40 days');
+select is(
+  public.ai_month_spend_usd(), 4.000000,
+  'A call still running from an earlier month does not count toward this one'
 );
 delete from public.ai_calls_in_flight;
 
