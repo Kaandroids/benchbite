@@ -10,6 +10,24 @@ alter table public.food_names
 create index food_names_name_key_trgm
   on public.food_names using gin (name_key extensions.gin_trgm_ops);
 
+-- A `like` pattern for the names that hold `term`, its wildcards matching only themselves.
+create function public.food_name_pattern(term text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select '%' || replace(replace(replace(term, '\', '\\'), '%', '\%'), '_', '\_') || '%';
+$$;
+
+revoke execute on function public.food_name_pattern(text) from public, anon;
+grant execute on function public.food_name_pattern(text) to authenticated;
+
+-- pg_trgm loaded in this session, as the index above loads it, so that the function may set its
+-- threshold: a parameter of an extension not loaded yet cannot be set by a role that is no
+-- superuser.
+select extensions.similarity('', '');
+
 -- As before (20261028170000_search_without_recipes.sql), and only over the names the index finds.
 create or replace function public.search_foods(
   query text,
@@ -38,24 +56,22 @@ as $$
   with search as (
     select public.food_name_key(trim(search_foods.query)) as term
   ),
-  -- The term as a pattern of itself, for the trigram index to find the names that hold it.
-  pattern as (
-    select '%' || replace(replace(replace(s.term, '\', '\\'), '%', '\%'), '_', '\_') || '%'
-      as contains
-    from search s
-  ),
   -- The library's names in the user's language and in English, and the user's foods and recipes.
   names as (
     select n.food_id, null::bigint as custom_food_id, null::bigint as recipe_id, n.name_key as name
     from public.food_names n
-    cross join search s
-    cross join pattern p
     where n.language in (search_foods.language, 'en')
       -- Only the names a score below can count, found by the index: those that hold the term,
       -- and for a typo those with a word close to it. The scores decide among them as before.
+      -- The term is worked out here from the argument, not taken from `search`: the function's
+      -- plan does not know the argument, and only a condition on it can use the index.
       and (
-        n.name_key like p.contains
-        or (length(s.term) >= 4 and s.term operator(extensions.<<%) n.name_key)
+        n.name_key like public.food_name_pattern(public.food_name_key(trim(search_foods.query)))
+        or (
+          length(public.food_name_key(trim(search_foods.query))) >= 4
+          and public.food_name_key(trim(search_foods.query))
+            operator(extensions.<<%) n.name_key
+        )
       )
     union all
     select null, c.id, null, public.food_name_key(c.name)
@@ -87,7 +103,8 @@ as $$
     cross join search s
     where length(s.term) between 2 and 50
   ),
-  -- Each food once, by its best name. A typo counts from a similarity of 0.4.
+  -- Each food once, by its best name. A typo counts from a similarity of 0.4, the function's
+  -- strict_word_similarity_threshold, by which the names above were found: the two go together.
   matches as (
     select distinct on (food_id, custom_food_id, recipe_id) food_id, custom_food_id, recipe_id,
       score
