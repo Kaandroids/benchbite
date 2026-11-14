@@ -22,7 +22,8 @@ import type { MealCard } from './meal-cards';
 import type { NoteCard } from './notes';
 import { isShownProposal, type ShownProposal } from './proposals';
 import { NOTES_KEY } from './notebook';
-import { THREADS_KEY } from './threads';
+import { mediaPaths } from './chat-media';
+import { messagePage, type OlderMessages, THREADS_KEY } from './threads';
 
 /** How soon after a stop a message refused as one at a time is sent again, and when. */
 const RETRY_WITHIN_MS = 5_000;
@@ -115,19 +116,28 @@ export type ChatStatus = 'idle' | 'thinking' | 'answering';
 /**
  * A conversation with Bite, as it is on the screen: the messages, what Bite is doing, the tool it
  * is looking something up with, and why a message failed. It goes on in `start`'s thread, with
- * its messages, when one is given, or else in a new thread, until the screen closes.
+ * its latest messages, when one is given, or else in a new thread, until the screen closes; its
+ * older messages are read a page at a time, as `start.older` begins them (#544).
  *
  * A message whose photos or voice message are refused, by the app or by coach-chat before Bite is
  * asked, leaves the chat again: `onRefused` gets it back, with why, for the user to change it and
  * send it again; a voice message refused comes back without it, to record again.
  */
 export function useChat(
-  start?: { threadId: number; messages: ChatMessage[] },
+  start?: { threadId: number; messages: ChatMessage[]; older?: OlderMessages },
   onRefused?: (draft: Draft, problem: DraftProblem) => void,
 ) {
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>(start?.messages ?? []);
+  // Where the messages not read yet begin, and whether a page of them is being read or failed.
+  const [older, setOlder] = useState(start?.older);
+  const [olderStatus, setOlderStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
+  // The photos and voice messages the chat kept, a page of messages at a time, for their
+  // addresses: those it opened with, then each page of older ones read. Only those: its messages
+  // are read again after each one sent, whose photos and voice show from the device, and a new list
+  // would ask for every address again.
+  const [mediaPages, setMediaPages] = useState(() => [mediaPaths(start?.messages ?? [])]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [tool, setTool] = useState<string>();
   const [failure, setFailure] = useState<Failure>();
@@ -343,8 +353,28 @@ export function useChat(
     if (last) sendAgain(last);
   };
 
+  /** Reads the page of messages before those shown, once, and puts it before them. */
+  const loadOlder = useCallback(async () => {
+    if (!older || olderStatus === 'loading') return;
+    setOlderStatus('loading');
+    try {
+      const page = await messagePage(older.threadId, older.before, messages[0]?.role);
+      setMessages((all) => [...page.messages, ...all]);
+      setMediaPages((pages) => [...pages, mediaPaths(page.messages)]);
+      setOlder(page.older);
+      setOlderStatus('idle');
+    } catch {
+      setOlderStatus('failed');
+    }
+  }, [older, olderStatus, messages]);
+
   return {
     messages,
+    /** Whether the thread has messages before those shown, and how reading them goes. */
+    olderStatus: older ? olderStatus : undefined,
+    /** The photos and voice messages the chat kept, by page of messages read. */
+    mediaPages,
+    loadOlder,
     /** The thread the chat goes on in, once it has one. */
     thread,
     status,

@@ -294,6 +294,8 @@ describe('a saved chat', () => {
       data: {
         title: null,
         messages: stored,
+        // The chat's first question, which names it, read on its own.
+        first: stored[0],
       },
     } as never);
   });
@@ -352,6 +354,7 @@ describe('a saved chat', () => {
           { id: 'stored-5', role: 'user', text: '', photos: [{ path: 'u/7/d.jpg' }] },
           { id: 'stored-6', role: 'bite', text: 'A Margherita!' },
         ],
+        first: stored[0],
       },
     } as never);
     await stream.send({ event: 'text', text: 'A Margherita!' });
