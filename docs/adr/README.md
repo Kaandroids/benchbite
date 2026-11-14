@@ -46,7 +46,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0028](0028-move-workouts-within-their-week.md)                       | Move workouts within their week, with several workouts a day                            | Accepted                                             |
 | [0029](0029-schedule-reminders-from-the-week.md)                      | Schedule workout reminders from the week as it is                                       | Accepted                                             |
 | [0030](0030-deploy-supabase-from-github-actions.md)                   | Deploy Supabase from GitHub Actions                                                     | Accepted                                             |
-| [0031](0031-email-and-password-accounts.md)                           | Create accounts with an email address and a password                                    | Accepted, amended by ADR-0091                        |
+| [0031](0031-email-and-password-accounts.md)                           | Create accounts with an email address and a password                                    | Accepted, amended by ADR-0091, ADR-0136              |
 | [0032](0032-animated-splash-over-a-static-native-splash.md)           | Animate the splash in the app, over a static native splash                              | Accepted                                             |
 | [0033](0033-food-library-from-bls.md)                                 | Build the food library from the BLS 4.0                                                 | Accepted                                             |
 | [0034](0034-meal-entries-with-copied-values.md)                       | Log meals as entries with copied values, per local day and fixed meal                   | Accepted                                             |
@@ -151,3 +151,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0133](0133-bite-proposes-note-changes.md)                            | Bite proposes changes to a note, which the user applies                                 | Accepted                                             |
 | [0134](0134-pause-bite-at-the-providers-spend-limit.md)               | Pause Bite at the provider's spend limit, and warn before it                            | Accepted                                             |
 | [0135](0135-search-food-names-through-a-trigram-index.md)             | Search food names through a trigram index                                               | Accepted                                             |
+| [0136](0136-sign-out-an-account-deleted-elsewhere.md)                 | Sign out an account deleted elsewhere, and say why a session ended                      | Accepted                                             |

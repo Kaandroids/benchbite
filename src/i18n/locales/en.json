@@ -24,10 +24,22 @@
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
   },
   "sessionEnded": {
-    "title": "Your guest session ended",
-    "message": "This device could no longer sign in as your guest profile, so your plan and workouts from before can’t be opened here anymore.\n\nYou’ll start fresh with a new guest profile.",
-    "startAgain": "Start again",
-    "accountNote": "With an account, your plan and workouts stay yours on any device."
+    "guest": {
+      "title": "Your guest session ended",
+      "message": "This device could no longer sign in as your guest profile, so your plan and workouts from before can’t be opened here anymore.\n\nYou’ll start fresh with a new guest profile.",
+      "startAgain": "Start again",
+      "accountNote": "With an account, your plan and workouts stay yours on any device."
+    },
+    "account": {
+      "title": "You’re signed out on this device",
+      "message": "Your account may have been deleted, or signed out on another device, for example after a password change.\n\nLog in again to open your plan and workouts.",
+      "guestNote": "As a guest you start with a new, empty profile."
+    },
+    "deleted": {
+      "title": "Your account was deleted",
+      "message": "It was deleted on the website, with everything in it, so you’re signed out here too.\n\nYou can keep using Benchbite as a guest, starting fresh."
+    },
+    "continueAsGuest": "Continue as guest"
   },
   "account": {
     "errors": {

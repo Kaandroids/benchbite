@@ -57,7 +57,8 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { status, retry, startAgain, recovering } = useSession();
+  const session = useSession();
+  const { status, retry, startAgain, recovering } = session;
   const { completed, checking } = useOnboarding();
   useClaimDevice();
   const { t } = useTranslation();
@@ -100,7 +101,7 @@ function RootNavigator() {
       {status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
-        <SessionEnded onStartAgain={startAgain} />
+        <SessionEnded reason={session.reason} onStartAgain={startAgain} />
       ) : recovering ? (
         <NewPasswordScreen />
       ) : checking ? (
