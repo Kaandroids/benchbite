@@ -7,11 +7,8 @@ import { refOfRow, type FoodRef } from '@shared/foods';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
+import { FOOD_KEY, FOOD_SEARCH_KEY } from './food-keys';
 import { totalsOf, type Totals } from './meals';
-
-/** The query keys of a food search and of one food. */
-const FOOD_SEARCH_KEY = ['food-search'];
-const FOOD_KEY = ['food'];
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 

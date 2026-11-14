@@ -4,6 +4,7 @@ import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
+import { ENTRIES_KEY } from './food-keys';
 import { scaled, totalOf } from './meals';
 import type { NutritionTargets } from './targets';
 
@@ -62,7 +63,7 @@ export function isOverTarget(day: DayNutrition): boolean {
 }
 
 /** The query keys of what was eaten on spans of days, which changing an entry reloads. */
-export const NUTRITION_DAYS_KEY = ['meal-entries', 'days'];
+export const NUTRITION_DAYS_KEY = [...ENTRIES_KEY, 'days'];
 
 /**
  * What was eaten on each day from `from` to `to`, at most a year, with the targets each day kept,

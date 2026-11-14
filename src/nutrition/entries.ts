@@ -8,8 +8,9 @@ import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
 import { foodColumns, type Amount, type FoodRef } from './foods';
-import { dayEntriesKey, type LoggedEntry, type Meal, PAST_MEAL_KEY } from './meals';
-import { FREQUENT_FOODS_KEY, useReloadFoods } from './quick-foods';
+import { FREQUENT_FOODS_KEY, PAST_MEAL_KEY } from './food-keys';
+import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
+import { useReloadFoods } from './quick-foods';
 import { dayTargetsKey } from './targets';
 
 export type NewEntry = Amount & {

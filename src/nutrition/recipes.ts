@@ -15,12 +15,9 @@ import {
   type FoodResult,
   type PortionUnit,
 } from './foods';
+import { RECIPE_KEY, RECIPES_KEY } from './food-keys';
 import { NOTHING, scaled, totalOf, totalsOf, type Totals } from './meals';
 import { useReloadFoods } from './quick-foods';
-
-/** The query keys of one recipe and of the user's recipes. */
-const RECIPE_KEY = ['recipe'];
-const RECIPES_KEY = ['recipes'];
 
 /** How many servings a recipe makes at most, and how many ingredients it has, as the database allows. */
 export const MAX_SERVINGS = 50;

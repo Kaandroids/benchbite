@@ -10,12 +10,10 @@ import type { ColorTokens } from '@/theme';
 import { addDays, daysBetween, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
+import { ENTRIES_KEY, PAST_MEAL_KEY } from './food-keys';
 import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './foods';
 
 import type { NutritionTargets } from './targets';
-
-/** The query key of a meal logged before, to log again. */
-export const PAST_MEAL_KEY = ['past-meal'];
 
 export type Meal = Database['public']['Enums']['meal'];
 
@@ -142,7 +140,7 @@ export function totalsOf(row: {
 }
 
 /** The query key of a day's entries, for anything that changes them. */
-export const dayEntriesKey = (day: string) => ['meal-entries', day];
+export const dayEntriesKey = (day: string) => [...ENTRIES_KEY, day];
 
 /** The columns of an entry that `loggedEntryOf` reads, with whether its food can still be logged. */
 const ENTRY_COLUMNS =
