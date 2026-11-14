@@ -72,14 +72,26 @@
   </tr>
   <tr>
     <td><img src="docs/media/bite.png" width="200" alt="Bite turning a message about lunch into a meal card"></td>
+    <td><img src="docs/media/bite-proposal.png" width="200" alt="Bite noting a sore shoulder and proposing to swap an exercise in the upper body workout"></td>
     <td><img src="docs/media/workout-active.png" width="200" alt="A workout in progress with last time's sets and the rest timer"></td>
-    <td><img src="docs/media/today-dark.png" width="200" alt="Today in dark mode"></td>
-    <td></td>
+    <td><img src="docs/media/workout-finished.png" width="200" alt="A finished workout with its heart rate from the watch and its sets"></td>
   </tr>
   <tr>
     <td align="center">Bite makes a meal card</td>
+    <td align="center">Bite proposes a change</td>
     <td align="center">During a workout</td>
+    <td align="center">After a workout</td>
+  </tr>
+  <tr>
+    <td><img src="docs/media/today-dark.png" width="200" alt="Today in dark mode"></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
     <td align="center">Dark mode</td>
+    <td></td>
+    <td></td>
     <td></td>
   </tr>
 </table>

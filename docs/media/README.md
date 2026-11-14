@@ -3,17 +3,19 @@
 The screenshots and GIFs in the README. They are taken on the iOS Simulator
 (iPhone 17 Pro) against the local Supabase stack, with a demo account and no real data.
 
-| File                 | Shows                                                           |
-| -------------------- | --------------------------------------------------------------- |
-| `onboarding.gif`     | The onboarding, from the welcome screen to the finished plan    |
-| `workout-create.gif` | Making a workout: name, days, exercises from the library, sets  |
-| `today.png`          | Today: the week, the daily target and the next workout          |
-| `workout.png`        | Workouts: the active workouts and this week's history           |
-| `nutrition.png`      | Nutrition: the day's meals, macros and water                    |
-| `progress.png`       | Progress: the weight over three months and last month's summary |
-| `bite.png`           | Bite turning a message into a meal card                         |
-| `workout-active.png` | A workout in progress, with last time's sets and the rest timer |
-| `today-dark.png`     | Today in dark mode                                              |
+| File                   | Shows                                                           |
+| ---------------------- | --------------------------------------------------------------- |
+| `onboarding.gif`       | The onboarding, from the welcome screen to the finished plan    |
+| `workout-create.gif`   | Making a workout: name, days, exercises from the library, sets  |
+| `today.png`            | Today: the week, the daily target and the next workout          |
+| `workout.png`          | Workouts: the active workouts and this week's history           |
+| `nutrition.png`        | Nutrition: the day's meals, macros and water                    |
+| `progress.png`         | Progress: the weight over three months and last month's summary |
+| `bite.png`             | Bite turning a message into a meal card                         |
+| `bite-proposal.png`    | Bite noting an injury and proposing to swap an exercise         |
+| `workout-active.png`   | A workout in progress, with last time's sets and the rest timer |
+| `workout-finished.png` | A finished workout, with the watch's heart rate and its sets    |
+| `today-dark.png`       | Today in dark mode                                              |
 
 ## The demo account
 
@@ -35,17 +37,24 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    `pnpm start --no-dev --minify`. In the development build's menu, turn off the tools button.
 2. Log in as the demo account in the simulator (Settings → Log in). After running the seed again,
    log out first: the old session belongs to the deleted account.
-3. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
-   1200 px high: `sips -Z 1200 <file>.png`.
-4. For `bite.png`, ask Bite "Just had 3 eggs, two slices of toast and a coffee with milk for
-   lunch. Can you log it?". For `workout-active.png`, start Upper body and tick the first set;
-   discard the workout afterwards.
+3. Give the status bar a fixed time and full bars:
+   `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`.
+4. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
+   1200 px high: `sips -Z 1200 <file>.png`. With a watch or a second iPhone simulator booted, put
+   the iPhone's id from `xcrun simctl list devices booted` in place of `booted`, here and in step 3.
+5. For `bite.png`, ask Bite "Just had 3 eggs, two slices of toast and a coffee with milk for
+   lunch. Can you log it?", and leave the card unadded. For `bite-proposal.png`, ask in the same
+   chat "My left shoulder hurts on overhead presses. Can you swap them out of my upper body
+   workout?", and keep the plan as it is. For `workout-finished.png`, open the last workout in the
+   history. For `workout-active.png`, start Upper body and tick the first set; discard the workout
+   afterwards.
 
 ## Recording the GIFs
 
 With [idb](https://fbidb.io), [ffmpeg](https://ffmpeg.org) and [gifski](https://gif.ski)
 installed, record the onboarding with the app on the welcome screen as a new guest, then making a
-workout with the app on the Workouts tab:
+workout with the app on the Workouts tab. They record the booted iPhone simulator; with several
+booted, set `UDID` to the one to record.
 
 ```bash
 scripts/record-onboarding.sh onboarding.mov
