@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 -- A, whose own budget is untouched, and B, whose calls make up the month's spend of all users.
 insert into auth.users (id, email) values
@@ -49,6 +49,16 @@ select is(
 -- A call recorded again changes its month by the difference.
 update public.ai_usage set cost_usd = 4 where cost_usd = 3;
 select is(public.ai_month_spend_usd(), 4.000000, 'A call recorded again counts what it cost');
+
+-- One that records below the most it was counted at lowers its month by as much.
+select pg_temp.used(1, now() - interval '200 days');
+update public.ai_usage set cost_usd = 0.25 where cost_usd = 1;
+select is(
+  (select cost_usd from public.ai_spend_months
+    where month = date_trunc('month', (now() - interval '200 days') at time zone 'UTC')::date),
+  0.250000,
+  'A call recorded below its most lowers its month'
+);
 
 -- A deleted account's calls stay counted, as the provider still bills them.
 delete from public.ai_usage where cost_usd = 4;
