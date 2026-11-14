@@ -52,63 +52,97 @@ export function SessionEnded({ reason, onStartAgain }: SessionEndedProps) {
       setStarting(false);
     }
   };
-  const asGuest = (label: string, variant: 'primary' | 'secondary') => (
-    <Button variant={variant} label={label} loading={starting} onPress={() => void startAgain()} />
-  );
 
   return (
     <Screen
       footer={
         <View style={{ gap: spacing.md }}>
-          {reason === 'guest' ? (
-            <>
-              {asGuest(t('sessionEnded.startAgain'), 'primary')}
-              <Button
-                variant="secondary"
-                label={t('settings.createAccount')}
-                onPress={() => setForm('create')}
-              />
-              <LinkPrompt
-                question={t('account.haveAccount')}
-                action={t('account.logIn')}
-                onPress={() => setForm('logIn')}
-              />
-              <Text variant="caption" color="textMuted" align="center">
-                {t('sessionEnded.accountNote')}
-              </Text>
-            </>
-          ) : reason === 'account' ? (
-            <>
-              <Button label={t('account.logIn')} onPress={() => setForm('logIn')} />
-              {asGuest(t('sessionEnded.continueAsGuest'), 'secondary')}
-              <Text variant="caption" color="textMuted" align="center">
-                {t('sessionEnded.signedOut.guestNote')}
-              </Text>
-            </>
-          ) : (
-            <>
-              {asGuest(t('sessionEnded.continueAsGuest'), 'primary')}
-              <Button
-                variant="secondary"
-                label={t('settings.createAccount')}
-                onPress={() => setForm('create')}
-              />
-            </>
-          )}
+          <Footer
+            reason={reason}
+            starting={starting}
+            onStartAgain={() => void startAgain()}
+            onOpen={setForm}
+          />
         </View>
       }
     >
       <MessageView
         icon={ICONS[reason]}
         tone="danger"
-        title={t(`sessionEnded.${COPY[reason]}.title`)}
-        message={t(`sessionEnded.${COPY[reason]}.message`)}
+        title={t(`sessionEnded.${reason}.title`)}
+        message={t(`sessionEnded.${reason}.message`)}
       />
     </Screen>
   );
 }
 
-const ICONS = { guest: 'personOff', account: 'logOut', deleted: 'trash' } as const;
+/** What the user can do once their session ended, as fits why. */
+function Footer({
+  reason,
+  starting,
+  onStartAgain,
+  onOpen,
+}: {
+  reason: EndedReason;
+  starting: boolean;
+  onStartAgain: () => void;
+  onOpen: (form: 'create' | 'logIn') => void;
+}) {
+  const { t } = useTranslation();
+  const createAccount = (
+    <Button
+      variant="secondary"
+      label={t('settings.createAccount')}
+      onPress={() => onOpen('create')}
+    />
+  );
+  switch (reason) {
+    case 'guest':
+      return (
+        <>
+          <Button
+            label={t('sessionEnded.guest.startAgain')}
+            loading={starting}
+            onPress={onStartAgain}
+          />
+          {createAccount}
+          <LinkPrompt
+            question={t('account.haveAccount')}
+            action={t('account.logIn')}
+            onPress={() => onOpen('logIn')}
+          />
+          <Text variant="caption" color="textMuted" align="center">
+            {t('sessionEnded.guest.accountNote')}
+          </Text>
+        </>
+      );
+    case 'account':
+      return (
+        <>
+          <Button label={t('account.logIn')} onPress={() => onOpen('logIn')} />
+          <Button
+            variant="secondary"
+            label={t('sessionEnded.continueAsGuest')}
+            loading={starting}
+            onPress={onStartAgain}
+          />
+          <Text variant="caption" color="textMuted" align="center">
+            {t('sessionEnded.account.guestNote')}
+          </Text>
+        </>
+      );
+    case 'deleted':
+      return (
+        <>
+          <Button
+            label={t('sessionEnded.continueAsGuest')}
+            loading={starting}
+            onPress={onStartAgain}
+          />
+          {createAccount}
+        </>
+      );
+  }
+}
 
-/** The copy of each reason, under `sessionEnded`. */
-const COPY = { guest: 'guest', account: 'signedOut', deleted: 'deleted' } as const;
+const ICONS = { guest: 'personOff', account: 'logOut', deleted: 'trash' } as const;

@@ -26,12 +26,11 @@
   "sessionEnded": {
     "guest": {
       "title": "Misafir oturumun sona erdi",
-      "message": "Bu cihaz artık misafir profilinle giriş yapamadı, bu yüzden önceki planın ve antrenmanların burada açılamıyor.\n\nYeni bir misafir profiliyle baştan başlayacaksın."
+      "message": "Bu cihaz artık misafir profilinle giriş yapamadı, bu yüzden önceki planın ve antrenmanların burada açılamıyor.\n\nYeni bir misafir profiliyle baştan başlayacaksın.",
+      "startAgain": "Baştan başla",
+      "accountNote": "Bir hesapla planın ve antrenmanların her cihazda seninle kalır."
     },
-    "startAgain": "Baştan başla",
-    "accountNote": "Bir hesapla planın ve antrenmanların her cihazda seninle kalır.",
-    "continueAsGuest": "Misafir olarak devam et",
-    "signedOut": {
+    "account": {
       "title": "Bu cihazda oturumun kapandı",
       "message": "Hesabın silinmiş ya da başka bir cihazda, örneğin şifre değişikliğinden sonra, çıkış yapılmış olabilir.\n\nPlanını ve antrenmanlarını açmak için tekrar giriş yap.",
       "guestNote": "Misafir olarak yeni ve boş bir profille başlarsın."
@@ -39,7 +38,8 @@
     "deleted": {
       "title": "Hesabın silindi",
       "message": "Web sitesinde, içindeki her şeyle birlikte silindi, bu yüzden burada da oturumun kapandı.\n\nBenchbite’ı misafir olarak sıfırdan kullanmaya devam edebilirsin."
-    }
+    },
+    "continueAsGuest": "Misafir olarak devam et"
   },
   "account": {
     "errors": {

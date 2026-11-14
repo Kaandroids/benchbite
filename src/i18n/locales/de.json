@@ -26,12 +26,11 @@
   "sessionEnded": {
     "guest": {
       "title": "Deine Gast-Sitzung ist abgelaufen",
-      "message": "Dieses Gerät konnte sich nicht mehr mit deinem Gastprofil anmelden. Dein bisheriger Plan und deine Trainings lassen sich hier deshalb nicht mehr öffnen.\n\nDu startest neu mit einem neuen Gastprofil."
+      "message": "Dieses Gerät konnte sich nicht mehr mit deinem Gastprofil anmelden. Dein bisheriger Plan und deine Trainings lassen sich hier deshalb nicht mehr öffnen.\n\nDu startest neu mit einem neuen Gastprofil.",
+      "startAgain": "Neu starten",
+      "accountNote": "Mit einem Konto bleiben dein Plan und deine Trainings auf jedem Gerät bei dir."
     },
-    "startAgain": "Neu starten",
-    "accountNote": "Mit einem Konto bleiben dein Plan und deine Trainings auf jedem Gerät bei dir.",
-    "continueAsGuest": "Als Gast weitermachen",
-    "signedOut": {
+    "account": {
       "title": "Du bist auf diesem Gerät abgemeldet",
       "message": "Dein Konto wurde vielleicht gelöscht oder auf einem anderen Gerät abgemeldet, zum Beispiel nach einer Passwortänderung.\n\nMelde dich wieder an, um deinen Plan und deine Trainings zu öffnen.",
       "guestNote": "Als Gast startest du mit einem neuen, leeren Profil."
@@ -39,7 +38,8 @@
     "deleted": {
       "title": "Dein Konto wurde gelöscht",
       "message": "Es wurde auf der Website gelöscht, mit allem, was darin war. Deshalb bist du auch hier abgemeldet.\n\nDu kannst Benchbite als Gast weiter nutzen und neu starten."
-    }
+    },
+    "continueAsGuest": "Als Gast weitermachen"
   },
   "account": {
     "errors": {
