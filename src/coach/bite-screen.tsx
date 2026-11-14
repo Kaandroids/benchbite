@@ -21,7 +21,7 @@ import { useTheme } from '@/theme';
 
 import { BitePremiumScreen } from './bite-premium-screen';
 import { ChatComposer, type RefusedDraft } from './chat-composer';
-import { mediaPaths, useMediaUrls } from './chat-media';
+import { useMediaUrls } from './chat-media';
 import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { LockedComposer } from './locked-composer';
@@ -177,12 +177,7 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
   const opening = (Object.keys(states) as (keyof typeof states)[])
     .filter((kind) => openedWith[kind])
     .map((kind) => states[kind]);
-  // The photos and voice messages the chat kept, read back once for all of them when it opens,
-  // then a page of older messages at a time as they are read. Only those: its messages are read
-  // again after each one sent, whose photos and voice show from the device, and a new list would
-  // ask for every address again.
-  const [keptMedia] = useState(() => mediaPaths(start?.messages ?? []));
-  const mediaUrls = useMediaUrls(start?.threadId, [keptMedia, ...chat.olderMedia]);
+  const mediaUrls = useMediaUrls(start?.threadId, chat.mediaPages);
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   // Older messages are read once the user scrolls up near the top, not as the chat opens there.
   const dragged = useRef(false);

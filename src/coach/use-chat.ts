@@ -133,8 +133,11 @@ export function useChat(
   // Where the messages not read yet begin, and whether a page of them is being read or failed.
   const [older, setOlder] = useState(start?.older);
   const [olderStatus, setOlderStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
-  // The photos and voice messages of each page of older messages read, for their addresses.
-  const [olderMedia, setOlderMedia] = useState<string[][]>([]);
+  // The photos and voice messages the chat kept, a page of messages at a time, for their
+  // addresses: those it opened with, then each page of older ones read. Only those: its messages
+  // are read again after each one sent, whose photos and voice show from the device, and a new list
+  // would ask for every address again.
+  const [mediaPages, setMediaPages] = useState(() => [mediaPaths(start?.messages ?? [])]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [tool, setTool] = useState<string>();
   const [failure, setFailure] = useState<Failure>();
@@ -357,7 +360,7 @@ export function useChat(
     try {
       const page = await messagePage(older.threadId, older.before, messages[0]?.role);
       setMessages((all) => [...page.messages, ...all]);
-      setOlderMedia((pages) => [...pages, mediaPaths(page.messages)]);
+      setMediaPages((pages) => [...pages, mediaPaths(page.messages)]);
       setOlder(page.older);
       setOlderStatus('idle');
     } catch {
@@ -369,8 +372,8 @@ export function useChat(
     messages,
     /** Whether the thread has messages before those shown, and how reading them goes. */
     olderStatus: older ? olderStatus : undefined,
-    /** The photos and voice messages of each page of older messages read, by page. */
-    olderMedia,
+    /** The photos and voice messages the chat kept, by page of messages read. */
+    mediaPages,
     loadOlder,
     /** The thread the chat goes on in, once it has one. */
     thread,
