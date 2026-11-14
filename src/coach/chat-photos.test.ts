@@ -144,6 +144,21 @@ describe("the addresses of a chat's photos", () => {
     await waitFor(() => expect(result.current?.get('u/7/c.jpg')).toBe('https://x/c'));
   });
 
+  it('asks nothing for pages without photos or voice messages', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    createSignedUrls.mockResolvedValue({
+      data: [{ path: 'u/7/a.jpg', signedUrl: 'https://x/a' }],
+      error: null,
+    });
+    const { result } = await renderHook(() => useMediaUrls(7, [[], [], ['u/7/a.jpg']]), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current?.get('u/7/a.jpg')).toBe('https://x/a'));
+    expect(createSignedUrls).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('asks again before they end, open or opened again, and keeps them for a chat reopened soon', async () => {
     jest.useFakeTimers();
     const queryClient = createTestQueryClient();

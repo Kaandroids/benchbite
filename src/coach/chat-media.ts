@@ -47,14 +47,16 @@ export function mediaPaths(messages: ChatMessage[]): string[] {
  */
 export function useMediaUrls(threadId: number | undefined, pages: string[][]) {
   return useQueries({
-    queries: pages.map((paths) => ({
-      queryKey: ['coach-media', threadId, paths],
-      enabled: paths.length > 0,
-      queryFn: () => mediaUrls(paths),
-      staleTime: RENEW_MS,
-      refetchInterval: RENEW_MS,
-      gcTime: KEPT_AFTER_CLOSE_MS,
-    })),
+    // A page with none asks for nothing, and would share its key with every other such page.
+    queries: pages
+      .filter((paths) => paths.length > 0)
+      .map((paths) => ({
+        queryKey: ['coach-media', threadId, paths],
+        queryFn: () => mediaUrls(paths),
+        staleTime: RENEW_MS,
+        refetchInterval: RENEW_MS,
+        gcTime: KEPT_AFTER_CLOSE_MS,
+      })),
     combine: byPath,
   });
 }
