@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { Storage } from 'expo-sqlite/kv-store';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
@@ -24,6 +25,7 @@ jest.mock('@/lib/supabase', () => ({
       signInAnonymously: jest.fn(),
       signOut: jest.fn(),
       getSession: jest.fn(),
+      getUser: jest.fn(),
     },
   },
 }));
@@ -35,6 +37,22 @@ const unsubscribe = jest.fn();
 let listeners: AuthListener[] = [];
 
 const SESSION = { access_token: 'token', user: { id: 'user-1' } } as Session;
+const ACCOUNT = { access_token: 'token', user: { id: 'user-1', is_anonymous: false } } as Session;
+
+/** Lets getUser() answer that the user no longer exists, as after a deletion elsewhere. */
+const userGone = () =>
+  auth.getUser.mockResolvedValue({
+    data: { user: null },
+    error: { code: 'user_not_found', status: 403 },
+  } as never);
+
+let appStateListeners: ((state: AppStateStatus) => void)[] = [];
+// The check it starts finishes inside the act, so that nothing updates after it.
+const comeToForeground = () =>
+  act(async () => {
+    for (const listener of appStateListeners) listener('active');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
 async function emit(session: Session | null, event = session ? 'SIGNED_IN' : 'INITIAL_SESSION') {
   await act(() => {
@@ -58,6 +76,13 @@ beforeEach(() => {
   });
   auth.signInAnonymously.mockResolvedValue({ data: {}, error: null } as never);
   auth.getSession.mockResolvedValue({ data: { session: null }, error: null } as never);
+  auth.getUser.mockResolvedValue({ data: { user: SESSION.user }, error: null } as never);
+  auth.signOut.mockResolvedValue({ error: null } as never);
+  appStateListeners = [];
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+    appStateListeners.push(listener as (state: AppStateStatus) => void);
+    return { remove: jest.fn() } as never;
+  });
   auth.signOut.mockImplementation(async () => {
     await emit(null);
     return { error: null };
@@ -135,9 +160,70 @@ describe('SessionProvider', () => {
     const { result } = await renderSession();
     await emit(SESSION);
     await emit(null);
-    expect(result.current.status).toBe('ended');
+    expect(result.current).toMatchObject({ status: 'ended', reason: 'guest' });
     await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
     expect(auth.signInAnonymously).not.toHaveBeenCalled();
+  });
+
+  it("tells an account's session that ended apart from a guest's", async () => {
+    const { result } = await renderSession();
+    await emit(ACCOUNT);
+    await emit(null);
+    expect(result.current).toMatchObject({ status: 'ended', reason: 'account' });
+  });
+
+  it('signs out an account found deleted, as on the website, and says it was deleted', async () => {
+    userGone();
+    const { result } = await renderSession();
+    await emit(ACCOUNT);
+    await waitFor(() => expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' }));
+    // The session the sign-out ends comes to the listener.
+    await emit(null, 'SIGNED_OUT');
+    expect(result.current).toMatchObject({ status: 'ended', reason: 'deleted' });
+    expect(auth.signInAnonymously).not.toHaveBeenCalled();
+  });
+
+  it('says it was deleted though its session could not be dropped', async () => {
+    userGone();
+    auth.signOut.mockResolvedValue({ error: new Error('offline') } as never);
+    const { result } = await renderSession();
+    await emit(ACCOUNT);
+    await waitFor(() =>
+      expect(result.current).toMatchObject({ status: 'ended', reason: 'deleted' }),
+    );
+  });
+
+  it("ends a guest removed as inactive as a guest's session", async () => {
+    userGone();
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await waitFor(() => expect(auth.signOut).toHaveBeenCalled());
+    await emit(null, 'SIGNED_OUT');
+    expect(result.current).toMatchObject({ status: 'ended', reason: 'guest' });
+  });
+
+  it('asks again whether the account exists when the app comes to the foreground', async () => {
+    const { result } = await renderSession();
+    await emit(ACCOUNT);
+    await waitFor(() => expect(auth.getUser).toHaveBeenCalled());
+    expect(auth.signOut).not.toHaveBeenCalled();
+    userGone();
+    await comeToForeground();
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    await emit(null, 'SIGNED_OUT');
+    expect(result.current).toMatchObject({ status: 'ended', reason: 'deleted' });
+  });
+
+  it('keeps the session when the user cannot be checked, as offline', async () => {
+    auth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { name: 'AuthRetryableFetchError', status: 0 },
+    } as never);
+    const { result } = await renderSession();
+    await emit(ACCOUNT);
+    await waitFor(() => expect(auth.getUser).toHaveBeenCalled());
+    expect(auth.signOut).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('ready');
   });
 
   it('asks for a new password after a reset code signed in, until it is saved', async () => {
