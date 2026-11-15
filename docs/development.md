@@ -280,24 +280,24 @@ A new native version needs `pnpm native:dev` and a new development build.
 
 ## Scripts
 
-| Command                 | Description                                           |
-| ----------------------- | ----------------------------------------------------- |
-| `pnpm start`            | Start the Expo dev server                             |
-| `pnpm typecheck`        | Type-check with TypeScript                            |
-| `pnpm lint`             | Lint with ESLint (fails on warnings)                  |
-| `pnpm format`           | Format all files with Prettier                        |
-| `pnpm format:check`     | Check formatting without changing it                  |
-| `pnpm test`             | Run the app's tests with Jest                         |
-| `pnpm check:locales`    | Check that translations and permission texts match    |
-| `pnpm watch:strings`    | Write the watch app's text to Swift                   |
-| `pnpm db:types`         | Generate TypeScript types from the local database     |
-| `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
-| `pnpm import:foods`     | Import the food library from the BLS 4.0              |
-| `pnpm icons`            | Draw the app icons and the splash image from the mark |
-| `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
-| `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools   |
-| `pnpm check:plans`      | Check every generated workout plan on the local stack |
-| `pnpm seed:demo`        | Recreate the demo account of the README screenshots   |
+| Command                 | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `pnpm start`            | Start the Expo dev server                                  |
+| `pnpm typecheck`        | Type-check with TypeScript                                 |
+| `pnpm lint`             | Lint with ESLint (fails on warnings)                       |
+| `pnpm format`           | Format all files with Prettier                             |
+| `pnpm format:check`     | Check formatting without changing it                       |
+| `pnpm test`             | Run the app's tests with Jest                              |
+| `pnpm check:locales`    | Check that translations and permission texts match         |
+| `pnpm watch:strings`    | Write the watch app's text to Swift                        |
+| `pnpm db:types`         | Generate TypeScript types from the local database          |
+| `pnpm import:exercises` | Import the exercise library from free-exercise-db          |
+| `pnpm import:foods`     | Import the food library from the BLS 4.0                   |
+| `pnpm icons`            | Draw the app icons, splash image and favicon from the mark |
+| `pnpm functions:check`  | Type-check, lint and test the Edge Functions               |
+| `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools        |
+| `pnpm check:plans`      | Check every generated workout plan on the local stack      |
+| `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.
