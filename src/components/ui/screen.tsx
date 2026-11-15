@@ -60,12 +60,8 @@ export function Screen({
     action
   );
   const scroll = useRef<ScrollViewInstance>(null);
-  const keepFocusedInView = useFocusedFieldInView(
-    scroll,
-    spacing.lg,
-    // Inside a KeyboardAvoiding, which makes the content smaller for the keyboard, as a form does.
-    useShrinksForKeyboard(),
-  );
+  const shrinks = useShrinksForKeyboard();
+  const keepFocusedInView = useFocusedFieldInView(scroll, spacing.lg, shrinks);
   const hasTopBar = progress !== undefined || onBack !== undefined || end !== undefined;
 
   return (
