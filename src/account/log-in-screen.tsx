@@ -58,6 +58,8 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   }
 
   const filled = email.trim() !== '' && password !== '';
+  // The return key logs in when the button would.
+  const canLogIn = filled && !signIn.isPending;
   const logIn = () =>
     signIn.mutate(
       { email, password },
@@ -108,8 +110,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
         onChange={setPassword}
         editable={!signIn.isPending}
         onSubmit={() => {
-          // As the button does, which is disabled until both are filled and while it logs in.
-          if (filled && !signIn.isPending) {
+          if (canLogIn) {
             logIn();
           }
         }}
