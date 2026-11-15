@@ -400,6 +400,8 @@ extension WatchWorkout {
       .count
   }
 
+  /// Whether all the sets of the exercise at `index` are done, those in `ticked` among them; never
+  /// for one with no sets.
   private func isExerciseDone(_ index: Int, _ ticked: Set<SetIndex>) -> Bool {
     let count = exercises[index].sets.count
     return count > 0 && doneCount(index, ticked) == count
@@ -418,7 +420,7 @@ extension WatchWorkout {
 
   /// The round the superset of the exercise at `index` is in, of how many, with the sets in
   /// `ticked` taken as done, as supersetRound() in src/sessions/session.ts; none on its own.
-  func supersetRound(of index: Int, ticked: Set<SetIndex> = []) -> (round: Int, rounds: Int)? {
+  func supersetRound(of index: Int, ticked: Set<SetIndex>) -> (round: Int, rounds: Int)? {
     let members = supersetMembers(of: index)
     guard !members.isEmpty else { return nil }
     let rounds = members.map { exercises[$0].sets.count }.max() ?? 0
