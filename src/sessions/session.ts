@@ -33,6 +33,11 @@ export type SessionExercise = {
   exerciseId: string;
   target: WorkoutTarget;
   restSeconds: number;
+  /**
+   * The superset it is in, done in rounds with its rest after each round (ADR 0137); none on its
+   * own, and in a workout started before supersets.
+   */
+  superset?: number | null;
   sets: SessionSet[];
   /** The sets of the exercise's latest log, shown as "last time". */
   last: SetValues[];
@@ -258,10 +263,11 @@ export function startSession(
     name: workout.name,
     type: workout.type,
     startedAt: now,
-    exercises: exercises.map(({ exerciseId, target, restSeconds, sets }) => ({
+    exercises: exercises.map(({ exerciseId, target, restSeconds, superset, sets }) => ({
       exerciseId,
       target,
       restSeconds,
+      superset,
       last: last[exerciseId] ?? [],
       bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
@@ -379,10 +385,75 @@ export function isExerciseDone(exercise: SessionExercise): boolean {
   return exercise.sets.length > 0 && exercise.sets.every((s) => s.done);
 }
 
+/** The places of the exercises in the superset of the one at `index`, in order; none on its own. */
+export function supersetMembers(exercises: readonly SessionExercise[], index: number): number[] {
+  const superset = exercises[index]?.superset;
+  if (superset == null) {
+    return [];
+  }
+  return exercises.flatMap((exercise, i) => (exercise.superset === superset ? [i] : []));
+}
+
+function doneCount(exercise: SessionExercise): number {
+  return exercise.sets.filter((s) => s.done).length;
+}
+
+/**
+ * The round a superset is in, from 1, of as many as its exercise with the most sets has: the
+ * first round one of its exercises still has a set to do in. None for an exercise on its own.
+ */
+export function supersetRound(
+  exercises: readonly SessionExercise[],
+  index: number,
+): { round: number; rounds: number } | null {
+  const members = supersetMembers(exercises, index).flatMap((i) => exercises[i] ?? []);
+  if (members.length === 0) {
+    return null;
+  }
+  const rounds = Math.max(...members.map((member) => member.sets.length));
+  const open = members.filter((member) => !isExerciseDone(member));
+  const round = open.length === 0 ? rounds : Math.min(...open.map(doneCount)) + 1;
+  return { round: Math.min(round, rounds), rounds };
+}
+
+/**
+ * Where a set ticked in a superset leads (ADR 0137): to the next of its exercises that has not yet
+ * had its set in this round, with no rest; or, the round done, to the superset's rest, and then to
+ * its first exercise with a set left, or past the superset once it is done.
+ */
+function afterSupersetTick(
+  value: Session,
+  members: number[],
+  exercise: number,
+  now: number,
+): Pick<Session, 'rest' | 'current'> {
+  const { exercises } = value;
+  const round = doneCount(exercises[exercise]!);
+  const from = members.indexOf(exercise);
+  const rotated = [...members.slice(from + 1), ...members.slice(0, from)];
+  const inRound = rotated.find((i) => {
+    const member = exercises[i]!;
+    return doneCount(member) < round && !isExerciseDone(member);
+  });
+  if (inRound !== undefined) {
+    return { rest: null, current: inRound };
+  }
+  const { restSeconds } = exercises[exercise]!;
+  const rest = restSeconds > 0 ? { endsAt: now + restSeconds * 1000, seconds: restSeconds } : null;
+  const nextRound = members.find((i) => !isExerciseDone(exercises[i]!));
+  if (nextRound !== undefined) {
+    return { rest, current: nextRound };
+  }
+  const last = members[members.length - 1]!;
+  const following = exercises.findIndex((e, i) => i > last && !isExerciseDone(e));
+  return { rest, current: following >= 0 ? following : value.current };
+}
+
 /**
  * Marks a set done, or not done again, without the checks of markDone(), which the screens and the
  * watch use: for markDone(), stopClock() and tests. Done starts the exercise's rest, and when it
- * was the last set, opens the next exercise that is not done.
+ * was the last set, opens the next exercise that is not done; in a superset it leads on as its
+ * rounds go instead.
  */
 export function toggleDoneUnchecked(
   value: Session,
@@ -403,6 +474,10 @@ export function toggleDoneUnchecked(
     return { ...next, rest: null, restChangedAt: now };
   }
   const item = next.exercises[exercise];
+  const members = supersetMembers(next.exercises, exercise);
+  if (members.length > 1) {
+    return { ...next, restChangedAt: now, ...afterSupersetTick(next, members, exercise, now) };
+  }
   // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
   next = {
     ...next,
@@ -622,6 +697,8 @@ export function toLog(value: Session, finishedAt = Date.now()) {
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
+      // Sent for every exercise, none as null, which an edit of the log keeps to (ADR 0137).
+      superset: exercise.superset ?? null,
       sets: exercise.sets
         .filter((s) => s.done)
         .map(({ doneAt, ...set }) => ({

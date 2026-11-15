@@ -23,6 +23,7 @@ import {
   startClock,
   startSession,
   stopClock,
+  supersetRound,
   toggleDoneUnchecked,
   toLog,
   type Session,
@@ -259,6 +260,62 @@ describe('logging sets', () => {
   });
 });
 
+describe('a superset', () => {
+  // Bench press 3 sets and row 2 sets in a superset resting 60 s after each round, then a plank.
+  const SUPERSET = testWorkout(8, {
+    exercises: [
+      testExercise('bench', { sets: 3, restSeconds: 60, superset: 1 }),
+      testExercise('row', { sets: 2, restSeconds: 60, superset: 1 }),
+      testExercise('plank', { sets: 1, target: { seconds: 45, meters: null }, restSeconds: 0 }),
+    ],
+  });
+  const begin = () => startSession('user-a', SUPERSET, {}, { now: NOW });
+
+  it('opens the next exercise of the round with no rest, then rests after the round', () => {
+    let session = toggleDoneUnchecked(begin(), 0, 0, NOW);
+    expect(session).toMatchObject({ current: 1, rest: null });
+    session = toggleDoneUnchecked(session, 1, 0, NOW + 30_000);
+    expect(session).toMatchObject({ current: 0, rest: { endsAt: NOW + 90_000, seconds: 60 } });
+    expect(supersetRound(session.exercises, 0)).toEqual({ round: 2, rounds: 3 });
+  });
+
+  it('drops an exercise out of sets from the later rounds, then moves past the superset', () => {
+    let session = begin();
+    for (const [exercise, set] of [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ] as const) {
+      session = toggleDoneUnchecked(session, exercise, set, NOW);
+    }
+    // The row is out of sets, so the third round is the bench press alone, with its rest.
+    expect(session).toMatchObject({ current: 0 });
+    expect(supersetRound(session.exercises, 1)).toEqual({ round: 3, rounds: 3 });
+    session = toggleDoneUnchecked(session, 0, 2, NOW + 60_000);
+    expect(session).toMatchObject({ current: 2, rest: { seconds: 60 } });
+  });
+
+  it('opens the exercise a round still needs when another was ticked first', () => {
+    const session = toggleDoneUnchecked(begin(), 1, 0, NOW);
+    expect(session).toMatchObject({ current: 0, rest: null });
+  });
+
+  it('ends the rest when a set is unticked, as on its own', () => {
+    const rested = toggleDoneUnchecked(toggleDoneUnchecked(begin(), 0, 0, NOW), 1, 0, NOW);
+    expect(toggleDoneUnchecked(rested, 1, 0, NOW + 1000).rest).toBeNull();
+  });
+
+  it('logs each exercise with its superset, none as null', () => {
+    const session = toggleDoneUnchecked(toggleDoneUnchecked(begin(), 0, 0, NOW), 2, 0, NOW);
+    expect(toLog(session, NOW + 60_000).exercises.map((e) => e.superset)).toEqual([1, 1, null]);
+  });
+
+  it('has no round for an exercise on its own', () => {
+    expect(supersetRound(begin().exercises, 2)).toBeNull();
+  });
+});
+
 describe('markDone', () => {
   const lifted: SetKind = { fields: ['weightKg', 'reps'], timed: false, addedWeight: false };
   const bench = (session: Session) => session.exercises[0]?.sets[0];
@@ -423,6 +480,7 @@ describe('finishing', () => {
       exercises: [
         {
           exerciseId: 'bench',
+          superset: null,
           sets: [
             {
               weightKg: 80,
@@ -433,8 +491,8 @@ describe('finishing', () => {
             },
           ],
         },
-        { exerciseId: 'plank', sets: [] },
-        { exerciseId: 'rowing', sets: [] },
+        { exerciseId: 'plank', superset: null, sets: [] },
+        { exerciseId: 'rowing', superset: null, sets: [] },
       ],
     });
     expect(sessionTotals(session)).toEqual({ done: 1, planned: 4, kilograms: 640 });

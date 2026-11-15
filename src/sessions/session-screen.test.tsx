@@ -374,6 +374,7 @@ describe('FinishScreen', () => {
         exercises: [
           {
             exerciseId: 'bench',
+            superset: null,
             sets: [
               {
                 weightKg: 80,
@@ -384,7 +385,7 @@ describe('FinishScreen', () => {
               },
             ],
           },
-          { exerciseId: 'plank', sets: [] },
+          { exerciseId: 'plank', superset: null, sets: [] },
         ],
       }),
     );
@@ -435,9 +436,10 @@ describe('FinishScreen', () => {
     expect(logWorkout).toHaveBeenCalledWith(
       expect.objectContaining({
         exercises: [
-          { exerciseId: 'bench', sets: [] },
+          { exerciseId: 'bench', superset: null, sets: [] },
           {
             exerciseId: 'plank',
+            superset: null,
             sets: [
               {
                 weightKg: null,

@@ -218,7 +218,9 @@ describe('a workout finished on the watch', () => {
     await act(async () => deliver(finish()));
     expect(supabase.rpc).toHaveBeenCalledWith('log_workout', {
       log: expect.objectContaining({
-        exercises: [{ exerciseId: 'bench', sets: [expect.objectContaining({ seconds: 30 })] }],
+        exercises: [
+          { exerciseId: 'bench', superset: null, sets: [expect.objectContaining({ seconds: 30 })] },
+        ],
       }),
     });
     expect(lastSent().workout).toBeNull();
