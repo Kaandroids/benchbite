@@ -108,6 +108,9 @@ struct WatchExercise: Decodable {
   /// The values the Crown changes, and how: never the time, which the clock measures.
   let crown: [SetField: CrownRange]
   let restSeconds: Int
+  /// The superset it is in, done in rounds (ADR 0137); none on its own, or from a phone before
+  /// supersets.
+  let superset: Int?
   let sets: [WatchSet]
 }
 
@@ -371,6 +374,75 @@ extension WatchWorkout {
       }
     }
     return nil
+  }
+
+  /// The exercises in one superset with the exercise at `index`, next to each other, in order
+  /// (ADR 0137); none for one on its own.
+  func supersetMembers(of index: Int) -> [Int] {
+    guard exercises.indices.contains(index), let superset = exercises[index].superset else {
+      return []
+    }
+    var first = index
+    var last = index
+    while first > 0, exercises[first - 1].superset == superset { first -= 1 }
+    while last < exercises.count - 1, exercises[last + 1].superset == superset { last += 1 }
+    return first == last ? [] : Array(first...last)
+  }
+
+  /// The sets of the exercise at `index` done, those in `ticked` among them.
+  private func doneCount(_ index: Int, _ ticked: Set<SetIndex>) -> Int {
+    exercises[index].sets.indices.filter {
+      exercises[index].sets[$0].done || ticked.contains(SetIndex(exercise: index, set: $0))
+    }.count
+  }
+
+  private func isDone(_ index: Int, _ ticked: Set<SetIndex>) -> Bool {
+    let count = exercises[index].sets.count
+    return count > 0 && doneCount(index, ticked) == count
+  }
+
+  /// Of a superset's exercises at `members`, the one not done with the fewest sets done, the first
+  /// on a tie, as furthestBehind() in src/sessions/session.ts.
+  private func furthestBehind(_ members: [Int], _ ticked: Set<SetIndex>) -> Int? {
+    var behind: Int?
+    for index in members where !isDone(index, ticked) {
+      if let current = behind, doneCount(index, ticked) >= doneCount(current, ticked) { continue }
+      behind = index
+    }
+    return behind
+  }
+
+  /// The round the superset of the exercise at `index` is in, of how many, with the sets in
+  /// `ticked` taken as done, as supersetRound() in src/sessions/session.ts; none on its own.
+  func supersetRound(of index: Int, ticked: Set<SetIndex> = []) -> (round: Int, rounds: Int)? {
+    let members = supersetMembers(of: index)
+    guard !members.isEmpty else { return nil }
+    let rounds = members.map { exercises[$0].sets.count }.max() ?? 0
+    guard let behind = furthestBehind(members, ticked) else { return (rounds, rounds) }
+    return (doneCount(behind, ticked) + 1, rounds)
+  }
+
+  /// What a tick of a set of the exercise at `index` leads to, with the sets in `ticked` taken as
+  /// done, the tick's set among them, as toggleDoneUnchecked() in src/sessions/session.ts: whether
+  /// it starts the exercise's rest, and the set to do next. On its own, its rest and its next set;
+  /// in a superset, the next exercise of the round with no rest, or after the round its rest and
+  /// the exercise furthest behind, or past the superset once it is done.
+  func afterTick(of index: Int, ticked: Set<SetIndex>) -> (rests: Bool, next: NextSet?) {
+    guard exercises.indices.contains(index) else { return (false, nil) }
+    let rests = exercises[index].restSeconds > 0
+    let members = supersetMembers(of: index)
+    guard let from = members.firstIndex(of: index), let last = members.last else {
+      return (rests, firstOpenSet(from: index, skipping: ticked))
+    }
+    let round = doneCount(index, ticked)
+    let rotated = members[(from + 1)...] + members[..<from]
+    if let inRound = rotated.first(where: {
+      doneCount($0, ticked) < round && !isDone($0, ticked)
+    }) {
+      return (false, firstOpenSet(from: inRound, skipping: ticked))
+    }
+    let next = furthestBehind(members, ticked) ?? (last + 1) % exercises.count
+    return (rests, firstOpenSet(from: next, skipping: ticked))
   }
 
   /// The workout's name, or a plain one where it has none.
