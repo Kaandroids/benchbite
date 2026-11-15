@@ -70,6 +70,11 @@ export type WatchExercise = {
    */
   crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
+  /**
+   * The superset it is in, which the watch does in rounds as the phone does (ADR 0137); none on
+   * its own.
+   */
+  superset: number | null;
   sets: WatchSet[];
 };
 
@@ -249,6 +254,7 @@ export function stateOf(
           fields: kind.fields,
           crown: crownOf(kind, known?.equipment),
           restSeconds: exercise.restSeconds,
+          superset: exercise.superset ?? null,
           sets: exercise.sets.map((set, index) => {
             const last = exercise.last[index];
             return {

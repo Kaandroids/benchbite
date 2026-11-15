@@ -161,6 +161,23 @@ describe('stateOf', () => {
     });
   });
 
+  it('gives each exercise its superset, which the watch does in rounds, none on its own', () => {
+    const superset = testWorkout(7, {
+      exercises: [
+        testExercise('bench', { superset: 1 }),
+        testExercise('row', { superset: 1 }),
+        testExercise('plank'),
+      ],
+    });
+    const state = stateOf(
+      startSession('user-a', superset, {}, { now: NOW }),
+      names(withBench),
+      1,
+      [],
+    );
+    expect(state.workout?.exercises.map((exercise) => exercise.superset)).toEqual([1, 1, null]);
+  });
+
   it('counts the set the phone’s clock times among those finishing saves', () => {
     const running = startClock(start(), 0, 1, NOW + MINUTE);
     expect(stateOf(running, names(withBench), 1, []).workout?.setsToSave).toBe(1);
