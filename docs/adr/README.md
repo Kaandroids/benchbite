@@ -153,3 +153,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0135](0135-search-food-names-through-a-trigram-index.md)             | Search food names through a trigram index                                               | Accepted                                             |
 | [0136](0136-sign-out-an-account-deleted-elsewhere.md)                 | Sign out an account deleted elsewhere, and say why a session ended                      | Accepted                                             |
 | [0137](0137-supersets.md)                                             | Join exercises into supersets, done in rounds with one rest                             | Accepted                                             |
+| [0138](0138-set-targets.md)                                           | Give each set a target, the user's own or worked out from last time                     | Accepted                                             |
