@@ -100,7 +100,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
         value={email}
         onChange={setEmail}
         editable={!signIn.isPending}
-        onSubmit={() => passwordField.current?.focus()}
+        onNext={() => passwordField.current?.focus()}
       />
       <PasswordField
         ref={passwordField}

@@ -24,8 +24,6 @@ type FieldProps = {
   errorAction?: ReactNode;
   /** False while what was typed is being sent. */
   editable?: boolean;
-  /** Called by the keyboard's return key, which then keeps the keyboard open. */
-  onSubmit?: () => void;
 };
 
 /** The email address of an account. */
@@ -35,8 +33,11 @@ export function EmailField({
   error,
   errorAction,
   editable = true,
-  onSubmit,
-}: FieldProps) {
+  onNext,
+}: FieldProps & {
+  /** Moves on to the next field with the keyboard's return key, which keeps the keyboard open. */
+  onNext?: () => void;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
@@ -53,10 +54,9 @@ export function EmailField({
         autoCorrect={false}
         autoComplete="email"
         textContentType="username"
-        // Moves on to the password, as the email is never the last field.
-        returnKeyType={onSubmit ? 'next' : undefined}
-        submitBehavior={onSubmit ? 'submit' : undefined}
-        onSubmitEditing={onSubmit}
+        returnKeyType={onNext ? 'next' : undefined}
+        submitBehavior={onNext ? 'submit' : undefined}
+        onSubmitEditing={onNext}
         placeholder={t('account.emailPlaceholder')}
         placeholderTextColor={colors.placeholder}
         style={[field, error ? { borderColor: colors.danger } : null]}
@@ -79,7 +79,13 @@ export function PasswordField({
   label,
   onSubmit,
   ref,
-}: FieldProps & { isNew?: boolean; label?: string; ref?: Ref<TextInputInstance> }) {
+}: FieldProps & {
+  isNew?: boolean;
+  label?: string;
+  /** Sends the form with the keyboard's return key. */
+  onSubmit?: () => void;
+  ref?: Ref<TextInputInstance>;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
