@@ -996,6 +996,11 @@
       "alternativeBody": "Koruduğun antrenmanlarda bir alternatife geçebilirsin. Diğerleri olduğu gibi premium'u bekler.",
       "used": "{{day}} kullanıldı",
       "failed": "Seçimin kaydedilemedi. Tekrar dene."
+    },
+    "superset": {
+      "line": "Süper set · {{rest}}",
+      "header": "Süper set · Her turdan sonra {{time}} dinlenme",
+      "headerNoRest": "Süper set · Turlar arasında dinlenme yok"
     }
   },
   "exercise": {
@@ -1079,7 +1084,10 @@
     "done": "Tamam",
     "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
     "overLimit_one": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
-    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir."
+    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "restAfterRound": "Turdan sonra dinlenme",
+    "supersetNext": "Sonraki egzersizle süper set",
+    "supersetNextNote": "{{name}}, aralarında dinlenme olmadan"
   },
   "onboarding": {
     "sections": {

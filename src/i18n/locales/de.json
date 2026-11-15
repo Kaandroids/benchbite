@@ -996,6 +996,11 @@
       "alternativeBody": "Bei den Workouts, die du behältst, kannst du zu einer anderen Version wechseln. Die übrigen warten unverändert auf Premium.",
       "used": "genutzt am {{day}}",
       "failed": "Deine Wahl konnte nicht gespeichert werden. Versuch es noch einmal."
+    },
+    "superset": {
+      "line": "Supersatz · {{rest}}",
+      "header": "Supersatz · {{time}} Pause nach jeder Runde",
+      "headerNoRest": "Supersatz · Keine Pause zwischen den Runden"
     }
   },
   "exercise": {
@@ -1079,7 +1084,10 @@
     "done": "Fertig",
     "limit": "Ein Training kann bis zu {{max}} Übungen haben.",
     "overLimit_one": "Entferne {{count}} Übung, um zu speichern. Ein Training kann bis zu {{max}} haben.",
-    "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben."
+    "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben.",
+    "restAfterRound": "Pause nach der Runde",
+    "supersetNext": "Supersatz mit der nächsten Übung",
+    "supersetNextNote": "{{name}}, ohne Pause dazwischen"
   },
   "onboarding": {
     "sections": {
