@@ -136,7 +136,7 @@ export function SessionScreen() {
               />
             );
           });
-          const round = supersetRound(session.exercises, block[0]!);
+          const round = supersetRound(session.exercises, block);
           return round ? (
             <SupersetCards key={`superset-${block[0]}`} round={round}>
               {cards}

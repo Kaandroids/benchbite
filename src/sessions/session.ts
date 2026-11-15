@@ -425,20 +425,42 @@ function nextOpen(exercises: readonly SessionExercise[], index: number): number 
 }
 
 /**
- * The round a superset is in, from 1, of as many as its exercise with the most sets has: the
- * first round one of its exercises still has a set to do in. None for an exercise on its own.
+ * Of a superset's exercises at `members`, the one furthest behind: the one not done with the
+ * fewest sets done, the first of them on a tie; none once all are done. The round a superset shows
+ * and the exercise it opens next both follow it.
+ */
+function furthestBehind(
+  exercises: readonly SessionExercise[],
+  members: readonly number[],
+): number | undefined {
+  let behind: number | undefined;
+  for (const i of members) {
+    const member = exercises[i];
+    if (!member || isExerciseDone(member)) {
+      continue;
+    }
+    if (behind === undefined || doneCount(member) < doneCount(exercises[behind]!)) {
+      behind = i;
+    }
+  }
+  return behind;
+}
+
+/**
+ * The round the superset of the exercises at `block` is in, from 1, of as many as its exercise
+ * with the most sets has: the round of its exercise furthest behind. None for a block of one, an
+ * exercise on its own.
  */
 export function supersetRound(
   exercises: readonly SessionExercise[],
-  index: number,
+  block: readonly number[],
 ): { round: number; rounds: number } | null {
-  const members = supersetMembers(exercises, index).flatMap((i) => exercises[i] ?? []);
-  if (members.length === 0) {
+  if (block.length < 2) {
     return null;
   }
-  const rounds = Math.max(...members.map((member) => member.sets.length));
-  const open = members.filter((member) => !isExerciseDone(member));
-  return { round: open.length === 0 ? rounds : Math.min(...open.map(doneCount)) + 1, rounds };
+  const rounds = Math.max(...block.map((i) => exercises[i]?.sets.length ?? 0));
+  const behind = furthestBehind(exercises, block);
+  return { round: behind === undefined ? rounds : doneCount(exercises[behind]!) + 1, rounds };
 }
 
 /**
@@ -465,14 +487,10 @@ function afterSupersetTick(
     return { rest: null, current: inRound };
   }
   const rest = restAfter(exercises[exercise]!.restSeconds, now);
-  const behind = members
-    .filter((i) => !isExerciseDone(exercises[i]!))
-    .reduce<number | undefined>(
-      (first, i) =>
-        first === undefined || doneCount(exercises[i]!) < doneCount(exercises[first]!) ? i : first,
-      undefined,
-    );
-  const current = behind ?? nextOpen(exercises, members[members.length - 1]!) ?? value.current;
+  const current =
+    furthestBehind(exercises, members) ??
+    nextOpen(exercises, members[members.length - 1]!) ??
+    value.current;
   return { rest, current };
 }
 

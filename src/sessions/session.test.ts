@@ -276,7 +276,7 @@ describe('a superset', () => {
     expect(session).toMatchObject({ current: 1, rest: null });
     session = toggleDoneUnchecked(session, 1, 0, NOW + 30_000);
     expect(session).toMatchObject({ current: 0, rest: { endsAt: NOW + 90_000, seconds: 60 } });
-    expect(supersetRound(session.exercises, 0)).toEqual({ round: 2, rounds: 3 });
+    expect(supersetRound(session.exercises, [0, 1])).toEqual({ round: 2, rounds: 3 });
   });
 
   it('drops an exercise out of sets from the later rounds, then moves past the superset', () => {
@@ -291,7 +291,7 @@ describe('a superset', () => {
     }
     // The row is out of sets, so the third round is the bench press alone, with its rest.
     expect(session).toMatchObject({ current: 0 });
-    expect(supersetRound(session.exercises, 1)).toEqual({ round: 3, rounds: 3 });
+    expect(supersetRound(session.exercises, [0, 1])).toEqual({ round: 3, rounds: 3 });
     session = toggleDoneUnchecked(session, 0, 2, NOW + 60_000);
     expect(session).toMatchObject({ current: 2, rest: { seconds: 60 } });
   });
@@ -322,11 +322,11 @@ describe('a superset', () => {
       session = toggleDoneUnchecked(session, exercise, set, NOW);
     }
     expect(session).toMatchObject({ current: 1, rest: { seconds: 60 } });
-    expect(supersetRound(session.exercises, 0)).toEqual({ round: 2, rounds: 3 });
+    expect(supersetRound(session.exercises, [0, 1])).toEqual({ round: 2, rounds: 3 });
   });
 
   it('has no round for an exercise on its own', () => {
-    expect(supersetRound(begin().exercises, 2)).toBeNull();
+    expect(supersetRound(begin().exercises, [2])).toBeNull();
   });
 });
 
