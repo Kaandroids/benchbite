@@ -45,6 +45,7 @@ const session = (workoutId: number, weekday: number, name: string, exercises = 0
     sets: 3,
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,
+    superset: null,
   })),
   estimatedMinutes: 45,
 });

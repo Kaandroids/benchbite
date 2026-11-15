@@ -15,6 +15,7 @@ import { typography, useTheme } from '@/theme';
 
 import { EditorExercises } from './editor-exercises';
 import { ExerciseSheet } from './exercise-sheet';
+import { joinedWithNext } from './supersets';
 import { useWorkoutEditor } from './use-workout-editor';
 import { WeekdayPicker } from './weekday-picker';
 
@@ -27,7 +28,9 @@ export function EditorScreen({ id }: { id?: number }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const details = (exerciseId: string) => findExercise(library.data, exerciseId);
-  const editingExercise = draft?.exercises.find((exercise) => exercise.key === editing) ?? null;
+  const editingIndex = draft?.exercises.findIndex((exercise) => exercise.key === editing) ?? -1;
+  const editingExercise = draft?.exercises[editingIndex] ?? null;
+  const nextExercise = draft?.exercises[editingIndex + 1];
 
   return (
     <SafeAreaView
@@ -135,6 +138,19 @@ export function EditorScreen({ id }: { id?: number }) {
         exercise={editingExercise}
         details={editingExercise ? details(editingExercise.exerciseId) : undefined}
         onChange={editor.replaceExercise}
+        next={
+          editingExercise && nextExercise && draft
+            ? {
+                name: details(nextExercise.exerciseId)?.name ?? '',
+                joined: joinedWithNext(draft.exercises, editingIndex),
+              }
+            : null
+        }
+        onJoinNext={(joined) => {
+          if (editing) {
+            editor.joinExerciseWithNext(editing, joined);
+          }
+        }}
         onRemove={() => {
           if (editing) {
             editor.removeExercise(editing);

@@ -150,11 +150,62 @@ describe('EditorScreen', () => {
       name: 'Chest day',
       weekdays: [4],
       exercises: [
-        { exerciseId: 'bench', sets: 4, target: { reps: { min: 8, max: 12 } }, restSeconds: 120 },
-        { exerciseId: 'rowing', sets: 1, target: { seconds: 300, meters: null }, restSeconds: 0 },
+        {
+          exerciseId: 'bench',
+          sets: 4,
+          target: { reps: { min: 8, max: 12 } },
+          restSeconds: 120,
+          superset: null,
+        },
+        {
+          exerciseId: 'rowing',
+          sets: 1,
+          target: { seconds: 300, meters: null },
+          restSeconds: 0,
+          superset: null,
+        },
       ],
     });
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('joins an exercise with the next into a superset, which shares its rest', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    expect(screen.getByText('Rowing, with no rest between them')).toBeTruthy();
+    await fireEvent(screen.getByLabelText('Superset with the next exercise'), 'valueChange', true);
+    expect(screen.getByText('Rest after the round')).toBeTruthy();
+    expect(screen.getAllByText('Superset · Rest 2:00')).toHaveLength(2);
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({ exerciseId: 'bench', superset: 1, restSeconds: 120 }),
+          expect.objectContaining({ exerciseId: 'rowing', superset: 1, restSeconds: 120 }),
+        ],
+      }),
+    );
+  });
+
+  it('splits up a superset left with one exercise by a removal', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent(screen.getByLabelText('Superset with the next exercise'), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('button', { name: 'Remove' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [expect.objectContaining({ exerciseId: 'rowing', superset: null })],
+      }),
+    );
+  });
+
+  it('offers no superset with the next for the last exercise', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Rowing' }));
+    expect(screen.queryByLabelText('Superset with the next exercise')).toBeNull();
+    expect(screen.getByText('Rest')).toBeTruthy();
   });
 
   it('opens the picker to add exercises', async () => {

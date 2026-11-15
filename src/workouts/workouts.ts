@@ -19,6 +19,8 @@ export type WorkoutExercise = {
   sets: number;
   target: WorkoutTarget;
   restSeconds: number;
+  /** The superset the exercise is in, by its number (ADR 0137); none on its own. */
+  superset: number | null;
   primaryMuscles: Muscle[];
   /** The first picture of the exercise, as a path in the exercise-images bucket. */
   imagePath: string | null;
@@ -91,6 +93,7 @@ type ExerciseRow = Pick<
   | 'target_seconds'
   | 'target_meters'
   | 'rest_seconds'
+  | 'superset'
 > & {
   exercises: Pick<
     Database['public']['Tables']['exercises']['Row'],
@@ -108,6 +111,7 @@ function workoutExercise(row: ExerciseRow): WorkoutExercise {
         ? { reps: { min: row.target_reps_min, max: row.target_reps_max ?? row.target_reps_min } }
         : { seconds: row.target_seconds, meters: row.target_meters },
     restSeconds: row.rest_seconds,
+    superset: row.superset,
     primaryMuscles: row.exercises.primary_muscles,
     imagePath: row.exercises.image_paths.find((path) => path !== null) ?? null,
   };
@@ -121,7 +125,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       `id, name, weekdays, active, held, type, estimated_minutes,
       workout_exercises (
         position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
-        target_meters, rest_seconds,
+        target_meters, rest_seconds, superset,
         exercises (primary_muscles, image_paths)
       )`,
     )
@@ -243,7 +247,7 @@ export type WorkoutDraft = {
   /** Null keeps the plan builder's type as the name, in whatever language the app is in. */
   name: string | null;
   weekdays: number[];
-  exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
+  exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds' | 'superset'>[];
 };
 
 /**

@@ -13,6 +13,8 @@ import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
 import { useRestFormat, useTargetFormat } from './format';
+import { SupersetLine } from './superset-marks';
+import { supersetPlace } from './supersets';
 
 const ROW_HEIGHT = 76;
 
@@ -23,7 +25,7 @@ type EditorExercisesProps = {
   max: number;
   over: number;
   onOpen: (key: string) => void;
-  onMove: (from: number, to: number) => void;
+  onMove: (from: number, to: number) => number | void;
   onDragChange: (dragging: boolean) => void;
 };
 
@@ -45,8 +47,9 @@ export function EditorExercises({
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
 
-  const row = (exercise: DraftExercise) => {
+  const row = (exercise: DraftExercise, index: number) => {
     const info = details(exercise.exerciseId);
+    const superset = supersetPlace(exercises, index);
     return (
       <Pressable
         accessibilityRole="button"
@@ -54,6 +57,7 @@ export function EditorExercises({
         onPress={() => onOpen(exercise.key)}
         style={[styles.exercise, { gap: spacing.md }]}
       >
+        {superset ? <SupersetLine place={superset} inset={spacing.md} /> : null}
         <ExerciseThumbnail path={thumbnailOf(info)} size={52} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
@@ -62,9 +66,15 @@ export function EditorExercises({
           <Text variant="captionStrong" color="primaryText">
             {formatTarget(exercise.sets, exercise.target)}
           </Text>
-          <Text variant="caption" color="textMuted">
-            {formatRest(exercise.restSeconds)}
-          </Text>
+          {superset ? (
+            <Text variant="captionStrong" color="primaryText">
+              {t('workout.superset.line', { rest: formatRest(exercise.restSeconds) })}
+            </Text>
+          ) : (
+            <Text variant="caption" color="textMuted">
+              {formatRest(exercise.restSeconds)}
+            </Text>
+          )}
         </View>
         <Icon name="forward" size={18} color="textMuted" />
       </Pressable>
@@ -114,7 +124,9 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  // As tall as the row, so that a superset's line runs on from one row to the next.
   exercise: {
+    height: ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
   },

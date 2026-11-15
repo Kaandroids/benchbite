@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -38,6 +38,8 @@ import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
 import { HeldAlternativeSheet } from './held-workout-sheet';
+import { SupersetHeader, SupersetLine } from './superset-marks';
+import { supersetPlace, type SupersetPlace } from './supersets';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
@@ -150,9 +152,8 @@ export function WorkoutScreen({ id }: { id: number }) {
       : []),
   ];
 
-  const row = (exercise: WorkoutExercise, key: string, divider: boolean) => (
+  const row = (exercise: WorkoutExercise, divider: boolean, superset: SupersetPlace) => (
     <View
-      key={key}
       style={[
         styles.exercise,
         {
@@ -163,6 +164,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         },
       ]}
     >
+      {superset ? <SupersetLine place={superset} inset={0} reach={spacing.md + 1} /> : null}
       <ExerciseThumbnail
         path={exercise.imagePath}
         size={IMAGE_SIZE}
@@ -173,9 +175,12 @@ export function WorkoutScreen({ id }: { id: number }) {
         <Text variant="bodyStrong" color="primaryText">
           {formatTarget(exercise.sets, exercise.target)}
         </Text>
-        <Text variant="caption" color="textMuted">
-          {formatRest(exercise.restSeconds)}
-        </Text>
+        {/* A superset says its rest once, over its exercises. */}
+        {superset ? null : (
+          <Text variant="caption" color="textMuted">
+            {formatRest(exercise.restSeconds)}
+          </Text>
+        )}
       </View>
       <View style={{ gap: spacing.sm }}>
         <InfoButton exerciseId={exercise.exerciseId} exerciseName={nameOf(exercise.exerciseId)} />
@@ -307,9 +312,24 @@ export function WorkoutScreen({ id }: { id: number }) {
           />
           <Card>
             <View>
-              {workout.exercises.map((exercise, index) =>
-                row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
-              )}
+              {workout.exercises.map((exercise, index) => {
+                const superset = supersetPlace(workout.exercises, index);
+                return (
+                  <Fragment key={`${exercise.exerciseId}-${index}`}>
+                    {superset?.first ? (
+                      <SupersetHeader
+                        restSeconds={exercise.restSeconds}
+                        style={{
+                          paddingTop: index > 0 ? spacing.md : 0,
+                          borderTopWidth: index > 0 ? 1 : 0,
+                          borderTopColor: colors.border,
+                        }}
+                      />
+                    ) : null}
+                    {row(exercise, index > 0 && !superset?.first, superset)}
+                  </Fragment>
+                );
+              })}
             </View>
           </Card>
         </View>

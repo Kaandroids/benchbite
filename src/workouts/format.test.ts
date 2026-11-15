@@ -15,6 +15,7 @@ const exercise = (primaryMuscles: WorkoutExercise['primaryMuscles']): WorkoutExe
   sets: 3,
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,
+  superset: null,
   primaryMuscles,
   imagePath: null,
 });

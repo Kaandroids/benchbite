@@ -34,6 +34,7 @@ const exerciseRow = (position: number, exerciseId: string, more: object = {}) =>
   target_seconds: null,
   target_meters: null,
   rest_seconds: 90,
+  superset: null,
   exercises: { primary_muscles: ['quadriceps'], image_paths: [`${exerciseId}/0.webp`] },
   ...more,
 });
@@ -78,6 +79,7 @@ describe('fetchWorkouts', () => {
               target_reps_max: null,
               target_seconds: 300,
               rest_seconds: 0,
+              superset: null,
               exercises: { primary_muscles: ['quadriceps'], image_paths: [] },
             }),
             exerciseRow(1, 'lunge', {
@@ -103,6 +105,7 @@ describe('fetchWorkouts', () => {
           sets: 3,
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
+          superset: null,
           primaryMuscles: ['quadriceps'],
           imagePath: 'squat/0.webp',
         },
@@ -111,6 +114,7 @@ describe('fetchWorkouts', () => {
           sets: 3,
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
+          superset: null,
           primaryMuscles: ['glutes'],
           imagePath: 'lunge/0.webp',
         },
@@ -119,6 +123,7 @@ describe('fetchWorkouts', () => {
           sets: 3,
           target: { seconds: 300, meters: null },
           restSeconds: 0,
+          superset: null,
           primaryMuscles: ['quadriceps'],
           imagePath: null,
         },
@@ -217,7 +222,13 @@ describe('useSaveWorkout', () => {
     name: 'Arms',
     weekdays: [2],
     exercises: [
-      { exerciseId: 'curl', sets: 3, target: { reps: { min: 8, max: 12 } }, restSeconds: 60 },
+      {
+        exerciseId: 'curl',
+        sets: 3,
+        target: { reps: { min: 8, max: 12 } },
+        restSeconds: 60,
+        superset: null,
+      },
     ],
   };
 

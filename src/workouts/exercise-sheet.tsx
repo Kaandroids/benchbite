@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
+import { SwitchCard } from '@/components/ui/switch-card';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -29,15 +30,26 @@ type ExerciseSheetProps = {
   exercise: DraftExercise | null;
   details: LibraryExercise | undefined;
   onChange: (exercise: DraftExercise) => void;
+  /**
+   * The exercise after it, which it can be joined with into a superset (ADR 0137), with whether it
+   * is; none for the last exercise.
+   */
+  next: { name: string; joined: boolean } | null;
+  onJoinNext: (joined: boolean) => void;
   onRemove: () => void;
   onClose: () => void;
 };
 
-/** The sets, target and rest of one exercise of the workout being edited, in a bottom sheet. */
+/**
+ * The sets, target and rest of one exercise of the workout being edited, and whether it is in a
+ * superset with the next, in a bottom sheet.
+ */
 export function ExerciseSheet({
   exercise,
   details,
   onChange,
+  next,
+  onJoinNext,
   onRemove,
   onClose,
 }: ExerciseSheetProps) {
@@ -129,7 +141,8 @@ export function ExerciseSheet({
   }
   rows.push(
     row(
-      t('editor.rest'),
+      // In a superset, the rest after each round, the same for all its exercises.
+      exercise.superset != null ? t('editor.restAfterRound') : t('editor.rest'),
       exercise.restSeconds,
       LIMITS.rest,
       (restSeconds) => set({ restSeconds }),
@@ -191,6 +204,15 @@ export function ExerciseSheet({
           </View>
         ))}
       </Card>
+
+      {next ? (
+        <SwitchCard
+          label={t('editor.supersetNext')}
+          note={t('editor.supersetNextNote', { name: next.name })}
+          value={next.joined}
+          onValueChange={onJoinNext}
+        />
+      ) : null}
 
       <View style={[styles.actions, { gap: spacing.md }]}>
         <Button
