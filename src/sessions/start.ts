@@ -12,9 +12,9 @@ import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 import { openWorkout } from '@/workouts/open';
 
-import { fetchBests, lastSetsQuery } from './logs';
+import { fetchBests, fetchLastSetsOrNone } from './logs';
 import { offerRestAlarm } from './rest-alarm';
-import { startSession, type ExerciseBests, type LastSets } from './session';
+import { startSession, type ExerciseBests } from './session';
 import { useStartMove } from './start-move';
 
 /** The query keys of the last sets and the bests of the exercises a workout starts with. */
@@ -81,10 +81,7 @@ export function useStartWorkout() {
     beforeStart?.();
     const ids = workout.exercises.map((exercise) => exercise.exerciseId);
     const [last, bests] = await Promise.all([
-      queryClient.fetchQuery(lastSetsQuery(ids)).catch((error: unknown): LastSets => {
-        console.warn('Could not load the last sets', error);
-        return {};
-      }),
+      fetchLastSetsOrNone(queryClient, ids),
       queryClient
         .fetchQuery({
           queryKey: [...BESTS_KEY, ...ids],

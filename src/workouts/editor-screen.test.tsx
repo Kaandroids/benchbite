@@ -23,18 +23,15 @@ jest.mock('@/exercises/library', () => ({
 /** Resolves last time's sets when a test lets it, at once otherwise. */
 let mockLastSetsGate: Promise<void> = Promise.resolve();
 jest.mock('@/sessions/logs', () => ({
-  lastSetsQuery: (ids: string[]) => ({
-    queryKey: ['last-sets', ...ids],
-    queryFn: async () => {
-      await mockLastSetsGate;
-      return {
-        bench: [
-          { weightKg: 75, reps: 12, seconds: null, meters: null },
-          { weightKg: 80, reps: 10, seconds: null, meters: null },
-        ],
-      };
-    },
-  }),
+  fetchLastSetsOrNone: async () => {
+    await mockLastSetsGate;
+    return {
+      bench: [
+        { weightKg: 75, reps: 12, seconds: null, meters: null },
+        { weightKg: 80, reps: 10, seconds: null, meters: null },
+      ],
+    };
+  },
 }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),

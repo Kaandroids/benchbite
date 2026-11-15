@@ -17,11 +17,7 @@ jest.mock('./logs', () => {
   const fetchLastSets = jest.fn().mockResolvedValue({});
   return {
     fetchLastSets,
-    lastSetsQuery: (ids: string[]) => ({
-      queryKey: ['last-sets', ...ids],
-      queryFn: () => fetchLastSets(ids),
-      staleTime: 0,
-    }),
+    fetchLastSetsOrNone: (_queryClient: unknown, ids: string[]) => fetchLastSets(ids),
     fetchBests: jest.fn().mockResolvedValue({}),
   };
 });

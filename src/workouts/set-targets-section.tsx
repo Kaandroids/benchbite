@@ -10,8 +10,7 @@ import { Text } from '@/components/ui/text';
 import type { LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
-import { lastSetsQuery } from '@/sessions/logs';
-import type { LastSets } from '@/sessions/session';
+import { fetchLastSetsOrNone } from '@/sessions/logs';
 import { setKindOf, weightStepOf } from '@/sets/fields';
 import { useTheme } from '@/theme';
 
@@ -55,12 +54,7 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
   };
 
   const add = async () => {
-    const last = await queryClient
-      .fetchQuery(lastSetsQuery([exercise.exerciseId]))
-      .catch((error: unknown): LastSets => {
-        console.warn('Could not load the last sets', error);
-        return {};
-      });
+    const last = await fetchLastSetsOrNone(queryClient, [exercise.exerciseId]);
     onChange((current) =>
       firstTargets(current.sets, current.target, last[current.exerciseId], weighted),
     );
