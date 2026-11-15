@@ -11,14 +11,16 @@
 -- The superset an exercise is in, by a number that joins the exercises of one superset; none for an
 -- exercise on its own. Sets keep the superset their exercise was in when the workout was done.
 alter table public.workout_exercises
-  add column superset smallint check (superset > 0);
+  add column superset smallint check (superset between 1 and 9999);
 alter table public.logged_sets
-  add column superset smallint check (superset > 0);
+  add column superset smallint check (superset between 1 and 9999);
 
 -- The exercises `exercises` with their supersets as a workout or a log may have them: a superset is
--- a whole number from 1 and joins two or more exercises next to each other. In a workout
--- (`with_rest`) they also share one rest, the rest after each round.
-create function public.check_supersets(exercises jsonb, with_rest boolean)
+-- a whole number from 1 to 9999. In a workout (`in_workout`) it joins two or more exercises next to
+-- each other, which share one rest, the rest after each round. A log keeps what was done, and an
+-- exercise skipped has no sets to keep its superset by, so a superset there may be left with one
+-- exercise, or with exercises apart.
+create function public.check_supersets(exercises jsonb, in_workout boolean)
 returns void
 language plpgsql
 immutable
@@ -29,14 +31,14 @@ begin
     select 1 from jsonb_array_elements(exercises) e
     where jsonb_typeof(e -> 'superset') not in ('number', 'null')
       or (jsonb_typeof(e -> 'superset') = 'number' and (e ->> 'superset') !~ '^[1-9][0-9]{0,3}$')
-  ) or exists (
+  ) or in_workout and exists (
     select 1
     from jsonb_array_elements(exercises) with ordinality e
     where jsonb_typeof(e.value -> 'superset') = 'number'
     group by e.value ->> 'superset'
     having count(*) < 2
       or max(e.ordinality) - min(e.ordinality) + 1 <> count(*)
-      or (with_rest and count(distinct e.value -> 'restSeconds') > 1)
+      or count(distinct e.value -> 'restSeconds') > 1
   ) then
     raise exception 'A superset joins two or more exercises next to each other, with one rest'
       using errcode = 'BB057';
@@ -144,8 +146,9 @@ begin
   ) then
     raise exception 'A target does not suit its exercise' using errcode = 'BB007';
   end if;
-  perform public.check_supersets(items, true);
 
+  -- As insert_workout_exercises() does, but before the time, which reads the supersets.
+  perform public.check_supersets(items, true);
   minutes := public.workout_minutes(items);
 
   if saved_id is null then
@@ -176,12 +179,16 @@ begin
 end;
 $$;
 
--- As before (20261026090000), with the superset.
+-- As before (20261026090000), with the superset, which it checks for every way a workout's exercises
+-- are written: save_workout() and the onboarding's plan.
 create or replace function public.insert_workout_exercises(workout_id bigint, user_id uuid, items jsonb)
 returns void
-language sql
+language plpgsql
 set search_path = ''
 as $$
+begin
+  perform public.check_supersets(items, true);
+
   insert into public.workout_exercises (
     workout_id, user_id, position, exercise_id, slot, sets, target_reps_min, target_reps_max,
     target_seconds, target_meters, rest_seconds, superset
@@ -200,6 +207,7 @@ as $$
     (e.value ->> 'restSeconds')::smallint,
     (e.value ->> 'superset')::smallint
   from jsonb_array_elements(items) with ordinality e;
+end;
 $$;
 
 -- As before (20261030230000), with the superset.
@@ -393,6 +401,9 @@ declare
   started timestamptz;
   finished timestamptz;
   sends_times boolean := jsonb_path_exists(log, '$.exercises[*].sets[*].doneAt');
+  -- An app from before supersets sends none, and its edit keeps them. A newer app sends the key
+  -- for every exercise, null for one on its own.
+  sends_supersets boolean := jsonb_path_exists(log, '$.exercises[*].superset');
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
@@ -412,7 +423,10 @@ begin
   with old as (
     delete from public.logged_sets s
     where s.log_id = edit_workout_log.log_id
-    returning s.exercise_position, s.exercise_id, s.set_position, s.done_at
+    returning s.exercise_position, s.exercise_id, s.set_position, s.done_at, s.superset
+  ), old_supersets as (
+    select distinct o.exercise_position, o.superset
+    from old o
   ), new as (
     select n.*, count(*) over (partition by n.exercise_position, n.exercise_id) as sets
     from public.sets_of(log) n
@@ -435,10 +449,14 @@ begin
       started,
       finished
     ),
-    public.superset_of(log, n.exercise_position)
+    case
+      when sends_supersets then public.superset_of(log, n.exercise_position)
+      else u.superset
+    end
   from new n
   left join old_counts c using (exercise_position, exercise_id)
-  left join old o using (exercise_position, exercise_id, set_position);
+  left join old o using (exercise_position, exercise_id, set_position)
+  left join old_supersets u using (exercise_position);
 end;
 $$;
 

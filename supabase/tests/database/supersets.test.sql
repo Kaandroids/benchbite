@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
@@ -136,18 +136,21 @@ select lives_ok(
   'Two supersets side by side are two'
 );
 
--- A log keeps each set's superset, as log_workout() and edit_workout_log() take it.
-create function pg_temp.log_exercises(first_superset integer, second_superset integer)
-returns jsonb language sql as $$
+-- A log keeps each set's superset, as log_workout() and edit_workout_log() take it. The app sends
+-- the key for every exercise, null for one on its own; the row's sets are none when `row_sets` is
+-- false, as when it was skipped.
+create function pg_temp.log_exercises(
+  first_superset integer, second_superset integer, row_sets boolean default true
+) returns jsonb language sql as $$
   select jsonb_build_array(
-    jsonb_strip_nulls(jsonb_build_object('exerciseId', 'Barbell_Bench_Press_-_Medium_Grip',
+    jsonb_build_object('exerciseId', 'Barbell_Bench_Press_-_Medium_Grip',
       'superset', first_superset, 'sets', jsonb_build_array(
-        jsonb_build_object('weightKg', 80, 'reps', 8), jsonb_build_object('weightKg', 80, 'reps', 7)))),
-    jsonb_strip_nulls(jsonb_build_object('exerciseId', 'Bent_Over_Barbell_Row',
-      'superset', second_superset, 'sets', jsonb_build_array(
-        jsonb_build_object('weightKg', 60, 'reps', 10)))),
-    jsonb_build_object('exerciseId', 'Standing_Military_Press', 'sets', jsonb_build_array(
-      jsonb_build_object('weightKg', 40, 'reps', 10)))
+        jsonb_build_object('weightKg', 80, 'reps', 8), jsonb_build_object('weightKg', 80, 'reps', 7))),
+    jsonb_build_object('exerciseId', 'Bent_Over_Barbell_Row',
+      'superset', second_superset, 'sets', case when row_sets then jsonb_build_array(
+        jsonb_build_object('weightKg', 60, 'reps', 10)) else '[]'::jsonb end),
+    jsonb_build_object('exerciseId', 'Standing_Military_Press', 'superset', null,
+      'sets', jsonb_build_array(jsonb_build_object('weightKg', 40, 'reps', 10)))
   );
 $$;
 grant execute on all functions in schema pg_temp to public;
@@ -171,9 +174,36 @@ select throws_ok(
   $$ select public.log_workout(jsonb_build_object(
        'workoutId', current_setting('test.workout')::bigint,
        'startedAt', now() - interval '1 hour', 'finishedAt', now() - interval '10 minutes',
-       'exercises', pg_temp.log_exercises(1, null))) $$,
+       'exercises', pg_temp.log_exercises(0, 0))) $$,
   'BB057', null,
-  'A log with a superset of one exercise is refused'
+  'A log with a superset numbered 0 is refused'
+);
+
+-- The row skipped: it has no sets to keep its superset by, and the log edited as the history does
+-- it, with the row in its place but no superset, still saves.
+select set_config('test.skipped', public.log_workout(jsonb_build_object(
+  'workoutId', current_setting('test.workout')::bigint,
+  'startedAt', now() - interval '1 hour', 'finishedAt', now() - interval '10 minutes',
+  'exercises', pg_temp.log_exercises(1, 1, false)
+))::text, true);
+select lives_ok(
+  $$ select public.edit_workout_log(current_setting('test.skipped')::bigint,
+       jsonb_build_object('exercises', pg_temp.log_exercises(1, null, false))) $$,
+  'A log whose superset was left with one exercise by a skipped one can be edited'
+);
+
+-- An app from before supersets sends none, and its edit keeps them.
+select lives_ok(
+  $$ select public.edit_workout_log(current_setting('test.log')::bigint, jsonb_build_object(
+       'exercises', (select jsonb_agg(e - 'superset') from jsonb_array_elements(
+         pg_temp.log_exercises(null, null)) e))) $$,
+  'An edit from an app without supersets saves'
+);
+select is(
+  (select array_agg(superset order by exercise_position, set_position) from public.logged_sets
+   where log_id = current_setting('test.log')::bigint),
+  array[1, 1, 1, null]::smallint[],
+  'An edit that sends no superset keeps the log''s'
 );
 
 select lives_ok(
@@ -195,6 +225,15 @@ select lives_ok(
 
 -- A coach's edit keeps a swapped exercise in its superset and splits up one left with one.
 reset role;
+
+-- The onboarding's plan is written by insert_workout_exercises() too, which checks the supersets.
+select throws_ok(
+  $$ select public.insert_workout_exercises(current_setting('test.workout')::bigint,
+       '00000000-0000-0000-0000-00000000000a',
+       jsonb_build_array(pg_temp.exercise('Barbell_Bench_Press_-_Medium_Grip', 7))) $$,
+  'BB057', null,
+  'A superset of one exercise is refused however a workout''s exercises are written'
+);
 select is(
   public.edited_workout_exercises(
     public.saved_workout(current_setting('test.workout')::bigint),
