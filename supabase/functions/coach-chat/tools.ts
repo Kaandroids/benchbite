@@ -443,7 +443,7 @@ const TOOLS = [
   tool({
     name: 'get_workouts',
     description:
-      "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises in use, with their ids, sets and targets; and a workout's alternatives, if it has any (other versions of it, as one for the gym and one for home), each with its id, name, whether it is in use, and the exercises of those not in use.",
+      "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises in use, with their ids, sets and targets, and a superset number on exercises next to each other done as a superset: one set of each in turn with no rest between them, then the rest; and a workout's alternatives, if it has any (other versions of it, as one for the gym and one for home), each with its id, name, whether it is in use, and the exercises of those not in use.",
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
       const workouts = read(await planWorkouts(supabase));
@@ -463,6 +463,7 @@ const TOOLS = [
           name: named(e.exercise_id),
           sets: e.sets,
           target: targetOf(e),
+          ...(e.superset != null && { superset: e.superset }),
         })),
         ...(workout.workout_alternatives.length > 0 && {
           alternatives: workout.workout_alternatives.map((a) => ({
@@ -475,6 +476,7 @@ const TOOLS = [
                 name: named(e.exerciseId),
                 sets: e.sets,
                 target: e.target,
+                ...(e.superset != null && { superset: e.superset }),
               })),
             }),
           })),
@@ -486,7 +488,7 @@ const TOOLS = [
     name: 'propose_workout_change',
     proposes: 'workouts',
     description:
-      "Proposes lasting changes to 1 to 3 of the user's workouts in one card: exercises swapped in place, removed, or added at the end, the rest of each workout as it is. The user applies all of it or keeps things as they are; it changes nothing itself. It counts from today, for good, and changes the alternative in use. Take the workouts and their exercise ids from get_workouts, and new exercises' ids from search_exercises.",
+      "Proposes lasting changes to 1 to 3 of the user's workouts in one card: exercises swapped in place, removed, or added at the end, the rest of each workout as it is. An exercise swapped in takes the other's place in its superset, one added joins none, and a superset left with one exercise is no longer one. The user applies all of it or keeps things as they are; it changes nothing itself. It counts from today, for good, and changes the alternative in use. Take the workouts and their exercise ids from get_workouts, and new exercises' ids from search_exercises.",
     args: z.object({
       workouts: z
         .array(z.object({ workoutId: z.number().int().positive(), ...EDIT }))
@@ -1225,7 +1227,7 @@ function planWorkouts(supabase: Client) {
   return supabase
     .from('workouts')
     .select(
-      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position), workout_alternatives (id, name, position, in_use, exercises)',
+      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position, superset), workout_alternatives (id, name, position, in_use, exercises)',
     )
     .eq('active', true)
     .order('id')
@@ -1234,7 +1236,13 @@ function planWorkouts(supabase: Client) {
 }
 
 /** An exercise of an alternative not in use, as saved_workout() kept it (ADR 0061). */
-type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
+type Kept = {
+  exerciseId: string;
+  sets: number;
+  target: ProposalTarget;
+  /** As saved_workout() keeps it; missing on one on its own. */
+  superset?: number;
+};
 
 /** The exercises an alternative keeps, none for the one in use. */
 function kept(exercises: unknown) {

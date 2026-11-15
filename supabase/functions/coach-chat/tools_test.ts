@@ -87,6 +87,7 @@ const LEGS = {
       target_seconds: null,
       target_meters: null,
       position: 0,
+      superset: null,
     },
     {
       exercise_id: 'Plank',
@@ -96,6 +97,7 @@ const LEGS = {
       target_seconds: 45,
       target_meters: null,
       position: 1,
+      superset: null,
     },
   ],
   workout_alternatives: [] as Row[],
@@ -410,6 +412,41 @@ Deno.test('reads the plan with its exercises and their targets', async () => {
       ],
     },
   ]);
+});
+
+Deno.test('reads which exercises are in a superset, in use and in an alternative', async () => {
+  const { context } = planContext(
+    {},
+    {
+      ...LEGS,
+      workout_exercises: LEGS.workout_exercises.map((e) => ({ ...e, superset: 1 })),
+      workout_alternatives: [
+        { id: 11, name: 'Gym', position: 1, in_use: true, exercises: null },
+        {
+          id: 12,
+          name: null,
+          position: 2,
+          in_use: false,
+          exercises: [
+            { exerciseId: 'Plank', sets: 2, target: { seconds: 30 }, superset: 1 },
+            { exerciseId: 'Barbell_Squat', sets: 2, target: { seconds: 30 }, superset: 1 },
+          ],
+        },
+      ],
+    },
+  );
+  const [legs] = (await runTool('get_workouts', {}, context)) as {
+    exercises: { superset?: number }[];
+    alternatives: { exercises?: { superset?: number }[] }[];
+  }[];
+  assertEquals(
+    legs?.exercises.map((e) => e.superset),
+    [1, 1],
+  );
+  assertEquals(
+    legs?.alternatives[1]?.exercises?.map((e) => e.superset),
+    [1, 1],
+  );
 });
 
 Deno.test("reads a workout's alternatives, and the exercises of those not in use", async () => {
