@@ -80,7 +80,9 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
     );
   }
 
-  const editingTarget = editing === null ? undefined : targetAt(targets, editing);
+  // None for a set removed while its sheet waited to open.
+  const editingTarget =
+    editing === null || editing >= exercise.sets ? undefined : targetAt(targets, editing);
   return (
     <View style={{ gap: spacing.sm }}>
       <Text variant="caption" color="textMuted" accessibilityRole="header">
