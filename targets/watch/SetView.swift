@@ -22,9 +22,7 @@ struct SetView: View {
         VStack(alignment: .leading, spacing: 6) {
           StatusLine(workout: workout)
           // The superset and the round it is in, as the phone shows it (ADR 0137).
-          if let round = workout.supersetRound(
-            of: next.exerciseIndex, ticked: phone.waitingTicks(of: workout))
-          {
+          if let round = phone.supersetRound(of: next, in: workout) {
             Text(L10n.t("supersetRound", ["round": round.round, "rounds": round.rounds]))
               .font(.rounded(12, .heavy))
               .foregroundStyle(Theme.accent)

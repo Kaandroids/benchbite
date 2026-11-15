@@ -117,7 +117,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   /// The sets ticked done here that the phone has not taken yet.
-  func waitingTicks(of workout: WatchWorkout) -> Set<SetIndex> {
+  private func waitingTicks(of workout: WatchWorkout) -> Set<SetIndex> {
     Set(
       waiting.values.compactMap { command -> SetIndex? in
         guard command.workoutId == workout.id,
@@ -173,6 +173,12 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
       return workout.firstOpenSet(from: from, skipping: ticked)
     }
     return workout.afterTick(of: from, ticked: ticked).next
+  }
+
+  /// The round of the superset of `next`'s exercise, with the ticks waiting for the phone taken as
+  /// done; none on its own.
+  func supersetRound(of next: NextSet, in workout: WatchWorkout) -> (round: Int, rounds: Int)? {
+    workout.supersetRound(of: next.exerciseIndex, ticked: waitingTicks(of: workout))
   }
 
   /// What a tick of `next` leads to, for its rest: whether it starts one, and the set the watch
