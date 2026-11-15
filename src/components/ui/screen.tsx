@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
 
+import { useFocusedFieldInView } from './focused-field';
 import { ScreenTitle } from './screen-title';
 import { SectionProgress, type SectionProgressProps } from './section-progress';
 import { TopBarButton } from './top-bar-button';
@@ -57,6 +58,8 @@ export function Screen({
   ) : (
     action
   );
+  const scroll = useRef<ScrollViewInstance>(null);
+  const keepFocusedInView = useFocusedFieldInView(scroll, spacing.lg);
   const hasTopBar = progress !== undefined || onBack !== undefined || end !== undefined;
 
   return (
@@ -92,6 +95,8 @@ export function Screen({
       ) : null}
       {scrolls ? (
         <ScrollView
+          ref={scroll}
+          {...keepFocusedInView}
           style={styles.content}
           contentContainerStyle={[
             styles.contentContainer,
