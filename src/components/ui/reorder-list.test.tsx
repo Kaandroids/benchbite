@@ -8,7 +8,7 @@ jest.mock('expo-haptics', () => ({ selectionAsync: jest.fn() }));
 
 const ITEMS = ['Squat', 'Bench press', 'Row'];
 
-const renderList = async (onMove = jest.fn()) => {
+const renderList = async (onMove: jest.Mock = jest.fn()) => {
   await render(
     <ReorderList
       items={ITEMS}
@@ -51,5 +51,14 @@ describe('ReorderList', () => {
       nativeEvent: { actionName: 'moveDown' },
     });
     expect(onMove).toHaveBeenLastCalledWith(1, 2);
+  });
+
+  it('says where a row ended up when the list puts it elsewhere than asked', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    await renderList(jest.fn(() => 0));
+    await fireEvent(screen.getByLabelText('Bench press'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'moveDown' },
+    });
+    expect(announce).toHaveBeenLastCalledWith('Bench press moved to 1 of 3');
   });
 });
