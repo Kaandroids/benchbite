@@ -414,6 +414,14 @@ Deno.test('reads the plan with its exercises and their targets', async () => {
   ]);
 });
 
+Deno.test('tells Bite how a change keeps supersets, for every tool that changes exercises', () => {
+  for (const name of ['propose_workout_change', 'propose_alternative']) {
+    const description = TOOL_DEFINITIONS.find((tool) => tool.name === name)?.description ?? '';
+    assertEquals(description.includes("takes the other's place in its superset"), true, name);
+    assertEquals(description.includes('${'), false, name);
+  }
+});
+
 Deno.test('reads which exercises are in a superset, in use and in an alternative', async () => {
   const { context } = planContext(
     {},

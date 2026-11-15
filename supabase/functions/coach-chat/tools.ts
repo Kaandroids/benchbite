@@ -94,6 +94,13 @@ const TARGET = z
 const SETS = z.number().int().min(1).max(10);
 
 /**
+ * What a change to a workout's exercises does to its supersets, as edited_workout_exercises()
+ * keeps them (ADR 0137), for every tool that takes EDIT.
+ */
+const EDIT_SUPERSETS =
+  "An exercise swapped in takes the other's place in its superset, one added joins none, and a superset left with one exercise is no longer one.";
+
+/**
  * What a change does to a workout's exercises (edited_workout_exercises()): exercises swapped in
  * place, removed, and added at the end, each with why.
  */
@@ -487,8 +494,7 @@ const TOOLS = [
   tool({
     name: 'propose_workout_change',
     proposes: 'workouts',
-    description:
-      "Proposes lasting changes to 1 to 3 of the user's workouts in one card: exercises swapped in place, removed, or added at the end, the rest of each workout as it is. An exercise swapped in takes the other's place in its superset, one added joins none, and a superset left with one exercise is no longer one. The user applies all of it or keeps things as they are; it changes nothing itself. It counts from today, for good, and changes the alternative in use. Take the workouts and their exercise ids from get_workouts, and new exercises' ids from search_exercises.",
+    description: `Proposes lasting changes to 1 to 3 of the user's workouts in one card: exercises swapped in place, removed, or added at the end, the rest of each workout as it is. ${EDIT_SUPERSETS} The user applies all of it or keeps things as they are; it changes nothing itself. It counts from today, for good, and changes the alternative in use. Take the workouts and their exercise ids from get_workouts, and new exercises' ids from search_exercises.`,
     args: z.object({
       workouts: z
         .array(z.object({ workoutId: z.number().int().positive(), ...EDIT }))
@@ -542,7 +548,7 @@ const TOOLS = [
   tool({
     name: 'propose_alternative',
     proposes: 'alternative',
-    description: `Proposes a new alternative of one of the user's workouts for a while, as for pain, an injury, travel or a gym closed: the version in use with exercises swapped, removed or added, put in use when the user applies it. The workout's other alternatives stay as they are, to switch back to. It changes nothing itself. Name it in the user's language, in at most ${ALTERNATIVE_NAME_LENGTH} characters, as no alternative of the workout is named. When the workout has no alternatives yet, name the version in use now too (currentName), as Gym. Take the ids as for propose_workout_change`,
+    description: `Proposes a new alternative of one of the user's workouts for a while, as for pain, an injury, travel or a gym closed: the version in use with exercises swapped, removed or added, put in use when the user applies it. The workout's other alternatives stay as they are, to switch back to. It changes nothing itself. Name it in the user's language, in at most ${ALTERNATIVE_NAME_LENGTH} characters, as no alternative of the workout is named. When the workout has no alternatives yet, name the version in use now too (currentName), as Gym. ${EDIT_SUPERSETS} Take the ids as for propose_workout_change`,
     args: z.object({
       workoutId: z.number().int().positive(),
       name: ALTERNATIVE_NAME.describe("The new alternative's name, as Knee-safe or Hotel."),
