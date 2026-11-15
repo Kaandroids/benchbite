@@ -188,6 +188,19 @@ describe('EditorScreen', () => {
     );
   });
 
+  it('splits up a superset left with one exercise by a removal', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent(screen.getByLabelText('Superset with the next exercise'), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('button', { name: 'Remove' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [expect.objectContaining({ exerciseId: 'rowing', superset: null })],
+      }),
+    );
+  });
+
   it('offers no superset with the next for the last exercise', async () => {
     await render(<EditorScreen id={5} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Rowing' }));
