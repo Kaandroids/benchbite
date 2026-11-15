@@ -551,6 +551,22 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Rest 0:30')).toBeTruthy();
   });
 
+  it("shows a superset under its rest after each round, and not its exercises' own rest", async () => {
+    mockWorkouts([
+      {
+        ...pull,
+        exercises: pull.exercises.map((exercise, index) =>
+          index < 2 ? { ...exercise, superset: 1, restSeconds: 60 } : exercise,
+        ),
+      },
+    ]);
+    await render(<WorkoutScreen id={7} />);
+    await waitFor(() => expect(screen.getByText('Name of pulldown')).toBeTruthy());
+    expect(screen.getByText('Superset · Rest 1:00 after each round')).toBeTruthy();
+    expect(screen.queryByText('Rest 1:00')).toBeNull();
+    expect(screen.getByText('Rest 0:30')).toBeTruthy();
+  });
+
   it('shows the exercise pictures', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
