@@ -981,6 +981,7 @@ export type Database = {
           reps: number | null;
           seconds: number | null;
           set_position: number;
+          superset: number | null;
           user_id: string;
           weight_kg: number | null;
         };
@@ -995,6 +996,7 @@ export type Database = {
           reps?: number | null;
           seconds?: number | null;
           set_position: number;
+          superset?: number | null;
           user_id: string;
           weight_kg?: number | null;
         };
@@ -1008,6 +1010,7 @@ export type Database = {
           reps?: number | null;
           seconds?: number | null;
           set_position?: number;
+          superset?: number | null;
           user_id?: string;
           weight_kg?: number | null;
         };
@@ -1775,6 +1778,7 @@ export type Database = {
           rest_seconds: number;
           sets: number;
           slot: Database['public']['Enums']['plan_slot'] | null;
+          superset: number | null;
           target_meters: number | null;
           target_reps_max: number | null;
           target_reps_min: number | null;
@@ -1790,6 +1794,7 @@ export type Database = {
           rest_seconds: number;
           sets: number;
           slot?: Database['public']['Enums']['plan_slot'] | null;
+          superset?: number | null;
           target_meters?: number | null;
           target_reps_max?: number | null;
           target_reps_min?: number | null;
@@ -1804,6 +1809,7 @@ export type Database = {
           rest_seconds?: number;
           sets?: number;
           slot?: Database['public']['Enums']['plan_slot'] | null;
+          superset?: number | null;
           target_meters?: number | null;
           target_reps_max?: number | null;
           target_reps_min?: number | null;
@@ -2296,6 +2302,7 @@ export type Database = {
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
+      check_supersets: { Args: { exercises: Json; with_rest: boolean }; Returns: undefined };
       choose_what_stays: {
         Args: { alternatives: number[]; today: string; workouts: number[] };
         Returns: undefined;
@@ -2642,6 +2649,7 @@ export type Database = {
           reps: number | null;
           seconds: number | null;
           set_position: number;
+          superset: number | null;
           user_id: string;
           weight_kg: number | null;
         }[];
@@ -3163,6 +3171,7 @@ export type Database = {
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
+      superset_of: { Args: { exercise_position: number; log: Json }; Returns: number };
       take_back_account_deletion_code: {
         Args: { p_code_hash: string; p_user: string };
         Returns: undefined;
