@@ -138,6 +138,11 @@ export function EditorScreen({ id }: { id?: number }) {
         exercise={editingExercise}
         details={editingExercise ? details(editingExercise.exerciseId) : undefined}
         onChange={editor.replaceExercise}
+        onChangeTargets={(change) => {
+          if (editing) {
+            editor.changeTargets(editing, change);
+          }
+        }}
         next={
           editingExercise && nextExercise && draft
             ? {

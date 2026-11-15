@@ -1,6 +1,6 @@
 import { EMPTY_SET } from '@/sets/values';
 
-import { firstTargets, resizeTargets, setTargetsOf, targetAt } from './set-targets';
+import { firstTargets, resizeTargets, setTargetsOf, targetAt, withTarget } from './set-targets';
 
 const target = (weightKg: number | null, reps: number | null, seconds: number | null = null) => ({
   weightKg,
@@ -43,6 +43,16 @@ describe('resizeTargets', () => {
 
   it('keeps none as none', () => {
     expect(resizeTargets(null, 3)).toBeNull();
+  });
+});
+
+describe('withTarget', () => {
+  it('changes one set’s target and keeps the others', () => {
+    expect(withTarget([target(80, 10), target(85, 8)], 3, 1, target(90, 6))).toEqual([
+      target(80, 10),
+      target(90, 6),
+      target(85, 8),
+    ]);
   });
 });
 

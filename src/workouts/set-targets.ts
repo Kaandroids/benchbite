@@ -44,6 +44,17 @@ export function resizeTargets(targets: SetTarget[] | null, sets: number): SetTar
   return Array.from({ length: sets }, (_, index) => targetAt(targets, index) as SetTarget);
 }
 
+/** The targets for `sets` sets with the one at `index` changed to `target`. */
+export function withTarget(
+  targets: SetTarget[] | null,
+  sets: number,
+  index: number,
+  target: SetTarget,
+): SetTarget[] {
+  const all = resizeTargets(targets, sets) ?? Array.from({ length: sets }, () => target);
+  return all.map((current, place) => (place === index ? target : current));
+}
+
 /**
  * The targets an exercise starts with when the user adds them: each set last time's weight, from
  * the same set or the last one, with the bottom of the rep range or the target time.

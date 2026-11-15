@@ -14,7 +14,7 @@ import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
-import { resizeTargets } from './set-targets';
+import { resizeTargets, type SetTarget } from './set-targets';
 import { SetTargetsSection } from './set-targets-section';
 import { StepperCard, stepperRow, type StepperRow } from './stepper-card';
 
@@ -33,6 +33,8 @@ type ExerciseSheetProps = {
   exercise: DraftExercise | null;
   details: LibraryExercise | undefined;
   onChange: (exercise: DraftExercise) => void;
+  /** Changes its own set targets, from the exercise as it is then. */
+  onChangeTargets: (change: (exercise: DraftExercise) => SetTarget[] | null) => void;
   /**
    * The exercise after it, which it can be joined with into a superset (ADR 0137), with whether it
    * is; none for the last exercise.
@@ -51,6 +53,7 @@ export function ExerciseSheet({
   exercise,
   details,
   onChange,
+  onChangeTargets,
   next,
   onJoinNext,
   onRemove,
@@ -159,11 +162,7 @@ export function ExerciseSheet({
       >
         <StepperCard rows={rows} />
 
-        <SetTargetsSection
-          exercise={exercise}
-          details={details}
-          onChange={(setTargets) => set({ setTargets })}
-        />
+        <SetTargetsSection exercise={exercise} details={details} onChange={onChangeTargets} />
 
         {next ? (
           <SwitchCard

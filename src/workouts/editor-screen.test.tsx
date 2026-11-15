@@ -20,15 +20,20 @@ jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
 }));
+/** Resolves last time's sets when a test lets it, at once otherwise. */
+let mockLastSetsGate: Promise<void> = Promise.resolve();
 jest.mock('@/sessions/logs', () => ({
   lastSetsQuery: (ids: string[]) => ({
     queryKey: ['last-sets', ...ids],
-    queryFn: async () => ({
-      bench: [
-        { weightKg: 75, reps: 12, seconds: null, meters: null },
-        { weightKg: 80, reps: 10, seconds: null, meters: null },
-      ],
-    }),
+    queryFn: async () => {
+      await mockLastSetsGate;
+      return {
+        bench: [
+          { weightKg: 75, reps: 12, seconds: null, meters: null },
+          { weightKg: 80, reps: 10, seconds: null, meters: null },
+        ],
+      };
+    },
   }),
 }));
 jest.mock('./workouts', () => ({
@@ -254,6 +259,31 @@ describe('EditorScreen', () => {
         ],
       }),
     );
+  });
+
+  it('keeps a change made while last time’s sets load', async () => {
+    let release = () => {};
+    mockLastSetsGate = new Promise((resolve) => {
+      release = resolve;
+    });
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add targets/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'More: Sets' }));
+    await act(async () => release());
+    mockLastSetsGate = Promise.resolve();
+    expect(await screen.findByRole('button', { name: 'Set 5, 80 kg × 8' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({ exerciseId: 'bench', sets: 5, setTargets: expect.any(Array) }),
+          expect.anything(),
+        ],
+      }),
+    );
+    expect(saveWorkout.mock.calls[0][0].exercises[0].setTargets).toHaveLength(5);
   });
 
   it('keeps a set target unchanged when its sheet is cancelled, and clears them all', async () => {

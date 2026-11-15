@@ -16,12 +16,13 @@ import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
 import { SetTargetSheet } from './set-target-sheet';
-import { firstTargets, targetAt, type SetTarget } from './set-targets';
+import { firstTargets, targetAt, withTarget, type SetTarget } from './set-targets';
 
 type SetTargetsSectionProps = {
   exercise: DraftExercise;
   details: LibraryExercise | undefined;
-  onChange: (setTargets: SetTarget[] | null) => void;
+  /** Changes the targets from the exercise as it is then, which may change while they load. */
+  onChange: (change: (exercise: DraftExercise) => SetTarget[] | null) => void;
 };
 
 /**
@@ -59,7 +60,9 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
         console.warn('Could not load the last sets', error);
         return {};
       });
-    onChange(firstTargets(exercise.sets, exercise.target, last[exercise.exerciseId], weighted));
+    onChange((current) =>
+      firstTargets(current.sets, current.target, last[current.exerciseId], weighted),
+    );
   };
 
   if (!targets) {
@@ -119,7 +122,7 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
       {/* Grey, as a way back rather than an action of its own. */}
       <Pressable
         accessibilityRole="button"
-        onPress={() => onChange(null)}
+        onPress={() => onChange(() => null)}
         style={[styles.clear, { minHeight: 44 }]}
       >
         <Text variant="bodyStrong" color="textMuted">
@@ -132,11 +135,7 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
           target={editingTarget}
           weight={weighted ? { step: weightStepOf(details?.equipment) } : null}
           onDone={(changed) =>
-            onChange(
-              Array.from({ length: exercise.sets }, (_, index) =>
-                index === editing ? changed : (targetAt(targets, index) as SetTarget),
-              ),
-            )
+            onChange((current) => withTarget(current.setTargets, current.sets, editing, changed))
           }
           onClose={() => setEditing(null)}
         />
