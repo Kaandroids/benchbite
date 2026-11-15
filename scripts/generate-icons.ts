@@ -73,9 +73,11 @@ const PLATE_ONLY = MARK_BOX / (PLATE.r * 2);
 // iOS needs an opaque square; the system rounds the corners. The three variants differ only in
 // colour, so they share the rest.
 const IOS_ICON = { size: 1024, bitten: true, scale: 0.85 };
+/** The light icon, which the website's favicon also draws. */
+const LIGHT_ICON: Drawing = { ...IOS_ICON, color: WHITE, background: BRAND_ORANGE };
 
 const images: Record<string, Drawing> = {
-  'icon.png': { ...IOS_ICON, color: WHITE, background: BRAND_ORANGE },
+  'icon.png': LIGHT_ICON,
   'ios-icon-dark.png': { ...IOS_ICON, color: BRAND_ORANGE_DARK, background: BRAND_SURFACE_DARK },
   // iOS tints the grey levels of this one in the tinted home screen style.
   'ios-icon-tinted.png': { ...IOS_ICON, color: WHITE, background: '#000000' },
@@ -96,7 +98,7 @@ for (const [file, drawing] of Object.entries(images)) {
 
 // The website's favicon: the light icon on a round ground, as a browser tab shows the icon as it
 // is. The SVG stays sharp at every size; the PNG is for browsers without SVG favicons.
-const FAVICON = { ...IOS_ICON, color: WHITE, background: BRAND_ORANGE, round: true };
+const FAVICON: Drawing = { ...LIGHT_ICON, round: true };
 await writeFile(join(WEBSITE_DIR, 'favicon.svg'), `${markSvg({ ...FAVICON, size: 32 })}\n`);
 console.log('Wrote website/public/favicon.svg');
 await sharp(Buffer.from(markSvg({ ...FAVICON, size: 96 })))
