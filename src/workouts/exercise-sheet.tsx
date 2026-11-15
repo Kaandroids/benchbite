@@ -1,10 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Card, listDivider } from '@/components/ui/card';
 import { Sheet } from '@/components/ui/sheet';
-import { StepButtons } from '@/components/ui/step-buttons';
 import { SwitchCard } from '@/components/ui/switch-card';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
@@ -12,11 +10,13 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
-import { clamp } from '@/lib/math';
 import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
+import { resizeTargets } from './set-targets';
+import { SetTargetsSection } from './set-targets-section';
+import { StepperCard, stepperRow, type StepperRow } from './stepper-card';
 
 const LIMITS = {
   sets: { min: 1, max: 10, step: 1 },
@@ -25,6 +25,9 @@ const LIMITS = {
   seconds: { min: 5, max: 3600, step: 15 },
   meters: { min: 100, max: 100000, step: 100 },
 };
+
+/** How much of the screen's height the sheet's values may take before they scroll. */
+const SCROLL_SHARE = 0.6;
 
 type ExerciseSheetProps = {
   exercise: DraftExercise | null;
@@ -41,8 +44,8 @@ type ExerciseSheetProps = {
 };
 
 /**
- * The sets, target and rest of one exercise of the workout being edited, and whether it is in a
- * superset with the next, in a bottom sheet.
+ * The sets, target and rest of one exercise of the workout being edited, its own targets for each
+ * set, and whether it is in a superset with the next, in a bottom sheet.
  */
 export function ExerciseSheet({
   exercise,
@@ -54,7 +57,8 @@ export function ExerciseSheet({
   onClose,
 }: ExerciseSheetProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
+  const { height } = useWindowDimensions();
   const caption = useExerciseCaption();
   const { format } = useNumberFormat();
 
@@ -63,40 +67,19 @@ export function ExerciseSheet({
   }
   const { target } = exercise;
   const set = (change: Partial<DraftExercise>) => onChange({ ...exercise, ...change });
-  const step = (value: number, delta: number, limits: { min: number; max: number }) =>
-    clamp(value + delta, limits.min, limits.max);
 
-  type Row = {
-    label: string;
-    value: string;
-    decrease: () => void;
-    increase: () => void;
-    canDecrease: boolean;
-    canIncrease: boolean;
-  };
-  const row = (
-    label: string,
-    value: number,
-    limits: { min: number; max: number; step: number },
-    apply: (next: number) => void,
-    shown: string = String(value),
-  ): Row => ({
-    label,
-    value: shown,
-    decrease: () => apply(step(value, -limits.step, limits)),
-    increase: () => apply(step(value, limits.step, limits)),
-    canDecrease: value > limits.min,
-    canIncrease: value < limits.max,
-  });
-
-  const rows: Row[] = [row(t('editor.sets'), exercise.sets, LIMITS.sets, (sets) => set({ sets }))];
+  const rows: StepperRow[] = [
+    stepperRow(t('editor.sets'), exercise.sets, LIMITS.sets, (sets) =>
+      set({ sets, setTargets: resizeTargets(exercise.setTargets, sets) }),
+    ),
+  ];
   if ('reps' in target) {
     const { min, max } = target.reps;
     rows.push(
-      row(t('editor.repsFrom'), min, LIMITS.reps, (next) =>
+      stepperRow(t('editor.repsFrom'), min, LIMITS.reps, (next) =>
         set({ target: { reps: { min: next, max: Math.max(max, next) } } }),
       ),
-      row(t('editor.repsTo'), max, { ...LIMITS.reps, min }, (next) =>
+      stepperRow(t('editor.repsTo'), max, { ...LIMITS.reps, min }, (next) =>
         set({ target: { reps: { min, max: next } } }),
       ),
     );
@@ -115,7 +98,7 @@ export function ExerciseSheet({
     if (distance) {
       const meters = optional(target.meters, LIMITS.meters, target.seconds);
       rows.push(
-        row(
+        stepperRow(
           t('editor.distance'),
           meters.value,
           meters,
@@ -130,7 +113,7 @@ export function ExerciseSheet({
     }
     const seconds = optional(target.seconds, LIMITS.seconds, target.meters);
     rows.push(
-      row(
+      stepperRow(
         t('editor.time'),
         seconds.value,
         seconds,
@@ -140,7 +123,7 @@ export function ExerciseSheet({
     );
   }
   rows.push(
-    row(
+    stepperRow(
       // In a superset, the rest after each round, the same for all its exercises.
       exercise.superset != null ? t('editor.restAfterRound') : t('editor.rest'),
       exercise.restSeconds,
@@ -169,50 +152,28 @@ export function ExerciseSheet({
         />
       </View>
 
-      <Card list>
-        {rows.map((item, index) => (
-          <View
-            key={item.label}
-            style={[
-              styles.row,
-              {
-                gap: spacing.md,
-                paddingVertical: spacing.sm,
-                ...listDivider(index === 0, colors.border),
-              },
-            ]}
-          >
-            <Text variant="bodyStrong" style={styles.label}>
-              {item.label}
-            </Text>
-            <Text
-              variant="headline"
-              style={styles.value}
-              accessibilityLabel={`${item.label} ${item.value}`}
-            >
-              {item.value}
-            </Text>
-            <StepButtons
-              size={44}
-              onDecrease={item.decrease}
-              onIncrease={item.increase}
-              canDecrease={item.canDecrease}
-              canIncrease={item.canIncrease}
-              decreaseLabel={t('editor.less', { label: item.label })}
-              increaseLabel={t('editor.more', { label: item.label })}
-            />
-          </View>
-        ))}
-      </Card>
+      {/* Scrolls once targets for many sets make it taller than the screen. */}
+      <ScrollView
+        style={{ maxHeight: height * SCROLL_SHARE }}
+        contentContainerStyle={{ gap: spacing.lg }}
+      >
+        <StepperCard rows={rows} />
 
-      {next ? (
-        <SwitchCard
-          label={t('editor.supersetNext')}
-          note={t('editor.supersetNextNote', { name: next.name })}
-          value={next.joined}
-          onValueChange={onJoinNext}
+        <SetTargetsSection
+          exercise={exercise}
+          details={details}
+          onChange={(setTargets) => set({ setTargets })}
         />
-      ) : null}
+
+        {next ? (
+          <SwitchCard
+            label={t('editor.supersetNext')}
+            note={t('editor.supersetNextNote', { name: next.name })}
+            value={next.joined}
+            onValueChange={onJoinNext}
+          />
+        ) : null}
+      </ScrollView>
 
       <View style={[styles.actions, { gap: spacing.md }]}>
         <Button
@@ -234,17 +195,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  label: {
-    flex: 1,
-  },
-  value: {
-    minWidth: 64,
-    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',

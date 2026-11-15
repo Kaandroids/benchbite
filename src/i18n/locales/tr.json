@@ -1087,7 +1087,18 @@
     "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
     "restAfterRound": "Turdan sonra dinlenme",
     "supersetNext": "Sonraki egzersizle süper set",
-    "supersetNextNote": "{{name}}, aralarında dinlenme olmadan"
+    "supersetNextNote": "{{name}}, aralarında dinlenme olmadan",
+    "weight": "Ağırlık",
+    "reps": "Tekrar",
+    "targets": "Hedefler",
+    "addTargets": "Hedef ekle",
+    "addTargetsNote": "İsteğe bağlı: her set için bir ağırlık ve tekrar. Hedef olmazsa her set geçen seferin biraz ötesini hedefler.",
+    "addTargetsTimedNote": "İsteğe bağlı: her set için bir süre. Hedef olmazsa her set geçen seferin biraz ötesini hedefler.",
+    "setNumber": "Set {{number}}",
+    "setTargetTitle": "Set {{number}} hedefi",
+    "targetReps_one": "{{count}} tekrar",
+    "targetReps_other": "{{count}} tekrar",
+    "clearTargets": "Hedefleri temizle"
   },
   "onboarding": {
     "sections": {

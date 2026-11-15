@@ -1087,7 +1087,18 @@
     "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben.",
     "restAfterRound": "Pause nach der Runde",
     "supersetNext": "Supersatz mit der nächsten Übung",
-    "supersetNextNote": "{{name}}, ohne Pause dazwischen"
+    "supersetNextNote": "{{name}}, ohne Pause dazwischen",
+    "weight": "Gewicht",
+    "reps": "Wdh.",
+    "targets": "Ziele",
+    "addTargets": "Ziele hinzufügen",
+    "addTargetsNote": "Optional: ein Gewicht und Wiederholungen für jeden Satz. Ohne sie zielt jeder Satz ein wenig über das letzte Mal hinaus.",
+    "addTargetsTimedNote": "Optional: eine Zeit für jeden Satz. Ohne sie zielt jeder Satz ein wenig über das letzte Mal hinaus.",
+    "setNumber": "Satz {{number}}",
+    "setTargetTitle": "Ziel für Satz {{number}}",
+    "targetReps_one": "{{count}} Wdh.",
+    "targetReps_other": "{{count}} Wdh.",
+    "clearTargets": "Ziele löschen"
   },
   "onboarding": {
     "sections": {
