@@ -24,10 +24,14 @@ pull requests of their own, after the mock-up the maintainer approved.
 - **The sets of a superset's exercises may differ.** It has as many rounds as its exercise with the
   most sets, and an exercise out of sets drops out of the later rounds: A with 5 sets, B with 3 and
   C with 2 go ABC, ABC, AB, A, A.
-- **`save_workout()` refuses a superset that is not one** with BB057: one of a single exercise, of
-  exercises apart, with different rests, or with a number that is not a whole number from 1. Every
-  way a workout's exercises change goes through it: the editor, alternatives and Bite's proposals.
-  `check_supersets()` holds the rule, for a log without the rest.
+- **A superset that is not one is refused** with BB057: one of a single exercise, of exercises
+  apart, with different rests, or with a number that is not a whole number from 1 to 9999.
+  `check_supersets()` holds the rule, and `insert_workout_exercises()` runs it, which every way a
+  workout's exercises are written goes through: the editor, alternatives, Bite's proposals and the
+  onboarding's plan. `save_workout()` runs it first too, as the time reads the supersets.
+- **A log checks only the numbers.** It keeps what was done, and an exercise skipped has no sets to
+  keep its superset by, so a superset in a log may be left with one exercise or with exercises
+  apart.
 - **The time counts the superset's rest once per round.** `workout_minutes()` counts a superset's
   exercises without their rest, and its rest once between each two of its rounds.
 - **A log keeps each set's superset** on `logged_sets`, sent by `log_workout()` and
@@ -57,7 +61,10 @@ pull requests of their own, after the mock-up the maintainer approved.
 
 ## Consequences
 
-- An app from before sends no superset, and its workouts and logs stay as they are.
+- An app from before sends no superset. An edit of a log that sends none keeps the log's supersets,
+  as one that sends no set times keeps the times, so the app sends the key for every exercise,
+  null for one on its own. A workout saved from an older app's editor loses its supersets, as the
+  database cannot tell that from one whose supersets were split up.
 - No superset can be made until the editor learns them: Bite and alternatives only keep the ones a
   workout has. The editor, the session, the watch and Bite follow in the next pull requests of
   #141.
