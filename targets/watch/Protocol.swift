@@ -368,7 +368,7 @@ extension WatchWorkout {
       let index = (exercise + step) % count
       let sets = exercises[index].sets
       if let next = sets.indices.first(where: {
-        !sets[$0].done && !ticked.contains(SetIndex(exercise: index, set: $0))
+        !isDone(SetIndex(exercise: index, set: $0), ticked)
       }) {
         return NextSet(exerciseIndex: index, setIndex: next, exercise: exercises[index])
       }
@@ -389,14 +389,18 @@ extension WatchWorkout {
     return first == last ? [] : Array(first...last)
   }
 
-  /// The sets of the exercise at `index` done, those in `ticked` among them.
-  private func doneCount(_ index: Int, _ ticked: Set<SetIndex>) -> Int {
-    exercises[index].sets.indices.filter {
-      exercises[index].sets[$0].done || ticked.contains(SetIndex(exercise: index, set: $0))
-    }.count
+  /// Whether a set is done, as the phone says or ticked here and waiting for the phone.
+  private func isDone(_ set: SetIndex, _ ticked: Set<SetIndex>) -> Bool {
+    exercises[set.exercise].sets[set.set].done || ticked.contains(set)
   }
 
-  private func isDone(_ index: Int, _ ticked: Set<SetIndex>) -> Bool {
+  /// The sets of the exercise at `index` done, those in `ticked` among them.
+  private func doneCount(_ index: Int, _ ticked: Set<SetIndex>) -> Int {
+    exercises[index].sets.indices.filter { isDone(SetIndex(exercise: index, set: $0), ticked) }
+      .count
+  }
+
+  private func isExerciseDone(_ index: Int, _ ticked: Set<SetIndex>) -> Bool {
     let count = exercises[index].sets.count
     return count > 0 && doneCount(index, ticked) == count
   }
@@ -405,7 +409,7 @@ extension WatchWorkout {
   /// on a tie, as furthestBehind() in src/sessions/session.ts.
   private func furthestBehind(_ members: [Int], _ ticked: Set<SetIndex>) -> Int? {
     var behind: Int?
-    for index in members where !isDone(index, ticked) {
+    for index in members where !isExerciseDone(index, ticked) {
       if let current = behind, doneCount(index, ticked) >= doneCount(current, ticked) { continue }
       behind = index
     }
@@ -437,7 +441,7 @@ extension WatchWorkout {
     let round = doneCount(index, ticked)
     let rotated = members[(from + 1)...] + members[..<from]
     if let inRound = rotated.first(where: {
-      doneCount($0, ticked) < round && !isDone($0, ticked)
+      doneCount($0, ticked) < round && !isExerciseDone($0, ticked)
     }) {
       return (false, firstOpenSet(from: inRound, skipping: ticked))
     }
