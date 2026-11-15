@@ -33,7 +33,10 @@ type ExerciseSheetProps = {
   exercise: DraftExercise | null;
   details: LibraryExercise | undefined;
   onChange: (exercise: DraftExercise) => void;
-  /** Changes its own set targets, from the exercise as it is then. */
+  /**
+   * Changes its own set targets, from the exercise as it is then, safe while last time's sets load.
+   * Only a change of the sets resizes them with `onChange`, as it is made at once.
+   */
   onChangeTargets: (change: (exercise: DraftExercise) => SetTarget[] | null) => void;
   /**
    * The exercise after it, which it can be joined with into a superset (ADR 0137), with whether it
