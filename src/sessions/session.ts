@@ -427,7 +427,8 @@ function nextOpen(exercises: readonly SessionExercise[], index: number): number 
 /**
  * Of a superset's exercises at `members`, the one furthest behind: the one not done with the
  * fewest sets done, the first of them on a tie; none once all are done. The round a superset shows
- * and the exercise it opens next both follow it.
+ * and the exercise it opens next both follow it. The watch keeps the same rule in
+ * targets/watch/Protocol.swift.
  */
 function furthestBehind(
   exercises: readonly SessionExercise[],
@@ -449,7 +450,7 @@ function furthestBehind(
 /**
  * The round the superset of the exercises at `block` is in, from 1, of as many as its exercise
  * with the most sets has: the round of its exercise furthest behind. None for a block of one, an
- * exercise on its own.
+ * exercise on its own. The watch works it out the same way (targets/watch/Protocol.swift).
  */
 export function supersetRound(
   exercises: readonly SessionExercise[],
@@ -467,7 +468,8 @@ export function supersetRound(
  * Where a set ticked in a superset leads (ADR 0137): to the next of its exercises that has not yet
  * had its set in this round, with no rest; or, the round done, to the superset's rest, and then to
  * the exercise furthest behind, the first of them on a tie, so that the round shown is the one it
- * opens; or past the superset once it is done.
+ * opens; or past the superset once it is done. The watch leads its own ticks the same way
+ * (afterTick in targets/watch/Protocol.swift).
  */
 function afterSupersetTick(
   value: Session,
@@ -523,7 +525,7 @@ export function toggleDoneUnchecked(
   if (members.length > 1) {
     return { ...next, restChangedAt: now, ...afterSupersetTick(next, members, exercise, now) };
   }
-  // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
+  // The watch reckons what its tick leads to the same way (afterTick in targets/watch/Protocol.swift).
   next = { ...next, restChangedAt: now, rest: item ? restAfter(item.restSeconds, now) : null };
   const following = item && isExerciseDone(item) ? nextOpen(next.exercises, exercise) : undefined;
   return following === undefined ? next : { ...next, current: following };

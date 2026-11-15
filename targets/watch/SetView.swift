@@ -21,6 +21,12 @@ struct SetView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 6) {
           StatusLine(workout: workout)
+          // The superset and the round it is in, as the phone shows it (ADR 0137).
+          if let round = phone.supersetRound(of: next, in: workout) {
+            Text(L10n.t("supersetRound", ["round": round.round, "rounds": round.rounds]))
+              .font(.rounded(12, .heavy))
+              .foregroundStyle(Theme.accent)
+          }
           Text(workout.name(of: next.exercise))
             .font(.rounded(17, .heavy))
             .lineLimit(2)
@@ -115,9 +121,9 @@ struct SetView: View {
   /// src/sessions/session.ts), with the set after it, so that the watch shows and signals it
   /// before the phone says, as with the wrist down at once.
   private func restStarted(by next: NextSet) -> (seconds: Int, next: String?)? {
-    let seconds = next.exercise.restSeconds
-    guard seconds > 0 else { return nil }
-    return (seconds, phone.nextSet(afterTicking: next, of: workout)?.label)
+    let after = phone.afterTicking(next, of: workout)
+    guard after.rests else { return nil }
+    return (next.exercise.restSeconds, after.next?.label)
   }
 
   private func subtitle(_ next: NextSet) -> String {

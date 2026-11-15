@@ -160,23 +160,33 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   /// The set to do next as the watch shows it: the phone's, or, while a pick or ticks here wait
   /// for the phone, the set the phone finds once it takes them: the first not done nor ticked here
   /// from the exercise of the latest of them, as a pick opens its exercise and a tick stays on its
-  /// own until it is done (markDone, nextSetOf); so logging goes on with the phone out of reach
-  /// (ADR 0121).
+  /// own until it is done, or goes on through its superset's round (markDone, nextSetOf); so
+  /// logging goes on with the phone out of reach (ADR 0121).
   func nextSet(of workout: WatchWorkout) -> NextSet? {
     let latest = waiting.values.filter { $0.workoutId == workout.id && $0.change.leads != nil }
       .max { $0.at < $1.at }
     guard let from = latest?.change.leads, workout.exercises.indices.contains(from) else {
       return workout.phoneNextSet
     }
-    return workout.firstOpenSet(from: from, skipping: waitingTicks(of: workout))
+    let ticked = waitingTicks(of: workout)
+    if latest?.change.opens != nil {
+      return workout.firstOpenSet(from: from, skipping: ticked)
+    }
+    return workout.afterTick(of: from, ticked: ticked).next
   }
 
-  /// The set to do after a tick of `next`, for its rest: the next set the watch shows once the
-  /// tick is sent.
-  func nextSet(afterTicking next: NextSet, of workout: WatchWorkout) -> NextSet? {
-    workout.firstOpenSet(
-      from: next.exerciseIndex,
-      skipping: waitingTicks(of: workout).union([
+  /// The round of the superset of `next`'s exercise, with the ticks waiting for the phone taken as
+  /// done; none on its own.
+  func supersetRound(of next: NextSet, in workout: WatchWorkout) -> (round: Int, rounds: Int)? {
+    workout.supersetRound(of: next.exerciseIndex, ticked: waitingTicks(of: workout))
+  }
+
+  /// What a tick of `next` leads to, for its rest: whether it starts one, and the set the watch
+  /// shows next once the tick is sent.
+  func afterTicking(_ next: NextSet, of workout: WatchWorkout) -> (rests: Bool, next: NextSet?) {
+    workout.afterTick(
+      of: next.exerciseIndex,
+      ticked: waitingTicks(of: workout).union([
         SetIndex(exercise: next.exerciseIndex, set: next.setIndex)
       ]))
   }
