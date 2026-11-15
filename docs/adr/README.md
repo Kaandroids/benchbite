@@ -152,3 +152,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0134](0134-pause-bite-at-the-providers-spend-limit.md)               | Pause Bite at the provider's spend limit, and warn before it                            | Accepted                                             |
 | [0135](0135-search-food-names-through-a-trigram-index.md)             | Search food names through a trigram index                                               | Accepted                                             |
 | [0136](0136-sign-out-an-account-deleted-elsewhere.md)                 | Sign out an account deleted elsewhere, and say why a session ended                      | Accepted                                             |
+| [0137](0137-supersets.md)                                             | Join exercises into supersets, done in rounds with one rest                             | Accepted                                             |
