@@ -58,7 +58,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   }
 
   const filled = email.trim() !== '' && password !== '';
-  // As the button, which is disabled until both are filled and takes no press while it logs in.
+  // The return key logs in when the button would: both fields filled, not already logging in.
   const canLogIn = filled && !signIn.isPending;
   const logIn = () =>
     signIn.mutate(
