@@ -8,6 +8,7 @@ import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
+import { joinedWithNext } from '@/workouts/supersets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -385,36 +386,42 @@ export function isExerciseDone(exercise: SessionExercise): boolean {
   return exercise.sets.length > 0 && exercise.sets.every((s) => s.done);
 }
 
-/** The places of the exercises in the superset of the one at `index`, in order; none on its own. */
-export function supersetMembers(exercises: readonly SessionExercise[], index: number): number[] {
-  const superset = exercises[index]?.superset;
-  if (superset == null) {
-    return [];
-  }
-  return exercises.flatMap((exercise, i) => (exercise.superset === superset ? [i] : []));
-}
-
-function doneCount(exercise: SessionExercise): number {
-  return exercise.sets.filter((s) => s.done).length;
-}
-
 /**
- * The places of the workout's exercises in blocks as they are shown: each superset's exercises
- * together, and every other exercise on its own.
+ * The places of the workout's exercises in blocks as they are shown and done: each superset's
+ * exercises next to each other together, and every other exercise on its own.
  */
-export function blocksOf(value: Pick<Session, 'exercises'>): number[][] {
+export function blocksOf(value: { exercises: readonly SessionExercise[] }): number[][] {
   const blocks: number[][] = [];
-  value.exercises.forEach((exercise, index) => {
+  value.exercises.forEach((_exercise, index) => {
     const previous = blocks[blocks.length - 1];
-    const joined =
-      exercise.superset != null && value.exercises[index - 1]?.superset === exercise.superset;
-    if (joined && previous) {
+    if (previous && joinedWithNext(value.exercises, index - 1)) {
       previous.push(index);
     } else {
       blocks.push([index]);
     }
   });
   return blocks;
+}
+
+/** The places of the exercises in the superset of the one at `index`, in order; none on its own. */
+function supersetMembers(exercises: readonly SessionExercise[], index: number): number[] {
+  const block = blocksOf({ exercises }).find((places) => places.includes(index)) ?? [];
+  return block.length > 1 ? block : [];
+}
+
+function doneCount(exercise: SessionExercise): number {
+  return exercise.sets.filter((s) => s.done).length;
+}
+
+/** The rest a set starts that rests `restSeconds` after it, from `now`; none without a rest. */
+function restAfter(restSeconds: number, now: number): Session['rest'] {
+  return restSeconds > 0 ? { endsAt: now + restSeconds * 1000, seconds: restSeconds } : null;
+}
+
+/** The first exercise after the one at `index` that is not done, if there is one. */
+function nextOpen(exercises: readonly SessionExercise[], index: number): number | undefined {
+  const following = exercises.findIndex((e, i) => i > index && !isExerciseDone(e));
+  return following >= 0 ? following : undefined;
 }
 
 /**
@@ -431,14 +438,14 @@ export function supersetRound(
   }
   const rounds = Math.max(...members.map((member) => member.sets.length));
   const open = members.filter((member) => !isExerciseDone(member));
-  const round = open.length === 0 ? rounds : Math.min(...open.map(doneCount)) + 1;
-  return { round: Math.min(round, rounds), rounds };
+  return { round: open.length === 0 ? rounds : Math.min(...open.map(doneCount)) + 1, rounds };
 }
 
 /**
  * Where a set ticked in a superset leads (ADR 0137): to the next of its exercises that has not yet
  * had its set in this round, with no rest; or, the round done, to the superset's rest, and then to
- * its first exercise with a set left, or past the superset once it is done.
+ * the exercise furthest behind, the first of them on a tie, so that the round shown is the one it
+ * opens; or past the superset once it is done.
  */
 function afterSupersetTick(
   value: Session,
@@ -457,15 +464,16 @@ function afterSupersetTick(
   if (inRound !== undefined) {
     return { rest: null, current: inRound };
   }
-  const { restSeconds } = exercises[exercise]!;
-  const rest = restSeconds > 0 ? { endsAt: now + restSeconds * 1000, seconds: restSeconds } : null;
-  const nextRound = members.find((i) => !isExerciseDone(exercises[i]!));
-  if (nextRound !== undefined) {
-    return { rest, current: nextRound };
-  }
-  const last = members[members.length - 1]!;
-  const following = exercises.findIndex((e, i) => i > last && !isExerciseDone(e));
-  return { rest, current: following >= 0 ? following : value.current };
+  const rest = restAfter(exercises[exercise]!.restSeconds, now);
+  const behind = members
+    .filter((i) => !isExerciseDone(exercises[i]!))
+    .reduce<number | undefined>(
+      (first, i) =>
+        first === undefined || doneCount(exercises[i]!) < doneCount(exercises[first]!) ? i : first,
+      undefined,
+    );
+  const current = behind ?? nextOpen(exercises, members[members.length - 1]!) ?? value.current;
+  return { rest, current };
 }
 
 /**
@@ -498,21 +506,9 @@ export function toggleDoneUnchecked(
     return { ...next, restChangedAt: now, ...afterSupersetTick(next, members, exercise, now) };
   }
   // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
-  next = {
-    ...next,
-    restChangedAt: now,
-    rest:
-      item && item.restSeconds > 0
-        ? { endsAt: now + item.restSeconds * 1000, seconds: item.restSeconds }
-        : null,
-  };
-  if (item && isExerciseDone(item)) {
-    const following = next.exercises.findIndex((e, i) => i > exercise && !isExerciseDone(e));
-    if (following >= 0) {
-      next = { ...next, current: following };
-    }
-  }
-  return next;
+  next = { ...next, restChangedAt: now, rest: item ? restAfter(item.restSeconds, now) : null };
+  const following = item && isExerciseDone(item) ? nextOpen(next.exercises, exercise) : undefined;
+  return following === undefined ? next : { ...next, current: following };
 }
 
 /** Adds a set to an exercise, with the values of its last set but its time. */

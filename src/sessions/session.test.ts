@@ -311,6 +311,20 @@ describe('a superset', () => {
     expect(toLog(session, NOW + 60_000).exercises.map((e) => e.superset)).toEqual([1, 1, null]);
   });
 
+  it('opens the exercise furthest behind after a round, so that it matches the round shown', () => {
+    let session = begin();
+    // The bench press ticked twice, its card opened again by hand, then the row once.
+    for (const [exercise, set] of [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+    ] as const) {
+      session = toggleDoneUnchecked(session, exercise, set, NOW);
+    }
+    expect(session).toMatchObject({ current: 1, rest: { seconds: 60 } });
+    expect(supersetRound(session.exercises, 0)).toEqual({ round: 2, rounds: 3 });
+  });
+
   it('has no round for an exercise on its own', () => {
     expect(supersetRound(begin().exercises, 2)).toBeNull();
   });
