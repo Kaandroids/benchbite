@@ -15,12 +15,10 @@ alter table public.workout_exercises
 alter table public.logged_sets
   add column superset smallint check (superset between 1 and 9999);
 
--- The exercises `exercises` with their supersets as a workout or a log may have them: a superset is
--- a whole number from 1 to 9999. In a workout (`in_workout`) it joins two or more exercises next to
--- each other, which share one rest, the rest after each round. A log keeps what was done, and an
--- exercise skipped has no sets to keep its superset by, so a superset there may be left with one
--- exercise, or with exercises apart.
-create function public.check_supersets(exercises jsonb, in_workout boolean)
+-- The supersets of the exercises `exercises` are whole numbers from 1 to 9999, or none. All a log
+-- checks: it keeps what was done, and an exercise skipped has no sets to keep its superset by, so a
+-- superset there may be left with one exercise, or with exercises apart.
+create function public.check_superset_numbers(exercises jsonb)
 returns void
 language plpgsql
 immutable
@@ -31,7 +29,24 @@ begin
     select 1 from jsonb_array_elements(exercises) e
     where jsonb_typeof(e -> 'superset') not in ('number', 'null')
       or (jsonb_typeof(e -> 'superset') = 'number' and (e ->> 'superset') !~ '^[1-9][0-9]{0,3}$')
-  ) or in_workout and exists (
+  ) then
+    raise exception 'A superset is a whole number from 1 to 9999' using errcode = 'BB057';
+  end if;
+end;
+$$;
+
+-- The supersets of a workout's exercises `exercises`: numbered as check_superset_numbers() wants,
+-- each joining two or more exercises next to each other, which share one rest, the rest after each
+-- round.
+create function public.check_supersets(exercises jsonb)
+returns void
+language plpgsql
+immutable
+set search_path = ''
+as $$
+begin
+  perform public.check_superset_numbers(exercises);
+  if exists (
     select 1
     from jsonb_array_elements(exercises) with ordinality e
     where jsonb_typeof(e.value -> 'superset') = 'number'
@@ -46,7 +61,7 @@ begin
 end;
 $$;
 
--- The superset of the exercise at `position` in a log, as check_supersets() let it through.
+-- The superset of the exercise at `position` in a log, as check_superset_numbers() let it through.
 create function public.superset_of(log jsonb, exercise_position smallint)
 returns smallint
 language sql
@@ -57,7 +72,9 @@ as $$
 $$;
 
 -- Called only from functions that run as their owner (20261024130000_tighten_grants.sql).
-revoke execute on function public.check_supersets(jsonb, boolean)
+revoke execute on function public.check_superset_numbers(jsonb)
+  from public, anon, authenticated, service_role;
+revoke execute on function public.check_supersets(jsonb)
   from public, anon, authenticated, service_role;
 revoke execute on function public.superset_of(jsonb, smallint)
   from public, anon, authenticated, service_role;
@@ -148,7 +165,7 @@ begin
   end if;
 
   -- As insert_workout_exercises() does, but before the time, which reads the supersets.
-  perform public.check_supersets(items, true);
+  perform public.check_supersets(items);
   minutes := public.workout_minutes(items);
 
   if saved_id is null then
@@ -187,7 +204,7 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  perform public.check_supersets(items, true);
+  perform public.check_supersets(items);
 
   insert into public.workout_exercises (
     workout_id, user_id, position, exercise_id, slot, sets, target_reps_min, target_reps_max,
@@ -246,7 +263,7 @@ as $$
   where w.id = saved_workout.workout_id and w.user_id = (select auth.uid());
 $$;
 
--- As before (20261023200000), and checks the supersets of the log's exercises.
+-- As before (20261023200000), and checks the numbers of the log's supersets.
 create or replace function public.check_sets(log jsonb)
 returns void
 language plpgsql
@@ -271,7 +288,7 @@ begin
   if unsuited then
     raise exception 'A set does not suit its exercise' using errcode = 'BB011';
   end if;
-  perform public.check_supersets(coalesce(log -> 'exercises', '[]'), false);
+  perform public.check_superset_numbers(coalesce(log -> 'exercises', '[]'));
 end;
 $$;
 
@@ -425,7 +442,7 @@ begin
     where s.log_id = edit_workout_log.log_id
     returning s.exercise_position, s.exercise_id, s.set_position, s.done_at, s.superset
   ), old_supersets as (
-    select distinct o.exercise_position, o.superset
+    select distinct o.exercise_position, o.exercise_id, o.superset
     from old o
   ), new as (
     select n.*, count(*) over (partition by n.exercise_position, n.exercise_id) as sets
@@ -456,7 +473,7 @@ begin
   from new n
   left join old_counts c using (exercise_position, exercise_id)
   left join old o using (exercise_position, exercise_id, set_position)
-  left join old_supersets u using (exercise_position);
+  left join old_supersets u using (exercise_position, exercise_id);
 end;
 $$;
 
