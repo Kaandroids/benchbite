@@ -29,7 +29,7 @@ export function setTargetsOf(json: Json | null): SetTarget[] | null {
 }
 
 /** The item at `index`, or the last one for an index past the end: as a set takes the last set's. */
-export function atOrLast<T>(list: readonly T[], index: number): T | undefined {
+function atOrLast<T>(list: readonly T[], index: number): T | undefined {
   return list[Math.min(index, list.length - 1)];
 }
 
