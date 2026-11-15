@@ -29,7 +29,7 @@ pull requests of their own, after the mock-up the maintainer approved.
   `check_supersets()` holds the rule, and `insert_workout_exercises()` runs it, which every way a
   workout's exercises are written goes through: the editor, alternatives, Bite's proposals and the
   onboarding's plan. `save_workout()` runs it first too, as the time reads the supersets.
-- **A log checks only the numbers.** It keeps what was done, and an exercise skipped has no sets to
+- **A log checks only the numbers** (`check_superset_numbers()`). It keeps what was done, and an exercise skipped has no sets to
   keep its superset by, so a superset in a log may be left with one exercise or with exercises
   apart.
 - **The time counts the superset's rest once per round.** `workout_minutes()` counts a superset's
