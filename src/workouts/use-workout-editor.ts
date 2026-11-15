@@ -6,11 +6,11 @@ import { Alert } from 'react-native';
 import { allLoaded } from '@/components/load-state';
 import { useExerciseLibrary } from '@/exercises/library';
 import { dbErrorMessage } from '@/lib/errors';
-import { move } from '@/lib/move';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { useWorkoutName } from './format';
+import { changeInSuperset, joinWithNext, moveWithSupersets, tidySupersets } from './supersets';
 import { findWorkout, useSaveWorkout, useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
@@ -44,12 +44,15 @@ export function useWorkoutEditor(id: number | undefined) {
             id: workout.id,
             name: workout.name ?? '',
             weekdays: workout.weekdays,
-            exercises: workout.exercises.map(({ exerciseId, sets, target, restSeconds }) => ({
-              exerciseId,
-              sets,
-              target,
-              restSeconds,
-            })),
+            exercises: workout.exercises.map(
+              ({ exerciseId, sets, target, restSeconds, superset }) => ({
+                exerciseId,
+                sets,
+                target,
+                restSeconds,
+                superset,
+              }),
+            ),
           }
         : { name: '', weekdays: [], exercises: [] },
     );
@@ -76,7 +79,12 @@ export function useWorkoutEditor(id: number | undefined) {
         ...(draft.id !== undefined ? { id: draft.id } : {}),
         name: draft.name.trim() || null,
         weekdays: draft.weekdays,
-        exercises: draft.exercises.map(({ key: _key, ...exercise }) => exercise),
+        // Every exercise says its superset, none as null, so that an edit is told from an app's
+        // from before supersets (ADR 0137).
+        exercises: draft.exercises.map(({ key: _key, ...exercise }) => ({
+          ...exercise,
+          superset: exercise.superset ?? null,
+        })),
       });
       router.back();
     } catch (error) {
@@ -110,13 +118,22 @@ export function useWorkoutEditor(id: number | undefined) {
   const setName = (name: string) => updateDraft((current) => ({ ...current, name }));
   const setWeekdays = (weekdays: number[]) => updateDraft((current) => ({ ...current, weekdays }));
   const moveExercise = (from: number, to: number) =>
-    setExercises((exercises) => move(exercises, from, to));
+    setExercises((exercises) => moveWithSupersets(exercises, from, to));
   const replaceExercise = (changed: DraftExercise) =>
-    setExercises((exercises) =>
-      exercises.map((exercise) => (exercise.key === changed.key ? changed : exercise)),
-    );
+    setExercises((exercises) => changeInSuperset(exercises, changed));
   const removeExercise = (key: string) =>
-    setExercises((exercises) => exercises.filter((exercise) => exercise.key !== key));
+    setExercises((exercises) =>
+      tidySupersets(exercises.filter((exercise) => exercise.key !== key)),
+    );
+  /** Joins the exercise with the one after it into a superset, or parts them. */
+  const joinExerciseWithNext = (key: string, joined: boolean) =>
+    setExercises((exercises) =>
+      joinWithNext(
+        exercises,
+        exercises.findIndex((exercise) => exercise.key === key),
+        joined,
+      ),
+    );
 
   return {
     draft,
@@ -137,5 +154,6 @@ export function useWorkoutEditor(id: number | undefined) {
     moveExercise,
     replaceExercise,
     removeExercise,
+    joinExerciseWithNext,
   };
 }

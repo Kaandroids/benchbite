@@ -150,8 +150,20 @@ describe('EditorScreen', () => {
       name: 'Chest day',
       weekdays: [4],
       exercises: [
-        { exerciseId: 'bench', sets: 4, target: { reps: { min: 8, max: 12 } }, restSeconds: 120 },
-        { exerciseId: 'rowing', sets: 1, target: { seconds: 300, meters: null }, restSeconds: 0 },
+        {
+          exerciseId: 'bench',
+          sets: 4,
+          target: { reps: { min: 8, max: 12 } },
+          restSeconds: 120,
+          superset: null,
+        },
+        {
+          exerciseId: 'rowing',
+          sets: 1,
+          target: { seconds: 300, meters: null },
+          restSeconds: 0,
+          superset: null,
+        },
       ],
     });
     expect(router.back).toHaveBeenCalled();
