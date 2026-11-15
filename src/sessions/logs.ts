@@ -7,6 +7,17 @@ import { reloadMoves } from '@/workouts/moves';
 
 import type { ExerciseBests, LastSets, toLog } from './session';
 
+export const LAST_SETS_KEY = ['last-sets'];
+
+/** The latest sets of the exercises, read again each time, as a workout may have been logged since. */
+export function lastSetsQuery(exerciseIds: string[]) {
+  return {
+    queryKey: [...LAST_SETS_KEY, ...exerciseIds],
+    queryFn: () => fetchLastSets(exerciseIds),
+    staleTime: 0,
+  };
+}
+
 /** The sets of each exercise's latest log, for filling in a new workout (last_sets()). */
 export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {
   const { data, error } = await supabase.rpc('last_sets', { exercise_ids: exerciseIds });
