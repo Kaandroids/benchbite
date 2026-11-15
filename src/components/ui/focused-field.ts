@@ -33,11 +33,13 @@ export function offsetToReveal(field: Span, viewport: Viewport, margin: number):
  * scrolls a field into view as it gets focus, but before the keyboard has made the scroll view
  * smaller, so a field near the bottom stayed under the buttons below it. This scrolls again
  * whenever the scroll view changes height and whenever the keyboard shows, which iOS also tells
- * when the focus moves from one field to another.
+ * when the focus moves from one field to another. It is for a scroll view that the keyboard makes
+ * smaller, as in a form; it returns the scroll view's props, none while not `enabled`.
  */
 export function useFocusedFieldInView(
   scroll: RefObject<ScrollViewInstance | null>,
   margin: number,
+  enabled: boolean,
 ) {
   const viewport = useRef<Viewport>({ offset: 0, height: 0 });
 
@@ -61,9 +63,12 @@ export function useFocusedFieldInView(
   }, [scroll, margin]);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const subscription = Keyboard.addListener('keyboardDidShow', reveal);
     return () => subscription.remove();
-  }, [reveal]);
+  }, [reveal, enabled]);
 
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {
@@ -76,5 +81,5 @@ export function useFocusedFieldInView(
     viewport.current.offset = event.nativeEvent.contentOffset.y;
   }, []);
 
-  return { onLayout, onScroll, scrollEventThrottle: 16 };
+  return enabled ? { onLayout, onScroll, scrollEventThrottle: 16 } : {};
 }

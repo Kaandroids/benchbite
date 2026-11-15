@@ -36,6 +36,11 @@ type ScreenProps = {
   subtitle?: string;
   /** False for content that scrolls itself, such as a long virtualized list. */
   scrolls?: boolean;
+  /**
+   * Scrolls the focused text field wholly into view above the footer, for a form that the
+   * keyboard makes smaller.
+   */
+  keepsFocusedFieldInView?: boolean;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
@@ -50,6 +55,7 @@ export function Screen({
   title,
   subtitle,
   scrolls = true,
+  keepsFocusedFieldInView = false,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
@@ -59,7 +65,7 @@ export function Screen({
     action
   );
   const scroll = useRef<ScrollViewInstance>(null);
-  const keepFocusedInView = useFocusedFieldInView(scroll, spacing.lg);
+  const keepFocusedInView = useFocusedFieldInView(scroll, spacing.lg, keepsFocusedFieldInView);
   const hasTopBar = progress !== undefined || onBack !== undefined || end !== undefined;
 
   return (
