@@ -156,6 +156,7 @@ describe('EditorScreen', () => {
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 120,
           superset: null,
+          setTargets: null,
         },
         {
           exerciseId: 'rowing',
@@ -163,6 +164,7 @@ describe('EditorScreen', () => {
           target: { seconds: 300, meters: null },
           restSeconds: 0,
           superset: null,
+          setTargets: null,
         },
       ],
     });

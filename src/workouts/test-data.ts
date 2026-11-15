@@ -11,6 +11,7 @@ export function testExercise(
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,
     superset: null,
+    setTargets: null,
     primaryMuscles: ['quadriceps'],
     imagePath: `${exerciseId}/0.webp`,
     ...more,

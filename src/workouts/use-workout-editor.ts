@@ -45,12 +45,13 @@ export function useWorkoutEditor(id: number | undefined) {
             name: workout.name ?? '',
             weekdays: workout.weekdays,
             exercises: workout.exercises.map(
-              ({ exerciseId, sets, target, restSeconds, superset }) => ({
+              ({ exerciseId, sets, target, restSeconds, superset, setTargets }) => ({
                 exerciseId,
                 sets,
                 target,
                 restSeconds,
                 superset,
+                setTargets,
               }),
             ),
           }
