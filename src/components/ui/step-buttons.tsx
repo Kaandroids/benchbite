@@ -4,8 +4,6 @@ import { useTheme } from '@/theme';
 
 import { Icon } from './icon';
 
-/** How faded the minus button is next to plus. */
-const QUIET_OPACITY = 0.55;
 /** The size of each half of the joined buttons, wide enough to tap with a thumb. */
 const JOINED_WIDTH = 52;
 const JOINED_HEIGHT = 44;
@@ -24,8 +22,8 @@ type StepButtonsProps = {
 };
 
 /**
- * Minus and plus buttons that change a value a step at a time. Minus is quieter than plus, so the
- * two read apart at a glance.
+ * Minus and plus buttons that change a value a step at a time, in greys so that orange stays with
+ * the filled buttons. Minus is quieter than plus, so the two read apart at a glance.
  */
 export function StepButtons({
   onDecrease,
@@ -59,19 +57,19 @@ export function StepButtons({
           ? {
               width: JOINED_WIDTH,
               height: '100%',
-              backgroundColor: pressed ? colors.selected : undefined,
+              backgroundColor: pressed ? colors.track : undefined,
               opacity: enabled ? 1 : 0.3,
             }
           : {
               width: size,
               height: size,
               borderRadius: radii.full,
-              backgroundColor: pressed ? colors.selected : colors.iconBackground,
-              opacity: !enabled ? 0.3 : quiet && !pressed ? QUIET_OPACITY : 1,
+              backgroundColor: pressed ? colors.border : colors.track,
+              opacity: enabled ? 1 : 0.3,
             },
       ]}
     >
-      <Icon name={icon} size={joined ? 20 : undefined} color={joined ? 'primaryText' : 'primary'} />
+      <Icon name={icon} size={joined ? 20 : undefined} color={quiet ? 'textMuted' : 'text'} />
     </Pressable>
   );
   const minus = button('minus', decreaseLabel, onDecrease, canDecrease, true);
