@@ -114,13 +114,12 @@ export function useWorkoutEditor(id: number | undefined) {
   const setWeekdays = (weekdays: number[]) => updateDraft((current) => ({ ...current, weekdays }));
   /** Moves an exercise, and returns where it ended up, which a superset may change. */
   const moveExercise = (from: number, to: number) => {
-    let place = to;
-    setExercises((exercises) => {
-      const moved = moveWithSupersets(exercises, from, to);
-      place = moved.findIndex((exercise) => exercise.key === exercises[from]?.key);
-      return moved;
-    });
-    return place;
+    if (!draft) {
+      return to;
+    }
+    const moved = moveWithSupersets(draft.exercises, from, to);
+    setExercises(() => moved);
+    return moved.findIndex((exercise) => exercise.key === draft.exercises[from]?.key);
   };
   const replaceExercise = (changed: DraftExercise) =>
     setExercises((exercises) => changeInSuperset(exercises, changed));
