@@ -399,6 +399,25 @@ function doneCount(exercise: SessionExercise): number {
 }
 
 /**
+ * The places of the workout's exercises in blocks as they are shown: each superset's exercises
+ * together, and every other exercise on its own.
+ */
+export function blocksOf(value: Pick<Session, 'exercises'>): number[][] {
+  const blocks: number[][] = [];
+  value.exercises.forEach((exercise, index) => {
+    const previous = blocks[blocks.length - 1];
+    const joined =
+      exercise.superset != null && value.exercises[index - 1]?.superset === exercise.superset;
+    if (joined && previous) {
+      previous.push(index);
+    } else {
+      blocks.push([index]);
+    }
+  });
+  return blocks;
+}
+
+/**
  * The round a superset is in, from 1, of as many as its exercise with the most sets has: the
  * first round one of its exercises still has a set to do in. None for an exercise on its own.
  */

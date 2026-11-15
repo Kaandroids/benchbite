@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
@@ -105,6 +106,7 @@ export function OpenExercise({
 }: ExerciseProps & { clock: Session['clock']; now: number }) {
   const { colors, radii, spacing } = useTheme();
   const formatTarget = useTargetFormat();
+  const { t } = useTranslation();
   const formatRest = useRestFormat();
   const kind = setKindOf(info?.metrics, exercise.target);
   const { bySet: records } = newRecords(exercise.sets, kind, exercise.bests);
@@ -128,7 +130,10 @@ export function OpenExercise({
           <Text variant="captionStrong" color="primaryText">
             {[
               formatTarget(exercise.sets.length, exercise.target),
-              formatRest(exercise.restSeconds),
+              // In a superset the rest comes after the round, which its line says.
+              exercise.superset != null
+                ? t('session.inSuperset')
+                : formatRest(exercise.restSeconds),
             ].join(' · ')}
           </Text>
         </View>
@@ -191,7 +196,45 @@ export function OpenExercise({
   );
 }
 
+/**
+ * The cards of a superset's exercises, joined by a line beside them under a line that says the
+ * round the superset is in (ADR 0137).
+ */
+export function SupersetCards({
+  round,
+  children,
+}: {
+  round: { round: number; rounds: number };
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View style={[styles.row, { gap: spacing.xs, paddingLeft: spacing.xs }]}>
+        <Icon name="link" size={15} color="primaryText" />
+        <Text variant="captionStrong" color="primaryText">
+          {t('session.supersetRound', round)}
+        </Text>
+      </View>
+      <View style={[styles.supersetCards, { gap: spacing.sm }]}>
+        <View
+          style={[styles.supersetLine, { backgroundColor: colors.planned, marginVertical: 22 }]}
+        />
+        <View style={[styles.flex, { gap: spacing.sm }]}>{children}</View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  supersetCards: {
+    flexDirection: 'row',
+  },
+  supersetLine: {
+    width: 3,
+    borderRadius: 2,
+  },
   flex: {
     flex: 1,
   },
