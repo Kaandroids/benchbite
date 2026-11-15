@@ -1,7 +1,8 @@
-import { Text } from 'react-native';
+import { ScrollView, Text, TextInput } from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
+import { KeyboardAvoiding } from './keyboard-avoiding';
 import { Screen } from './screen';
 
 // The bar is not an accessibility element and has no label here, so it is found by its role prop.
@@ -107,5 +108,72 @@ describe('Screen', () => {
       (node) => node.type === 'View' && node.props.style?.width === 44,
     );
     expect(sides.length).toBeGreaterThanOrEqual(2);
+  });
+
+  describe('inside a KeyboardAvoiding', () => {
+    // The mocked ScrollView's methods, shared through its prototype.
+    const scrollView = ScrollView.prototype as unknown as {
+      getInnerViewRef: jest.Mock;
+      scrollTo: jest.Mock;
+    };
+    const scrollBox = () => {
+      const [box] = screen.container.queryAll((node) => node.type === 'RCTScrollView');
+      if (!box) {
+        throw new Error('No scroll view');
+      }
+      return box;
+    };
+
+    /** A focused field at `top`, 50 points tall, or one outside the scroll view. */
+    function focusField(top: number | null) {
+      jest.spyOn(TextInput.State, 'currentlyFocusedInput').mockReturnValue({
+        measureLayout: (
+          _content: unknown,
+          onSuccess: (x: number, y: number, width: number, height: number) => void,
+          onFail: () => void,
+        ) => (top === null ? onFail() : onSuccess(0, top, 300, 50)),
+      } as never);
+    }
+
+    /** A form, whose screen the keyboard makes smaller, or a screen it does not. */
+    async function renderForm(shrinks = true) {
+      const form = (
+        <Screen footer={<Text>Footer</Text>}>
+          <Text>Content</Text>
+        </Screen>
+      );
+      await render(shrinks ? <KeyboardAvoiding>{form}</KeyboardAvoiding> : form);
+    }
+
+    beforeEach(() => {
+      scrollView.getInnerViewRef.mockReturnValue({});
+      scrollView.scrollTo.mockClear();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('scrolls a field the smaller form hides into view, with a margin', async () => {
+      await renderForm();
+      focusField(400);
+      await fireEvent(scrollBox(), 'layout', { nativeEvent: { layout: { height: 200 } } });
+      // Its bottom at 450, a margin of 16 below it, in 200 points of the form.
+      expect(scrollView.scrollTo).toHaveBeenCalledWith({ y: 266, animated: true });
+    });
+
+    it('leaves a field already in view, and one outside the form', async () => {
+      await renderForm();
+      focusField(40);
+      await fireEvent(scrollBox(), 'layout', { nativeEvent: { layout: { height: 200 } } });
+      focusField(null);
+      await fireEvent(scrollBox(), 'layout', { nativeEvent: { layout: { height: 100 } } });
+      expect(scrollView.scrollTo).not.toHaveBeenCalled();
+    });
+
+    it('leaves the scroll view alone outside one', async () => {
+      await renderForm(false);
+      expect(scrollBox().props.onLayout).toBeUndefined();
+    });
   });
 });
