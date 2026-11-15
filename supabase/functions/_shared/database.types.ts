@@ -2302,7 +2302,7 @@ export type Database = {
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
-      check_supersets: { Args: { exercises: Json; with_rest: boolean }; Returns: undefined };
+      check_supersets: { Args: { exercises: Json; in_workout: boolean }; Returns: undefined };
       choose_what_stays: {
         Args: { alternatives: number[]; today: string; workouts: number[] };
         Returns: undefined;
