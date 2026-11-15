@@ -83,8 +83,9 @@ export function joinWithNext<T extends SupersetMember>(
 
 /**
  * The exercises after the one at `from` was dragged to `to`. Within its superset it changes the
- * superset's order; dragged out of it, it leaves it. Dropped inside another superset it goes below
- * it, as it would split it otherwise.
+ * superset's order; dragged out of it, it leaves it. Dropped inside another superset it goes past
+ * it the way it was moving, below it moving down and above it moving up, as it would split it
+ * otherwise; a screen reader's one step up from below a superset thus passes it.
  */
 export function moveWithSupersets<T extends SupersetMember>(
   exercises: readonly T[],
@@ -103,11 +104,12 @@ export function moveWithSupersets<T extends SupersetMember>(
   next[to] = landed;
   const inside = next[to - 1]?.superset;
   if (!besideOwn && inside != null && next[to + 1]?.superset === inside) {
-    let end = to + 1;
-    while (next[end + 1]?.superset === inside) {
-      end += 1;
+    let edge = to;
+    const step = to < from ? -1 : 1;
+    while (next[edge + step]?.superset === inside) {
+      edge += step;
     }
-    next = move(next, to, end);
+    next = move(next, to, edge);
   }
   return tidySupersets(next);
 }

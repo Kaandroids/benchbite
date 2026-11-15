@@ -25,7 +25,7 @@ type EditorExercisesProps = {
   max: number;
   over: number;
   onOpen: (key: string) => void;
-  onMove: (from: number, to: number) => void;
+  onMove: (from: number, to: number) => number | void;
   onDragChange: (dragging: boolean) => void;
 };
 

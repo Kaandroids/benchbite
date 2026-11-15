@@ -79,12 +79,7 @@ export function useWorkoutEditor(id: number | undefined) {
         ...(draft.id !== undefined ? { id: draft.id } : {}),
         name: draft.name.trim() || null,
         weekdays: draft.weekdays,
-        // Every exercise says its superset, none as null, so that an edit is told from an app's
-        // from before supersets (ADR 0137).
-        exercises: draft.exercises.map(({ key: _key, ...exercise }) => ({
-          ...exercise,
-          superset: exercise.superset ?? null,
-        })),
+        exercises: draft.exercises.map(({ key: _key, ...exercise }) => exercise),
       });
       router.back();
     } catch (error) {
@@ -117,8 +112,16 @@ export function useWorkoutEditor(id: number | undefined) {
     updateDraft((current) => ({ ...current, exercises: change(current.exercises) }));
   const setName = (name: string) => updateDraft((current) => ({ ...current, name }));
   const setWeekdays = (weekdays: number[]) => updateDraft((current) => ({ ...current, weekdays }));
-  const moveExercise = (from: number, to: number) =>
-    setExercises((exercises) => moveWithSupersets(exercises, from, to));
+  /** Moves an exercise, and returns where it ended up, which a superset may change. */
+  const moveExercise = (from: number, to: number) => {
+    let place = to;
+    setExercises((exercises) => {
+      const moved = moveWithSupersets(exercises, from, to);
+      place = moved.findIndex((exercise) => exercise.key === exercises[from]?.key);
+      return moved;
+    });
+    return place;
+  };
   const replaceExercise = (changed: DraftExercise) =>
     setExercises((exercises) => changeInSuperset(exercises, changed));
   const removeExercise = (key: string) =>

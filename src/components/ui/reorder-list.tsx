@@ -31,7 +31,8 @@ type ReorderListProps<T> = {
   keyOf: (item: T) => string;
   /** The height of every row, which the drag distance is counted in. */
   rowHeight: number;
-  onMove: (from: number, to: number) => void;
+  /** Moves a row; returns where it ended up, when the list puts it elsewhere than asked. */
+  onMove: (from: number, to: number) => number | void;
   renderItem: (item: T, index: number) => ReactNode;
   /** What screen readers call a row's handle, such as the exercise's name. */
   labelOf: (item: T) => string;
@@ -109,9 +110,9 @@ export function ReorderList<T>({
           label={labelOf(item)}
           style={rowStyle?.(item)}
           onStep={(to) => {
-            onMove(index, to);
+            const place = onMove(index, to) ?? to;
             AccessibilityInfo.announceForAccessibility(
-              t('reorder.moved', { name: labelOf(item), place: to + 1, count: items.length }),
+              t('reorder.moved', { name: labelOf(item), place: place + 1, count: items.length }),
             );
           }}
         >
@@ -128,7 +129,7 @@ type ReorderRowProps = {
   count: number;
   places: SharedValue<Places>;
   rowHeight: number;
-  onMove: (from: number, to: number) => void;
+  onMove: (from: number, to: number) => number | void;
   onDragChange: ((dragging: boolean) => void) | undefined;
   label: string;
   style: StyleProp<ViewStyle>;

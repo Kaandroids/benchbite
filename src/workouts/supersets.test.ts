@@ -67,9 +67,16 @@ describe('supersets', () => {
     expect(spec(moveWithSupersets(list('a1 b1 c'), 0, 2))).toBe('b c a');
   });
 
-  it('puts an exercise dropped inside another superset below it', () => {
+  it('moves an exercise dropped inside another superset past it, the way it was moving', () => {
     expect(spec(moveWithSupersets(list('a b1 c1 d1 e'), 0, 2))).toBe('b1 c1 d1 a e');
     expect(spec(moveWithSupersets(list('a1 b1 c d2 e2'), 0, 3))).toBe('b c d1 e1 a');
+    expect(spec(moveWithSupersets(list('a b1 c1 d1 e'), 4, 2))).toBe('a e b1 c1 d1');
+  });
+
+  it('passes a superset a step at a time, as a screen reader moves a row', () => {
+    expect(spec(moveWithSupersets(list('a1 b1 c'), 2, 1))).toBe('c a1 b1');
+    expect(spec(moveWithSupersets(list('x a1 b1 c'), 3, 2))).toBe('x c a1 b1');
+    expect(spec(moveWithSupersets(list('c a1 b1'), 0, 1))).toBe('a1 b1 c');
   });
 
   it('gives a rest changed in a superset to all its exercises', () => {
