@@ -233,7 +233,7 @@ describe('EditorScreen', () => {
     expect(await screen.findByRole('button', { name: 'Set 1, 75 kg × 8' })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Set 2, 80 kg × 8' })).toHaveLength(1);
     await fireEvent.press(screen.getByRole('button', { name: 'Set 2, 80 kg × 8' }));
-    expect(screen.getByText('Set 2 target')).toBeTruthy();
+    expect(await screen.findByText('Set 2 target')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'More: Weight' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Less: Reps' }));
     // The set's sheet is inside the exercise's, before its own buttons.
@@ -291,6 +291,7 @@ describe('EditorScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
     await fireEvent.press(screen.getByRole('button', { name: /^Add targets/ }));
     await fireEvent.press(await screen.findByRole('button', { name: 'Set 1, 75 kg × 8' }));
+    await screen.findByText('Set 1 target');
     await fireEvent.press(screen.getByRole('button', { name: 'More: Reps' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByRole('button', { name: 'Set 1, 75 kg × 8' })).toBeTruthy();

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { whenSheetClosed } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import type { LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
@@ -100,7 +101,8 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
               key={index}
               accessibilityRole="button"
               accessibilityLabel={`${label}, ${describe(target)}`}
-              onPress={() => setEditing(index)}
+              // iOS shows no sheet while the one before is still closing.
+              onPress={() => void whenSheetClosed().then(() => setEditing(index))}
               style={[
                 styles.row,
                 {
