@@ -20,7 +20,7 @@ export type WorkoutExercise = {
   target: WorkoutTarget;
   restSeconds: number;
   /** The superset the exercise is in, by its number (ADR 0137); none on its own. */
-  superset?: number | null;
+  superset: number | null;
   primaryMuscles: Muscle[];
   /** The first picture of the exercise, as a path in the exercise-images bucket. */
   imagePath: string | null;

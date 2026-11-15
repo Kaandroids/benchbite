@@ -49,8 +49,20 @@ describe('the draft', () => {
         name: 'Arms',
         weekdays: [],
         exercises: [
-          { exerciseId: 'curl', sets: 3, target: { reps: { min: 8, max: 12 } }, restSeconds: 60 },
-          { exerciseId: 'curl', sets: 2, target: { reps: { min: 8, max: 12 } }, restSeconds: 60 },
+          {
+            exerciseId: 'curl',
+            sets: 3,
+            target: { reps: { min: 8, max: 12 } },
+            restSeconds: 60,
+            superset: null,
+          },
+          {
+            exerciseId: 'curl',
+            sets: 2,
+            target: { reps: { min: 8, max: 12 } },
+            restSeconds: 60,
+            superset: null,
+          },
         ],
       }),
     );
@@ -66,8 +78,20 @@ describe('the draft', () => {
       addExercises([exercise('row', ['distance', 'duration']), exercise('plank', ['duration'])]),
     );
     expect(result.current?.exercises.map(({ key: _key, ...rest }) => rest)).toEqual([
-      { exerciseId: 'row', sets: 1, target: { seconds: null, meters: 1000 }, restSeconds: 0 },
-      { exerciseId: 'plank', sets: 3, target: { seconds: 30, meters: null }, restSeconds: 90 },
+      {
+        exerciseId: 'row',
+        sets: 1,
+        target: { seconds: null, meters: 1000 },
+        restSeconds: 0,
+        superset: null,
+      },
+      {
+        exerciseId: 'plank',
+        sets: 3,
+        target: { seconds: 30, meters: null },
+        restSeconds: 90,
+        superset: null,
+      },
     ]);
   });
 

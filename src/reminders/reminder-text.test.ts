@@ -15,6 +15,7 @@ const session = (name: string, exercises: number, estimatedMinutes: number): Wee
     sets: 3,
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,
+    superset: null,
   })),
   estimatedMinutes,
 });
