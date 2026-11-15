@@ -1776,6 +1776,7 @@ export type Database = {
           id: number;
           position: number;
           rest_seconds: number;
+          set_targets: Json | null;
           sets: number;
           slot: Database['public']['Enums']['plan_slot'] | null;
           superset: number | null;
@@ -1792,6 +1793,7 @@ export type Database = {
           id?: never;
           position: number;
           rest_seconds: number;
+          set_targets?: Json | null;
           sets: number;
           slot?: Database['public']['Enums']['plan_slot'] | null;
           superset?: number | null;
@@ -1807,6 +1809,7 @@ export type Database = {
           id?: never;
           position?: number;
           rest_seconds?: number;
+          set_targets?: Json | null;
           sets?: number;
           slot?: Database['public']['Enums']['plan_slot'] | null;
           superset?: number | null;
@@ -2301,6 +2304,7 @@ export type Database = {
       };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
+      check_set_targets: { Args: { items: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       check_superset_numbers: { Args: { exercises: Json }; Returns: undefined };
       check_supersets: { Args: { exercises: Json }; Returns: undefined };
@@ -2779,6 +2783,29 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      logged_set_at: {
+        Args: { exercise_id: string; log_id: number; set_position: number };
+        Returns: {
+          done_at: string | null;
+          exercise_id: string;
+          exercise_position: number;
+          id: number;
+          log_id: number;
+          meters: number | null;
+          reps: number | null;
+          seconds: number | null;
+          set_position: number;
+          superset: number | null;
+          user_id: string;
+          weight_kg: number | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'logged_sets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       metric_target_kind: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
         Returns: string;
@@ -3083,6 +3110,17 @@ export type Database = {
         };
         Returns: boolean;
       };
+      set_targets: {
+        Args: { workout_id: number };
+        Returns: {
+          exercise_position: number;
+          own: boolean;
+          reps: number;
+          seconds: number;
+          set_position: number;
+          weight_kg: number;
+        }[];
+      };
       set_workout_active: {
         Args: { active: boolean; today: string; workout_id: number };
         Returns: undefined;
@@ -3249,6 +3287,10 @@ export type Database = {
       };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       weight_on: { Args: { day: string; user_id: string }; Returns: number };
+      weight_step: {
+        Args: { equipment: Database['public']['Enums']['equipment'] };
+        Returns: number;
+      };
       with_grace: {
         Args: {
           span: unknown;

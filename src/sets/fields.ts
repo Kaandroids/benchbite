@@ -42,7 +42,8 @@ export function setKindOf(
 
 /**
  * What a weight usually goes up by with the equipment: dumbbells in pairs of a kilogram each,
- * kettlebells by 4 kg, and plates by 1.25 kg a side.
+ * kettlebells by 4 kg, and plates by 1.25 kg a side. The database's weight_step() works set targets
+ * out by the same steps (20261116100000_set_targets.sql): change them together.
  */
 export function weightStepOf(equipment: LibraryExercise['equipment'] | undefined): number {
   switch (equipment) {
