@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 import { useFocusedFieldInView } from './focused-field';
+import { useShrinksForKeyboard } from './keyboard-avoiding';
 import { ScreenTitle } from './screen-title';
 import { SectionProgress, type SectionProgressProps } from './section-progress';
 import { TopBarButton } from './top-bar-button';
@@ -36,11 +37,6 @@ type ScreenProps = {
   subtitle?: string;
   /** False for content that scrolls itself, such as a long virtualized list. */
   scrolls?: boolean;
-  /**
-   * Scrolls the focused text field wholly into view above the footer, for a form that the
-   * keyboard makes smaller.
-   */
-  keepsFocusedFieldInView?: boolean;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
@@ -55,7 +51,6 @@ export function Screen({
   title,
   subtitle,
   scrolls = true,
-  keepsFocusedFieldInView = false,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
@@ -65,7 +60,12 @@ export function Screen({
     action
   );
   const scroll = useRef<ScrollViewInstance>(null);
-  const keepFocusedInView = useFocusedFieldInView(scroll, spacing.lg, keepsFocusedFieldInView);
+  const keepFocusedInView = useFocusedFieldInView(
+    scroll,
+    spacing.lg,
+    // Inside a KeyboardAvoiding, which makes the content smaller for the keyboard, as a form does.
+    useShrinksForKeyboard(),
+  );
   const hasTopBar = progress !== undefined || onBack !== undefined || end !== undefined;
 
   return (

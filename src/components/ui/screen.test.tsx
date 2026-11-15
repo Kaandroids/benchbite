@@ -2,6 +2,7 @@ import { ScrollView, Text, TextInput } from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
+import { KeyboardAvoiding } from './keyboard-avoiding';
 import { Screen } from './screen';
 
 // The bar is not an accessibility element and has no label here, so it is found by its role prop.
@@ -109,7 +110,7 @@ describe('Screen', () => {
     expect(sides.length).toBeGreaterThanOrEqual(2);
   });
 
-  describe('with the focused field kept in view', () => {
+  describe('inside a KeyboardAvoiding', () => {
     // The mocked ScrollView's methods, shared through its prototype.
     const scrollView = ScrollView.prototype as unknown as {
       getInnerViewRef: jest.Mock;
@@ -134,12 +135,14 @@ describe('Screen', () => {
       } as never);
     }
 
-    async function renderForm(keepsFocusedFieldInView = true) {
-      await render(
-        <Screen footer={<Text>Footer</Text>} keepsFocusedFieldInView={keepsFocusedFieldInView}>
+    /** A form, whose screen the keyboard makes smaller, or a screen it does not. */
+    async function renderForm(shrinks = true) {
+      const form = (
+        <Screen footer={<Text>Footer</Text>}>
           <Text>Content</Text>
-        </Screen>,
+        </Screen>
       );
+      await render(shrinks ? <KeyboardAvoiding>{form}</KeyboardAvoiding> : form);
     }
 
     beforeEach(() => {
@@ -168,7 +171,7 @@ describe('Screen', () => {
       expect(scrollView.scrollTo).not.toHaveBeenCalled();
     });
 
-    it('is off unless the screen asks for it', async () => {
+    it('leaves the scroll view alone outside one', async () => {
       await renderForm(false);
       expect(scrollBox().props.onLayout).toBeUndefined();
     });

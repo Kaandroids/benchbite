@@ -38,14 +38,7 @@ export function FormScreen({
   const { spacing } = useTheme();
   return (
     <KeyboardAvoiding>
-      <Screen
-        onBack={onBack}
-        closes={closes}
-        onClose={onClose}
-        progress={progress}
-        footer={footer}
-        keepsFocusedFieldInView
-      >
+      <Screen onBack={onBack} closes={closes} onClose={onClose} progress={progress} footer={footer}>
         <View style={{ gap: spacing.xs }}>
           <Text variant="title" accessibilityRole="header">
             {title}

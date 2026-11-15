@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, use, useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
   type KeyboardEvent,
@@ -15,6 +15,14 @@ type KeyboardAvoidingProps = {
   /** Defaults to filling the space it is given. */
   style?: ViewStyle;
 };
+
+/** True inside a KeyboardAvoiding, whose content the keyboard makes smaller. */
+const Shrinks = createContext(false);
+
+/** Whether this is inside a KeyboardAvoiding, so that its scroll view gets smaller for the keyboard. */
+export function useShrinksForKeyboard(): boolean {
+  return use(Shrinks);
+}
 
 /** Where a view is in the window. */
 type Frame = { y: number; height: number };
@@ -71,7 +79,7 @@ export function KeyboardAvoiding({ children, style = styles.flex }: KeyboardAvoi
 
   return (
     <View ref={view} style={[style, { paddingBottom: bottom }]}>
-      {children}
+      <Shrinks value>{children}</Shrinks>
     </View>
   );
 }
