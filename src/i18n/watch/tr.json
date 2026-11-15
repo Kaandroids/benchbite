@@ -61,5 +61,6 @@
     "kcal": "KCAL",
     "records_one": "{{count}} yeni rekor · iPhone'una bak",
     "records_other": "{{count}} yeni rekor · iPhone'una bak"
-  }
+  },
+  "supersetRound": "SÜPER SET · TUR {{round}}/{{rounds}}"
 }

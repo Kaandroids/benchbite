@@ -61,5 +61,6 @@
     "kcal": "KCAL",
     "records_one": "{{count}} new record · see your iPhone",
     "records_other": "{{count}} new records · see your iPhone"
-  }
+  },
+  "supersetRound": "SUPERSET · ROUND {{round}} OF {{rounds}}"
 }
