@@ -29,7 +29,9 @@ const { meta } = messagesFor(locale);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={meta.description} />
     <title>{title ? `${title} | Benchbite` : meta.title}</title>
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
+    <!-- After the PNG, so that browsers that take SVG favicons use it. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
     <Header locale={locale} page={page} brand={brandHeader} />
