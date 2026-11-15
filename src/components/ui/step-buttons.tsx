@@ -53,19 +53,18 @@ export function StepButtons({
       hitSlop={joined ? undefined : 4}
       style={({ pressed }) => [
         styles.button,
+        { opacity: enabled ? 1 : 0.3 },
         joined
           ? {
               width: JOINED_WIDTH,
               height: '100%',
               backgroundColor: pressed ? colors.track : undefined,
-              opacity: enabled ? 1 : 0.3,
             }
           : {
               width: size,
               height: size,
               borderRadius: radii.full,
               backgroundColor: pressed ? colors.border : colors.track,
-              opacity: enabled ? 1 : 0.3,
             },
       ]}
     >
