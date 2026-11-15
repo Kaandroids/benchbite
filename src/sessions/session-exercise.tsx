@@ -14,6 +14,7 @@ import { describeSet, setKindOf } from '@/sets/fields';
 import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
 import { useRestFormat, useTargetFormat } from '@/workouts/format';
+import { SupersetHeader, SupersetLine } from '@/workouts/superset-marks';
 
 import { newRecords } from './records';
 import {
@@ -208,19 +209,16 @@ export function SupersetCards({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   return (
     <View style={{ gap: spacing.sm }}>
-      <View style={[styles.row, { gap: spacing.xs, paddingLeft: spacing.xs }]}>
-        <Icon name="link" size={15} color="primaryText" />
-        <Text variant="captionStrong" color="primaryText">
-          {t('session.supersetRound', round)}
-        </Text>
-      </View>
-      <View style={[styles.supersetCards, { gap: spacing.sm }]}>
-        <View
-          style={[styles.supersetLine, { backgroundColor: colors.planned, marginVertical: 22 }]}
-        />
+      <SupersetHeader
+        label={t('session.supersetRound', round)}
+        style={{ paddingLeft: spacing.xs }}
+      />
+      <View style={[styles.row, { gap: spacing.sm }]}>
+        {/* From the middle of the first card to the middle of the last. */}
+        <SupersetLine place={{ first: true, last: true }} inset={22} />
         <View style={[styles.flex, { gap: spacing.sm }]}>{children}</View>
       </View>
     </View>
@@ -228,13 +226,6 @@ export function SupersetCards({
 }
 
 const styles = StyleSheet.create({
-  supersetCards: {
-    flexDirection: 'row',
-  },
-  supersetLine: {
-    width: 3,
-    borderRadius: 2,
-  },
   flex: {
     flex: 1,
   },
