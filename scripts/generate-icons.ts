@@ -1,5 +1,7 @@
 // Draws the app icons and the splash screen image from the mark in src/brand/mark.ts and writes
-// them to assets/images. Run with `pnpm icons` after changing the mark.
+// them to assets/images, and the website's favicon to website/public. Run with `pnpm icons` after
+// changing the mark.
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import sharp from 'sharp';
@@ -16,6 +18,7 @@ import {
 } from '../src/brand/mark.ts';
 
 const IMAGES_DIR = join(import.meta.dirname, '..', 'assets', 'images');
+const WEBSITE_DIR = join(import.meta.dirname, '..', 'website', 'public');
 const WHITE = '#FFFFFF';
 
 type Drawing = {
@@ -24,6 +27,8 @@ type Drawing = {
   color: string;
   /** Fills the whole square; transparent without one. */
   background?: string;
+  /** Draws the background as a circle, with transparent corners. */
+  round?: boolean;
   bitten: boolean;
   /** Share of the image the mark's 100 × 100 box takes up. */
   scale: number;
@@ -33,7 +38,7 @@ function circle(cx: number, cy: number, r: number, fill: string): string {
   return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`;
 }
 
-function markSvg({ size, color, background, bitten, scale }: Drawing): string {
+function markSvg({ size, color, background, round = false, bitten, scale }: Drawing): string {
   const { cx, cy } = PLATE;
   const cuts = [
     `<circle cx="${cx}" cy="${cy}" r="${RING.r}" fill="none" stroke="#000" stroke-width="${RING.width}"/>`,
@@ -48,11 +53,18 @@ function markSvg({ size, color, background, bitten, scale }: Drawing): string {
       ${cuts.join('\n      ')}
     </mask>
   </defs>
-  ${background ? `<rect width="${MARK_BOX}" height="${MARK_BOX}" fill="${background}"/>` : ''}
+  ${background ? backgroundSvg(background, round) : ''}
   <g transform="translate(${offset} ${offset}) scale(${scale})">
     <rect width="${MARK_BOX}" height="${MARK_BOX}" fill="${color}" mask="url(#mark)"/>
   </g>
 </svg>`;
+}
+
+function backgroundSvg(fill: string, round: boolean): string {
+  const half = MARK_BOX / 2;
+  return round
+    ? circle(half, half, half, fill)
+    : `<rect width="${MARK_BOX}" height="${MARK_BOX}" fill="${fill}"/>`;
 }
 
 // The splash image is only the plate, so `imageWidth` in app.json is the plate's width.
@@ -81,3 +93,13 @@ for (const [file, drawing] of Object.entries(images)) {
     .toFile(join(IMAGES_DIR, file));
   console.log(`Wrote assets/images/${file}`);
 }
+
+// The website's favicon: the light icon on a round ground, as a browser tab shows the icon as it
+// is. The SVG stays sharp at every size; the PNG is for browsers without SVG favicons.
+const FAVICON = { ...IOS_ICON, color: WHITE, background: BRAND_ORANGE, round: true };
+await writeFile(join(WEBSITE_DIR, 'favicon.svg'), `${markSvg({ ...FAVICON, size: 32 })}\n`);
+console.log('Wrote website/public/favicon.svg');
+await sharp(Buffer.from(markSvg({ ...FAVICON, size: 96 })))
+  .png()
+  .toFile(join(WEBSITE_DIR, 'favicon.png'));
+console.log('Wrote website/public/favicon.png');
