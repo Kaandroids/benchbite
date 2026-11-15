@@ -56,6 +56,20 @@ describe('LogInScreen', () => {
     });
   });
 
+  it('moves from the email to the password, and logs in from the password, with return', async () => {
+    await renderScreen();
+    await fireEvent(screen.getByLabelText('Password'), 'submitEditing');
+    expect(auth.signInWithPassword).not.toHaveBeenCalled();
+    await fill('kaan@example.com', 'secret12');
+    await fireEvent(screen.getByLabelText('Email'), 'submitEditing');
+    expect(screen.getByLabelText('Password')).toHaveProp('returnKeyType', 'go');
+    await fireEvent(screen.getByLabelText('Password'), 'submitEditing');
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'kaan@example.com',
+      password: 'secret12',
+    });
+  });
+
   it('shows why it failed, until the next change', async () => {
     auth.signInWithPassword.mockResolvedValue({
       data: {},

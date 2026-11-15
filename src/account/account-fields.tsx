@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, type Ref, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, type TextInputInstance, View } from 'react-native';
 
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { FormError } from '@/components/ui/form-error';
@@ -24,10 +24,19 @@ type FieldProps = {
   errorAction?: ReactNode;
   /** False while what was typed is being sent. */
   editable?: boolean;
+  /** Called by the keyboard's return key, which then keeps the keyboard open. */
+  onSubmit?: () => void;
 };
 
 /** The email address of an account. */
-export function EmailField({ value, onChange, error, errorAction, editable = true }: FieldProps) {
+export function EmailField({
+  value,
+  onChange,
+  error,
+  errorAction,
+  editable = true,
+  onSubmit,
+}: FieldProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
@@ -44,6 +53,10 @@ export function EmailField({ value, onChange, error, errorAction, editable = tru
         autoCorrect={false}
         autoComplete="email"
         textContentType="username"
+        // Moves on to the password, as the email is never the last field.
+        returnKeyType={onSubmit ? 'next' : undefined}
+        submitBehavior={onSubmit ? 'submit' : undefined}
+        onSubmitEditing={onSubmit}
         placeholder={t('account.emailPlaceholder')}
         placeholderTextColor={colors.placeholder}
         style={[field, error ? { borderColor: colors.danger } : null]}
@@ -64,7 +77,9 @@ export function PasswordField({
   isNew = false,
   editable = true,
   label,
-}: FieldProps & { isNew?: boolean; label?: string }) {
+  onSubmit,
+  ref,
+}: FieldProps & { isNew?: boolean; label?: string; ref?: Ref<TextInputInstance> }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
@@ -79,6 +94,7 @@ export function PasswordField({
       <FieldLabel text={label ?? t('account.password')} />
       <View>
         <TextInput
+          ref={ref}
           accessibilityLabel={label ?? t('account.password')}
           value={value}
           onChangeText={onChange}
@@ -89,6 +105,8 @@ export function PasswordField({
           autoComplete={isNew ? 'new-password' : 'current-password'}
           textContentType={isNew ? 'newPassword' : 'password'}
           maxLength={MAX_PASSWORD_LENGTH}
+          returnKeyType={onSubmit ? 'go' : undefined}
+          onSubmitEditing={onSubmit}
           style={[field, styles.password, error ? { borderColor: colors.danger } : null]}
         />
         <Pressable

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { type TextInputInstance, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/theme';
@@ -35,6 +35,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   const resend = useResendCode();
   const { email, password, setEmail, setPassword, message } = useCredentialsForm(signIn);
   const [step, setStep] = useState<'confirm' | 'forgot' | null>(null);
+  const passwordField = useRef<TextInputInstance>(null);
 
   if (step === 'forgot') {
     return (
@@ -56,6 +57,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
     );
   }
 
+  const filled = email.trim() !== '' && password !== '';
   const logIn = () =>
     signIn.mutate(
       { email, password },
@@ -81,7 +83,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
           {message ? <Note tone="danger">{message}</Note> : null}
           <Button
             label={t('account.logIn')}
-            disabled={email.trim() === '' || password === ''}
+            disabled={!filled}
             loading={signIn.isPending}
             onPress={logIn}
           />
@@ -94,8 +96,24 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       }
     >
       {leavesGuestData ? <Note tone="warning">{t('account.guestDataStays')}</Note> : null}
-      <EmailField value={email} onChange={setEmail} editable={!signIn.isPending} />
-      <PasswordField value={password} onChange={setPassword} editable={!signIn.isPending} />
+      <EmailField
+        value={email}
+        onChange={setEmail}
+        editable={!signIn.isPending}
+        onSubmit={() => passwordField.current?.focus()}
+      />
+      <PasswordField
+        ref={passwordField}
+        value={password}
+        onChange={setPassword}
+        editable={!signIn.isPending}
+        onSubmit={() => {
+          // As the button does, which is disabled until both are filled and while it logs in.
+          if (filled && !signIn.isPending) {
+            logIn();
+          }
+        }}
+      />
       <TextLink
         label={t('account.forgotPassword')}
         align="end"
