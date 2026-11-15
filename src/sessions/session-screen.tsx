@@ -18,8 +18,16 @@ import { useWorkoutName } from '@/workouts/format';
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
 import { signalsRest } from './rest-owner';
-import { changeRest, sessionTotals, skipRest, updateSession, useActiveSession } from './session';
-import { FoldedExercise, OpenExercise } from './session-exercise';
+import {
+  blocksOf,
+  changeRest,
+  sessionTotals,
+  skipRest,
+  supersetRound,
+  updateSession,
+  useActiveSession,
+} from './session';
+import { FoldedExercise, OpenExercise, SupersetCards } from './session-exercise';
 import { WatchChip } from './watch-chip';
 import { useHeardWatch } from './watch-heard';
 import { useNow } from '@/lib/use-now';
@@ -107,25 +115,36 @@ export function SessionScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        {session.exercises.map((exercise, index) =>
-          index === session.current ? (
-            <OpenExercise
-              key={index}
-              exercise={exercise}
-              index={index}
-              info={details(exercise.exerciseId)}
-              clock={session.clock}
-              now={now}
-            />
+        {blocksOf(session).map((block) => {
+          const cards = block.map((index) => {
+            const exercise = session.exercises[index]!;
+            return index === session.current ? (
+              <OpenExercise
+                key={index}
+                exercise={exercise}
+                index={index}
+                info={details(exercise.exerciseId)}
+                clock={session.clock}
+                now={now}
+              />
+            ) : (
+              <FoldedExercise
+                key={index}
+                exercise={exercise}
+                index={index}
+                info={details(exercise.exerciseId)}
+              />
+            );
+          });
+          const round = supersetRound(session.exercises, block);
+          return round ? (
+            <SupersetCards key={`superset-${block[0]}`} round={round}>
+              {cards}
+            </SupersetCards>
           ) : (
-            <FoldedExercise
-              key={index}
-              exercise={exercise}
-              index={index}
-              info={details(exercise.exerciseId)}
-            />
-          ),
-        )}
+            cards
+          );
+        })}
       </ScrollView>
 
       {session.rest && session.rest.endsAt > now ? (

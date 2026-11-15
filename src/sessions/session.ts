@@ -8,6 +8,7 @@ import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
+import { joinedWithNext } from '@/workouts/supersets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -33,6 +34,11 @@ export type SessionExercise = {
   exerciseId: string;
   target: WorkoutTarget;
   restSeconds: number;
+  /**
+   * The superset it is in, done in rounds with its rest after each round (ADR 0137); none on its
+   * own, and in a workout started before supersets.
+   */
+  superset?: number | null;
   sets: SessionSet[];
   /** The sets of the exercise's latest log, shown as "last time". */
   last: SetValues[];
@@ -258,10 +264,11 @@ export function startSession(
     name: workout.name,
     type: workout.type,
     startedAt: now,
-    exercises: exercises.map(({ exerciseId, target, restSeconds, sets }) => ({
+    exercises: exercises.map(({ exerciseId, target, restSeconds, superset, sets }) => ({
       exerciseId,
       target,
       restSeconds,
+      superset,
       last: last[exerciseId] ?? [],
       bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
@@ -380,9 +387,118 @@ export function isExerciseDone(exercise: SessionExercise): boolean {
 }
 
 /**
+ * The places of the workout's exercises in blocks as they are shown and done: each superset's
+ * exercises next to each other together, and every other exercise on its own.
+ */
+export function blocksOf(value: { exercises: readonly SessionExercise[] }): number[][] {
+  const blocks: number[][] = [];
+  value.exercises.forEach((_exercise, index) => {
+    const previous = blocks[blocks.length - 1];
+    if (previous && joinedWithNext(value.exercises, index - 1)) {
+      previous.push(index);
+    } else {
+      blocks.push([index]);
+    }
+  });
+  return blocks;
+}
+
+/** The places of the exercises in the superset of the one at `index`, in order; none on its own. */
+function supersetMembers(exercises: readonly SessionExercise[], index: number): number[] {
+  const block = blocksOf({ exercises }).find((places) => places.includes(index)) ?? [];
+  return block.length > 1 ? block : [];
+}
+
+function doneCount(exercise: SessionExercise): number {
+  return exercise.sets.filter((s) => s.done).length;
+}
+
+/** The rest a set starts that rests `restSeconds` after it, from `now`; none without a rest. */
+function restAfter(restSeconds: number, now: number): Session['rest'] {
+  return restSeconds > 0 ? { endsAt: now + restSeconds * 1000, seconds: restSeconds } : null;
+}
+
+/** The first exercise after the one at `index` that is not done, if there is one. */
+function nextOpen(exercises: readonly SessionExercise[], index: number): number | undefined {
+  const following = exercises.findIndex((e, i) => i > index && !isExerciseDone(e));
+  return following >= 0 ? following : undefined;
+}
+
+/**
+ * Of a superset's exercises at `members`, the one furthest behind: the one not done with the
+ * fewest sets done, the first of them on a tie; none once all are done. The round a superset shows
+ * and the exercise it opens next both follow it.
+ */
+function furthestBehind(
+  exercises: readonly SessionExercise[],
+  members: readonly number[],
+): number | undefined {
+  let behind: number | undefined;
+  for (const i of members) {
+    const member = exercises[i];
+    if (!member || isExerciseDone(member)) {
+      continue;
+    }
+    if (behind === undefined || doneCount(member) < doneCount(exercises[behind]!)) {
+      behind = i;
+    }
+  }
+  return behind;
+}
+
+/**
+ * The round the superset of the exercises at `block` is in, from 1, of as many as its exercise
+ * with the most sets has: the round of its exercise furthest behind. None for a block of one, an
+ * exercise on its own.
+ */
+export function supersetRound(
+  exercises: readonly SessionExercise[],
+  block: readonly number[],
+): { round: number; rounds: number } | null {
+  if (block.length < 2) {
+    return null;
+  }
+  const rounds = Math.max(...block.map((i) => exercises[i]?.sets.length ?? 0));
+  const behind = furthestBehind(exercises, block);
+  return { round: behind === undefined ? rounds : doneCount(exercises[behind]!) + 1, rounds };
+}
+
+/**
+ * Where a set ticked in a superset leads (ADR 0137): to the next of its exercises that has not yet
+ * had its set in this round, with no rest; or, the round done, to the superset's rest, and then to
+ * the exercise furthest behind, the first of them on a tie, so that the round shown is the one it
+ * opens; or past the superset once it is done.
+ */
+function afterSupersetTick(
+  value: Session,
+  members: number[],
+  exercise: number,
+  now: number,
+): Pick<Session, 'rest' | 'current'> {
+  const { exercises } = value;
+  const round = doneCount(exercises[exercise]!);
+  const from = members.indexOf(exercise);
+  const rotated = [...members.slice(from + 1), ...members.slice(0, from)];
+  const inRound = rotated.find((i) => {
+    const member = exercises[i]!;
+    return doneCount(member) < round && !isExerciseDone(member);
+  });
+  if (inRound !== undefined) {
+    return { rest: null, current: inRound };
+  }
+  const rest = restAfter(exercises[exercise]!.restSeconds, now);
+  const current =
+    furthestBehind(exercises, members) ??
+    nextOpen(exercises, members[members.length - 1]!) ??
+    value.current;
+  return { rest, current };
+}
+
+/**
  * Marks a set done, or not done again, without the checks of markDone(), which the screens and the
  * watch use: for markDone(), stopClock() and tests. Done starts the exercise's rest, and when it
- * was the last set, opens the next exercise that is not done.
+ * was the last set, opens the next exercise that is not done; in a superset it leads on as its
+ * rounds go instead.
  */
 export function toggleDoneUnchecked(
   value: Session,
@@ -403,22 +519,14 @@ export function toggleDoneUnchecked(
     return { ...next, rest: null, restChangedAt: now };
   }
   const item = next.exercises[exercise];
-  // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
-  next = {
-    ...next,
-    restChangedAt: now,
-    rest:
-      item && item.restSeconds > 0
-        ? { endsAt: now + item.restSeconds * 1000, seconds: item.restSeconds }
-        : null,
-  };
-  if (item && isExerciseDone(item)) {
-    const following = next.exercises.findIndex((e, i) => i > exercise && !isExerciseDone(e));
-    if (following >= 0) {
-      next = { ...next, current: following };
-    }
+  const members = supersetMembers(next.exercises, exercise);
+  if (members.length > 1) {
+    return { ...next, restChangedAt: now, ...afterSupersetTick(next, members, exercise, now) };
   }
-  return next;
+  // The watch reckons the rest its tick starts the same way (targets/watch/SetView.swift).
+  next = { ...next, restChangedAt: now, rest: item ? restAfter(item.restSeconds, now) : null };
+  const following = item && isExerciseDone(item) ? nextOpen(next.exercises, exercise) : undefined;
+  return following === undefined ? next : { ...next, current: following };
 }
 
 /** Adds a set to an exercise, with the values of its last set but its time. */
@@ -622,6 +730,8 @@ export function toLog(value: Session, finishedAt = Date.now()) {
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
+      // Sent for every exercise, none as null, which an edit of the log keeps to (ADR 0137).
+      superset: exercise.superset ?? null,
       sets: exercise.sets
         .filter((s) => s.done)
         .map(({ doneAt, ...set }) => ({

@@ -200,6 +200,33 @@ describe('SessionScreen', () => {
     expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
   });
 
+  it('shows a superset under its round, and moves on in the round with no rest', async () => {
+    resetSessionStore();
+    startSession(
+      'user-a',
+      testWorkout(4, {
+        exercises: [
+          testExercise('bench', { sets: 2, restSeconds: 90, superset: 1 }),
+          testExercise('plank', {
+            sets: 2,
+            target: { seconds: 45, meters: null },
+            restSeconds: 90,
+            superset: 1,
+          }),
+        ],
+      }),
+      { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
+      { now: NOW.getTime() },
+    );
+    await render(<SessionScreen />);
+    expect(screen.getByText('Superset · Round 1 of 2')).toBeTruthy();
+    expect(screen.getByText('2 × 8–12 reps · Superset')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    // The plank opens at once, with no rest before it.
+    expect(screen.getByText('2 × 45 s · Superset')).toBeTruthy();
+    expect(screen.queryByText('REST')).toBeNull();
+  });
+
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
     startSession('user-a', PUSH, {}, { now: NOW.getTime() });
@@ -374,6 +401,7 @@ describe('FinishScreen', () => {
         exercises: [
           {
             exerciseId: 'bench',
+            superset: null,
             sets: [
               {
                 weightKg: 80,
@@ -384,7 +412,7 @@ describe('FinishScreen', () => {
               },
             ],
           },
-          { exerciseId: 'plank', sets: [] },
+          { exerciseId: 'plank', superset: null, sets: [] },
         ],
       }),
     );
@@ -435,9 +463,10 @@ describe('FinishScreen', () => {
     expect(logWorkout).toHaveBeenCalledWith(
       expect.objectContaining({
         exercises: [
-          { exerciseId: 'bench', sets: [] },
+          { exerciseId: 'bench', superset: null, sets: [] },
           {
             exerciseId: 'plank',
+            superset: null,
             sets: [
               {
                 weightKg: null,

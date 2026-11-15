@@ -1684,7 +1684,9 @@
       "extraMissed": "Geçmişine kaydedilir ama haftaya sayılmaz. {{day}} kaçırılmış olarak kalır.",
       "extraLater": "Geçmişine kaydedilir ama haftaya sayılmaz. {{day}} planlı olarak kalır.",
       "cancel": "Vazgeç"
-    }
+    },
+    "supersetRound": "Süper set · Tur {{round}}/{{rounds}}",
+    "inSuperset": "Süper set"
   },
   "history": {
     "seeAll": "Tümünü gör",

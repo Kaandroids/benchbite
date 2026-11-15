@@ -1684,7 +1684,9 @@
       "extraMissed": "Saved to your history, not counted towards the week. {{day}} stays missed.",
       "extraLater": "Saved to your history, not counted towards the week. {{day}} stays planned.",
       "cancel": "Cancel"
-    }
+    },
+    "supersetRound": "Superset · Round {{round}} of {{rounds}}",
+    "inSuperset": "Superset"
   },
   "history": {
     "seeAll": "See all",

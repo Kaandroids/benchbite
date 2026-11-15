@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,6 +14,7 @@ import { describeSet, setKindOf } from '@/sets/fields';
 import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
 import { useRestFormat, useTargetFormat } from '@/workouts/format';
+import { SupersetHeader, SupersetLine } from '@/workouts/superset-marks';
 
 import { newRecords } from './records';
 import {
@@ -105,6 +107,7 @@ export function OpenExercise({
 }: ExerciseProps & { clock: Session['clock']; now: number }) {
   const { colors, radii, spacing } = useTheme();
   const formatTarget = useTargetFormat();
+  const { t } = useTranslation();
   const formatRest = useRestFormat();
   const kind = setKindOf(info?.metrics, exercise.target);
   const { bySet: records } = newRecords(exercise.sets, kind, exercise.bests);
@@ -128,7 +131,10 @@ export function OpenExercise({
           <Text variant="captionStrong" color="primaryText">
             {[
               formatTarget(exercise.sets.length, exercise.target),
-              formatRest(exercise.restSeconds),
+              // In a superset the rest comes after the round, which its line says.
+              exercise.superset != null
+                ? t('session.inSuperset')
+                : formatRest(exercise.restSeconds),
             ].join(' · ')}
           </Text>
         </View>
@@ -187,6 +193,34 @@ export function OpenExercise({
         count={exercise.sets.length}
         onPress={() => updateSession((current) => addSet(current, index))}
       />
+    </View>
+  );
+}
+
+/**
+ * The cards of a superset's exercises, joined by a line beside them under a line that says the
+ * round the superset is in (ADR 0137).
+ */
+export function SupersetCards({
+  round,
+  children,
+}: {
+  round: { round: number; rounds: number };
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <SupersetHeader
+        label={t('session.supersetRound', round)}
+        style={{ paddingLeft: spacing.xs }}
+      />
+      <View style={[styles.row, { gap: spacing.sm }]}>
+        {/* From the middle of the first card to the middle of the last. */}
+        <SupersetLine place={{ first: true, last: true }} inset={22} />
+        <View style={[styles.flex, { gap: spacing.sm }]}>{children}</View>
+      </View>
     </View>
   );
 }

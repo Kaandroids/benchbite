@@ -1684,7 +1684,9 @@
       "extraMissed": "Wird in deinem Verlauf gespeichert, zählt aber nicht für die Woche. {{day}} bleibt verpasst.",
       "extraLater": "Wird in deinem Verlauf gespeichert, zählt aber nicht für die Woche. {{day}} bleibt geplant.",
       "cancel": "Abbrechen"
-    }
+    },
+    "supersetRound": "Supersatz · Runde {{round}} von {{rounds}}",
+    "inSuperset": "Supersatz"
   },
   "history": {
     "seeAll": "Alle ansehen",

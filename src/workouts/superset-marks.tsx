@@ -37,23 +37,25 @@ export function SupersetLine({
   );
 }
 
-/** The line over a superset that says it is one, with its rest after each round. */
+/**
+ * The line over a superset that says it is one, with its rest after each round, or what `label`
+ * says instead, such as the round a workout in progress is in.
+ */
 export function SupersetHeader({
-  restSeconds,
   style,
-}: {
-  restSeconds: number;
-  style?: StyleProp<ViewStyle>;
-}) {
+  ...says
+}: ({ restSeconds: number } | { label: string }) & { style?: StyleProp<ViewStyle> }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   return (
     <View style={[styles.header, { gap: spacing.xs }, style]}>
       <Icon name="link" size={15} color="primaryText" />
       <Text variant="captionStrong" color="primaryText">
-        {restSeconds > 0
-          ? t('workout.superset.header', { time: minutesAndSeconds(restSeconds) })
-          : t('workout.superset.headerNoRest')}
+        {'label' in says
+          ? says.label
+          : says.restSeconds > 0
+            ? t('workout.superset.header', { time: minutesAndSeconds(says.restSeconds) })
+            : t('workout.superset.headerNoRest')}
       </Text>
     </View>
   );
