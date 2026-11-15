@@ -1,4 +1,5 @@
 import { AuthApiError } from '@supabase/supabase-js';
+import { TextInput } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
@@ -61,7 +62,10 @@ describe('LogInScreen', () => {
     await fireEvent(screen.getByLabelText('Password'), 'submitEditing');
     expect(auth.signInWithPassword).not.toHaveBeenCalled();
     await fill('kaan@example.com', 'secret12');
+    const focus = jest.spyOn(TextInput.prototype, 'focus');
     await fireEvent(screen.getByLabelText('Email'), 'submitEditing');
+    expect(focus).toHaveBeenCalledTimes(1);
+    focus.mockRestore();
     expect(screen.getByLabelText('Password')).toHaveProp('returnKeyType', 'go');
     await fireEvent(screen.getByLabelText('Password'), 'submitEditing');
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
