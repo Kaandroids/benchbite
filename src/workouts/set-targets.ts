@@ -28,9 +28,14 @@ export function setTargetsOf(json: Json | null): SetTarget[] | null {
   });
 }
 
+/** The item at `index`, or the last one for an index past the end: as a set takes the last set's. */
+export function atOrLast<T>(list: readonly T[], index: number): T | undefined {
+  return list[Math.min(index, list.length - 1)];
+}
+
 /** The target of the set at `index`: the last one's for a set after the last target. */
 export function targetAt(targets: readonly SetTarget[], index: number): SetTarget | undefined {
-  return targets[Math.min(index, targets.length - 1)];
+  return atOrLast(targets, index);
 }
 
 /**
@@ -66,7 +71,7 @@ export function firstTargets(
   weighted: boolean,
 ): SetTarget[] {
   return Array.from({ length: sets }, (_, index) => {
-    const before = last && last.length > 0 ? last[Math.min(index, last.length - 1)] : undefined;
+    const before = last ? atOrLast(last, index) : undefined;
     return {
       weightKg: weighted ? (before?.weightKg ?? null) : null,
       reps: 'reps' in target ? target.reps.min : null,
