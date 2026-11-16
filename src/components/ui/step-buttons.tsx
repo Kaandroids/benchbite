@@ -37,7 +37,7 @@ export function StepButton({ icon, label, onPress, disabled = false, size = 48 }
           width: size,
           height: size,
           borderRadius: radii.full,
-          backgroundColor: pressed ? colors.border : colors.track,
+          backgroundColor: pressed ? colors.trackPressed : colors.track,
           opacity: disabled ? 0.3 : 1,
         },
       ]}
