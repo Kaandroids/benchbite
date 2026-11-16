@@ -273,8 +273,10 @@ pgTAP test is behind the cases.
 ## End-to-end tests
 
 The flows in `.maestro/` drive the development build on the iOS Simulator through whole journeys
-across screens and tabs, such as a new user's onboarding up to Today (ADR 0139). They run against
-the local stack, so start what the app talks to first, each in a terminal of its own:
+across screens and tabs, such as a new user's onboarding up to Today, or logging a workout and
+finding it in the history (ADR 0139). A flow that needs a user starts with the onboarding's flow.
+They run against the local stack, so start what the app talks to first, each in a terminal of its
+own:
 
 ```bash
 pnpm supabase start
@@ -381,7 +383,8 @@ scripts/               the project's scripts, with shared helpers in lib/: the i
                        checks, the generators, the local setup, the end-to-end runner and the
                        README's recording scripts
 website/               the website, a package of its own
-.maestro/              the end-to-end flows, with shared steps in subflows/
+.maestro/              the end-to-end flows; subflows/ holds shared steps, and a flow can also
+                       start with another, such as the onboarding
 docs/adr/              Architecture Decision Records
 docs/development.md    this guide; docs/deployment.md covers the hosted project
 docs/media/            the screenshots and GIFs in the README, and how to make them

@@ -1,0 +1,40 @@
+# A new user starts the plan's workout, logs a set, finishes early and finds it in the history.
+appId: com.benchbite.app.dev
+---
+- runFlow: onboarding.yaml
+# The onboarding picks a beginner's gym plan on 3 days: one workout, Full body, of 20 sets.
+- tapOn: 'Workout'
+- tapOn: 'Start Full body'
+# On a day without it, when it is planned later in the week, as on a Tuesday, the app first offers
+# to move it to today.
+- extendedWaitUntil:
+    visible: 'Move to today|Tell you when your rest is over\?'
+    timeout: 15000
+- runFlow:
+    when:
+      visible: 'Move to today'
+    commands:
+      - tapOn: 'Move to today'
+
+# The first workout asks about rest alerts once.
+- tapOn: 'Not now'
+- tapOn: 'Weight of set 1'
+- inputText: '60'
+- tapOn: 'Reps of set 1'
+- inputText: '8'
+- tapOn: 'Set 1 done'
+- assertVisible: '1 of 20 sets'
+- tapOn: 'Skip'
+
+# The summary, then the history
+- tapOn: 'Finish'
+- assertVisible: 'Full body done'
+- assertVisible: '1 of 3 sets · 60 kg × 8'
+- scrollUntilVisible:
+    element: 'Save workout'
+    centerElement: true
+- tapOn: 'Save workout'
+- extendedWaitUntil:
+    visible: 'History · 1 this week'
+    timeout: 15000
+- assertVisible: '.*Full body.*1 set.*'
