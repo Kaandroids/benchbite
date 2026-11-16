@@ -264,6 +264,15 @@ function lastValues(target: WorkoutTarget, last: SetValues[], index: number): Se
 }
 
 /**
+ * The targets of the exercise at `place`: none where they were worked out for another exercise, as
+ * in a workout changed since the app read it, whose sets then start from last time.
+ */
+function ownTargets(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
+  const atPlace = targets[place];
+  return atPlace?.exerciseId === exerciseId ? atPlace.sets : [];
+}
+
+/**
  * Starts a workout, its sets filled in from their targets or last time, counting for a planned day
  * when it moves.
  */
@@ -307,8 +316,7 @@ export function startSession(
           target,
           last[exerciseId] ?? [],
           index,
-          // Only the exercise's own: another one at its place starts from last time instead.
-          targets[place]?.exerciseId === exerciseId ? targets[place].sets[index] : undefined,
+          ownTargets(targets, place, exerciseId)[index],
         ),
         done: false,
       })),
