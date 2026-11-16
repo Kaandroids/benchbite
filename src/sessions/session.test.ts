@@ -87,6 +87,34 @@ describe('startSession', () => {
     ]);
   });
 
+  it('starts each set from its target, and the rest from last time', () => {
+    const session = startSession(
+      'user-a',
+      PUSH,
+      {
+        bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }],
+        plank: [{ weightKg: null, reps: null, seconds: 40, meters: null }],
+      },
+      {
+        now: NOW,
+        targets: {
+          0: [{ weightKg: 82.5, reps: 8, seconds: null }],
+          1: [{ weightKg: null, reps: null, seconds: 45 }],
+        },
+      },
+    );
+    // The second bench set has no target, as an exercise has one per set or none.
+    expect(session.exercises[0]?.sets).toEqual([
+      { weightKg: 82.5, reps: 8, seconds: null, meters: null, done: false },
+      { weightKg: 80, reps: 8, seconds: null, meters: null, done: false },
+    ]);
+    // A target time is kept beside the time, which the clock measures.
+    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: null, targetSeconds: 45 });
+    expect(session.exercises[2]?.sets[0]).not.toHaveProperty('targetSeconds');
+    // A set added aims for the last set's time.
+    expect(addSet(session, 1).exercises[1]?.sets[1]).toMatchObject({ targetSeconds: 45 });
+  });
+
   it('starts on the watch too only when asked to', () => {
     expect(start().watchFollows).toBeUndefined();
     expect(startSession('user-a', PUSH, {}, { now: NOW, watchFollows: true }).watchFollows).toBe(

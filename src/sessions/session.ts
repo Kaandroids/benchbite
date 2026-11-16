@@ -9,6 +9,7 @@ import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import { joinedWithNext } from '@/workouts/supersets';
+import type { SetTarget } from '@/workouts/set-targets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -21,10 +22,13 @@ export type SessionSet = SetValues & {
   carried?: boolean;
   /**
    * When each of its values was last changed, and when it was last ticked or unticked, on the phone
-   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109).
+   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109). A value
+   * with no time here was not typed, and shows as a suggestion.
    */
   valuesAt?: Partial<Record<keyof SetValues, number>>;
   doneChangedAt?: number;
+  /** The time a timed set aims for (ADR 0138), shown in its time until the clock measures it. */
+  targetSeconds?: number;
 };
 
 /** The longest a workout can be, as log_workout() accepts it. */
@@ -112,6 +116,9 @@ export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string 
 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
+
+/** Each set's target, by the place of its exercise in the workout. */
+export type SetTargets = Record<number, SetTarget[]>;
 
 /** Each exercise's records before the workout. */
 export type ExerciseBests = Record<string, Bests>;
@@ -224,10 +231,25 @@ export function resetSessionStore() {
 }
 
 /**
- * The values a set starts with: last time's, the set before it if there were fewer, or else the
- * target. They count only once the set is done. The time is left out: the clock measures it.
+ * The values a set starts with: its target's weight and reps (ADR 0138), or else last time's, the
+ * set before it if there were fewer, or else the workout's target. They count only once the set is
+ * done. The time is left out, the clock measures it; a target time is kept beside it.
  */
-function startingValues(target: WorkoutTarget, last: SetValues[], index: number): SetValues {
+function startingValues(
+  target: WorkoutTarget,
+  last: SetValues[],
+  index: number,
+  setTarget: SetTarget | undefined,
+): SetValues & Pick<SessionSet, 'targetSeconds'> {
+  if (setTarget && setTarget.seconds === null) {
+    return { weightKg: setTarget.weightKg, reps: setTarget.reps, seconds: null, meters: null };
+  }
+  const values = lastValues(target, last, index);
+  return setTarget?.seconds != null ? { ...values, targetSeconds: setTarget.seconds } : values;
+}
+
+/** Last time's values for the set, the set before it if there were fewer, or else the workout's target. */
+function lastValues(target: WorkoutTarget, last: SetValues[], index: number): SetValues {
   const previous = last[index] ?? last[last.length - 1];
   if (previous) {
     return { ...previous, seconds: null };
@@ -238,18 +260,24 @@ function startingValues(target: WorkoutTarget, last: SetValues[], index: number)
   return { weightKg: null, reps: null, seconds: null, meters: target.meters };
 }
 
-/** Starts a workout, its sets filled in from last time, counting for a planned day when it moves. */
+/**
+ * Starts a workout, its sets filled in from their targets or last time, counting for a planned day
+ * when it moves.
+ */
 export function startSession(
   userId: string,
   workout: Workout,
   last: LastSets,
   {
     bests = {},
+    targets = {},
     now = Date.now(),
     move,
     watchFollows = false,
   }: {
     bests?: ExerciseBests;
+    /** Each set's target, by the place of its exercise. */
+    targets?: SetTargets;
     now?: number;
     move?: Session['move'];
     /** Started on the watch too, which then follows it without joining (ADR 0115). */
@@ -264,7 +292,7 @@ export function startSession(
     name: workout.name,
     type: workout.type,
     startedAt: now,
-    exercises: exercises.map(({ exerciseId, target, restSeconds, superset, sets }) => ({
+    exercises: exercises.map(({ exerciseId, target, restSeconds, superset, sets }, place) => ({
       exerciseId,
       target,
       restSeconds,
@@ -272,7 +300,7 @@ export function startSession(
       last: last[exerciseId] ?? [],
       bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
-        ...startingValues(target, last[exerciseId] ?? [], index),
+        ...startingValues(target, last[exerciseId] ?? [], index, targets[place]?.[index]),
         done: false,
       })),
     })),
@@ -540,9 +568,16 @@ export function addSet(value: Session, exercise: number): Session {
         return item;
       }
       const last = item.sets[item.sets.length - 1];
+      // It aims for the last set's time, as a set after the last target takes its target.
       const values = last
-        ? { weightKg: last.weightKg, reps: last.reps, seconds: null, meters: last.meters }
-        : startingValues(item.target, [], 0);
+        ? {
+            weightKg: last.weightKg,
+            reps: last.reps,
+            seconds: null,
+            meters: last.meters,
+            ...(last.targetSeconds !== undefined ? { targetSeconds: last.targetSeconds } : {}),
+          }
+        : lastValues(item.target, [], 0);
       return { ...item, sets: [...item.sets, { ...values, done: false }] };
     }),
   };

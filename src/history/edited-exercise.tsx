@@ -54,7 +54,7 @@ export function EditedExerciseCard({
           number={setIndex + 1}
           kind={kind}
           values={set}
-          muted={false}
+          muted={[]}
           invalid={checked ? missingFields(set, kind) : []}
           onChange={(values) =>
             onChangeSets((current) =>

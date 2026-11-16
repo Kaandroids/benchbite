@@ -12,9 +12,9 @@ import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 import { openWorkout } from '@/workouts/open';
 
-import { fetchBests, fetchLastSetsOrNone } from './logs';
+import { fetchBests, fetchLastSetsOrNone, fetchSetTargets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
-import { startSession, type ExerciseBests } from './session';
+import { startSession, type ExerciseBests, type SetTargets } from './session';
 import { useStartMove } from './start-move';
 
 /** The query keys of the last sets and the bests of the exercises a workout starts with. */
@@ -80,7 +80,7 @@ export function useStartWorkout() {
     }
     beforeStart?.();
     const ids = workout.exercises.map((exercise) => exercise.exerciseId);
-    const [last, bests] = await Promise.all([
+    const [last, bests, targets] = await Promise.all([
       fetchLastSetsOrNone(queryClient, ids),
       queryClient
         .fetchQuery({
@@ -92,11 +92,17 @@ export function useStartWorkout() {
           console.warn('Could not load the records', error);
           return {};
         }),
+      // Without them, each set starts from last time, as before targets.
+      fetchSetTargets(workout.id).catch((error: unknown): SetTargets => {
+        console.warn('Could not load the set targets', error);
+        return {};
+      }),
     ]);
     const now = Date.now();
     const move = choice.fromOn ? { from: choice.fromOn, to: toIsoDate(new Date(now)) } : undefined;
     const session = startSession(userId, workout, last, {
       bests,
+      targets,
       now,
       move,
       watchFollows: onWatch,

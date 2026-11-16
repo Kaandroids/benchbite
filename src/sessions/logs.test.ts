@@ -4,7 +4,7 @@ import { act, createTestQueryClient, renderHook } from '@/test/render';
 
 import { MOVES_KEY } from '@/workouts/moves';
 
-import { fetchBests, fetchLastSets, useLogWorkout } from './logs';
+import { fetchBests, fetchLastSets, fetchSetTargets, useLogWorkout } from './logs';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 
@@ -67,6 +67,47 @@ describe('fetchLastSets', () => {
     const error = { code: '500', message: 'boom' };
     jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error } as never);
     await expect(fetchLastSets(['bench'])).rejects.toBe(error);
+  });
+});
+
+describe('fetchSetTargets', () => {
+  it('gives each set its target by its exercise’s place, without the values it has not', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({
+      data: [
+        {
+          exercise_position: 0,
+          set_position: 0,
+          weight_kg: 80,
+          reps: 10,
+          seconds: null,
+          own: true,
+        },
+        { exercise_position: 0, set_position: 1, weight_kg: 85, reps: 8, seconds: null, own: true },
+        {
+          exercise_position: 2,
+          set_position: 0,
+          weight_kg: null,
+          reps: null,
+          seconds: 50,
+          own: false,
+        },
+      ],
+      error: null,
+    } as never);
+    await expect(fetchSetTargets(7)).resolves.toEqual({
+      0: [
+        { weightKg: 80, reps: 10, seconds: null },
+        { weightKg: 85, reps: 8, seconds: null },
+      ],
+      2: [{ weightKg: null, reps: null, seconds: 50 }],
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('set_targets', { workout_id: 7 });
+  });
+
+  it('fails with the error the database returns', async () => {
+    const error = { code: '500', message: 'boom' };
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error } as never);
+    await expect(fetchSetTargets(7)).rejects.toBe(error);
   });
 });
 

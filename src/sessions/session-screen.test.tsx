@@ -2,9 +2,10 @@ import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { useWorkoutHealth } from '@/health/workout-health';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
 import { router } from 'expo-router';
-import { Alert, Keyboard } from 'react-native';
+import { Alert, Keyboard, StyleSheet } from 'react-native';
 
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { lightColors } from '@/theme/colors';
 import { act, fireEvent, render, renderHook, screen } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 import { reloadPlan } from '@/workouts/workouts';
@@ -129,6 +130,35 @@ describe('SessionScreen', () => {
     expect(screen.getByLabelText('Reps of set 2').props.value).toBe('8');
     // The plank waits, folded, with its target.
     expect(screen.getByText('1 × 45 s')).toBeTruthy();
+  });
+
+  it('shows suggested values faint and typed ones in full, and a target time as a hint', async () => {
+    resetSessionStore();
+    startSession(
+      'user-a',
+      PUSH,
+      { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
+      {
+        now: NOW.getTime(),
+        targets: {
+          0: [
+            { weightKg: 82.5, reps: 8, seconds: null },
+            { weightKg: 85, reps: 6, seconds: null },
+          ],
+          1: [{ weightKg: null, reps: null, seconds: 50 }],
+        },
+      },
+    );
+    await render(<SessionScreen />);
+    const color = (label: string) =>
+      StyleSheet.flatten(screen.getByLabelText(label).props.style).color;
+    expect(screen.getByLabelText('Weight of set 2').props.value).toBe('85');
+    expect(color('Weight of set 1')).toBe(lightColors.textMuted);
+    await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '85');
+    expect(color('Weight of set 1')).toBe(lightColors.text);
+    expect(color('Reps of set 1')).toBe(lightColors.textMuted);
+    await fireEvent.press(screen.getByRole('button', { name: /Plank/ }));
+    expect(screen.getByLabelText('Time of set 1').props.placeholder).toBe('0:50');
   });
 
   it('keeps a value the watch changed while the keyboard was up', async () => {

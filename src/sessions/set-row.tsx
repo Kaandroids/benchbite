@@ -91,6 +91,9 @@ export function SetRow({
       done={set.done}
       clock={clock}
       invalid={checked ? missing : []}
+      // A value typed on the phone or the watch is the user's own; the rest are suggestions.
+      muted={kind.fields.filter((field) => set.valuesAt?.[field] === undefined)}
+      targetSeconds={set.targetSeconds}
       weightRef={weightInput}
       onChange={onChange}
       note={
