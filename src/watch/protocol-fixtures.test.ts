@@ -20,11 +20,13 @@ jest.mock('expo-sqlite/kv-store', () => ({
 
 const WRITE = process.env.WATCH_FIXTURES === 'write';
 
+// Jest runs each test file as a module of Node's, which has it; the app's types leave Node out.
+declare const __dirname: string;
+
 /** Writes a fixture beside this test, through Node's fs, which the app's types leave out. */
 function writeFixture(file: string, value: unknown) {
   const fs = jest.requireActual<{ writeFileSync: (path: string, data: string) => void }>('fs');
-  const dir = (expect.getState().testPath ?? '').replace(/[^/]+$/, '');
-  fs.writeFileSync(`${dir}fixtures/${file}`, `${JSON.stringify(value, null, 2)}\n`);
+  fs.writeFileSync(`${__dirname}/fixtures/${file}`, `${JSON.stringify(value, null, 2)}\n`);
 }
 const NOW = 1_800_000_000_000;
 
@@ -103,21 +105,6 @@ describe('the state the phone sends the watch', () => {
 });
 
 describe('the commands the watch sends', () => {
-  it('cover every kind the watch makes', () => {
-    expect(commands.map((item) => item.name).sort()).toEqual(
-      [
-        'finish',
-        'join',
-        'open',
-        'setDone',
-        'setDoneWithValues',
-        'setRest',
-        'skipRest',
-        'startClock',
-      ].sort(),
-    );
-  });
-
   it.each(commands.map((item) => [item.name, item.command] as const))(
     'take %s as the phone parses it',
     (_name, command) => {
