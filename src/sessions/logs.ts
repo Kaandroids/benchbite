@@ -4,6 +4,7 @@ import { LOGS_KEY } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
+import type { SetTarget } from '@/workouts/set-targets';
 
 import type { ExerciseBests, LastSets, toLog } from './session';
 
@@ -42,6 +43,31 @@ export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {
     });
   }
   return sets;
+}
+
+/** Each set's target, by the place of its exercise in the workout. */
+export type SetTargets = Record<number, SetTarget[]>;
+
+/**
+ * The target of each set of the workout (set_targets(), ADR 0138): the user's own, or worked out
+ * from last time; none for an exercise without, whose sets start from last time.
+ */
+export async function fetchSetTargets(workoutId: number): Promise<SetTargets> {
+  const { data, error } = await supabase.rpc('set_targets', { workout_id: workoutId });
+  if (error) {
+    throw error;
+  }
+  const targets: SetTargets = {};
+  for (const row of data) {
+    // The generated types call every column of a table a function returns a number, while a set
+    // of reps has no time, a timed one no reps and one done with the body's weight no weight.
+    (targets[row.exercise_position] ??= [])[row.set_position] = {
+      weightKg: (row.weight_kg as number | null) ?? null,
+      reps: (row.reps as number | null) ?? null,
+      seconds: (row.seconds as number | null) ?? null,
+    };
+  }
+  return targets;
 }
 
 /** Each exercise's records before a workout, for noticing new ones while logging (exercise_bests()). */
