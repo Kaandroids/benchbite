@@ -3,10 +3,14 @@
 import { fromIsoDate } from '@/i18n/dates';
 import { oneRepMax, recordValues } from '@/sessions/records';
 import { weekSchedule } from '@/workouts/week-schedule';
+import { weekOf, type Workout } from '@/workouts/workouts';
 import type { LibraryExercise } from '@/exercises/library';
 
 import cases from '../../supabase/tests/rules/cases.json';
 import { setKindOf, weightStepOf } from './fields';
+
+// weekOf() sits beside the workouts' queries, which no case calls.
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 describe('one_rep_max()', () => {
   it.each(cases.oneRepMax)('estimates $weightKg kg × $reps as $expected', (item) => {
@@ -31,19 +35,19 @@ describe('weight_step()', () => {
 
 describe('day_workouts()', () => {
   it.each(cases.weekSchedule)('$name', (item) => {
-    // The plan as the app reads it: each active workout on each of its weekdays.
-    const sessions = item.workouts
-      .filter((workout) => (workout as { active?: boolean }).active !== false)
-      .flatMap((workout) =>
-        workout.weekdays.map((weekday) => ({
-          workoutId: workout.id,
-          weekday,
-          name: `Workout ${workout.id}`,
-          type: null,
-          exercises: [],
-          estimatedMinutes: 45,
-        })),
-      );
+    // The plan as the app turns its workouts into the week's sessions. The app reads the days
+    // the database kept for days gone by (plannedSessions()); the cases cover the plan alone.
+    const workouts: Workout[] = item.workouts.map((workout) => ({
+      id: workout.id,
+      name: `Workout ${workout.id}`,
+      type: null,
+      weekdays: workout.weekdays,
+      active: (workout as { active?: boolean }).active ?? true,
+      held: false,
+      estimatedMinutes: 45,
+      exercises: [],
+    }));
+    const { sessions } = weekOf(workouts);
     const finished = item.logs.map((log) => ({
       workoutId: log.workoutId,
       startedOn: log.startedOn,
