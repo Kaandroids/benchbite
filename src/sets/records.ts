@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
 
+import type { SetKind } from './fields';
+import { useDescribeSet } from './set-words';
 import type { SetValues } from './values';
 
 // Kept apart from the queries, so that code without the database, such as a workout in progress,
@@ -25,10 +27,14 @@ export const RECORD_KINDS = [
 
 export type RecordKind = (typeof RECORD_KINDS)[number];
 
+/** A set with a weight and reps, as a best set is. */
+const LIFTED: SetKind = { fields: ['weightKg', 'reps'], timed: false, addedWeight: false };
+
 /** A record's value, such as "85 kg", "80 kg × 8", "1:15" or "3:40 /km". */
 export function useRecordFormat() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
+  const describeSet = useDescribeSet();
   const kilograms = (value: number) => `${format(value, { maximumFractionDigits: 1 })} kg`;
   return ({ kind, value, set }: { kind: RecordKind; value: number; set: SetValues }) => {
     switch (kind) {
@@ -37,7 +43,8 @@ export function useRecordFormat() {
       case 'one_rep_max':
         return kilograms(Math.round(value));
       case 'best_set':
-        return `${kilograms(set.weightKg ?? 0)} × ${set.reps ?? 0}`;
+        // A set as every screen describes it (#615).
+        return describeSet(set, LIFTED);
       case 'most_reps':
         return format(value);
       case 'longest_time':
