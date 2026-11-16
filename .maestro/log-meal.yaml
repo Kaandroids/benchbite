@@ -1,0 +1,26 @@
+# A new user finds a food in the library, adds an amount of it to breakfast and a glass of water.
+appId: com.benchbite.app.dev
+---
+- runFlow: onboarding.yaml
+- tapOn: 'Nutrition'
+# The targets follow from the onboarding's answers; the checks look at what is added.
+- assertVisible: '0 of .* kcal eaten'
+
+# A food of the library, which the migrations bring to every database
+- tapOn: 'Add to breakfast'
+- tapOn: 'Search foods'
+- inputText: 'oats'
+- tapOn: 'Oat flakes, 1 bowl.*'
+- assertVisible: '348 kcal per 100 g'
+# Half a bowl more: 1.5 bowls of 50 g
+- tapOn: 'More'
+- assertVisible: '261 kcal'
+- tapOn: 'Add to breakfast'
+
+# The day, with the food in its meal
+- extendedWaitUntil:
+    visible: '261 of .* kcal eaten'
+    timeout: 15000
+- assertVisible: '.*Breakfast · 1 item, 261 kcal.*'
+- tapOn: 'Add a glass, 250 ml'
+- assertVisible: 'Water, 0.25 of .*'
