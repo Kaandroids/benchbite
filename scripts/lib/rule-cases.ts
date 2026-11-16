@@ -93,10 +93,11 @@ export function ruleCasesSql(root: string): string {
   );
   // Each week case its own user, whose workouts are numbered from 100 times the case's place.
   const weekUser = (index: number) =>
-    `00000000-0000-0000-0000-${String(0x5e2000 + index).padStart(12, '0')}`;
+    `00000000-0000-0000-0000-${(0x5e2000 + index).toString(16).padStart(12, '0')}`;
+  const weekIds = (index: number) => (index + 1) * 100;
   const weekRows = cases.weekSchedule.map(({ workouts, moves, logs }, index) => {
     const user = weekUser(index);
-    const id = (workout: number) => (index + 1) * 100 + workout;
+    const id = (workout: number) => weekIds(index) + workout;
     return [
       `insert into auth.users (id, email) values ('${user}', 'week${index}@example.com');`,
       ...workouts.map(
@@ -122,7 +123,7 @@ export function ruleCasesSql(root: string): string {
     [
       `select set_config('request.jwt.claims', '{"sub": "${weekUser(index)}", "role": "authenticated"}', true);`,
       `select is(`,
-      `  (select coalesce(jsonb_agg(jsonb_build_object('day', w.day, 'workoutId', w.workout_id - ${(index + 1) * 100},`,
+      `  (select coalesce(jsonb_agg(jsonb_build_object('day', w.day, 'workoutId', w.workout_id - ${weekIds(index)},`,
       `     'done', w.done, 'skipped', w.skipped and not w.done) order by w.day, w.workout_id), '[]')`,
       `   from public.day_workouts(date_trunc('week', '${today}'::date)::date,`,
       `     date_trunc('week', '${today}'::date)::date + 6, '${today}') w),`,
