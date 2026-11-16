@@ -14,14 +14,20 @@ export type NewRecord = { kind: RecordKind; value: number; set: SetValues };
 /** The kinds a lower value is better for. */
 const LOWER_IS_BETTER: readonly RecordKind[] = ['best_pace'];
 
-/** The weight that could be lifted once, as the database estimates it (one_rep_max()). */
+/**
+ * The weight that could be lifted once, as the database estimates it (one_rep_max()); their cases in
+ * supabase/tests/rules/cases.json check both (#546).
+ */
 export function oneRepMax(weightKg: number, reps: number): number {
   // In hundredths of a kilogram, as the database keeps a weight, and multiplied before it is
   // divided, as one_rep_max() does, so that both round a half up: 37.5 × 7 and 82.1 × 15 (#628).
   return reps === 1 ? weightKg : Math.round((Math.round(weightKg * 100) * (30 + reps)) / 300) / 10;
 }
 
-/** What a set comes to for each kind of record the exercise has, as exercise_records() counts it. */
+/**
+ * What a set comes to for each kind of record the exercise has, as exercise_records() counts it from
+ * record_candidates(); their cases in supabase/tests/rules/cases.json check both (#546).
+ */
 export function recordValues({ weightKg, reps, seconds, meters }: SetValues, kind: SetKind) {
   const values: Partial<Record<Exclude<RecordKind, 'most_time'>, number>> = {};
   if (kind.fields.includes('reps')) {
