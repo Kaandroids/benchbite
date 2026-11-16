@@ -68,7 +68,7 @@
     "ios": "expo run:ios",
     "native:dev": "expo prebuild --clean",
     "native:release": "APP_VARIANT=production expo prebuild --clean --platform ios",
-    "lint": "expo lint --max-warnings 0",
+    "lint": "expo lint --max-warnings 0 --no-cache",
     "typecheck": "tsc --noEmit && tsc -p scripts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -10,7 +10,7 @@ import { useTheme } from '@/theme';
 
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
-import type { Totals } from './meals';
+import type { Totals } from './totals';
 import type { NutritionTargets } from './targets';
 
 const RING = 96;

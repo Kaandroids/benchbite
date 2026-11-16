@@ -13,12 +13,9 @@ import { supabase } from '@/lib/supabase';
 import { ENTRIES_KEY, PAST_MEAL_KEY } from './food-keys';
 import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './foods';
 
-import type { NutritionTargets } from './targets';
+import { totalOf, totalsOf, type Totals } from './totals';
 
 export type Meal = Database['public']['Enums']['meal'];
-
-/** What a meal or a day adds up to, in the units of the targets. */
-export type Totals = NutritionTargets;
 
 /** How many days before today meals can be logged, as the database allows. */
 export { LOGGABLE_DAYS };
@@ -66,32 +63,6 @@ export type LoggedEntry = MealEntry &
     per100g: Totals;
   };
 
-export const NOTHING: Totals = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
-
-function add(a: Totals, b: Totals): Totals {
-  return {
-    calories: a.calories + b.calories,
-    proteinG: a.proteinG + b.proteinG,
-    carbsG: a.carbsG + b.carbsG,
-    fatG: a.fatG + b.fatG,
-  };
-}
-
-/** What the entries add up to. */
-export function totalOf(entries: Totals[]): Totals {
-  return entries.reduce(add, NOTHING);
-}
-
-/** Totals multiplied by a factor, such as a recipe's shared out by its servings. */
-export function scaled(totals: Totals, factor: number): Totals {
-  return {
-    calories: totals.calories * factor,
-    proteinG: totals.proteinG * factor,
-    carbsG: totals.carbsG * factor,
-    fatG: totals.fatG * factor,
-  };
-}
-
 export type MealSummary = (typeof MEALS)[number] & { items: number; totals: Totals };
 
 /** Every meal with its number of entries and what they add up to, empty ones too. */
@@ -122,21 +93,6 @@ export function suggestedCalories(target: number, meals: MealSummary[]): Map<Mea
     }
   }
   return suggested;
-}
-
-/** A row's kcal and macros as totals; generated columns may be typed as nullable. */
-export function totalsOf(row: {
-  kcal: number | null;
-  protein_g: number | null;
-  carbs_g: number | null;
-  fat_g: number | null;
-}): Totals {
-  return {
-    calories: row.kcal ?? 0,
-    proteinG: row.protein_g ?? 0,
-    carbsG: row.carbs_g ?? 0,
-    fatG: row.fat_g ?? 0,
-  };
 }
 
 /** The query key of a day's entries, for anything that changes them. */

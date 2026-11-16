@@ -11,7 +11,8 @@ import { useNumberFormat } from '@/i18n/units';
 import { AmountForm } from './amount-form';
 import { useRemoveEntry, useUpdateEntry } from './entries';
 import { useFood, type Portion } from './foods';
-import { totalOf, useDayEntries, type LoggedEntry } from './meals';
+import { useDayEntries, type LoggedEntry } from './meals';
+import { totalOf } from './totals';
 import { handOverRemovedEntry } from './removed-entry';
 import { useDayTargets } from './targets';
 
@@ -145,12 +146,12 @@ function EntryForm({
           <Note tone="danger">{t('nutrition.entry.removeError')}</Note>
         ) : undefined
       }
-      onSubmit={(amount) =>
-        updateEntry
+      onSubmit={(amount) => {
+        void updateEntry
           .mutateAsync({ id: entry.id, day: entry.day, amount })
           .then(onSaved)
-          .catch(() => {})
-      }
+          .catch(() => {});
+      }}
     >
       <Button
         label={t('nutrition.entry.remove')}

@@ -59,7 +59,7 @@ it('brings in the weights as soon as the store is connected', async () => {
     </>,
   );
 
-  fireEvent.press(screen.getByRole('button', { name: 'Connect' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Connect' }));
 
   await waitFor(() =>
     expect(supabase.rpc).toHaveBeenCalledWith('import_weights', expect.anything()),

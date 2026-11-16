@@ -25,7 +25,8 @@ import {
   RECIPE_KEY,
   RECIPES_KEY,
 } from './food-keys';
-import { totalsOf, type Meal } from './meals';
+import type { Meal } from './meals';
+import { totalsOf } from './totals';
 
 /** A food logged often at a meal: how often, and the amount it was logged with last. */
 export type FrequentFood = FoodResult & { times: number; amount: Amount };

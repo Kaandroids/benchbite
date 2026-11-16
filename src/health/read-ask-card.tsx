@@ -53,7 +53,11 @@ export function ReadAskCard({
         />
       </View>
       <Text color="textMuted">{t(`health.ask.${kind}.body`)}</Text>
-      <Button label={t(`health.ask.${kind}.bringIn`)} loading={busy} onPress={bringIn} />
+      <Button
+        label={t(`health.ask.${kind}.bringIn`)}
+        loading={busy}
+        onPress={() => void bringIn()}
+      />
     </Card>
   );
 }

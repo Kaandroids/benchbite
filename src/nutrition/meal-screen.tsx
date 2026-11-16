@@ -19,7 +19,8 @@ import { useRemoveEntry, useRestoreEntry } from './entries';
 import { EntryRow } from './entry-row';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
-import { totalOf, useDayEntries, type LoggedEntry, type Meal } from './meals';
+import { useDayEntries, type LoggedEntry, type Meal } from './meals';
+import { totalOf } from './totals';
 import { takeRemovedEntry } from './removed-entry';
 
 type MealScreenProps = {

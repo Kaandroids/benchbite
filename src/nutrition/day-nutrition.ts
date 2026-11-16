@@ -5,7 +5,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import { ENTRIES_KEY } from './food-keys';
-import { scaled, totalOf } from './meals';
+import { scaled, totalOf } from './totals';
 import type { NutritionTargets } from './targets';
 
 /** What was eaten on a day, and the targets it is measured against (day_nutrition()). */

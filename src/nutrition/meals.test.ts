@@ -2,15 +2,7 @@ import { supabase } from '@/lib/supabase';
 import i18n from '@/i18n';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import {
-  mealsOf,
-  scaled,
-  suggestedCalories,
-  totalOf,
-  useDayEntries,
-  usePastMeal,
-  type MealEntry,
-} from './meals';
+import { mealsOf, suggestedCalories, useDayEntries, usePastMeal, type MealEntry } from './meals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
@@ -20,28 +12,6 @@ const entry = (meal: MealEntry['meal'], calories: number): MealEntry => ({
   proteinG: 10,
   carbsG: 20,
   fatG: 5,
-});
-
-describe('totalOf', () => {
-  it('adds up the entries', () => {
-    expect(totalOf([entry('lunch', 300), entry('lunch', 200.5)])).toEqual({
-      calories: 500.5,
-      proteinG: 20,
-      carbsG: 40,
-      fatG: 10,
-    });
-  });
-});
-
-describe('scaled', () => {
-  it('multiplies every value', () => {
-    expect(scaled({ calories: 400, proteinG: 20, carbsG: 40, fatG: 8 }, 0.25)).toEqual({
-      calories: 100,
-      proteinG: 5,
-      carbsG: 10,
-      fatG: 2,
-    });
-  });
 });
 
 describe('mealsOf', () => {

@@ -17,7 +17,7 @@ import { typography, useTheme } from '@/theme';
 import { amountOf, DEFAULT_GRAMS, type Amount, type Portion } from './foods';
 import { MacroDot } from './macro-dot';
 import { MACRO_TEXT_MIN_SCALE, MACROS } from './macro-targets';
-import type { Totals } from './meals';
+import type { Totals } from './totals';
 import { usePortionLabel } from './portion-label';
 
 /** Portions go up and down in halves; grams in tens, up to what an entry may hold. */

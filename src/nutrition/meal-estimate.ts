@@ -16,7 +16,7 @@ import { oneOf } from '@/lib/one-of';
 import { preparePhoto } from '@/lib/photos';
 import { functionHeaders, functionUrl } from '@/lib/supabase';
 
-import type { Totals } from './meals';
+import type { Totals } from './totals';
 
 export type { EstimateItem, EstimateResponse };
 
