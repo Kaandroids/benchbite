@@ -1,18 +1,48 @@
 // The watch's side of the protocol's fixtures (#541), run by `pnpm check:watch` with the watch's
-// Protocol.swift: reads each state the phone sends and writes back what it read, and makes each
-// command the watch sends, with a fixed id and time. Prints both as JSON.
+// Protocol.swift: reads each state the phone sends and writes back what it read, lists every field
+// it reads, also those it read as none, and makes each command the watch sends, with a fixed id and
+// time. Prints them as JSON.
 import Foundation
 
 let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
 let encoder = JSONEncoder()
 encoder.outputFormatting = [.sortedKeys]
 
+/// The paths of the fields `value` has, as "workout.exercises[].sets[].text", an optional one also
+/// when it is none, which the encoder leaves out; any key of a dictionary as `*`.
+func fields(of value: Any, at path: String, into paths: inout Set<String>) {
+  let mirror = Mirror(reflecting: value)
+  switch mirror.displayStyle {
+  case .optional:
+    if let some = mirror.children.first { fields(of: some.value, at: path, into: &paths) }
+  case .struct:
+    for child in mirror.children {
+      guard let label = child.label else { continue }
+      let field = path.isEmpty ? label : "\(path).\(label)"
+      paths.insert(field)
+      fields(of: child.value, at: field, into: &paths)
+    }
+  case .collection:
+    for child in mirror.children { fields(of: child.value, at: "\(path)[]", into: &paths) }
+  case .dictionary:
+    for child in mirror.children {
+      let value = Mirror(reflecting: child.value).children.map(\.value)[1]
+      paths.insert("\(path).*")
+      fields(of: value, at: "\(path).*", into: &paths)
+    }
+  default:
+    break
+  }
+}
+
 var states: [String: Any] = [:]
+var read = Set<String>()
 let files = try FileManager.default.contentsOfDirectory(atPath: fixtures.path)
 for file in files.sorted() where file.hasPrefix("state-") && file.hasSuffix(".json") {
   let data = try Data(contentsOf: fixtures.appendingPathComponent(file))
   let state = try JSONDecoder().decode(WatchState.self, from: data)
   states[file] = try JSONSerialization.jsonObject(with: encoder.encode(state))
+  fields(of: state, at: "", into: &read)
 }
 
 let workoutId = "workout-1"
@@ -42,5 +72,6 @@ for (name, command) in made {
 }
 
 let output = try JSONSerialization.data(
-  withJSONObject: ["states": states, "commands": commands], options: [.sortedKeys])
+  withJSONObject: ["states": states, "read": read.sorted(), "commands": commands],
+  options: [.sortedKeys])
 print(String(data: output, encoding: .utf8)!)

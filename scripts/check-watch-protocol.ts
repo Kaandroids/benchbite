@@ -53,8 +53,22 @@ execFileSync(
 );
 const output = JSON.parse(execFileSync(binary, [FIXTURES], { encoding: 'utf8' })) as {
   states: Record<string, Json>;
+  read: string[];
   commands: Json[];
 };
+
+/** The values at `path` in `json`, `[]` standing for every item of a list and `*` for any key. */
+function valuesAt(json: Json | undefined, path: string[]): Json[] {
+  if (path.length === 0) return json === undefined ? [] : [json];
+  const [step, ...rest] = path as [string, ...string[]];
+  if (json === null || typeof json !== 'object' || Array.isArray(json)) return [];
+  if (step === '*') return Object.values(json).flatMap((value) => valuesAt(value, rest));
+  if (step.endsWith('[]')) {
+    const list = json[step.slice(0, -2)];
+    return Array.isArray(list) ? list.flatMap((item) => valuesAt(item, rest)) : [];
+  }
+  return valuesAt(json[step], rest);
+}
 
 const problems: string[] = [];
 const names = Object.keys(output.states);
@@ -63,6 +77,18 @@ for (const name of names) {
   const sent = JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Json;
   for (const path of unread(sent, output.states[name], '')) {
     problems.push(`${name}: the watch does not read ${path}`);
+  }
+}
+
+// Every field the watch reads has a value in a fixture: one the phone stopped sending, or sent as
+// null in every fixture, would go unchecked.
+const sentStates = names.map(
+  (name) => JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Json,
+);
+for (const path of output.read) {
+  const values = sentStates.flatMap((state) => valuesAt(state, path.split('.')));
+  if (!values.some((value) => value !== null)) {
+    problems.push(`No fixture has a value for ${path}, which the watch reads`);
   }
 }
 
