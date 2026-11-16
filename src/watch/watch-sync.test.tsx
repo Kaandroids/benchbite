@@ -211,7 +211,11 @@ describe('a workout finished on the watch', () => {
 
   it('is saved with the set its clock times as its only work', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
-    startSession('user-a', PUSH, last, { now: NOW, watchFollows: true });
+    // A timed exercise, as a time is logged only for one that records it.
+    const held = testWorkout(7, {
+      exercises: [testExercise('plank', { sets: 3, target: { seconds: 45, meters: null } })],
+    });
+    startSession('user-a', held, {}, { now: NOW, watchFollows: true });
     updateSession((current) => startClock(current, 0, 0, NOW + 30_000));
     await render(<WatchSync />);
     jest.setSystemTime(NOW + 120_000);
@@ -219,7 +223,7 @@ describe('a workout finished on the watch', () => {
     expect(supabase.rpc).toHaveBeenCalledWith('log_workout', {
       log: expect.objectContaining({
         exercises: [
-          { exerciseId: 'bench', superset: null, sets: [expect.objectContaining({ seconds: 30 })] },
+          { exerciseId: 'plank', superset: null, sets: [expect.objectContaining({ seconds: 30 })] },
         ],
       }),
     });
