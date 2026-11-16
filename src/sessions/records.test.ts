@@ -30,6 +30,9 @@ describe('oneRepMax', () => {
     // A value ending in a 5 rounds up, as one_rep_max() rounds it (#628).
     expect(oneRepMax(37.5, 7)).toBe(46.3);
     expect(oneRepMax(93.75, 4)).toBe(106.3);
+    // A weight to a tenth, which a float multiplies to just below the half.
+    expect(oneRepMax(82.1, 15)).toBe(123.2);
+    expect(oneRepMax(20.9, 15)).toBe(31.4);
   });
 });
 
