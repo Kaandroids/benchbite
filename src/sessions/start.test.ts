@@ -7,6 +7,7 @@ import { startsOnWatch } from '@/watch/start-on-watch';
 import { testExercise } from '@/workouts/test-data';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
+import { fetchSetTargets } from './logs';
 import { startSession } from './session';
 import { useStartWorkout } from './start';
 import { useStartMove } from './start-move';
@@ -19,6 +20,7 @@ jest.mock('./logs', () => {
     fetchLastSets,
     fetchLastSetsOrNone: (_queryClient: unknown, ids: string[]) => fetchLastSets(ids),
     fetchBests: jest.fn().mockResolvedValue({}),
+    fetchSetTargets: jest.fn().mockResolvedValue({}),
   };
 });
 jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(undefined) }));
@@ -77,6 +79,7 @@ describe('useStartWorkout', () => {
       {},
       {
         bests: {},
+        targets: {},
         now: WEDNESDAY.getTime(),
         move: { from: '2026-10-19', to: '2026-10-21' },
         watchFollows: false,
@@ -84,6 +87,29 @@ describe('useStartWorkout', () => {
     );
     expect(router.push).toHaveBeenCalledWith('/session');
     expect(openOnWatch).not.toHaveBeenCalled();
+  });
+
+  it('starts each set from its target, and from last time when the targets cannot be read', async () => {
+    askMove.mockResolvedValue({});
+    const targets = { 0: [{ weightKg: 80, reps: 10, seconds: null }] };
+    jest.mocked(fetchSetTargets).mockResolvedValueOnce(targets);
+    await start();
+    expect(fetchSetTargets).toHaveBeenCalledWith(PUSH.id);
+    expect(startSession).toHaveBeenLastCalledWith(
+      'user-a',
+      PUSH,
+      {},
+      expect.objectContaining({ targets }),
+    );
+    jest.mocked(fetchSetTargets).mockRejectedValueOnce(new Error('offline'));
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await start();
+    expect(startSession).toHaveBeenLastCalledWith(
+      'user-a',
+      PUSH,
+      {},
+      expect.objectContaining({ targets: {} }),
+    );
   });
 
   it('starts on the watch too when the user chose it, and opens Benchbite there', async () => {
