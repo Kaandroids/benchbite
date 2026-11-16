@@ -117,10 +117,10 @@
       }
     },
     {
-      "name": "a weighted hold counts for the longest time",
+      "name": "a weighted hold counts for the longest time, its weight for no record",
       "metrics": ["weight", "duration"],
       "set": {
-        "weightKg": null,
+        "weightKg": 20,
         "reps": null,
         "seconds": 45,
         "meters": null
@@ -157,10 +157,10 @@
       }
     },
     {
-      "name": "a carry over a distance counts for the distance",
+      "name": "a carry counts for the distance, its weight and a time from before for no record",
       "metrics": ["weight", "distance"],
       "set": {
-        "weightKg": null,
+        "weightKg": 40,
         "reps": null,
         "seconds": 30,
         "meters": 50
