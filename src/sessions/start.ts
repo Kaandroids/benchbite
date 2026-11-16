@@ -12,9 +12,9 @@ import { useWorkoutName } from '@/workouts/format';
 import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 import { openWorkout } from '@/workouts/open';
 
-import { fetchBests, fetchLastSetsOrNone, fetchSetTargets, type SetTargets } from './logs';
+import { fetchBests, fetchLastSetsOrNone, fetchSetTargets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
-import { startSession, type ExerciseBests } from './session';
+import { startSession, type ExerciseBests, type SetTargets } from './session';
 import { useStartMove } from './start-move';
 
 /** The query keys of the last sets and the bests of the exercises a workout starts with. */

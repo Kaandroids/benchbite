@@ -117,6 +117,9 @@ export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
 
+/** Each set's target, by the place of its exercise in the workout. */
+export type SetTargets = Record<number, SetTarget[]>;
+
 /** Each exercise's records before the workout. */
 export type ExerciseBests = Record<string, Bests>;
 
@@ -245,6 +248,7 @@ function startingValues(
   return setTarget?.seconds != null ? { ...values, targetSeconds: setTarget.seconds } : values;
 }
 
+/** Last time's values for the set, the set before it if there were fewer, or else the workout's target. */
 function lastValues(target: WorkoutTarget, last: SetValues[], index: number): SetValues {
   const previous = last[index] ?? last[last.length - 1];
   if (previous) {
@@ -273,7 +277,7 @@ export function startSession(
   }: {
     bests?: ExerciseBests;
     /** Each set's target, by the place of its exercise. */
-    targets?: Record<number, SetTarget[]>;
+    targets?: SetTargets;
     now?: number;
     move?: Session['move'];
     /** Started on the watch too, which then follows it without joining (ADR 0115). */

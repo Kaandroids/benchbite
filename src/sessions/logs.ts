@@ -4,9 +4,8 @@ import { LOGS_KEY } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
-import type { SetTarget } from '@/workouts/set-targets';
 
-import type { ExerciseBests, LastSets, toLog } from './session';
+import type { ExerciseBests, LastSets, SetTargets, toLog } from './session';
 
 export const LAST_SETS_KEY = ['last-sets'];
 
@@ -44,9 +43,6 @@ export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {
   }
   return sets;
 }
-
-/** Each set's target, by the place of its exercise in the workout. */
-export type SetTargets = Record<number, SetTarget[]>;
 
 /**
  * The target of each set of the workout (set_targets(), ADR 0138): the user's own, or worked out
