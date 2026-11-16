@@ -22,7 +22,8 @@ export type SessionSet = SetValues & {
   carried?: boolean;
   /**
    * When each of its values was last changed, and when it was last ticked or unticked, on the phone
-   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109).
+   * or the watch: an older change that arrives late does not undo a newer one (ADR 0109). A value
+   * with no time here was not typed, and shows as a suggestion.
    */
   valuesAt?: Partial<Record<keyof SetValues, number>>;
   doneChangedAt?: number;

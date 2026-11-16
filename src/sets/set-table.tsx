@@ -201,10 +201,8 @@ type SetLineProps = {
   clock?: number | null;
   /** Fields that are marked as needed. */
   invalid?: readonly SetField[];
-  /** Shows the values faint, as suggestions, until the set is done. */
-  muted?: boolean;
-  /** Values typed for the set, shown in full rather than faint as the suggested ones. */
-  typed?: readonly SetField[];
+  /** The values shown faint, as suggestions, until the set is done: all of them unless given. */
+  muted?: readonly SetField[];
   /** The time the set aims for, shown faint in its time until one is measured or typed. */
   targetSeconds?: number;
   weightRef?: Ref<TextInputInstance>;
@@ -225,8 +223,7 @@ export function SetLine({
   done = false,
   clock = null,
   invalid = [],
-  muted = true,
-  typed = [],
+  muted,
   targetSeconds,
   weightRef,
   onChange,
@@ -278,7 +275,7 @@ export function SetLine({
               done={done}
               clock={field === 'seconds' ? clock : null}
               invalid={invalid.includes(field)}
-              muted={muted && !typed.includes(field)}
+              muted={muted ? muted.includes(field) : true}
               ref={field === 'weightKg' ? weightRef : undefined}
               onChange={(value) => onChange({ [field]: value })}
             />
