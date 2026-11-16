@@ -298,7 +298,8 @@ declare const __dirname: string;
 describe('the protocol version', () => {
   it('is of the version the watch app speaks', () => {
     // targets/watch/Protocol.swift keeps the same version; a message of another one is dropped.
-    // This guards the number only: a change of a message's shape is made on both sides by hand.
+    // This guards the number only; the messages' shape is checked by protocol-fixtures.test.ts and
+    // `pnpm check:watch` (#541).
     const { readFileSync } = jest.requireActual<{
       readFileSync: (path: string, encoding: 'utf8') => string;
     }>('fs');
