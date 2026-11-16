@@ -1,0 +1,195 @@
+{
+  "oneRepMax": [
+    {
+      "weightKg": 100,
+      "reps": 1,
+      "expected": 100
+    },
+    {
+      "weightKg": 100,
+      "reps": 10,
+      "expected": 133.3
+    },
+    {
+      "weightKg": 77.5,
+      "reps": 8,
+      "expected": 98.2
+    },
+    {
+      "weightKg": 82.5,
+      "reps": 5,
+      "expected": 96.3
+    },
+    {
+      "weightKg": 60,
+      "reps": 15,
+      "expected": 90
+    },
+    {
+      "weightKg": 37.5,
+      "reps": 7,
+      "expected": 46.3
+    },
+    {
+      "weightKg": 93.75,
+      "reps": 4,
+      "expected": 106.3
+    },
+    {
+      "weightKg": 82.1,
+      "reps": 15,
+      "expected": 123.2
+    },
+    {
+      "weightKg": 20.9,
+      "reps": 15,
+      "expected": 31.4
+    }
+  ],
+  "recordValues": [
+    {
+      "name": "a lifted set counts for each record of weight and reps",
+      "metrics": ["weight", "reps"],
+      "set": {
+        "weightKg": 80,
+        "reps": 8,
+        "seconds": null,
+        "meters": null
+      },
+      "expected": {
+        "heaviest": 80,
+        "one_rep_max": 101.3,
+        "best_set": 640,
+        "most_reps": 8
+      }
+    },
+    {
+      "name": "a lifted set without its weight counts only for the reps",
+      "metrics": ["weight", "reps"],
+      "set": {
+        "weightKg": null,
+        "reps": 10,
+        "seconds": null,
+        "meters": null
+      },
+      "expected": {
+        "most_reps": 10
+      }
+    },
+    {
+      "name": "weight added to the body counts as the heaviest, not for a one-rep max",
+      "metrics": ["reps"],
+      "set": {
+        "weightKg": 10,
+        "reps": 12,
+        "seconds": null,
+        "meters": null
+      },
+      "expected": {
+        "heaviest": 10,
+        "most_reps": 12
+      }
+    },
+    {
+      "name": "a set with the body's weight alone counts for the reps",
+      "metrics": ["reps"],
+      "set": {
+        "weightKg": null,
+        "reps": 15,
+        "seconds": null,
+        "meters": null
+      },
+      "expected": {
+        "most_reps": 15
+      }
+    },
+    {
+      "name": "a held set counts for the longest time",
+      "metrics": ["duration"],
+      "set": {
+        "weightKg": null,
+        "reps": null,
+        "seconds": 50,
+        "meters": null
+      },
+      "expected": {
+        "longest_time": 50
+      }
+    },
+    {
+      "name": "a weighted hold counts for the longest time",
+      "metrics": ["weight", "duration"],
+      "set": {
+        "weightKg": null,
+        "reps": null,
+        "seconds": 45,
+        "meters": null
+      },
+      "expected": {
+        "longest_time": 45
+      }
+    },
+    {
+      "name": "a distance in a time counts for the distance and the pace",
+      "metrics": ["distance", "duration"],
+      "set": {
+        "weightKg": null,
+        "reps": null,
+        "seconds": 492,
+        "meters": 2000
+      },
+      "expected": {
+        "longest_distance": 2000,
+        "best_pace": 246
+      }
+    },
+    {
+      "name": "a distance without a time counts for the distance",
+      "metrics": ["distance", "duration"],
+      "set": {
+        "weightKg": null,
+        "reps": null,
+        "seconds": null,
+        "meters": 5000
+      },
+      "expected": {
+        "longest_distance": 5000
+      }
+    },
+    {
+      "name": "a carry over a distance counts for the distance",
+      "metrics": ["weight", "distance"],
+      "set": {
+        "weightKg": null,
+        "reps": null,
+        "seconds": 30,
+        "meters": 50
+      },
+      "expected": {
+        "longest_distance": 50
+      }
+    }
+  ],
+  "weightStep": [
+    {
+      "equipment": "barbell",
+      "expected": 2.5
+    },
+    {
+      "equipment": "dumbbell",
+      "expected": 2
+    },
+    {
+      "equipment": "kettlebells",
+      "expected": 4
+    },
+    {
+      "equipment": "machine",
+      "expected": 2.5
+    },
+    {
+      "equipment": null,
+      "expected": 2.5
+    }
+  ]
+}

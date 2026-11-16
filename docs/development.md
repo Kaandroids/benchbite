@@ -240,6 +240,16 @@ The Apple Watch app's text is in `src/i18n/watch/`, and `pnpm watch:strings` wri
 the language chosen in Benchbite, which the phone sends it (ADR 0123). A text with a count has a
 `_one` and an `_other` form, as in the app's files.
 
+## Rules the app shares with the database
+
+A few rules live in the database and, as the app needs them live or offline, in the app too: the
+records a set counts for (`record_candidates()` and `recordValues()`), the one-rep max
+(`one_rep_max()` and `oneRepMax()`) and the weight step (`weight_step()` and `weightStepOf()`).
+Their cases are in `supabase/tests/rules/cases.json`: Jest checks the app's side, and
+`supabase/tests/database/rule_cases.test.sql`, which `pnpm rules:sql` writes from the cases,
+checks the database's. Change a rule on both sides and add its case; `pnpm check:rules` fails while
+the pgTAP test is behind the cases.
+
 ## Run the website
 
 The website in `website/` is a package of its own, with its own dependencies:
@@ -290,6 +300,8 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm test`             | Run the app's tests with Jest                              |
 | `pnpm check:locales`    | Check that translations and permission texts match         |
 | `pnpm watch:strings`    | Write the watch app's text to Swift                        |
+| `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
+| `pnpm check:rules`      | Check that the rule cases' pgTAP test is up to date        |
 | `pnpm db:types`         | Generate TypeScript types from the local database          |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db          |
 | `pnpm import:foods`     | Import the food library from the BLS 4.0                   |
