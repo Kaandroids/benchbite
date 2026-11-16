@@ -158,6 +158,7 @@ describe('stateOf', () => {
       text: '— × 12',
       lastText: null,
       timedByClock: false,
+      targetSeconds: null,
     });
   });
 
@@ -542,6 +543,24 @@ describe('applyCommand', () => {
     expect(
       stateOf(running, names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.timedByClock,
     ).toBe(true);
+  });
+
+  it('gives a timed set the time it aims for, shown beside its clock', () => {
+    const targeted = startSession(
+      'user-a',
+      PUSH,
+      {},
+      {
+        now: NOW,
+        targets: { 2: [{ weightKg: null, reps: null, seconds: 50 }] },
+      },
+    );
+    expect(
+      stateOf(targeted, names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.targetSeconds,
+    ).toBe(50);
+    expect(
+      stateOf(start(), names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.targetSeconds,
+    ).toBeNull();
   });
 
   it('starts no clock for a set done, nor over a clock that runs', () => {
