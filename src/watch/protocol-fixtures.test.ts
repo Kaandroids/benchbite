@@ -69,6 +69,8 @@ function underWay() {
   session = startClock(session, 2, 1, NOW + 60_000);
   session = toggleDoneUnchecked(session, 0, 0, NOW + 70_000);
   session = toggleDoneUnchecked(session, 1, 0, NOW + 80_000);
+  // A command the watch sent, which the phone applied.
+  session = { ...session, watchCommands: ['command-open'] };
   return session;
 }
 

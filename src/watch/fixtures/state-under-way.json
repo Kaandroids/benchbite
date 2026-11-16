@@ -210,7 +210,7 @@
         ]
       }
     ],
-    "applied": [],
+    "applied": ["command-open"],
     "follows": true
   }
 }
