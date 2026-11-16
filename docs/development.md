@@ -217,10 +217,10 @@ and `targets/watch/Protocol.swift`), checked against the fixtures in `src/watch/
 checks that the phone sends the state there and takes the watch's commands, and `pnpm check:watch`,
 on a Mac with Xcode, that the watch reads every field of that state and makes those commands. A
 change to the watch or the protocol also runs the [Watch workflow](../.github/workflows/watch.yml)
-on a Mac, which type-checks the watch app, runs its tests and runs `pnpm check:watch`. Every field the watch reads
-needs a value in one of the states, which `src/watch/protocol-fixtures.test.ts` builds: give a new
-one a value there. After changing the protocol on purpose, write the state again with `pnpm
-watch:fixtures` and the commands with `pnpm check:watch --write`, and run both checks.
+on a Mac, which type-checks the watch app, runs its tests and runs `pnpm check:watch`. Every field
+the watch reads needs a value in one of the states, which `src/watch/protocol-fixtures.test.ts`
+builds: give a new one a value there. After changing the protocol on purpose, write the state again
+with `pnpm watch:fixtures` and the commands with `pnpm check:watch --write`, and run both checks.
 
 The watch's logic that needs no SwiftUI, WatchKit or WatchConnectivity, such as the next set, a
 superset's rounds and the commands it sends, is tested with XCTest in `targets/watch-tests`: a Swift
