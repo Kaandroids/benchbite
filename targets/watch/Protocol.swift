@@ -7,7 +7,9 @@ import Foundation
 /// Raised with the phone's PROTOCOL_VERSION; a message of another version is dropped.
 let protocolVersion = 1
 
-struct WatchState: Decodable {
+// The state's types are Codable rather than only Decodable so that `pnpm check:watch` can write back
+// what the watch read, which shows a field it does not read (#541).
+struct WatchState: Codable {
   let v: Int
   let seq: Double
   let workout: WatchWorkout?
@@ -18,7 +20,7 @@ struct WatchState: Decodable {
 }
 
 /// How a workout ended: saved as a log, at the time it ended, or let go.
-struct WatchEnded: Decodable, Equatable {
+struct WatchEnded: Codable, Equatable {
   let id: String
   let saved: Bool
   let endedAt: Double?
@@ -53,7 +55,7 @@ struct FinishedWorkout {
   }
 }
 
-struct WatchWorkout: Decodable {
+struct WatchWorkout: Codable {
   let id: String
   let name: String?
   let startedAt: Double
@@ -72,18 +74,18 @@ struct WatchWorkout: Decodable {
   let follows: Bool
 }
 
-struct WatchNext: Decodable {
+struct WatchNext: Codable {
   let exercise: Int
   let set: Int
 }
 
-struct WatchClock: Decodable {
+struct WatchClock: Codable {
   let exercise: Int
   let set: Int
   let startedAt: Double
 }
 
-struct WatchRest: Decodable {
+struct WatchRest: Codable {
   let endsAt: Double
   let seconds: Int
 }
@@ -97,7 +99,7 @@ struct ShownRest: Equatable {
   let next: String?
 }
 
-struct WatchExercise: Decodable {
+struct WatchExercise: Codable {
   let exerciseId: String
   /// None when the phone's library does not know it.
   let name: String?
@@ -115,13 +117,13 @@ struct WatchExercise: Decodable {
 }
 
 /// What the plan aims at; only the time is read, the rest of it being the phone's.
-struct WatchTarget: Decodable {
+struct WatchTarget: Codable {
   let seconds: Double?
 }
 
 /// How the Crown turns a value: from `min` to `max`, by `step`; with `fine`, by it while turned
 /// slowly and by `step` while turned fast (ADR 0125).
-struct CrownRange: Decodable {
+struct CrownRange: Codable {
   let min: Double
   let max: Double
   let step: Double
@@ -129,7 +131,7 @@ struct CrownRange: Decodable {
 }
 
 /// A value a set records, as SetField in src/sets/fields.ts.
-enum SetField: String, Decodable, CodingKeyRepresentable {
+enum SetField: String, Codable, CodingKeyRepresentable {
   case weightKg, reps, seconds, meters
 
   /// Under a value, as "80 KG".
@@ -153,7 +155,7 @@ enum SetField: String, Decodable, CodingKeyRepresentable {
   }
 }
 
-struct WatchSet: Decodable {
+struct WatchSet: Codable {
   let weightKg: Double?
   let reps: Double?
   let seconds: Double?
