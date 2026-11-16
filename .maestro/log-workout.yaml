@@ -2,9 +2,19 @@
 appId: com.benchbite.app.dev
 ---
 - runFlow: onboarding.yaml
+# The onboarding picks a beginner's gym plan on 3 days: one workout, Full body, of 20 sets.
 - tapOn: 'Workout'
-# The plan's workout can be started on any day, from the list of workouts.
 - tapOn: 'Start Full body'
+# On a day without it, when it is planned later in the week, as on a Tuesday, the app first offers
+# to move it to today.
+- extendedWaitUntil:
+    visible: 'Move to today|Tell you when your rest is over\?'
+    timeout: 15000
+- runFlow:
+    when:
+      visible: 'Move to today'
+    commands:
+      - tapOn: 'Move to today'
 
 # The first workout asks about rest alerts once.
 - tapOn: 'Not now'
