@@ -216,7 +216,9 @@ The phone and the watch keep their own copies of the protocol between them
 (`src/watch/protocol.ts` and `targets/watch/Protocol.swift`), checked against the fixtures in
 `src/watch/fixtures`: Jest checks that the phone sends the state there and takes the watch's
 commands, and `pnpm check:watch`, on a Mac with Xcode, that the watch reads every field of that
-state and makes those commands. Every field the watch reads needs a value in one of the states,
+state and makes those commands. A change to the watch or the protocol also runs the
+[Watch workflow](../.github/workflows/watch.yml) on a Mac, which type-checks the watch app and runs
+`pnpm check:watch`. Every field the watch reads needs a value in one of the states,
 which `src/watch/protocol-fixtures.test.ts` builds: give a new one a value there. After changing the protocol on purpose, write the state again with
 `pnpm watch:fixtures` and the commands with `pnpm check:watch --write`, and run both checks.
 

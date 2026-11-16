@@ -19,8 +19,9 @@ The `main` branch is protected: changes require a pull request and an approving 
 
 Every pull request runs the [CI workflow](.github/workflows/ci.yml): types, lint, formatting, the
 app's tests, translations, the shared rule cases and Edge Functions, and on a local Supabase stack
-the database tests, the generated types and every generated plan. Run the main checks locally
-before pushing:
+the database tests, the generated types and every generated plan. A change to the Apple Watch app
+or its protocol also runs the [Watch workflow](.github/workflows/watch.yml) on a Mac. Run the main
+checks locally before pushing:
 
 ```bash
 pnpm typecheck
