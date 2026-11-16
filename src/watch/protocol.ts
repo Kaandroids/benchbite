@@ -67,7 +67,7 @@ export type WatchExercise = {
   fields: SetField[];
   /**
    * The values the watch changes with the Crown, and how; never the time, which the clock measures,
-   * so for a timed set only its distance, if it has one (ADR 0124).
+   * so for a set of a distance only its distance, timed or not (ADR 0124).
    */
   crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
