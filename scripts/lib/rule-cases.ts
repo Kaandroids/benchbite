@@ -70,6 +70,7 @@ export function ruleCasesSql(root: string): string {
       `select is(`,
       `  (select coalesce(jsonb_object_agg(r.kind, r.value), '{}') from cases c`,
       `   cross join lateral public.record_candidates(c.exercise_id) r`,
+      // The most time is a workout's total, not a set's: recordValues() leaves it out too.
       `   where c.n = ${index} and r.log_id = c.log_id and r.kind <> 'most_time'),`,
       `  ${sql(JSON.stringify(expected))}::jsonb,`,
       `  ${sql(`record_candidates(): ${name}`)}`,
