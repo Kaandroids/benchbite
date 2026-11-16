@@ -3,7 +3,8 @@
 import { fromIsoDate } from '@/i18n/dates';
 import { oneRepMax, recordValues } from '@/sessions/records';
 import { weekSchedule } from '@/workouts/week-schedule';
-import { weekOf, type Workout } from '@/workouts/workouts';
+import { testWorkout } from '@/workouts/test-data';
+import { weekOf } from '@/workouts/workouts';
 import type { LibraryExercise } from '@/exercises/library';
 
 import cases from '../../supabase/tests/rules/cases.json';
@@ -37,16 +38,12 @@ describe('day_workouts()', () => {
   it.each(cases.weekSchedule)('$name', (item) => {
     // The plan as the app turns its workouts into the week's sessions. The app reads the days
     // the database kept for days gone by (plannedSessions()); the cases cover the plan alone.
-    const workouts: Workout[] = item.workouts.map((workout) => ({
-      id: workout.id,
-      name: `Workout ${workout.id}`,
-      type: null,
-      weekdays: workout.weekdays,
-      active: (workout as { active?: boolean }).active ?? true,
-      held: false,
-      estimatedMinutes: 45,
-      exercises: [],
-    }));
+    const workouts = item.workouts.map((workout) =>
+      testWorkout(workout.id, {
+        weekdays: workout.weekdays,
+        active: (workout as { active?: boolean }).active ?? true,
+      }),
+    );
     const { sessions } = weekOf(workouts);
     const finished = item.logs.map((log) => ({
       workoutId: log.workoutId,
