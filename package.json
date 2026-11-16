@@ -66,6 +66,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "e2e": "scripts/e2e.sh",
     "native:dev": "expo prebuild --clean",
     "native:release": "APP_VARIANT=production expo prebuild --clean --platform ios",
     "lint": "expo lint --max-warnings 0 --no-cache",
