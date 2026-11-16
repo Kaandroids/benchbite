@@ -24,7 +24,11 @@ export function metricsOf(kind: SetKind): [ProgressMetric, ...ProgressMetric[]] 
   if (kind.fields.includes('reps')) {
     return kind.addedWeight ? ['mostReps', 'totalReps'] : ['heaviest', 'oneRepMax', 'volume'];
   }
-  return kind.fields.includes('meters') ? ['distance', 'pace'] : ['longest', 'totalTime'];
+  if (kind.fields.includes('meters')) {
+    // A pace needs a time, which a carry has none of.
+    return kind.fields.includes('seconds') ? ['distance', 'pace'] : ['distance'];
+  }
+  return ['longest', 'totalTime'];
 }
 
 const VALUE_OF: Record<ProgressMetric, (point: ProgressPoint) => number | null> = {

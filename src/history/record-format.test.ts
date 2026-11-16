@@ -23,6 +23,7 @@ describe('metricsOf', () => {
     expect(metricsOf(setKindOf(['reps'], target))).toEqual(['mostReps', 'totalReps']);
     expect(metricsOf(setKindOf(['duration'], target))).toEqual(['longest', 'totalTime']);
     expect(metricsOf(setKindOf(['distance', 'duration'], target))).toEqual(['distance', 'pace']);
+    expect(metricsOf(setKindOf(['weight', 'distance'], target))).toEqual(['distance']);
   });
 });
 
