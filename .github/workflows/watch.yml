@@ -4,6 +4,7 @@ name: Watch
 # the protocol it shares with the phone, or this check changes, as a Mac's minutes cost more.
 on:
   pull_request:
+    # The same paths as for pushes to main below: change them together.
     paths:
       - 'targets/watch/**'
       - 'src/watch/**'
@@ -42,12 +43,15 @@ jobs:
         with:
           node-version-file: .node-version
 
-      # Every source of the watch app, compiled for watchOS at its deployment target
-      # (targets/watch/expo-target.config.js), without a project, which only Expo's prebuild makes.
+      # Every source of the watch app, compiled for watchOS at its deployment target, read from
+      # targets/watch/expo-target.config.js, without a project, which only Expo's prebuild makes.
       - name: Type-check the watch app
-        run: xcrun -sdk watchsimulator swiftc -typecheck -target arm64-apple-watchos10.0-simulator targets/watch/*.swift
+        run: |
+          version=$(node -p "require('./targets/watch/expo-target.config.js').deploymentTarget")
+          xcrun -sdk watchsimulator swiftc -typecheck -target "arm64-apple-watchos${version}-simulator" targets/watch/*.swift
 
-      # The watch's side of the protocol's fixtures (#541); Jest checks the phone's in CI.
+      # `pnpm check:watch`, without pnpm, as nothing is installed: the watch's side of the protocol's
+      # fixtures (#541); Jest checks the phone's in CI.
       - name: Protocol check
         if: ${{ !cancelled() }}
         run: node scripts/check-watch-protocol.ts
