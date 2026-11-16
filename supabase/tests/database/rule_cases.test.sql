@@ -100,7 +100,7 @@ with exercise as (
 insert into cases select 5, log.id, exercise.id from log, exercise;
 insert into public.logged_sets (log_id, user_id, exercise_position, set_position, exercise_id,
   weight_kg, reps, seconds, meters)
-select log_id, '00000000-0000-0000-0000-0000000005e1', 0, 0, exercise_id, null, null,
+select log_id, '00000000-0000-0000-0000-0000000005e1', 0, 0, exercise_id, 20, null,
   45, null
 from cases where n = 5;
 with exercise as (
@@ -139,7 +139,7 @@ with exercise as (
 insert into cases select 8, log.id, exercise.id from log, exercise;
 insert into public.logged_sets (log_id, user_id, exercise_position, set_position, exercise_id,
   weight_kg, reps, seconds, meters)
-select log_id, '00000000-0000-0000-0000-0000000005e1', 0, 0, exercise_id, null, null,
+select log_id, '00000000-0000-0000-0000-0000000005e1', 0, 0, exercise_id, 40, null,
   30, 50
 from cases where n = 8;
 
@@ -187,7 +187,7 @@ select is(
    cross join lateral public.record_candidates(c.exercise_id) r
    where c.n = 5 and r.log_id = c.log_id and r.kind <> 'most_time'),
   '{"longest_time":45}'::jsonb,
-  'record_candidates(): a weighted hold counts for the longest time'
+  'record_candidates(): a weighted hold counts for the longest time, its weight for no record'
 );
 select is(
   (select coalesce(jsonb_object_agg(r.kind, r.value), '{}') from cases c
@@ -208,7 +208,7 @@ select is(
    cross join lateral public.record_candidates(c.exercise_id) r
    where c.n = 8 and r.log_id = c.log_id and r.kind <> 'most_time'),
   '{"longest_distance":50}'::jsonb,
-  'record_candidates(): a carry over a distance counts for the distance'
+  'record_candidates(): a carry counts for the distance, its weight and a time from before for no record'
 );
 
 select * from finish();
