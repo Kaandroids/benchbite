@@ -377,8 +377,9 @@ targets/               Apple targets beside the app, such as the Apple Watch app
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
-scripts/               the exercise and food imports (shared helpers in lib/), the checks,
-                       the end-to-end runner and the README's recording scripts
+scripts/               the project's scripts, with shared helpers in lib/: the imports, the
+                       checks, the generators, the local setup, the end-to-end runner and the
+                       README's recording scripts
 website/               the website, a package of its own
 .maestro/              the end-to-end flows, with shared steps in subflows/
 docs/adr/              Architecture Decision Records
