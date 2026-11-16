@@ -76,6 +76,8 @@
     "watch:strings": "node scripts/generate-watch-strings.ts",
     "rules:sql": "node scripts/generate-rule-cases.ts",
     "check:rules": "node scripts/check-rule-cases.ts",
+    "watch:fixtures": "WATCH_FIXTURES=write jest src/watch/protocol-fixtures && prettier --write src/watch/fixtures",
+    "check:watch": "node scripts/check-watch-protocol.ts",
     "import:exercises": "node scripts/import-exercises.ts",
     "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",
