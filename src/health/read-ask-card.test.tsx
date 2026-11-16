@@ -49,7 +49,7 @@ beforeEach(() => {
 it('asks for weight, then reads it and hides', async () => {
   await render(<AskCard />);
 
-  fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
   expect(readSync('weight')).toBe('on');
@@ -60,7 +60,7 @@ it('reads nothing when weight was not allowed', async () => {
   jest.mocked(requestHealthWeightAccess).mockResolvedValue(false);
   await render(<AskCard />);
 
-  fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
   await waitFor(() => expect(readSync('weight')).toBe('off'));
   expect(importHealthWeights).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ it('reads nothing when weight was not allowed', async () => {
 it('hides for good on not now', async () => {
   await render(<AskCard />);
 
-  fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
   expect(readSync('weight')).toBe('off');
@@ -92,7 +92,7 @@ it('asks for steps the same way, on their own', async () => {
   await render(<AskCard kind="steps" />);
   expect(screen.getByText('Your steps from Apple Health')).toBeOnTheScreen();
 
-  fireEvent.press(screen.getByRole('button', { name: 'Show my steps' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Show my steps' }));
 
   await waitFor(() => expect(readSync('steps')).toBe('on'));
   expect(importHealthSteps).toHaveBeenCalled();

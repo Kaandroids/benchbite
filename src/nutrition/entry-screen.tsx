@@ -145,12 +145,12 @@ function EntryForm({
           <Note tone="danger">{t('nutrition.entry.removeError')}</Note>
         ) : undefined
       }
-      onSubmit={(amount) =>
-        updateEntry
+      onSubmit={(amount) => {
+        void updateEntry
           .mutateAsync({ id: entry.id, day: entry.day, amount })
           .then(onSaved)
-          .catch(() => {})
-      }
+          .catch(() => {});
+      }}
     >
       <Button
         label={t('nutrition.entry.remove')}

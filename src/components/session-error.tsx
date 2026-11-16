@@ -25,7 +25,13 @@ export function SessionError({ onRetry }: SessionErrorProps) {
 
   return (
     <Screen
-      footer={<Button label={t('common.tryAgain')} loading={isRetrying} onPress={handleRetry} />}
+      footer={
+        <Button
+          label={t('common.tryAgain')}
+          loading={isRetrying}
+          onPress={() => void handleRetry()}
+        />
+      }
     >
       <MessageView
         icon="offline"
