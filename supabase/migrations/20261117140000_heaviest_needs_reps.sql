@@ -1,6 +1,8 @@
 -- The heaviest record needs an exercise of reps (#630), as the app counts it (recordValues()): a
 -- weighted hold or a carry logged with a weight no longer gets one, which the app never showed.
--- Replaces record_candidates() of 20261029190000_record_history.sql, keeping its grants.
+-- Replaces record_candidates() of 20261029190000_record_history.sql, keeping its grants, and the
+-- heaviest's row in the kinds of 20261024090000_exercise_record_places.sql: weight with reps, or
+-- reps with added weight.
 create or replace function public.record_candidates(exercise_id text)
 returns table (
   kind text,
