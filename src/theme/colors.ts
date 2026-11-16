@@ -14,6 +14,8 @@ export type ColorTokens = {
   border: string;
   /** Unfilled part of progress bars and sliders, inactive segments. */
   track: string;
+  /** A button on `track` while it is pressed, plainly lighter in the dark (#613). */
+  trackPressed: string;
   /** Brand orange for fills, icons and selected states. Not for text on light backgrounds. */
   primary: string;
   /** Orange text on `background` or `surface`, at least 4.5:1. */
@@ -110,6 +112,7 @@ export const lightColors: ColorTokens = {
   placeholder: '#B4B6BC',
   border: '#E3E4E8',
   track: '#ECEDF0',
+  trackPressed: '#E3E4E8',
   primary: '#E05300', // 3.4:1 on iconBackground, the lowest of its pairs
   primaryText: '#C2410C', // 4.8:1 on background
   primaryButton: '#F25A00', // 3.4:1 with white
@@ -172,6 +175,7 @@ export const darkColors: ColorTokens = {
   placeholder: '#5C5F66',
   border: '#2B2D31',
   track: '#25272B',
+  trackPressed: '#3A3C42',
   primary: '#FF7F26',
   primaryText: '#FF7F26', // 7.4:1 on background
   primaryButton: '#FF7F26', // 7.6:1 with onPrimary
