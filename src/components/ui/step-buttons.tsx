@@ -8,6 +8,50 @@ import { Icon } from './icon';
 const JOINED_WIDTH = 52;
 const JOINED_HEIGHT = 44;
 
+type StepButtonProps = {
+  icon: 'minus' | 'plus';
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  /** The width and height. */
+  size?: number;
+};
+
+/**
+ * One round minus or plus button, grey so that orange stays with the filled buttons, the minus
+ * quieter than the plus: for a value between the two, or beside it in StepButtons.
+ */
+export function StepButton({ icon, label, onPress, disabled = false, size = 48 }: StepButtonProps) {
+  const { colors, radii } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      hitSlop={4}
+      style={({ pressed }) => [
+        styles.button,
+        {
+          width: size,
+          height: size,
+          borderRadius: radii.full,
+          backgroundColor: pressed ? colors.border : colors.track,
+          opacity: disabled ? 0.3 : 1,
+        },
+      ]}
+    >
+      {/* The usual icon on a thumb-sized button, half of a smaller one. */}
+      <Icon
+        name={icon}
+        size={size >= 44 ? 24 : size / 2}
+        color={icon === 'minus' ? 'textMuted' : 'text'}
+      />
+    </Pressable>
+  );
+}
+
 type StepButtonsProps = {
   onDecrease: () => void;
   onIncrease: () => void;
@@ -37,42 +81,31 @@ export function StepButtons({
 }: StepButtonsProps) {
   const { colors, radii, spacing } = useTheme();
   const joined = variant === 'joined';
-  const button = (
-    icon: 'minus' | 'plus',
-    label: string,
-    onPress: () => void,
-    enabled: boolean,
-    quiet: boolean,
-  ) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !enabled }}
-      disabled={!enabled}
-      onPress={onPress}
-      hitSlop={joined ? undefined : 4}
-      style={({ pressed }) => [
-        styles.button,
-        { opacity: enabled ? 1 : 0.3 },
-        joined
-          ? {
-              width: JOINED_WIDTH,
-              height: '100%',
-              backgroundColor: pressed ? colors.track : undefined,
-            }
-          : {
-              width: size,
-              height: size,
-              borderRadius: radii.full,
-              backgroundColor: pressed ? colors.border : colors.track,
-            },
-      ]}
-    >
-      <Icon name={icon} size={joined ? 20 : undefined} color={quiet ? 'textMuted' : 'text'} />
-    </Pressable>
-  );
-  const minus = button('minus', decreaseLabel, onDecrease, canDecrease, true);
-  const plus = button('plus', increaseLabel, onIncrease, canIncrease, false);
+  const button = (icon: 'minus' | 'plus', label: string, onPress: () => void, enabled: boolean) =>
+    joined ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !enabled }}
+        disabled={!enabled}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.button,
+          {
+            width: JOINED_WIDTH,
+            height: '100%',
+            backgroundColor: pressed ? colors.track : undefined,
+            opacity: enabled ? 1 : 0.3,
+          },
+        ]}
+      >
+        <Icon name={icon} size={20} color={icon === 'minus' ? 'textMuted' : 'text'} />
+      </Pressable>
+    ) : (
+      <StepButton icon={icon} label={label} onPress={onPress} disabled={!enabled} size={size} />
+    );
+  const minus = button('minus', decreaseLabel, onDecrease, canDecrease);
+  const plus = button('plus', increaseLabel, onIncrease, canIncrease);
   if (joined) {
     return (
       <View
