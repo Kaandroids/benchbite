@@ -357,8 +357,13 @@ struct NextSet {
   let setIndex: Int
   let exercise: WatchExercise
   var set: WatchSet { exercise.sets[setIndex] }
-  /// As "Set 4 · 80 kg × 8".
-  var label: String { L10n.t("setLabel", ["number": setIndex + 1, "values": set.text]) }
+  /// As "Set 4 · 80 kg × 8", or "Set 4" for a set without values yet, as a timed one before its
+  /// clock.
+  var label: String {
+    self.set.text.isEmpty
+      ? L10n.t("setNumber", ["number": setIndex + 1])
+      : L10n.t("setLabel", ["number": setIndex + 1, "values": set.text])
+  }
 }
 
 extension WatchWorkout {

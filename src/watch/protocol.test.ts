@@ -552,6 +552,10 @@ describe('applyCommand', () => {
     ).toBe(true);
   });
 
+  it('sends a set without values with no text, which the watch labels by its number alone', () => {
+    expect(stateOf(start(), names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.text).toBe('');
+  });
+
   it('gives a timed set the time it aims for, shown beside its clock', () => {
     const targeted = startSession(
       'user-a',

@@ -12,6 +12,7 @@
   "position": "Satz {{number}} von {{total}}",
   "lastTime": "{{position}} · zuletzt {{values}}",
   "setLabel": "Satz {{number}} · {{values}}",
+  "setNumber": "Satz {{number}}",
   "done": "Fertig",
   "start": "Start",
   "stop": "Stopp",
