@@ -24,7 +24,10 @@ jest.mock('./logs', () => {
   };
 });
 jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(undefined) }));
-jest.mock('./session', () => ({ startSession: jest.fn() }));
+jest.mock('./session', () => ({
+  ownSetTargets: jest.requireActual<typeof import('./session')>('./session').ownSetTargets,
+  startSession: jest.fn(),
+}));
 jest.mock('./start-move', () => ({ useStartMove: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/watch/start-on-watch', () => ({ startsOnWatch: jest.fn() }));
@@ -111,6 +114,21 @@ describe('useStartWorkout', () => {
       PUSH,
       {},
       expect.objectContaining({ targets: {} }),
+    );
+  });
+
+  it('starts from the own targets the workout holds when the targets cannot be read', async () => {
+    askMove.mockResolvedValue({});
+    const own = [{ weightKg: 80, reps: 10, seconds: null }];
+    const withOwn = { ...PUSH, exercises: [testExercise('bench', { sets: 2, setTargets: own })] };
+    jest.mocked(fetchSetTargets).mockRejectedValueOnce(new Error('offline'));
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await start(undefined, withOwn);
+    expect(startSession).toHaveBeenLastCalledWith(
+      'user-a',
+      withOwn,
+      {},
+      expect.objectContaining({ targets: { 0: { exerciseId: 'bench', sets: [own[0], own[0]] } } }),
     );
   });
 
