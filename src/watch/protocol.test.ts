@@ -552,7 +552,9 @@ describe('applyCommand', () => {
       {},
       {
         now: NOW,
-        targets: { 2: [{ weightKg: null, reps: null, seconds: 50 }] },
+        targets: {
+          2: { exerciseId: 'plank', sets: [{ weightKg: null, reps: null, seconds: 50 }] },
+        },
       },
     );
     expect(

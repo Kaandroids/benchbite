@@ -98,8 +98,8 @@ describe('startSession', () => {
       {
         now: NOW,
         targets: {
-          0: [{ weightKg: 82.5, reps: 8, seconds: null }],
-          1: [{ weightKg: null, reps: null, seconds: 45 }],
+          0: { exerciseId: 'bench', sets: [{ weightKg: 82.5, reps: 8, seconds: null }] },
+          1: { exerciseId: 'plank', sets: [{ weightKg: null, reps: null, seconds: 45 }] },
         },
       },
     );
@@ -113,6 +113,20 @@ describe('startSession', () => {
     expect(session.exercises[2]?.sets[0]).not.toHaveProperty('targetSeconds');
     // A set added aims for the last set's time.
     expect(addSet(session, 1).exercises[1]?.sets[1]).toMatchObject({ targetSeconds: 45 });
+  });
+
+  it('starts from last time where the targets are for another exercise at its place', () => {
+    // The workout changed since the app read it: the squat's targets are now first.
+    const session = startSession(
+      'user-a',
+      PUSH,
+      { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
+      {
+        now: NOW,
+        targets: { 0: { exerciseId: 'squat', sets: [{ weightKg: 120, reps: 5, seconds: null }] } },
+      },
+    );
+    expect(session.exercises[0]?.sets[0]).toMatchObject({ weightKg: 80, reps: 8 });
   });
 
   it('starts on the watch too only when asked to', () => {

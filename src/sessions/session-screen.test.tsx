@@ -141,11 +141,14 @@ describe('SessionScreen', () => {
       {
         now: NOW.getTime(),
         targets: {
-          0: [
-            { weightKg: 82.5, reps: 8, seconds: null },
-            { weightKg: 85, reps: 6, seconds: null },
-          ],
-          1: [{ weightKg: null, reps: null, seconds: 50 }],
+          0: {
+            exerciseId: 'bench',
+            sets: [
+              { weightKg: 82.5, reps: 8, seconds: null },
+              { weightKg: 85, reps: 6, seconds: null },
+            ],
+          },
+          1: { exerciseId: 'plank', sets: [{ weightKg: null, reps: null, seconds: 50 }] },
         },
       },
     );
