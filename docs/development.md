@@ -16,6 +16,9 @@ For the hosted project, see [Deployment](deployment.md).
   for the local Supabase stack.
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/) 2, to check and test the Edge
   Functions.
+- [Maestro](https://docs.maestro.dev/getting-started/installing-maestro), for the
+  [end-to-end tests](#end-to-end-tests) on the iOS Simulator, with Java 17 or later:
+  `brew tap mobile-dev-inc/tap && brew install mobile-dev-inc/tap/maestro`.
 
 ## Set up
 
@@ -267,6 +270,29 @@ cases are in `supabase/tests/rules/cases.json`: Jest checks the app's side, and
 the database's. Change a rule on both sides and add its case; `pnpm check:rules` fails while the
 pgTAP test is behind the cases.
 
+## End-to-end tests
+
+The flows in `.maestro/` drive the development build on the iOS Simulator through whole journeys
+across screens and tabs, such as a new user's onboarding up to Today (ADR 0139). They run against
+the local stack, so start what the app talks to first, each in a terminal of its own:
+
+```bash
+pnpm supabase start
+pnpm supabase functions serve
+pnpm start
+```
+
+Then `pnpm e2e` runs every flow, and `pnpm e2e .maestro/onboarding.yaml` one of them. Each flow
+starts the app from scratch, signed out, so they run on a simulator of their own, "Benchbite E2E",
+not the one used day to day. `pnpm e2e` makes it the first time and copies the development build
+onto it from a booted simulator that has it, as `pnpm ios` leaves one. After a change to native
+code, `xcrun simctl delete "Benchbite E2E"` makes the next run take the new build.
+
+A flow finds what to tap by the text or accessibility label on screen, in English, and
+`.maestro/subflows/launch.yaml` opens the app on Metro's bundle without the development build's
+launcher. A run as a guest leaves a new guest user in the local database. `maestro studio` shows
+the screen's elements and tries commands, to write a new flow.
+
 ## Run the website
 
 The website in `website/` is a package of its own, with its own dependencies:
@@ -331,6 +357,7 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools        |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack      |
 | `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
+| `pnpm e2e`              | Run the end-to-end flows on the iOS Simulator              |
 
 When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
 with the lines no test runs.
@@ -353,6 +380,7 @@ supabase/functions/    Edge Functions, with shared code in _shared/
 scripts/               the exercise and food imports (shared helpers in lib/), the locale check
                        and the plan check
 website/               the website, a package of its own
+.maestro/              the end-to-end flows, with shared steps in subflows/
 docs/adr/              Architecture Decision Records
 docs/development.md    this guide; docs/deployment.md covers the hosted project
 docs/media/            the screenshots and GIFs in the README, and how to make them

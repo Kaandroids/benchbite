@@ -138,7 +138,7 @@ flowchart LR
 | Server-side logic | Postgres functions, triggers and pg_cron; Edge Functions in Deno          |
 | AI                | Gemini, behind an interface of our own                                    |
 | Website           | Astro, on Netlify                                                         |
-| Tests             | Jest and React Native Testing Library, pgTAP, Deno test                   |
+| Tests             | Jest and React Native Testing Library, pgTAP, Deno test, Maestro          |
 
 ## How it is built
 
