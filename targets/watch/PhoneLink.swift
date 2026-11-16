@@ -86,10 +86,6 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     shown.isTickWaiting(workoutId: workoutId, exercise: exercise, set: set)
   }
 
-  func isClockWaiting(workoutId: String, exercise: Int, set: Int) -> Bool {
-    shown.isClockWaiting(workoutId: workoutId, exercise: exercise, set: set)
-  }
-
   func clockStart(of workout: WatchWorkout, exercise: Int, set: Int) -> Double? {
     shown.clockStart(of: workout, exercise: exercise, set: set)
   }
@@ -116,33 +112,13 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   func isJoinWaiting(workoutId: String) -> Bool { shown.isJoinWaiting(workoutId: workoutId) }
 
-  func picked(workoutId: String) -> Int? { shown.picked(workoutId: workoutId) }
-
   func openExercise(of workout: WatchWorkout) -> Int? { shown.openExercise(of: workout) }
 
   func rest(of workout: WatchWorkout) -> ShownRest? { shown.rest(of: workout) }
 
   func send(_ command: WatchCommand?) {
-    guard let command else { return }
-    switch command.change {
-    case .tick(let exercise, let set, _):
-      if isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
-    case .rest:
-      if isRestWaiting(workoutId: command.workoutId) { return }
-    case .join:
-      if isJoinWaiting(workoutId: command.workoutId) { return }
-    case .clock(let exercise, let set):
-      if isClockWaiting(workoutId: command.workoutId, exercise: exercise, set: set) { return }
-    case .finish:
-      if isFinishWaiting(workoutId: command.workoutId) { return }
-      unsaved = nil
-    case .open(let exercise):
-      // Only a pick of another exercise than the one shown: picking the phone's again undoes a
-      // pick that waits, as the phone applies picks in the order made (ADR 0117).
-      if let workout, workout.id == command.workoutId, exercise == openExercise(of: workout) {
-        return
-      }
-    }
+    guard let command, !shown.repeats(command, shown: workout) else { return }
+    if command.change.isFinish { unsaved = nil }
     let payload = command.payload
     waiting[command.id] = command
     let session = WCSession.default

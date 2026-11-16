@@ -160,6 +160,28 @@ struct WaitingCommands {
     }
   }
 
+  /// Whether `command` would only repeat one that waits, which is then not sent: a second tick of
+  /// a set, change of the rest, join, start of a clock or finish, or a pick of the exercise `shown`
+  /// already opens. Picking the phone's again undoes a pick that waits, as the phone applies picks
+  /// in the order made (ADR 0117).
+  func repeats(_ command: WatchCommand, shown workout: WatchWorkout?) -> Bool {
+    switch command.change {
+    case .tick(let exercise, let set, _):
+      return isTickWaiting(workoutId: command.workoutId, exercise: exercise, set: set)
+    case .rest:
+      return isRestWaiting(workoutId: command.workoutId)
+    case .join:
+      return isJoinWaiting(workoutId: command.workoutId)
+    case .clock(let exercise, let set):
+      return isClockWaiting(workoutId: command.workoutId, exercise: exercise, set: set)
+    case .finish:
+      return isFinishWaiting(workoutId: command.workoutId)
+    case .open(let exercise):
+      guard let workout, workout.id == command.workoutId else { return false }
+      return exercise == openExercise(of: workout)
+    }
+  }
+
   private func firstWaiting(
     _ workoutId: String, where matches: (WatchCommand.Change) -> Bool
   ) -> WatchCommand? {
