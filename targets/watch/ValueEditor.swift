@@ -118,7 +118,7 @@ private struct FieldEditor: View {
       let fast = lastTurn.map { now.timeIntervalSince($0) < Self.fastWithin } ?? false
       lastTurn = now
       let previous = value
-      value = Self.turn(value, by: detents, fast: fast, range: range)
+      value = range.turned(value, by: detents, fast: fast)
       if value != previous { change(value) }
     }
     .onAppear {
@@ -138,31 +138,6 @@ private struct FieldEditor: View {
     return range.step == 1
       ? L10n.t("turnCrown")
       : L10n.t("turnCrownSteps", ["step": formatted(range.step), "unit": unit])
-  }
-
-  /// A value turned by `detents`: by the fine step turned slowly, and turned fast by the coarse one,
-  /// onto its grid, so that 61.5 goes on to 62.5 and 65; without a fine step always by the coarse
-  /// one from where it is, so that 81 turns to 83.5. Within the range, to the hundredth.
-  static func turn(_ value: Double, by detents: Double, fast: Bool, range: CrownRange) -> Double {
-    var next = value
-    let steps = Int(detents.magnitude.rounded())
-    let up = detents > 0
-    for _ in 0..<steps {
-      guard let fine = range.fine else {
-        // A single step, from wherever the value is.
-        next += up ? range.step : -range.step
-        continue
-      }
-      if fast {
-        // Onto the coarse grid, a whole step on from where it is.
-        let place = next / range.step
-        next = (up ? (place + 1e-9).rounded(.down) + 1 : (place - 1e-9).rounded(.up) - 1)
-          * range.step
-      } else {
-        next += up ? fine : -fine
-      }
-    }
-    return (min(max(next, range.min), range.max) * 100).rounded() / 100
   }
 
   /// The value a step away, or nothing past the ends.
