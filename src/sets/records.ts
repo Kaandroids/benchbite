@@ -39,7 +39,8 @@ export function useRecordFormat() {
   return ({ kind, value, set }: { kind: RecordKind; value: number; set: SetValues }) => {
     switch (kind) {
       case 'heaviest':
-        return kilograms(value);
+        // To the quarter kilogram, as the set it was lifted in reads.
+        return `${format(value, { maximumFractionDigits: 2 })} kg`;
       case 'one_rep_max':
         return kilograms(Math.round(value));
       case 'best_set':
