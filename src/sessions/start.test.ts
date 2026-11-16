@@ -91,7 +91,9 @@ describe('useStartWorkout', () => {
 
   it('starts each set from its target, and from last time when the targets cannot be read', async () => {
     askMove.mockResolvedValue({});
-    const targets = { 0: [{ weightKg: 80, reps: 10, seconds: null }] };
+    const targets = {
+      0: { exerciseId: 'bench', sets: [{ weightKg: 80, reps: 10, seconds: null }] },
+    };
     jest.mocked(fetchSetTargets).mockResolvedValueOnce(targets);
     await start();
     expect(fetchSetTargets).toHaveBeenCalledWith(PUSH.id);

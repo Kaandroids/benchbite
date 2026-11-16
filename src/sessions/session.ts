@@ -117,8 +117,11 @@ export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
 
-/** Each set's target, by the place of its exercise in the workout. */
-export type SetTargets = Record<number, SetTarget[]>;
+/**
+ * Each set's target, by the place of its exercise in the workout, with the exercise they were
+ * worked out for: the workout the app holds can be older than the database's (#617).
+ */
+export type SetTargets = Record<number, { exerciseId: string; sets: SetTarget[] }>;
 
 /** Each exercise's records before the workout. */
 export type ExerciseBests = Record<string, Bests>;
@@ -261,6 +264,15 @@ function lastValues(target: WorkoutTarget, last: SetValues[], index: number): Se
 }
 
 /**
+ * The targets of the exercise at `place`: none where they were worked out for another exercise, as
+ * in a workout changed since the app read it, whose sets then start from last time.
+ */
+function ownTargets(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
+  const atPlace = targets[place];
+  return atPlace?.exerciseId === exerciseId ? atPlace.sets : [];
+}
+
+/**
  * Starts a workout, its sets filled in from their targets or last time, counting for a planned day
  * when it moves.
  */
@@ -276,7 +288,7 @@ export function startSession(
     watchFollows = false,
   }: {
     bests?: ExerciseBests;
-    /** Each set's target, by the place of its exercise. */
+    /** Each set's target, by the place of its exercise, taken only where that exercise is still. */
     targets?: SetTargets;
     now?: number;
     move?: Session['move'];
@@ -300,7 +312,12 @@ export function startSession(
       last: last[exerciseId] ?? [],
       bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
-        ...startingValues(target, last[exerciseId] ?? [], index, targets[place]?.[index]),
+        ...startingValues(
+          target,
+          last[exerciseId] ?? [],
+          index,
+          ownTargets(targets, place, exerciseId)[index],
+        ),
         done: false,
       })),
     })),

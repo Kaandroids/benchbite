@@ -57,7 +57,9 @@ export async function fetchSetTargets(workoutId: number): Promise<SetTargets> {
   for (const row of data) {
     // The generated types call every column of a table a function returns a number, while a set
     // of reps has no time, a timed one no reps and one done with the body's weight no weight.
-    (targets[row.exercise_position] ??= [])[row.set_position] = {
+    (targets[row.exercise_position] ??= { exerciseId: row.exercise_id, sets: [] }).sets[
+      row.set_position
+    ] = {
       weightKg: (row.weight_kg as number | null) ?? null,
       reps: (row.reps as number | null) ?? null,
       seconds: (row.seconds as number | null) ?? null,

@@ -3113,6 +3113,7 @@ export type Database = {
       set_targets: {
         Args: { workout_id: number };
         Returns: {
+          exercise_id: string;
           exercise_position: number;
           own: boolean;
           reps: number;

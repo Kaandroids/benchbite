@@ -76,15 +76,25 @@ describe('fetchSetTargets', () => {
       data: [
         {
           exercise_position: 0,
+          exercise_id: 'bench',
           set_position: 0,
           weight_kg: 80,
           reps: 10,
           seconds: null,
           own: true,
         },
-        { exercise_position: 0, set_position: 1, weight_kg: 85, reps: 8, seconds: null, own: true },
+        {
+          exercise_position: 0,
+          exercise_id: 'bench',
+          set_position: 1,
+          weight_kg: 85,
+          reps: 8,
+          seconds: null,
+          own: true,
+        },
         {
           exercise_position: 2,
+          exercise_id: 'plank',
           set_position: 0,
           weight_kg: null,
           reps: null,
@@ -95,11 +105,14 @@ describe('fetchSetTargets', () => {
       error: null,
     } as never);
     await expect(fetchSetTargets(7)).resolves.toEqual({
-      0: [
-        { weightKg: 80, reps: 10, seconds: null },
-        { weightKg: 85, reps: 8, seconds: null },
-      ],
-      2: [{ weightKg: null, reps: null, seconds: 50 }],
+      0: {
+        exerciseId: 'bench',
+        sets: [
+          { weightKg: 80, reps: 10, seconds: null },
+          { weightKg: 85, reps: 8, seconds: null },
+        ],
+      },
+      2: { exerciseId: 'plank', sets: [{ weightKg: null, reps: null, seconds: 50 }] },
     });
     expect(supabase.rpc).toHaveBeenCalledWith('set_targets', { workout_id: 7 });
   });
