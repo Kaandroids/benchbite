@@ -29,6 +29,7 @@ pnpm typecheck            # TypeScript
 pnpm lint                 # ESLint, fails on warnings
 pnpm format               # format with Prettier (format:check only verifies)
 pnpm test                 # Jest tests of the app
+pnpm e2e                  # Maestro flows on the iOS Simulator, against the local stack
 ```
 
 Run `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm test` before every commit.
@@ -44,6 +45,7 @@ targets/      # Apple targets beside the app, such as the Apple Watch app (a cha
 .github/scripts/  # scripts the workflows run
 assets/       # images and icons
 website/      # the website, a package of its own
+.maestro/     # end-to-end flows of the app, run with Maestro (pnpm e2e)
 docs/adr/     # Architecture Decision Records
 ```
 
