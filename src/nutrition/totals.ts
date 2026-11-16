@@ -17,3 +17,29 @@ export function totalsOf(row: {
     fatG: row.fat_g ?? 0,
   };
 }
+
+export const NOTHING: Totals = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+
+function add(a: Totals, b: Totals): Totals {
+  return {
+    calories: a.calories + b.calories,
+    proteinG: a.proteinG + b.proteinG,
+    carbsG: a.carbsG + b.carbsG,
+    fatG: a.fatG + b.fatG,
+  };
+}
+
+/** What the entries add up to. */
+export function totalOf(entries: Totals[]): Totals {
+  return entries.reduce(add, NOTHING);
+}
+
+/** Totals multiplied by a factor, such as a recipe's shared out by its servings. */
+export function scaled(totals: Totals, factor: number): Totals {
+  return {
+    calories: totals.calories * factor,
+    proteinG: totals.proteinG * factor,
+    carbsG: totals.carbsG * factor,
+    fatG: totals.fatG * factor,
+  };
+}

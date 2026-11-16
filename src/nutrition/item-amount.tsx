@@ -6,7 +6,8 @@ import { useNumberFormat } from '@/i18n/units';
 
 import { AmountForm } from './amount-form';
 import { per100Totals, type EstimateItem } from './meal-estimate';
-import { totalOf, useDayEntries } from './meals';
+import { useDayEntries } from './meals';
+import { totalOf } from './totals';
 import { useDayTargets } from './targets';
 
 /**

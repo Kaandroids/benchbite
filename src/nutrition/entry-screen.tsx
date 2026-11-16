@@ -11,7 +11,8 @@ import { useNumberFormat } from '@/i18n/units';
 import { AmountForm } from './amount-form';
 import { useRemoveEntry, useUpdateEntry } from './entries';
 import { useFood, type Portion } from './foods';
-import { totalOf, useDayEntries, type LoggedEntry } from './meals';
+import { useDayEntries, type LoggedEntry } from './meals';
+import { totalOf } from './totals';
 import { handOverRemovedEntry } from './removed-entry';
 import { useDayTargets } from './targets';
 

@@ -16,8 +16,7 @@ import {
   type PortionUnit,
 } from './foods';
 import { RECIPE_KEY, RECIPES_KEY } from './food-keys';
-import { NOTHING, scaled, totalOf } from './meals';
-import { totalsOf, type Totals } from './totals';
+import { NOTHING, scaled, totalOf, totalsOf, type Totals } from './totals';
 import { useReloadFoods } from './quick-foods';
 
 /** How many servings a recipe makes at most, and how many ingredients it has, as the database allows. */

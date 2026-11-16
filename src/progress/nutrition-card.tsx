@@ -13,7 +13,7 @@ import { Average } from '@/nutrition/average';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { nutritionSummary, useDayNutrition } from '@/nutrition/day-nutrition';
 import { MacroBars } from '@/nutrition/macro-bars';
-import { NOTHING } from '@/nutrition/meals';
+import { NOTHING } from '@/nutrition/totals';
 import { useTheme } from '@/theme';
 
 import { nutritionSpans, type NutritionSpan } from './nutrition-spans';

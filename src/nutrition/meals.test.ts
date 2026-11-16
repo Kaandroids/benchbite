@@ -2,15 +2,8 @@ import { supabase } from '@/lib/supabase';
 import i18n from '@/i18n';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import {
-  mealsOf,
-  scaled,
-  suggestedCalories,
-  totalOf,
-  useDayEntries,
-  usePastMeal,
-  type MealEntry,
-} from './meals';
+import { mealsOf, suggestedCalories, useDayEntries, usePastMeal, type MealEntry } from './meals';
+import { scaled, totalOf } from './totals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
