@@ -1,0 +1,99 @@
+[
+  {
+    "command": {
+      "at": 1800000100000,
+      "done": true,
+      "exercise": 0,
+      "id": "command-setDone",
+      "set": 1,
+      "type": "setDone",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "setDone"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "done": true,
+      "exercise": 0,
+      "id": "command-setDoneWithValues",
+      "set": 1,
+      "type": "setDone",
+      "v": 1,
+      "values": {
+        "reps": 8,
+        "weightKg": 82.5
+      },
+      "workoutId": "workout-1"
+    },
+    "name": "setDoneWithValues"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "id": "command-join",
+      "type": "join",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "join"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "exercise": 2,
+      "id": "command-open",
+      "type": "open",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "open"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "exercise": 2,
+      "id": "command-startClock",
+      "set": 0,
+      "type": "startClock",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "startClock"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "id": "command-finish",
+      "type": "finish",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "finish"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "endsAt": 1800000165000,
+      "id": "command-setRest",
+      "of": 1800000150000,
+      "type": "setRest",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "setRest"
+  },
+  {
+    "command": {
+      "at": 1800000100000,
+      "endsAt": null,
+      "id": "command-skipRest",
+      "of": 1800000150000,
+      "type": "setRest",
+      "v": 1,
+      "workoutId": "workout-1"
+    },
+    "name": "skipRest"
+  }
+]

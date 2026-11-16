@@ -1,0 +1,216 @@
+{
+  "v": 1,
+  "seq": 12,
+  "language": "en",
+  "ended": [],
+  "workout": {
+    "id": "workout-1",
+    "name": "Full body",
+    "startedAt": 1800000000000,
+    "current": 0,
+    "next": {
+      "exercise": 0,
+      "set": 1
+    },
+    "rest": {
+      "endsAt": 1800000170000,
+      "seconds": 90
+    },
+    "clock": {
+      "exercise": 2,
+      "set": 1,
+      "startedAt": 1800000060000
+    },
+    "setsToSave": 4,
+    "exercises": [
+      {
+        "exerciseId": "bench",
+        "name": "Bench press",
+        "target": {
+          "reps": {
+            "min": 8,
+            "max": 12
+          }
+        },
+        "fields": ["weightKg", "reps"],
+        "crown": {
+          "weightKg": {
+            "min": 2.5,
+            "max": 999.75,
+            "step": 2.5,
+            "fine": 0.5
+          },
+          "reps": {
+            "min": 1,
+            "max": 999,
+            "step": 1
+          }
+        },
+        "restSeconds": 90,
+        "superset": 1,
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 8,
+            "seconds": null,
+            "meters": null,
+            "done": true,
+            "missing": [],
+            "text": "82.5 kg × 8",
+            "lastText": "80 kg × 8",
+            "targetSeconds": null,
+            "timedByClock": false
+          },
+          {
+            "weightKg": 80,
+            "reps": 8,
+            "seconds": null,
+            "meters": null,
+            "done": false,
+            "missing": [],
+            "text": "80 kg × 8",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": false
+          },
+          {
+            "weightKg": 80,
+            "reps": 8,
+            "seconds": null,
+            "meters": null,
+            "done": false,
+            "missing": [],
+            "text": "80 kg × 8",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": false
+          }
+        ]
+      },
+      {
+        "exerciseId": "row",
+        "name": "Bent over row",
+        "target": {
+          "reps": {
+            "min": 8,
+            "max": 12
+          }
+        },
+        "fields": ["weightKg", "reps"],
+        "crown": {
+          "weightKg": {
+            "min": 2.5,
+            "max": 999.75,
+            "step": 2.5,
+            "fine": 0.5
+          },
+          "reps": {
+            "min": 1,
+            "max": 999,
+            "step": 1
+          }
+        },
+        "restSeconds": 90,
+        "superset": 1,
+        "sets": [
+          {
+            "weightKg": null,
+            "reps": 12,
+            "seconds": null,
+            "meters": null,
+            "done": true,
+            "missing": [],
+            "text": "12 reps",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": false
+          },
+          {
+            "weightKg": null,
+            "reps": 12,
+            "seconds": null,
+            "meters": null,
+            "done": false,
+            "missing": ["weightKg"],
+            "text": "12 reps",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": false
+          }
+        ]
+      },
+      {
+        "exerciseId": "plank",
+        "name": "Plank",
+        "target": {
+          "seconds": 45,
+          "meters": null
+        },
+        "fields": ["seconds"],
+        "crown": {},
+        "restSeconds": 60,
+        "superset": null,
+        "sets": [
+          {
+            "weightKg": null,
+            "reps": null,
+            "seconds": 45,
+            "meters": null,
+            "done": true,
+            "missing": [],
+            "text": "0:45",
+            "lastText": null,
+            "targetSeconds": 50,
+            "timedByClock": false
+          },
+          {
+            "weightKg": null,
+            "reps": null,
+            "seconds": null,
+            "meters": null,
+            "done": false,
+            "missing": ["seconds"],
+            "text": "",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": true
+          }
+        ]
+      },
+      {
+        "exerciseId": "drag",
+        "name": "Backward drag",
+        "target": {
+          "seconds": null,
+          "meters": 50
+        },
+        "fields": ["meters"],
+        "crown": {
+          "meters": {
+            "min": 50,
+            "max": 1000000,
+            "step": 50
+          }
+        },
+        "restSeconds": 0,
+        "superset": null,
+        "sets": [
+          {
+            "weightKg": null,
+            "reps": null,
+            "seconds": null,
+            "meters": 50,
+            "done": false,
+            "missing": [],
+            "text": "50 m",
+            "lastText": null,
+            "targetSeconds": null,
+            "timedByClock": false
+          }
+        ]
+      }
+    ],
+    "applied": ["command-open"],
+    "follows": true
+  }
+}
