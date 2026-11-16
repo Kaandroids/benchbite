@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -51,6 +51,8 @@ select pg_temp.log(2, 'Plank', '[{"seconds": 50}, {"seconds": 45}]');
 select pg_temp.log(3, 'Rowing_Stationary', '[{"meters": 2000, "seconds": 480}]');
 select pg_temp.log(2, 'Rowing_Stationary', '[{"meters": 1000, "seconds": 220}]');
 select pg_temp.log(1, 'Pushups', '[{"reps": 20}, {"weightKg": 10, "reps": 12}]');
+-- A weighted hold, logged with its weight.
+select pg_temp.log(1, 'Crucifix', '[{"weightKg": 20, "seconds": 45}]');
 
 select is(public.one_rep_max(85, 7), 104.8, 'The one-rep max is estimated with Epley''s formula');
 select is(public.one_rep_max(100, 1), 100::numeric, 'A single rep is its own one-rep max');
@@ -109,6 +111,11 @@ select results_eq(
   $$ select kind, value from public.exercise_records('Pushups') order by kind $$,
   $$ values ('heaviest', 10.00), ('most_reps', 20.00) $$,
   'A bodyweight exercise has its most reps and its heaviest added weight'
+);
+select results_eq(
+  $$ select kind, value from public.exercise_records('Crucifix') order by kind $$,
+  $$ values ('longest_time', 45::numeric), ('most_time', 45::numeric) $$,
+  'A weighted hold has its time and no heaviest, as it is no exercise of reps'
 );
 
 select results_eq(
