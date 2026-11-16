@@ -1,0 +1,30 @@
+# A new user starts the plan's workout, logs a set, finishes early and finds it in the history.
+appId: com.benchbite.app.dev
+---
+- runFlow: onboarding.yaml
+- tapOn: 'Workout'
+# The plan's workout can be started on any day, from the list of workouts.
+- tapOn: 'Start Full body'
+
+# The first workout asks about rest alerts once.
+- tapOn: 'Not now'
+- tapOn: 'Weight of set 1'
+- inputText: '60'
+- tapOn: 'Reps of set 1'
+- inputText: '8'
+- tapOn: 'Set 1 done'
+- assertVisible: '1 of 20 sets'
+- tapOn: 'Skip'
+
+# The summary, then the history
+- tapOn: 'Finish'
+- assertVisible: 'Full body done'
+- assertVisible: '1 of 3 sets · 60 kg × 8'
+- scrollUntilVisible:
+    element: 'Save workout'
+    centerElement: true
+- tapOn: 'Save workout'
+- extendedWaitUntil:
+    visible: 'History · 1 this week'
+    timeout: 15000
+- assertVisible: '.*Full body.*1 set.*'
