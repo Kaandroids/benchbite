@@ -51,7 +51,7 @@ jobs:
 
       - name: Tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: pnpm test --ci
+        run: pnpm test --ci --coverage
 
       - name: Locale check
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
