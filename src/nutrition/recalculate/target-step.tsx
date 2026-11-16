@@ -13,8 +13,8 @@ import {
 } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
+import { StepButton } from '@/components/ui/step-buttons';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { PaceNote } from '@/goals/pace-note';
@@ -95,10 +95,8 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
           {t('nutrition.recalculate.target.weight')}
         </Text>
         <View style={[styles.row, { gap: spacing.xl }]}>
-          <RoundIconButton
+          <StepButton
             icon="minus"
-            color="primary"
-            background="iconBackground"
             label={t('nutrition.recalculate.target.lower')}
             onPress={() => change(-1)}
             size={44}
@@ -109,10 +107,8 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
               {unit}
             </Text>
           </Text>
-          <RoundIconButton
+          <StepButton
             icon="plus"
-            color="primary"
-            background="iconBackground"
             label={t('nutrition.recalculate.target.higher')}
             onPress={() => change(1)}
             size={44}

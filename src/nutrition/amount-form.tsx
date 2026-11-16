@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
+import { StepButton } from '@/components/ui/step-buttons';
 import { MAX_FONT_SCALE, Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
@@ -183,10 +183,8 @@ export function AmountForm({
         </View>
 
         <Card style={[styles.stepper, { gap: spacing.md }]}>
-          <RoundIconButton
+          <StepButton
             icon="minus"
-            color="text"
-            background="track"
             size={48}
             label={t('nutrition.amount.less')}
             onPress={() => step(-1)}
@@ -250,10 +248,8 @@ export function AmountForm({
               </>
             )}
           </View>
-          <RoundIconButton
+          <StepButton
             icon="plus"
-            color="text"
-            background="track"
             size={48}
             label={t('nutrition.amount.more')}
             onPress={() => step(1)}

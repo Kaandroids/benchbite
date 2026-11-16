@@ -10,9 +10,9 @@ import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
+import { StepButton } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { dbErrorMessage } from '@/lib/errors';
 import { toTenth, useNumberFormat } from '@/i18n/units';
@@ -259,10 +259,8 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
               <Text variant="label" style={styles.flex}>
                 {t('nutrition.recipe.makes')}
               </Text>
-              <RoundIconButton
+              <StepButton
                 icon="minus"
-                color="text"
-                background="track"
                 size={36}
                 label={t('nutrition.recipe.fewer')}
                 onPress={() => set({ servings: recipe.servings - 1 })}
@@ -275,10 +273,8 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
               >
                 {format(recipe.servings)}
               </Text>
-              <RoundIconButton
+              <StepButton
                 icon="plus"
-                color="text"
-                background="track"
                 size={36}
                 label={t('nutrition.recipe.more')}
                 onPress={() => set({ servings: recipe.servings + 1 })}
