@@ -117,8 +117,11 @@ export function workoutIdOf(session: Pick<Session, 'id' | 'startedAt'>): string 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
 
-/** Each set's target, by the place of its exercise in the workout. */
-export type SetTargets = Record<number, SetTarget[]>;
+/**
+ * Each set's target, by the place of its exercise in the workout, with the exercise they were
+ * worked out for: the workout the app holds can be older than the database's (#617).
+ */
+export type SetTargets = Record<number, { exerciseId: string; sets: SetTarget[] }>;
 
 /** Each exercise's records before the workout. */
 export type ExerciseBests = Record<string, Bests>;
@@ -300,7 +303,13 @@ export function startSession(
       last: last[exerciseId] ?? [],
       bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
-        ...startingValues(target, last[exerciseId] ?? [], index, targets[place]?.[index]),
+        ...startingValues(
+          target,
+          last[exerciseId] ?? [],
+          index,
+          // Only the exercise's own: another one at its place starts from last time instead.
+          targets[place]?.exerciseId === exerciseId ? targets[place].sets[index] : undefined,
+        ),
         done: false,
       })),
     })),
