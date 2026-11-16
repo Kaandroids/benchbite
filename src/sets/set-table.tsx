@@ -7,7 +7,8 @@ import { parseDecimal } from '@/lib/math';
 import { minutesAndSeconds } from '@/lib/time';
 import { typography, useTheme } from '@/theme';
 
-import { describeSet, parseTime, setValueOf, type SetField, type SetKind } from './fields';
+import { parseTime, setValueOf, type SetField, type SetKind } from './fields';
+import { useDescribeSet } from './set-words';
 import { MAX_SETS, type SetValues } from './values';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
@@ -232,6 +233,7 @@ export function SetLine({
 }: SetLineProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const describeSet = useDescribeSet();
   const labels: Record<SetField, string> = {
     weightKg: t('session.weightOf', { number }),
     reps: t('session.repsOf', { number }),

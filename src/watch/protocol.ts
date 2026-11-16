@@ -20,7 +20,6 @@ import {
   workoutIdOf,
 } from '@/sessions/session';
 import {
-  describeSet,
   SET_LIMITS,
   setKindOf,
   setValueOf,
@@ -225,7 +224,18 @@ export type ExerciseOf = (
  */
 export function stateOf(
   session: Session | null,
-  { exerciseOf, name, language }: { exerciseOf: ExerciseOf; name: string | null; language: string },
+  {
+    exerciseOf,
+    name,
+    language,
+    describe,
+  }: {
+    exerciseOf: ExerciseOf;
+    name: string | null;
+    language: string;
+    /** A set as the phone describes it, in its language (useDescribeSet()). */
+    describe: (values: SetValues, kind: SetKind) => string;
+  },
   seq: number,
   ended: EndedSession[],
 ): WatchState {
@@ -263,8 +273,8 @@ export function stateOf(
               ...pickSetValues(set),
               done: set.done,
               missing: set.done ? [] : missingFields(set, kind),
-              text: describeSet(set, kind),
-              lastText: last ? describeSet(last, kind) : null,
+              text: describe(set, kind),
+              lastText: last ? describe(last, kind) : null,
               targetSeconds: set.targetSeconds ?? null,
               timedByClock: timedByClock(
                 set,

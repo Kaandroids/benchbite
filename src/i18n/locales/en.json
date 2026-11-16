@@ -1035,6 +1035,10 @@
     "details": "Details of {{name}}",
     "history": "History of {{name}}"
   },
+  "sets": {
+    "reps_one": "{{count}} rep",
+    "reps_other": "{{count}} reps"
+  },
   "picker": {
     "title": "Add exercises",
     "search": "Search exercises",
@@ -1096,8 +1100,6 @@
     "addTargetsTimedNote": "Optional: a time for each set. Without them, each set is aimed a little past last time.",
     "setNumber": "Set {{number}}",
     "setTargetTitle": "Set {{number}} target",
-    "targetReps_one": "{{count}} rep",
-    "targetReps_other": "{{count}} reps",
     "clearTargets": "Clear targets"
   },
   "onboarding": {

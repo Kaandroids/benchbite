@@ -55,10 +55,13 @@ describe('summarizeSets', () => {
 });
 
 describe('shortSet', () => {
-  it('leaves out the unit of the weight', () => {
-    const describe = () => 'described';
-    expect(shortSet(set({ weightKg: 80, reps: 8 }), weighted, describe)).toBe('80 × 8');
-    expect(shortSet(set({ reps: 14 }), bodyweight, describe)).toBe('14');
-    expect(shortSet(set({ seconds: 50 }), held, describe)).toBe('described');
+  const words = {
+    number: (value: number) => String(value).replace('.', ','),
+    reps: (count: number) => `${count} Wdh.`,
+  };
+  it('leaves out the unit of the weight, in the language’s numbers', () => {
+    expect(shortSet(set({ weightKg: 77.5, reps: 8 }), weighted, words)).toBe('77,5 × 8');
+    expect(shortSet(set({ reps: 14 }), bodyweight, words)).toBe('14');
+    expect(shortSet(set({ seconds: 50 }), held, words)).toBe('0:50');
   });
 });

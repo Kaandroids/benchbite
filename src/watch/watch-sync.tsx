@@ -7,6 +7,7 @@ import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exerci
 import { useSession, useUserId } from '@/providers/session-provider';
 import { updateSession, useActiveSession, useEndedSessions } from '@/sessions/session';
 import type { MetricsOf } from '@/sessions/records';
+import { useDescribeSet } from '@/sets/set-words';
 import { useWorkoutName } from '@/workouts/format';
 
 import { link } from './link';
@@ -44,6 +45,7 @@ export function WatchSync() {
   const name = session ? nameOf(session) || null : null;
   // The language the watch shows its texts in, as the exercises' names are in it (ADR 0123).
   const language = useTranslation().i18n.language;
+  const describe = useDescribeSet();
   const exerciseOf = exerciseIn(library.data);
   const metricsOf: MetricsOf = (id) => exerciseOf(id)?.metrics;
   useFinishFromWatch(session, metricsOf);
@@ -58,7 +60,7 @@ export function WatchSync() {
     if (signedIn && (session === null || ready)) {
       const state = stateOf(
         session,
-        { exerciseOf: exerciseIn(library.data), name, language },
+        { exerciseOf: exerciseIn(library.data), name, language, describe },
         nextSeq(),
         ended,
       );
@@ -66,7 +68,7 @@ export function WatchSync() {
       // A workout started on the watch too opens Benchbite there only now that it is sent.
       sentToWatch(state);
     }
-  }, [signedIn, session, ready, library.data, name, language, ended]);
+  }, [signedIn, session, ready, library.data, name, language, describe, ended]);
 
   const receive = useEffectEvent((message: unknown) => {
     const command = parseCommand(message);

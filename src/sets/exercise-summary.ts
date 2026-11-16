@@ -1,4 +1,4 @@
-import type { SetKind } from './fields';
+import { describeSet, type SetKind, type SetWords } from './fields';
 import type { SetValues } from './values';
 
 /** What an exercise's sets add up to, depending on what it records. */
@@ -60,10 +60,14 @@ export function summarizeSets(
   };
 }
 
-/** A set in few characters for a list of sets, such as "80 × 8", "14", "0:50". */
-export function shortSet(set: SetValues, kind: SetKind, describe: (set: SetValues) => string) {
-  if (kind.fields.includes('reps')) {
-    return set.weightKg === null ? String(set.reps ?? '—') : `${set.weightKg} × ${set.reps ?? '—'}`;
+/**
+ * A set in few characters for a list of sets, such as "80 × 8", "14", "0:50", in the app's
+ * language; a value it does not have is left out, as in describeSet().
+ */
+export function shortSet(set: SetValues, kind: SetKind, words: SetWords) {
+  if (kind.fields.includes('reps') && set.reps !== null) {
+    const reps = words.number(set.reps);
+    return set.weightKg === null ? reps : `${words.number(set.weightKg)} × ${reps}`;
   }
-  return describe(set);
+  return describeSet(set, kind, words);
 }

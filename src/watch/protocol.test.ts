@@ -9,7 +9,8 @@ import {
   workoutIdOf,
 } from '@/sessions/session';
 import type { MetricsOf } from '@/sessions/records';
-import { setKindOf } from '@/sets/fields';
+import { describeSet, setKindOf, type SetKind } from '@/sets/fields';
+import type { SetValues } from '@/sets/values';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
@@ -34,7 +35,13 @@ const noLibrary: MetricsOf = () => undefined;
 /** The library's exercises: none known, as before it loads. */
 const noExercises: ExerciseOf = () => undefined;
 /** The workout named as the phone names it, and its exercises by the library. */
-const names = (exerciseOf: ExerciseOf) => ({ exerciseOf, name: 'Full body', language: 'en' });
+const WORDS = { number: String, reps: (count: number) => `${count} reps` };
+const names = (exerciseOf: ExerciseOf) => ({
+  exerciseOf,
+  name: 'Full body',
+  language: 'en',
+  describe: (values: SetValues, kind: SetKind) => describeSet(values, kind, WORDS),
+});
 /** The bench press as the library has it: lifted, with a barbell. */
 const withBench: ExerciseOf = (id) =>
   id === 'bench'
@@ -155,7 +162,7 @@ describe('stateOf', () => {
       meters: null,
       done: true,
       missing: [],
-      text: '— × 12',
+      text: '12 reps',
       lastText: null,
       timedByClock: false,
       targetSeconds: null,
@@ -543,6 +550,10 @@ describe('applyCommand', () => {
     expect(
       stateOf(running, names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.timedByClock,
     ).toBe(true);
+  });
+
+  it('sends a set without values with no text, which the watch labels by its number alone', () => {
+    expect(stateOf(start(), names(withBench), 1, []).workout?.exercises[2]?.sets[0]?.text).toBe('');
   });
 
   it('gives a timed set the time it aims for, shown beside its clock', () => {

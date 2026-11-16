@@ -11,6 +11,11 @@ describe('useRecordFormat', () => {
     expect(format({ kind: 'heaviest', value: 82.5, set })).toBe('82.5 kg');
     expect(format({ kind: 'one_rep_max', value: 99.6, set })).toBe('100 kg');
     expect(format({ kind: 'best_set', value: 640, set })).toBe('80 kg × 8');
+    expect(format({ kind: 'heaviest', value: 77.25, set })).toBe('77.25 kg');
+    // As every screen describes a set, to the quarter kilogram.
+    expect(format({ kind: 'best_set', value: 620, set: { ...set, weightKg: 77.25 } })).toBe(
+      '77.25 kg × 8',
+    );
     expect(format({ kind: 'most_reps', value: 12, set })).toBe('12');
     expect(format({ kind: 'longest_time', value: 75, set })).toBe('1:15');
     expect(format({ kind: 'longest_distance', value: 400, set })).toBe('400 m');

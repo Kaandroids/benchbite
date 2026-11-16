@@ -1035,6 +1035,10 @@
     "details": "{{name}} detayları",
     "history": "{{name}} geçmişi"
   },
+  "sets": {
+    "reps_one": "{{count}} tekrar",
+    "reps_other": "{{count}} tekrar"
+  },
   "picker": {
     "title": "Egzersiz ekle",
     "search": "Egzersiz ara",
@@ -1096,8 +1100,6 @@
     "addTargetsTimedNote": "İsteğe bağlı: her set için bir süre. Hedef olmazsa her set geçen seferin biraz ötesini hedefler.",
     "setNumber": "Set {{number}}",
     "setTargetTitle": "Set {{number}} hedefi",
-    "targetReps_one": "{{count}} tekrar",
-    "targetReps_other": "{{count}} tekrar",
     "clearTargets": "Hedefleri temizle"
   },
   "onboarding": {

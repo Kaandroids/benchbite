@@ -56,17 +56,27 @@ export function weightStepOf(equipment: LibraryExercise['equipment'] | undefined
   }
 }
 
-/** A set in a few characters, such as "80 kg × 8", "0:50" or "2000 m · 8:12". */
-export function describeSet(values: SetValues, kind: SetKind): string {
+/** How a set's numbers, and a number of reps on their own, read in the app's language. */
+export type SetWords = {
+  number: (value: number) => string;
+  reps: (count: number) => string;
+};
+
+/**
+ * A set in a few characters, such as "80 kg × 8", "8 reps", "0:50" or "2000 m · 8:12" (#615). A
+ * value it does not have is left out, and a set without any is empty.
+ */
+export function describeSet(values: SetValues, kind: SetKind, words: SetWords): string {
   if (kind.fields.includes('reps')) {
-    const weight = values.weightKg === null ? '—' : `${values.weightKg} kg`;
-    return `${weight} × ${values.reps ?? '—'}`;
+    const weight = values.weightKg === null ? null : `${words.number(values.weightKg)} kg`;
+    if (values.reps === null) {
+      return weight ?? '';
+    }
+    return weight === null ? words.reps(values.reps) : `${weight} × ${words.number(values.reps)}`;
   }
   const time = values.seconds === null ? null : minutesAndSeconds(values.seconds);
-  if (kind.fields.includes('meters')) {
-    return [values.meters === null ? null : `${values.meters} m`, time].filter(Boolean).join(' · ');
-  }
-  return time ?? '—';
+  const meters = values.meters === null ? null : `${words.number(values.meters)} m`;
+  return [kind.fields.includes('meters') ? meters : null, time].filter(Boolean).join(' · ');
 }
 
 /**

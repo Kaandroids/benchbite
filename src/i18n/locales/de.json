@@ -1035,6 +1035,10 @@
     "details": "Details zu {{name}}",
     "history": "Verlauf von {{name}}"
   },
+  "sets": {
+    "reps_one": "{{count}} Wdh.",
+    "reps_other": "{{count}} Wdh."
+  },
   "picker": {
     "title": "Übungen hinzufügen",
     "search": "Übungen suchen",
@@ -1096,8 +1100,6 @@
     "addTargetsTimedNote": "Optional: eine Zeit für jeden Satz. Ohne sie zielt jeder Satz ein wenig über das letzte Mal hinaus.",
     "setNumber": "Satz {{number}}",
     "setTargetTitle": "Ziel für Satz {{number}}",
-    "targetReps_one": "{{count}} Wdh.",
-    "targetReps_other": "{{count}} Wdh.",
     "clearTargets": "Ziele löschen"
   },
   "onboarding": {

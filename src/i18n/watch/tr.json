@@ -12,6 +12,7 @@
   "position": "Set {{number}} / {{total}}",
   "lastTime": "{{position}} · geçen sefer {{values}}",
   "setLabel": "Set {{number}} · {{values}}",
+  "setNumber": "Set {{number}}",
   "done": "Tamam",
   "start": "Başlat",
   "stop": "Durdur",
