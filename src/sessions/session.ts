@@ -9,7 +9,7 @@ import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import { joinedWithNext } from '@/workouts/supersets';
-import type { SetTarget } from '@/workouts/set-targets';
+import { resizeTargets, type SetTarget } from '@/workouts/set-targets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -264,10 +264,25 @@ function lastValues(target: WorkoutTarget, last: SetValues[], index: number): Se
 }
 
 /**
+ * The user's own set targets of the workout as the app holds it (ADR 0138), by the place of each
+ * exercise: what a workout starts from when set_targets() cannot be read.
+ */
+export function ownSetTargets(workout: Pick<Workout, 'exercises'>): SetTargets {
+  const targets: SetTargets = {};
+  workout.exercises.forEach(({ exerciseId, sets, setTargets }, place) => {
+    const own = resizeTargets(setTargets, sets);
+    if (own) {
+      targets[place] = { exerciseId, sets: own };
+    }
+  });
+  return targets;
+}
+
+/**
  * The targets of the exercise at `place`: none where they were worked out for another exercise, as
  * in a workout changed since the app read it, whose sets then start from last time.
  */
-function ownTargets(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
+function targetsOf(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
   const atPlace = targets[place];
   return atPlace?.exerciseId === exerciseId ? atPlace.sets : [];
 }
@@ -316,7 +331,7 @@ export function startSession(
           target,
           last[exerciseId] ?? [],
           index,
-          ownTargets(targets, place, exerciseId)[index],
+          targetsOf(targets, place, exerciseId)[index],
         ),
         done: false,
       })),

@@ -14,7 +14,7 @@ import { openWorkout } from '@/workouts/open';
 
 import { fetchBests, fetchLastSetsOrNone, fetchSetTargets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
-import { startSession, type ExerciseBests, type SetTargets } from './session';
+import { ownSetTargets, startSession, type ExerciseBests, type SetTargets } from './session';
 import { useStartMove } from './start-move';
 
 /** The query keys of the last sets and the bests of the exercises a workout starts with. */
@@ -92,10 +92,11 @@ export function useStartWorkout() {
           console.warn('Could not load the records', error);
           return {};
         }),
-      // Without them, each set starts from last time, as before targets.
+      // Without them, as without a connection, the user's own targets the workout holds still
+      // count; the other sets start from last time.
       fetchSetTargets(workout.id).catch((error: unknown): SetTargets => {
         console.warn('Could not load the set targets', error);
-        return {};
+        return ownSetTargets(workout);
       }),
     ]);
     const now = Date.now();
