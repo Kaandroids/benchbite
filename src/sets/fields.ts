@@ -33,14 +33,13 @@ export function setKindOf(
     };
   }
   const distance = metrics ? metrics.includes('distance') : 'meters' in target && !!target.meters;
+  if (!distance) {
+    return { fields: ['seconds'], timed: true, addedWeight: false };
+  }
   // A distance has a time only where the exercise records one, as a carry does not: the database
   // takes no time for it (set_suits(), #625). Its distance is then logged with a tick.
-  const timed = !distance || (metrics ? metrics.includes('duration') : true);
-  return {
-    fields: distance ? (timed ? ['meters', 'seconds'] : ['meters']) : ['seconds'],
-    timed,
-    addedWeight: false,
-  };
+  const timed = metrics ? metrics.includes('duration') : true;
+  return { fields: timed ? ['meters', 'seconds'] : ['meters'], timed, addedWeight: false };
 }
 
 /**
