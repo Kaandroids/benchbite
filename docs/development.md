@@ -314,6 +314,7 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm format`           | Format all files with Prettier                             |
 | `pnpm format:check`     | Check formatting without changing it                       |
 | `pnpm test`             | Run the app's tests with Jest                              |
+| `pnpm test --coverage`  | Run them all and check their coverage, as CI does          |
 | `pnpm check:locales`    | Check that translations and permission texts match         |
 | `pnpm watch:strings`    | Write the watch app's text to Swift                        |
 | `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
@@ -329,6 +330,9 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools        |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack      |
 | `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
+
+When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
+with the lines no test runs.
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.
