@@ -13,12 +13,9 @@ import { supabase } from '@/lib/supabase';
 import { ENTRIES_KEY, PAST_MEAL_KEY } from './food-keys';
 import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './foods';
 
-import type { NutritionTargets } from './targets';
+import { totalsOf, type Totals } from './totals';
 
 export type Meal = Database['public']['Enums']['meal'];
-
-/** What a meal or a day adds up to, in the units of the targets. */
-export type Totals = NutritionTargets;
 
 /** How many days before today meals can be logged, as the database allows. */
 export { LOGGABLE_DAYS };
@@ -122,21 +119,6 @@ export function suggestedCalories(target: number, meals: MealSummary[]): Map<Mea
     }
   }
   return suggested;
-}
-
-/** A row's kcal and macros as totals; generated columns may be typed as nullable. */
-export function totalsOf(row: {
-  kcal: number | null;
-  protein_g: number | null;
-  carbs_g: number | null;
-  fat_g: number | null;
-}): Totals {
-  return {
-    calories: row.kcal ?? 0,
-    proteinG: row.protein_g ?? 0,
-    carbsG: row.carbs_g ?? 0,
-    fatG: row.fat_g ?? 0,
-  };
 }
 
 /** The query key of a day's entries, for anything that changes them. */

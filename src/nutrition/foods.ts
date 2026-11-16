@@ -8,7 +8,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import { FOOD_KEY, FOOD_SEARCH_KEY } from './food-keys';
-import { totalsOf, type Totals } from './meals';
+import { totalsOf, type Totals } from './totals';
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 

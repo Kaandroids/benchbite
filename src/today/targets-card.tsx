@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { DayTotals } from '@/nutrition/day-totals';
 import { MACROS } from '@/nutrition/macro-targets';
-import type { Totals } from '@/nutrition/meals';
+import type { Totals } from '@/nutrition/totals';
 import { openNutritionDay } from '@/nutrition/open-nutrition-day';
 import type { NutritionTargets } from '@/nutrition/targets';
 import { useTheme } from '@/theme';

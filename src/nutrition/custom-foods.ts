@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 import type { Portion } from './foods';
-import type { Totals } from './meals';
+import type { Totals } from './totals';
 import { useReloadFoods } from './quick-foods';
 
 /** A food of one's own as the form saves it: its name trimmed, its values per 100 g and one portion, if any. */
