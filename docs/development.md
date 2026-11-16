@@ -223,9 +223,10 @@ builds: give a new one a value there. After changing the protocol on purpose, wr
 with `pnpm watch:fixtures` and the commands with `pnpm check:watch --write`, and run both checks.
 
 The watch's logic that needs no SwiftUI, WatchKit or WatchConnectivity, such as the next set, a
-superset's rounds and the commands it sends, is tested with XCTest in `targets/watch-tests`: a Swift
-package whose sources are links to the watch's own files, run with `pnpm test:watch`. A new file of
-such logic joins it with a link in `targets/watch-tests/Sources/WatchLogic`.
+superset's rounds, what it shows while commands wait for the phone, the Crown's steps and the
+commands it sends, is tested with XCTest in `targets/watch-tests`: a Swift package whose sources are
+links to the watch's own files, run with `pnpm test:watch`. A new file of such logic joins it with a
+link in `targets/watch-tests/Sources/WatchLogic`.
 
 ## Add a language
 
