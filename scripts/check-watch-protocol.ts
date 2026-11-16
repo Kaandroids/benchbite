@@ -6,7 +6,7 @@
 // written with `pnpm watch:fixtures`. `--write` writes the commands' fixture instead.
 // Jest checks the phone's side (src/watch/protocol-fixtures.test.ts).
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -40,17 +40,18 @@ function unread(sent: Json, read: Json | undefined, path: string): string[] {
   return sent === read ? [] : [path];
 }
 
+// The watch's files that need no SwiftUI, WatchKit or WatchConnectivity, as the watch's tests link
+// them (targets/watch-tests): one list for both.
+const LOGIC = join(ROOT, 'targets/watch-tests/Sources/WatchLogic');
+const logic = readdirSync(LOGIC)
+  .filter((file) => file.endsWith('.swift'))
+  .map((file) => join(LOGIC, file));
+
 const build = mkdtempSync(join(tmpdir(), 'watch-check-'));
 const binary = join(build, 'watch-check');
 execFileSync(
   'xcrun',
-  [
-    'swiftc',
-    '-o',
-    binary,
-    ...['Protocol', 'L10n', 'Strings'].map((file) => join(ROOT, `targets/watch/${file}.swift`)),
-    join(ROOT, 'scripts/watch-check/main.swift'),
-  ],
+  ['swiftc', '-o', binary, ...logic, join(ROOT, 'scripts/watch-check/main.swift')],
   { stdio: ['ignore', 'ignore', 'inherit'] },
 );
 const output = JSON.parse(execFileSync(binary, [FIXTURES], { encoding: 'utf8' })) as {
