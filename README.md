@@ -153,7 +153,8 @@ flowchart LR
   [CONTRIBUTING.md](CONTRIBUTING.md) describes the flow.
 - **Checked on every pull request.** CI runs types, lint, formatting, the app's tests,
   translations and the Edge Functions' checks, and on a local Supabase stack the database tests,
-  the generated types and every plan the plan builder can make.
+  the generated types and every plan the plan builder can make. A change to the Apple Watch app is
+  type-checked, and its protocol with the phone checked, on a Mac.
 - **Watched in production.** A daily workflow checks the hosted project's scheduled jobs and the
   month's AI spend, and Dependabot keeps dependencies current.
 - **Security first.** Row level security on every table, schema changes only through migrations,
