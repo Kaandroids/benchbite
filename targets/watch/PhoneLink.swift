@@ -117,7 +117,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   func rest(of workout: WatchWorkout) -> ShownRest? { shown.rest(of: workout) }
 
   func send(_ command: WatchCommand?) {
-    guard let command, !shown.repeats(command, shown: workout) else { return }
+    guard let command, !shown.repeats(command, of: workout) else { return }
     if command.change.isFinish { unsaved = nil }
     let payload = command.payload
     waiting[command.id] = command

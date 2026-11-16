@@ -84,18 +84,27 @@ final class WaitingTests: XCTestCase {
   func testRepeatsNothingButWhatWaits() {
     let ticked = tick(0, 0)
     let shown = waiting(ticked, .join(workoutId: "workout-1"))
-    XCTAssertTrue(shown.repeats(tick(0, 0)!, shown: twoExercises))
-    XCTAssertFalse(shown.repeats(tick(0, 1)!, shown: twoExercises))
-    XCTAssertTrue(shown.repeats(.join(workoutId: "workout-1")!, shown: twoExercises))
-    XCTAssertFalse(waiting().repeats(.finish(workoutId: "workout-1")!, shown: twoExercises))
+    XCTAssertTrue(shown.repeats(tick(0, 0)!, of: twoExercises))
+    XCTAssertFalse(shown.repeats(tick(0, 1)!, of: twoExercises))
+    XCTAssertTrue(shown.repeats(.join(workoutId: "workout-1")!, of: twoExercises))
+    XCTAssertFalse(waiting().repeats(.finish(workoutId: "workout-1")!, of: twoExercises))
+    let rest = WatchCommand.setRest(workoutId: "workout-1", of: 1_000, endsAt: nil)!
+    XCTAssertTrue(waiting(rest).repeats(rest, of: twoExercises))
+    let start = WatchCommand.startClock(workoutId: "workout-1", exercise: 1, set: 0)!
+    XCTAssertTrue(waiting(start).repeats(start, of: twoExercises))
+    XCTAssertFalse(
+      waiting(start).repeats(
+        .startClock(workoutId: "workout-1", exercise: 1, set: 1)!, of: twoExercises))
+    let finish = WatchCommand.finish(workoutId: "workout-1")!
+    XCTAssertTrue(waiting(finish).repeats(finish, of: twoExercises))
   }
 
   func testRepeatsAPickOfTheExerciseShownOnly() {
     // The tick waiting leads on in exercise a, which is then shown.
     let shown = waiting(tick(0, 0))
-    XCTAssertTrue(shown.repeats(.open(workoutId: "workout-1", exercise: 0)!, shown: twoExercises))
-    XCTAssertFalse(shown.repeats(.open(workoutId: "workout-1", exercise: 1)!, shown: twoExercises))
+    XCTAssertTrue(shown.repeats(.open(workoutId: "workout-1", exercise: 0)!, of: twoExercises))
+    XCTAssertFalse(shown.repeats(.open(workoutId: "workout-1", exercise: 1)!, of: twoExercises))
     // Without the workout shown, a pick goes.
-    XCTAssertFalse(shown.repeats(.open(workoutId: "workout-1", exercise: 0)!, shown: nil))
+    XCTAssertFalse(shown.repeats(.open(workoutId: "workout-1", exercise: 0)!, of: nil))
   }
 }
