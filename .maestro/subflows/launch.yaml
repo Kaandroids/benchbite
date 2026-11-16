@@ -1,0 +1,15 @@
+# Opens the development build from scratch, signed out, on the bundle Metro serves on this Mac.
+appId: com.benchbite.app.dev
+---
+- launchApp:
+    clearState: true
+    arguments:
+      # The development build loads this bundle at once, without its launcher.
+      '--initialUrl': 'http://127.0.0.1:8081'
+      # And without the developer menu's introduction, the menu or its button over the app.
+      '-EXDevMenuIsOnboardingFinished': 'YES'
+      '-EXDevMenuShowsAtLaunch': 'NO'
+      '-EXDevMenuShowFloatingActionButton': 'NO'
+- extendedWaitUntil:
+    visible: 'Get started for free'
+    timeout: 120000

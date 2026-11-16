@@ -1,0 +1,67 @@
+# A new user goes through the onboarding as a guest and lands on Today with a plan.
+appId: com.benchbite.app.dev
+---
+- runFlow: subflows/launch.yaml
+# Right after the launch the app may still be busy and miss a tap.
+- repeat:
+    times: 5
+    while:
+      notVisible: 'What should we call you?'
+    commands:
+      - tapOn: 'Get started for free'
+      - waitForAnimationToEnd
+
+# About you; the name field has the keyboard.
+- assertVisible: 'What should we call you?'
+- inputText: 'Alex'
+- tapOn: 'Continue'
+- tapOn: 'Build muscle.*'
+- tapOn: 'Continue'
+- tapOn: 'Continue'
+- tapOn: 'I agree that.*'
+- tapOn: 'Continue'
+- tapOn: 'Male'
+- tapOn: 'Continue'
+- assertVisible: 'When were you born?'
+- tapOn: 'Continue'
+- assertVisible: 'How tall are you?'
+- tapOn: 'Continue'
+- assertVisible: 'What do you weigh?'
+- tapOn: 'Continue'
+- assertVisible: "What's your target weight?"
+- tapOn: 'Continue'
+- assertVisible: 'How fast do you want to get there?'
+- tapOn: 'Continue'
+- tapOn: 'Lightly active.*'
+- tapOn: 'Continue'
+- assertVisible: 'Halfway there, Alex.'
+- tapOn: 'Continue'
+
+# Training
+- tapOn: 'Beginner.*'
+- tapOn: 'Continue'
+- assertVisible: '3 days a week'
+- tapOn: 'Continue'
+- tapOn: 'Gym.*'
+- tapOn: 'Continue'
+- extendedWaitUntil:
+    visible: 'Main lifts'
+    timeout: 30000
+- tapOn: 'Continue'
+
+# The plan
+- extendedWaitUntil:
+    visible: 'Your plan is ready'
+    timeout: 60000
+- tapOn: 'See my plan'
+- assertVisible: 'Your daily targets'
+- tapOn: 'Start my plan'
+- tapOn: 'Not now'
+- assertVisible: "You're all set, Alex!"
+- tapOn: "Let's go"
+
+# Today, with the week's workouts planned
+- extendedWaitUntil:
+    visible: '0 of 3 workouts this week.*'
+    timeout: 30000
+- assertVisible: "Today's workout"
