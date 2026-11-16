@@ -5,8 +5,10 @@ import type { SetValues } from './values';
 import { describeSet, type SetKind, type SetWords } from './fields';
 
 /**
- * A set's numbers in the app's language, as "77,5" in German, without grouping, as a set holds at
- * most a quarter kilogram; and a number of reps on their own, as "8 reps".
+ * A set's numbers in the app's language, as "77,5" in German: two decimals, as a weight steps by a
+ * quarter kilogram, and no grouping, so that 2000 m reads as on the watch. And a number of reps on
+ * their own, as "8 reps". The same while the language stays, as the watch's state is sent again
+ * when its describer changes (WatchSync), which useNumberFormat()'s format would on every render.
  */
 export function useSetWords(): SetWords {
   const { t, i18n } = useTranslation();
