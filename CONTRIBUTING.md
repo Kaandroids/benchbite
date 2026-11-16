@@ -18,8 +18,8 @@ Benchbite uses an AI-assisted workflow:
 The `main` branch is protected: changes require a pull request and an approving review.
 
 Every pull request runs the [CI workflow](.github/workflows/ci.yml): types, lint, formatting, the
-app's tests, translations and Edge Functions, and on a local Supabase stack the database tests,
-the generated types and every generated plan. Run the main checks locally before pushing:
+app's tests, translations, the shared rule cases and Edge Functions, and on a local Supabase stack
+the database tests, the generated types and every generated plan. Run the main checks locally before pushing:
 
 ```bash
 pnpm typecheck
