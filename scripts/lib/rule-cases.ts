@@ -23,6 +23,16 @@ export type RuleCases = {
     expected: Record<string, number>;
   }[];
   weightStep: { equipment: string | null; expected: number }[];
+  weekSchedule: {
+    name: string;
+    /** The device's day, YYYY-MM-DD; the week is the one it is in. */
+    today: string;
+    workouts: { id: number; weekdays: number[]; active?: boolean }[];
+    moves: { workoutId: number; fromOn: string; toOn: string | null }[];
+    logs: { workoutId: number; startedOn: string }[];
+    /** Each workout of each day after the week's moves; skipped only for one not done. */
+    expected: { day: string; workoutId: number; done: boolean; skipped: boolean }[];
+  }[];
 };
 
 const USER = '00000000-0000-0000-0000-0000000005e1';
@@ -38,7 +48,11 @@ function sql(value: string | number | null): string {
 /** The pgTAP test of the database's side of the cases in `root`. */
 export function ruleCasesSql(root: string): string {
   const cases = JSON.parse(readFileSync(join(root, RULE_CASES_PATH), 'utf8')) as RuleCases;
-  const tests = cases.oneRepMax.length + cases.recordValues.length + cases.weightStep.length;
+  const tests =
+    cases.oneRepMax.length +
+    cases.recordValues.length +
+    cases.weightStep.length +
+    cases.weekSchedule.length;
   const oneRepMax = cases.oneRepMax.map(
     ({ weightKg, reps, expected }) =>
       `select is(public.one_rep_max(${weightKg}, ${reps}), ${expected}::numeric, 'one_rep_max(${weightKg}, ${reps})');`,
@@ -77,6 +91,47 @@ export function ruleCasesSql(root: string): string {
       `);`,
     ].join('\n'),
   );
+  // Each week case its own user, whose workouts are numbered from 100 times the case's place.
+  const weekUser = (index: number) =>
+    `00000000-0000-0000-0000-${String(0x5e2000 + index).padStart(12, '0')}`;
+  const weekRows = cases.weekSchedule.map(({ workouts, moves, logs }, index) => {
+    const user = weekUser(index);
+    const id = (workout: number) => (index + 1) * 100 + workout;
+    return [
+      `insert into auth.users (id, email) values ('${user}', 'week${index}@example.com');`,
+      ...workouts.map(
+        (workout) =>
+          `insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes) ` +
+          `overriding system value values (${id(workout.id)}, '${user}', 'Workout ${workout.id}', ` +
+          `'{${workout.weekdays.join(',')}}', ${workout.active ?? true}, 45);`,
+      ),
+      ...moves.map(
+        (move) =>
+          `insert into public.workout_moves (user_id, workout_id, from_on, to_on) values ` +
+          `('${user}', ${id(move.workoutId)}, '${move.fromOn}', ${sql(move.toOn)});`,
+      ),
+      ...logs.map(
+        (log) =>
+          `insert into public.workout_logs (user_id, name, started_at, finished_at, started_on, ` +
+          `source_workout_id) values ('${user}', 'Workout ${log.workoutId}', ` +
+          `'${log.startedOn} 10:00', '${log.startedOn} 11:00', '${log.startedOn}', ${id(log.workoutId)});`,
+      ),
+    ].join('\n');
+  });
+  const weeks = cases.weekSchedule.map(({ name, today, expected }, index) =>
+    [
+      `select set_config('request.jwt.claims', '{"sub": "${weekUser(index)}", "role": "authenticated"}', true);`,
+      `select is(`,
+      `  (select coalesce(jsonb_agg(jsonb_build_object('day', w.day, 'workoutId', w.workout_id - ${(index + 1) * 100},`,
+      `     'done', w.done, 'skipped', w.skipped and not w.done) order by w.day, w.workout_id), '[]')`,
+      `   from public.day_workouts(date_trunc('week', '${today}'::date)::date,`,
+      `     date_trunc('week', '${today}'::date)::date + 6, '${today}') w),`,
+      `  ${sql(JSON.stringify(expected))}::jsonb,`,
+      `  ${sql(`day_workouts(): ${name}`)}`,
+      `);`,
+    ].join('\n'),
+  );
+
   return [
     `-- Generated from ${RULE_CASES_PATH} by \`pnpm rules:sql\`: edit the cases, not this file.`,
     `-- The database's side of the rules the app keeps a copy of (#546); Jest checks the app's.`,
@@ -94,12 +149,17 @@ export function ruleCasesSql(root: string): string {
     'grant select on cases to public;',
     '',
     ...logs,
+    ...weekRows,
     '',
     '-- As the user, whose logs alone row level security shows.',
     "select set_config('role', 'authenticated', true),",
     `  set_config('request.jwt.claims', '{"sub": "${USER}", "role": "authenticated"}', true);`,
     '',
     ...records,
+    '',
+    "-- day_workouts() is closed to clients, so it runs without their role, as each case's user.",
+    'reset role;',
+    ...weeks,
     '',
     'select * from finish();',
     'rollback;',
