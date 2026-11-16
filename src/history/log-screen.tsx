@@ -21,6 +21,7 @@ import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
+import { useSetWords } from '@/sets/set-words';
 import { SetChips } from '@/sets/set-chips';
 import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
@@ -46,6 +47,7 @@ export function LogScreen({ id }: { id: number }) {
   const { t, i18n } = useTranslation();
   const time = useClockFormat();
   const { colors, spacing } = useTheme();
+  const words = useSetWords();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
   // Only a workout with a heart rate has samples to chart.
@@ -205,7 +207,7 @@ export function LogScreen({ id }: { id: number }) {
         const info = findExercise(library.data, exercise.exerciseId);
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
         const { best, total } = summarizeSets(exercise.sets, kind);
-        const describe = (set: SetValues) => describeSet(set, kind);
+        const describe = (set: SetValues) => describeSet(set, kind, words);
         return (
           <Card key={index}>
             {/* Beside the name and over the sets' edge, so that the card keeps its height. */}
@@ -227,7 +229,7 @@ export function LogScreen({ id }: { id: number }) {
             {/* Every set, the best one picked out. */}
             <SetChips
               sets={exercise.sets.map((set) => ({
-                text: shortSet(set, kind, describe),
+                text: shortSet(set, kind, words),
                 spoken: describe(set),
               }))}
               marked={(index) => exercise.sets[index] === best}

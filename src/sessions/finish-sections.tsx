@@ -8,7 +8,8 @@ import type { LibraryExercise } from '@/exercises/library';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { summarizeSets } from '@/sets/exercise-summary';
-import { describeSet, setKindOf } from '@/sets/fields';
+import { setKindOf } from '@/sets/fields';
+import { useDescribeSet } from '@/sets/set-words';
 import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
 import { workoutLength } from '@/workouts/format';
@@ -122,6 +123,7 @@ export function EndTime({
 export function ExerciseSummary({ session, details }: { session: Session; details: Details }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
+  const describeSet = useDescribeSet();
   return (
     <Card list>
       {session.exercises.map((exercise, index) => {

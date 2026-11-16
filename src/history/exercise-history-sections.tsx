@@ -9,7 +9,8 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useShortDateFormat } from '@/i18n/dates';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
-import { describeSet, type SetKind } from '@/sets/fields';
+import type { SetKind } from '@/sets/fields';
+import { useSetWords } from '@/sets/set-words';
 import { useRecordFormat, useRecordKindLabel } from '@/sets/records';
 import { SetChips } from '@/sets/set-chips';
 import { fonts, useTheme } from '@/theme';
@@ -41,6 +42,7 @@ import {
 export function RecordsCard({ records, kind }: { records: ExerciseRecord[]; kind: SetKind }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const words = useSetWords();
   const formatRecord = useRecordFormat();
   const day = useShortDateFormat(new Date());
   const kindLabel = useRecordKindLabel();
@@ -66,7 +68,7 @@ export function RecordsCard({ records, kind }: { records: ExerciseRecord[]; kind
             <Text variant="caption" color="textMuted" style={styles.semibold}>
               {/* An estimate says which set it comes from. */}
               {record.kind === 'one_rep_max'
-                ? `${shortSet(record.set, kind, (set) => describeSet(set, kind))} · ${day(record.achievedAt)}`
+                ? `${shortSet(record.set, kind, words)} · ${day(record.achievedAt)}`
                 : day(record.achievedAt)}
             </Text>
           </View>
@@ -207,6 +209,7 @@ export function SessionList({
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
+  const words = useSetWords();
   const workoutName = useWorkoutName();
   const formatTotal = useTotalFormat();
   const marked = recordSets(records, sessions);
@@ -240,7 +243,7 @@ export function SessionList({
             </Text>
             <SetChips
               sets={session.sets.map((set) => ({
-                text: shortSet(set, kind, (values) => describeSet(values, kind)),
+                text: shortSet(set, kind, words),
               }))}
               marked={(index) => marked.get(session.logId)?.has(index) ?? false}
               markLabel={t('exerciseHistory.record')}

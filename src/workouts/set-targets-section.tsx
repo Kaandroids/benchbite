@@ -8,10 +8,9 @@ import { Icon } from '@/components/ui/icon';
 import { whenSheetClosed } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import type { LibraryExercise } from '@/exercises/library';
-import { useNumberFormat } from '@/i18n/units';
-import { minutesAndSeconds } from '@/lib/time';
 import { fetchLastSetsOrNone } from '@/sessions/logs';
 import { setKindOf, weightStepOf } from '@/sets/fields';
+import { useDescribeSet } from '@/sets/set-words';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
@@ -33,7 +32,7 @@ type SetTargetsSectionProps = {
 export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSectionProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const { format } = useNumberFormat();
+  const describeSet = useDescribeSet();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<number | null>(null);
   const kind = setKindOf(details?.metrics, exercise.target);
@@ -43,15 +42,7 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
   const weighted = !kind.timed;
   const targets = exercise.setTargets;
 
-  const describe = (target: SetTarget) => {
-    if (target.seconds !== null) {
-      return minutesAndSeconds(target.seconds);
-    }
-    const reps = target.reps ?? 0;
-    return target.weightKg === null
-      ? t('editor.targetReps', { count: reps })
-      : `${format(target.weightKg)} kg × ${reps}`;
-  };
+  const describe = (target: SetTarget) => describeSet({ ...target, meters: null }, kind);
 
   const add = async () => {
     const last = await fetchLastSetsOrNone(queryClient, [exercise.exerciseId]);

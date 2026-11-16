@@ -33,18 +33,31 @@ describe('setKindOf', () => {
 
 describe('describeSet', () => {
   const values = { weightKg: null, reps: null, seconds: null, meters: null };
+  // German numbers, so that the language's own is seen to be used.
+  const words = {
+    number: (value: number) => String(value).replace('.', ','),
+    reps: (count: number) => `${count} Wdh.`,
+  };
+  const lifted = setKindOf(['weight', 'reps'], reps);
   it('describes each kind of set', () => {
-    expect(
-      describeSet({ ...values, weightKg: 80, reps: 8 }, setKindOf(['weight', 'reps'], reps)),
-    ).toBe('80 kg × 8');
-    expect(describeSet({ ...values, reps: 14 }, setKindOf(['reps'], reps))).toBe('— × 14');
-    expect(describeSet({ ...values, seconds: 50 }, setKindOf(['duration'], time))).toBe('0:50');
+    expect(describeSet({ ...values, weightKg: 77.5, reps: 8 }, lifted, words)).toBe('77,5 kg × 8');
+    expect(describeSet({ ...values, seconds: 50 }, setKindOf(['duration'], time), words)).toBe(
+      '0:50',
+    );
     expect(
       describeSet(
         { ...values, meters: 2000, seconds: 492 },
         setKindOf(['distance', 'duration'], time),
+        words,
       ),
     ).toBe('2000 m · 8:12');
+  });
+
+  it('leaves out a value the set does not have', () => {
+    expect(describeSet({ ...values, reps: 14 }, setKindOf(['reps'], reps), words)).toBe('14 Wdh.');
+    expect(describeSet({ ...values, weightKg: 80 }, lifted, words)).toBe('80 kg');
+    expect(describeSet(values, lifted, words)).toBe('');
+    expect(describeSet(values, setKindOf(['duration'], time), words)).toBe('');
   });
 });
 

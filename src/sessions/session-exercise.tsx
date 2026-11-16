@@ -10,7 +10,8 @@ import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { summarizeSets } from '@/sets/exercise-summary';
-import { describeSet, setKindOf } from '@/sets/fields';
+import { setKindOf } from '@/sets/fields';
+import { useDescribeSet } from '@/sets/set-words';
 import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
 import { useRestFormat, useTargetFormat } from '@/workouts/format';
@@ -43,6 +44,7 @@ type ExerciseProps = {
 export function FoldedExercise({ exercise, index, info }: ExerciseProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const describeSet = useDescribeSet();
   const formatTarget = useTargetFormat();
   const kind = setKindOf(info?.metrics, exercise.target);
   const done = exercise.sets.filter((s) => s.done);
