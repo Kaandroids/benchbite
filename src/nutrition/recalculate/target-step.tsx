@@ -13,8 +13,8 @@ import {
 } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { StepButton } from '@/components/ui/step-buttons';
 import { Screen } from '@/components/ui/screen';
+import { StepButton } from '@/components/ui/step-buttons';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { PaceNote } from '@/goals/pace-note';
