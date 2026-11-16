@@ -16,7 +16,9 @@ const LOWER_IS_BETTER: readonly RecordKind[] = ['best_pace'];
 
 /** The weight that could be lifted once, as the database estimates it (one_rep_max()). */
 export function oneRepMax(weightKg: number, reps: number): number {
-  return reps === 1 ? weightKg : Math.round(weightKg * (1 + reps / 30) * 10) / 10;
+  // In hundredths of a kilogram, as the database keeps a weight, and multiplied before it is
+  // divided, as one_rep_max() does, so that both round a half up: 37.5 × 7 and 82.1 × 15 (#628).
+  return reps === 1 ? weightKg : Math.round((Math.round(weightKg * 100) * (30 + reps)) / 300) / 10;
 }
 
 /** What a set comes to for each kind of record the exercise has, as exercise_records() counts it. */
