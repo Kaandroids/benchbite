@@ -167,6 +167,9 @@ struct WatchSet: Decodable {
   let lastText: String?
   /// Done with its clock, Start and Stop in place of Done, as the phone shows it (ADR 0124).
   let timedByClock: Bool
+  /// The time it aims for (ADR 0138), shown beside its clock; none without a target time, or from
+  /// a phone before set targets.
+  let targetSeconds: Double?
 
   func value(_ field: SetField) -> Double? {
     switch field {

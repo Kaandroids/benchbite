@@ -49,6 +49,8 @@ export type WatchSet = SetValues & {
   lastText: string | null;
   /** Done with its clock, Start and Stop in place of Done, as the phone shows it (ADR 0124). */
   timedByClock: boolean;
+  /** The time it aims for (ADR 0138), shown beside its clock; none without a target time. */
+  targetSeconds: number | null;
 };
 
 /**
@@ -263,6 +265,7 @@ export function stateOf(
               missing: set.done ? [] : missingFields(set, kind),
               text: describeSet(set, kind),
               lastText: last ? describeSet(last, kind) : null,
+              targetSeconds: set.targetSeconds ?? null,
               timedByClock: timedByClock(
                 set,
                 kind,
