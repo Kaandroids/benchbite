@@ -78,6 +78,7 @@
     "check:rules": "node scripts/check-rule-cases.ts",
     "watch:fixtures": "WATCH_FIXTURES=write jest src/watch/protocol-fixtures && prettier --write src/watch/fixtures",
     "check:watch": "node scripts/check-watch-protocol.ts",
+    "test:watch": "swift test --package-path targets/watch-tests",
     "import:exercises": "node scripts/import-exercises.ts",
     "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",
