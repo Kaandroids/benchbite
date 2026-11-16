@@ -9,7 +9,7 @@ import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import { joinedWithNext } from '@/workouts/supersets';
-import type { SetTarget } from '@/workouts/set-targets';
+import { resizeTargets, type SetTarget } from '@/workouts/set-targets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import type { Bests } from './records';
@@ -261,6 +261,21 @@ function lastValues(target: WorkoutTarget, last: SetValues[], index: number): Se
     return { weightKg: null, reps: target.reps.max, seconds: null, meters: null };
   }
   return { weightKg: null, reps: null, seconds: null, meters: target.meters };
+}
+
+/**
+ * The user's own set targets of the workout as the app holds it (ADR 0138), by the place of each
+ * exercise: what a workout starts from when set_targets() cannot be read.
+ */
+export function ownSetTargets(workout: Pick<Workout, 'exercises'>): SetTargets {
+  const targets: SetTargets = {};
+  workout.exercises.forEach(({ exerciseId, sets, setTargets }, place) => {
+    const own = resizeTargets(setTargets, sets);
+    if (own) {
+      targets[place] = { exerciseId, sets: own };
+    }
+  });
+  return targets;
 }
 
 /**

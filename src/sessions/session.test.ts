@@ -8,6 +8,7 @@ import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
   addSet,
+  ownSetTargets,
   changeRest,
   clockSeconds,
   endSession,
@@ -127,6 +128,31 @@ describe('startSession', () => {
       },
     );
     expect(session.exercises[0]?.sets[0]).toMatchObject({ weightKg: 80, reps: 8 });
+  });
+
+  it('gives the own targets the workout holds, for every set, by the place of their exercise', () => {
+    const workout = testWorkout(8, {
+      exercises: [
+        testExercise('squat'),
+        testExercise('bench', {
+          sets: 3,
+          setTargets: [
+            { weightKg: 80, reps: 10, seconds: null },
+            { weightKg: 85, reps: 8, seconds: null },
+          ],
+        }),
+      ],
+    });
+    expect(ownSetTargets(workout)).toEqual({
+      1: {
+        exerciseId: 'bench',
+        sets: [
+          { weightKg: 80, reps: 10, seconds: null },
+          { weightKg: 85, reps: 8, seconds: null },
+          { weightKg: 85, reps: 8, seconds: null },
+        ],
+      },
+    });
   });
 
   it('starts on the watch too only when asked to', () => {
