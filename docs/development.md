@@ -314,6 +314,7 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm format`           | Format all files with Prettier                             |
 | `pnpm format:check`     | Check formatting without changing it                       |
 | `pnpm test`             | Run the app's tests with Jest                              |
+| `pnpm test --coverage`  | Run them all and check their coverage, as CI does          |
 | `pnpm check:locales`    | Check that translations and permission texts match         |
 | `pnpm watch:strings`    | Write the watch app's text to Swift                        |
 | `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
