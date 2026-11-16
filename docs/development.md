@@ -260,11 +260,12 @@ the language chosen in Benchbite, which the phone sends it (ADR 0123). A text wi
 
 A few rules live in the database and, as the app needs them live or offline, in the app too: the
 records a set counts for (`record_candidates()` and `recordValues()`), the one-rep max
-(`one_rep_max()` and `oneRepMax()`) and the weight step (`weight_step()` and `weightStepOf()`).
-Their cases are in `supabase/tests/rules/cases.json`: Jest checks the app's side, and
-`supabase/tests/database/rule_cases.test.sql`, which `pnpm rules:sql` writes from the cases,
-checks the database's. Change a rule on both sides and add its case; `pnpm check:rules` fails while
-the pgTAP test is behind the cases.
+(`one_rep_max()` and `oneRepMax()`), the weight step (`weight_step()` and `weightStepOf()`) and the
+week's planned workouts after its moves and logs (`day_workouts()` and `weekSchedule()`). Their
+cases are in `supabase/tests/rules/cases.json`: Jest checks the app's side, and
+`supabase/tests/database/rule_cases.test.sql`, which `pnpm rules:sql` writes from the cases, checks
+the database's. Change a rule on both sides and add its case; `pnpm check:rules` fails while the
+pgTAP test is behind the cases.
 
 ## Run the website
 
