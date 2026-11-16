@@ -27,6 +27,9 @@ describe('oneRepMax', () => {
     expect(oneRepMax(85, 7)).toBe(104.8);
     expect(oneRepMax(70, 10)).toBe(93.3);
     expect(oneRepMax(100, 1)).toBe(100);
+    // A value ending in a 5 rounds up, as one_rep_max() rounds it (#628).
+    expect(oneRepMax(37.5, 7)).toBe(46.3);
+    expect(oneRepMax(93.75, 4)).toBe(106.3);
   });
 });
 
