@@ -45,7 +45,10 @@ struct SetView: View {
           } else {
             HStack(spacing: 6) {
               if timed {
-                ClockTile(startedAt: started, target: next.exercise.target.seconds)
+                // The set's own target time, else the plan's for the exercise.
+                ClockTile(
+                  startedAt: started,
+                  target: set.targetSeconds ?? next.exercise.target.seconds)
               }
               ForEach(editable, id: \.self) { field in
                 Button {
