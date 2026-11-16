@@ -3,7 +3,7 @@
 // it takes the watch's commands. `pnpm check:watch` checks the watch's side: it reads every field of
 // the state, and its commands are the fixtures'. Write the state's fixtures again with
 // `pnpm watch:fixtures` after changing the protocol on purpose.
-import { startClock, startSession, toggleDoneUnchecked } from '@/sessions/session';
+import { startClock, startSession, stopClock, toggleDoneUnchecked } from '@/sessions/session';
 import { describeSet, type SetKind } from '@/sets/fields';
 import type { SetValues } from '@/sets/values';
 import { testExercise, testWorkout } from '@/workouts/test-data';
@@ -43,8 +43,9 @@ const names = {
 };
 
 /**
- * A workout under way: a superset of bench press and row with set targets, its first set done and
- * its rest running; a plank with a target time, its clock running; and a carry.
+ * A workout under way: a superset of bench press and row with set targets, its first round done and
+ * its rest running; a plank with a target time, its first set timed and its second's clock
+ * running; and a carry. Every value the watch reads is in it, or in the ended one, not null.
  */
 function underWay() {
   const workout = testWorkout(7, {
@@ -61,8 +62,11 @@ function underWay() {
     2: { exerciseId: 'plank', sets: [{ weightKg: null, reps: null, seconds: 50 }] },
   };
   let session = startSession('user-a', workout, last, { now: NOW, targets, watchFollows: true });
-  session = toggleDoneUnchecked(session, 0, 0, NOW + 60_000);
-  session = startClock(session, 2, 0, NOW + 90_000);
+  session = startClock(session, 2, 0, NOW + 10_000);
+  session = stopClock(session, NOW + 55_000);
+  session = startClock(session, 2, 1, NOW + 60_000);
+  session = toggleDoneUnchecked(session, 0, 0, NOW + 70_000);
+  session = toggleDoneUnchecked(session, 1, 0, NOW + 80_000);
   return session;
 }
 

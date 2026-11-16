@@ -7,18 +7,21 @@
     "id": "workout-1",
     "name": "Full body",
     "startedAt": 1800000000000,
-    "current": 1,
+    "current": 0,
     "next": {
-      "exercise": 1,
-      "set": 0
+      "exercise": 0,
+      "set": 1
     },
-    "rest": null,
+    "rest": {
+      "endsAt": 1800000170000,
+      "seconds": 90
+    },
     "clock": {
       "exercise": 2,
-      "set": 0,
-      "startedAt": 1800000090000
+      "set": 1,
+      "startedAt": 1800000060000
     },
-    "setsToSave": 2,
+    "setsToSave": 4,
     "exercises": [
       {
         "exerciseId": "bench",
@@ -115,8 +118,8 @@
             "reps": 12,
             "seconds": null,
             "meters": null,
-            "done": false,
-            "missing": ["weightKg"],
+            "done": true,
+            "missing": [],
             "text": "12 reps",
             "lastText": null,
             "targetSeconds": null,
@@ -151,14 +154,14 @@
           {
             "weightKg": null,
             "reps": null,
-            "seconds": null,
+            "seconds": 45,
             "meters": null,
-            "done": false,
-            "missing": ["seconds"],
-            "text": "",
+            "done": true,
+            "missing": [],
+            "text": "0:45",
             "lastText": null,
             "targetSeconds": 50,
-            "timedByClock": true
+            "timedByClock": false
           },
           {
             "weightKg": null,
