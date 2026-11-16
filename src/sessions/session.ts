@@ -282,7 +282,7 @@ export function ownSetTargets(workout: Pick<Workout, 'exercises'>): SetTargets {
  * The targets of the exercise at `place`: none where they were worked out for another exercise, as
  * in a workout changed since the app read it, whose sets then start from last time.
  */
-function ownTargets(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
+function targetsOf(targets: SetTargets, place: number, exerciseId: string): SetTarget[] {
   const atPlace = targets[place];
   return atPlace?.exerciseId === exerciseId ? atPlace.sets : [];
 }
@@ -331,7 +331,7 @@ export function startSession(
           target,
           last[exerciseId] ?? [],
           index,
-          ownTargets(targets, place, exerciseId)[index],
+          targetsOf(targets, place, exerciseId)[index],
         ),
         done: false,
       })),
