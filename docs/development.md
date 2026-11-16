@@ -331,6 +331,9 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm check:plans`      | Check every generated workout plan on the local stack      |
 | `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
 
+When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
+with the lines no test runs.
+
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.
 

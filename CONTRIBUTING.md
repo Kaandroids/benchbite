@@ -27,7 +27,7 @@ Mac. Run the main checks locally before pushing:
 pnpm typecheck
 pnpm lint
 pnpm format:check
-pnpm test
+pnpm test --coverage   # the tests, and their coverage as CI checks it
 pnpm supabase test db   # with the local stack running
 ```
 
