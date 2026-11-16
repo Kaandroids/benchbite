@@ -1,0 +1,53 @@
+name: Watch
+
+# The Apple Watch app on a Mac (#540), which the Linux jobs of CI cannot build: only when the watch,
+# the protocol it shares with the phone, or this check changes, as a Mac's minutes cost more.
+on:
+  pull_request:
+    paths:
+      - 'targets/watch/**'
+      - 'src/watch/**'
+      - 'scripts/watch-check/**'
+      - 'scripts/check-watch-protocol.ts'
+      - '.github/workflows/watch.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'targets/watch/**'
+      - 'src/watch/**'
+      - 'scripts/watch-check/**'
+      - 'scripts/check-watch-protocol.ts'
+      - '.github/workflows/watch.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    name: Watch app
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      # Actions are pinned to commit SHAs because tags can be moved to point at different code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Node runs the protocol check, which needs no packages of the app's.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      # Every source of the watch app, compiled for watchOS at its deployment target
+      # (targets/watch/expo-target.config.js), without a project, which only Expo's prebuild makes.
+      - name: Type-check the watch app
+        run: xcrun -sdk watchsimulator swiftc -typecheck -target arm64-apple-watchos10.0-simulator targets/watch/*.swift
+
+      # The watch's side of the protocol's fixtures (#541); Jest checks the phone's in CI.
+      - name: Protocol check
+        if: ${{ !cancelled() }}
+        run: node scripts/check-watch-protocol.ts
