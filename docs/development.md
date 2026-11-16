@@ -383,7 +383,8 @@ scripts/               the project's scripts, with shared helpers in lib/: the i
                        checks, the generators, the local setup, the end-to-end runner and the
                        README's recording scripts
 website/               the website, a package of its own
-.maestro/              the end-to-end flows, with shared steps in subflows/
+.maestro/              the end-to-end flows; subflows/ holds shared steps, and a flow can also
+                       start with another, such as the onboarding
 docs/adr/              Architecture Decision Records
 docs/development.md    this guide; docs/deployment.md covers the hosted project
 docs/media/            the screenshots and GIFs in the README, and how to make them
