@@ -8,7 +8,6 @@ import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
   addSet,
-  ownSetTargets,
   changeRest,
   clockSeconds,
   endSession,
@@ -18,6 +17,7 @@ import {
   markDone,
   MAX_WORKOUT_MS,
   openExercise,
+  ownSetTargets,
   resetSessionStore,
   sessionTotals,
   setValues,
