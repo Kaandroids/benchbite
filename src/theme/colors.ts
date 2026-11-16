@@ -14,7 +14,7 @@ export type ColorTokens = {
   border: string;
   /** Unfilled part of progress bars and sliders, inactive segments. */
   track: string;
-  /** A button on `track` while it is pressed, plainly lighter in the dark (#613). */
+  /** A button on `track` while it is pressed, plainly apart from `track`. */
   trackPressed: string;
   /** Brand orange for fills, icons and selected states. Not for text on light backgrounds. */
   primary: string;
