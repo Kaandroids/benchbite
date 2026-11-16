@@ -1,4 +1,4 @@
-# A new user goes through the onboarding as a guest and lands on Today with a plan.
+# A new user goes through the onboarding as a guest and lands on Today in the plan's first week.
 appId: com.benchbite.app.dev
 ---
 - runFlow: subflows/launch.yaml
@@ -60,8 +60,9 @@ appId: com.benchbite.app.dev
 - assertVisible: "You're all set, Alex!"
 - tapOn: "Let's go"
 
-# Today, with the week's workouts planned
+# Today, in the plan's first week. Only the days from today on are planned in it, so what the
+# week and the workout card show depends on the weekday: a workout today or a rest day.
 - extendedWaitUntil:
-    visible: '0 of 3 workouts this week.*'
+    visible: '.*your first week'
     timeout: 30000
-- assertVisible: "Today's workout"
+- assertVisible: "Today's workout|Rest day.*"
