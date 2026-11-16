@@ -6,13 +6,13 @@ import { useSyncExternalStore } from 'react';
 import { toIsoDate } from '@/i18n/dates';
 import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { createListeners } from '@/lib/listeners';
-import { SET_LIMITS, type SetField, type SetKind } from '@/sets/fields';
+import { SET_LIMITS, setKindOf, type SetField, type SetKind } from '@/sets/fields';
 import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import { joinedWithNext } from '@/workouts/supersets';
 import { resizeTargets, type SetTarget } from '@/workouts/set-targets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
-import type { Bests } from './records';
+import type { Bests, MetricsOf } from './records';
 
 export type SessionSet = SetValues & {
   done: boolean;
@@ -785,8 +785,12 @@ export function skipRest(value: Session, now = Date.now()): Session {
   return setRestEnd(value, null, now);
 }
 
-/** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */
-export function toLog(value: Session, finishedAt = Date.now()) {
+/**
+ * The sets that were done, the way log_workout() takes them. Exercises without any are left out.
+ * With an exercise's metrics, a set sends only the values the exercise records, which the database
+ * refuses others of: a carry's time from before it had none (#625).
+ */
+export function toLog(value: Session, finishedAt = Date.now(), metricsOf?: MetricsOf) {
   return {
     clientId: value.id,
     workoutId: value.workoutId,
@@ -797,18 +801,31 @@ export function toLog(value: Session, finishedAt = Date.now()) {
     // The device's day it started on, which the streak counts it for (ADR 0044).
     startedOn: toIsoDate(new Date(value.startedAt)),
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
-    exercises: value.exercises.map((exercise) => ({
-      exerciseId: exercise.exerciseId,
-      // Sent for every exercise, none as null, which an edit of the log keeps to (ADR 0137).
-      superset: exercise.superset ?? null,
-      sets: exercise.sets
-        .filter((s) => s.done)
-        .map(({ doneAt, ...set }) => ({
-          ...pickSetValues(set),
-          // When the set was done, which the heart rate chart marks (ADR 0104).
-          ...(doneAt !== undefined ? { doneAt: new Date(doneAt).toISOString() } : {}),
-        })),
-    })),
+    exercises: value.exercises.map((exercise) => {
+      const metrics = metricsOf?.(exercise.exerciseId);
+      const fields = metrics ? setKindOf(metrics, exercise.target).fields : null;
+      const recorded = (set: SetValues): SetValues =>
+        fields
+          ? {
+              weightKg: fields.includes('weightKg') ? set.weightKg : null,
+              reps: fields.includes('reps') ? set.reps : null,
+              seconds: fields.includes('seconds') ? set.seconds : null,
+              meters: fields.includes('meters') ? set.meters : null,
+            }
+          : pickSetValues(set);
+      return {
+        exerciseId: exercise.exerciseId,
+        // Sent for every exercise, none as null, which an edit of the log keeps to (ADR 0137).
+        superset: exercise.superset ?? null,
+        sets: exercise.sets
+          .filter((s) => s.done)
+          .map(({ doneAt, ...set }) => ({
+            ...recorded(set),
+            // When the set was done, which the heart rate chart marks (ADR 0104).
+            ...(doneAt !== undefined ? { doneAt: new Date(doneAt).toISOString() } : {}),
+          })),
+      };
+    }),
     ...(value.move ? { move: value.move } : {}),
   };
 }

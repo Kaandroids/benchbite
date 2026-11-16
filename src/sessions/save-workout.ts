@@ -54,7 +54,7 @@ export function useSaveWorkout() {
     if (setsToSave(session, endedAt) === 0) return null;
     let logId: number;
     try {
-      logId = await mutateAsync(toLog(ending, endedAt));
+      logId = await mutateAsync(toLog(ending, endedAt, metricsOf));
     } catch (error) {
       // The workout already waited for premium when this session started, as from a list cached
       // before the plan changed: the list is loaded again to show it locked.

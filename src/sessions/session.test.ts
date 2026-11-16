@@ -1,3 +1,4 @@
+import type { LibraryExercise } from '@/exercises/library';
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { toIsoDate } from '@/i18n/dates';
@@ -533,6 +534,25 @@ describe('finishing', () => {
     expect(toLog(first, NOW + 60_000).startedOn).toBe(toIsoDate(new Date(NOW)));
     expect(first.id).toMatch(/^[0-9a-f-]{36}$/);
     expect(start().id).not.toBe(first.id);
+  });
+
+  it('sends only the values an exercise records, as a carry with a time from before', () => {
+    const carry = testWorkout(9, {
+      exercises: [testExercise('drag', { sets: 1, target: { seconds: null, meters: 50 } })],
+    });
+    const session = toggleDoneUnchecked(
+      setValues(startSession('user-a', carry, {}, { now: NOW }), 0, 0, { seconds: 37, meters: 50 }),
+      0,
+      0,
+      NOW + 10_000,
+    );
+    const metricsOf = () => ['weight', 'distance'] as LibraryExercise['metrics'];
+    expect(toLog(session, NOW + 60_000, metricsOf).exercises[0]?.sets[0]).toMatchObject({
+      seconds: null,
+      meters: 50,
+    });
+    // Without its metrics, as the library loads, every value goes.
+    expect(toLog(session, NOW + 60_000).exercises[0]?.sets[0]).toMatchObject({ seconds: 37 });
   });
 
   it('sends the planned day the workout counts for, only when it moves', () => {
