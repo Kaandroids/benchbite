@@ -3,13 +3,17 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(23);
 
 select is(public.one_rep_max(100, 1), 100::numeric, 'one_rep_max(100, 1)');
 select is(public.one_rep_max(100, 10), 133.3::numeric, 'one_rep_max(100, 10)');
 select is(public.one_rep_max(77.5, 8), 98.2::numeric, 'one_rep_max(77.5, 8)');
 select is(public.one_rep_max(82.5, 5), 96.3::numeric, 'one_rep_max(82.5, 5)');
 select is(public.one_rep_max(60, 15), 90::numeric, 'one_rep_max(60, 15)');
+select is(public.one_rep_max(37.5, 7), 46.3::numeric, 'one_rep_max(37.5, 7)');
+select is(public.one_rep_max(93.75, 4), 106.3::numeric, 'one_rep_max(93.75, 4)');
+select is(public.one_rep_max(82.1, 15), 123.2::numeric, 'one_rep_max(82.1, 15)');
+select is(public.one_rep_max(20.9, 15), 31.4::numeric, 'one_rep_max(20.9, 15)');
 
 select is(public.weight_step('barbell'), 2.5::numeric, 'weight_step(barbell)');
 select is(public.weight_step('dumbbell'), 2::numeric, 'weight_step(dumbbell)');
