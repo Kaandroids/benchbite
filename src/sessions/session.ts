@@ -7,7 +7,13 @@ import { toIsoDate } from '@/i18n/dates';
 import { readVersioned, writeVersioned } from '@/lib/device-storage';
 import { createListeners } from '@/lib/listeners';
 import { SET_LIMITS, setKindOf, type SetField, type SetKind } from '@/sets/fields';
-import { MAX_SETS, missingFields, pickSetValues, type SetValues } from '@/sets/values';
+import {
+  MAX_SETS,
+  missingFields,
+  pickSetValues,
+  recordedValues,
+  type SetValues,
+} from '@/sets/values';
 import { joinedWithNext } from '@/workouts/supersets';
 import { resizeTargets, type SetTarget } from '@/workouts/set-targets';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -790,7 +796,7 @@ export function skipRest(value: Session, now = Date.now()): Session {
  * With an exercise's metrics, a set sends only the values the exercise records, which the database
  * refuses others of: a carry's time from before it had none (#625).
  */
-export function toLog(value: Session, finishedAt = Date.now(), metricsOf?: MetricsOf) {
+export function toLog(value: Session, finishedAt: number, metricsOf: MetricsOf) {
   return {
     clientId: value.id,
     workoutId: value.workoutId,
@@ -802,17 +808,10 @@ export function toLog(value: Session, finishedAt = Date.now(), metricsOf?: Metri
     startedOn: toIsoDate(new Date(value.startedAt)),
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => {
-      const metrics = metricsOf?.(exercise.exerciseId);
-      const fields = metrics ? setKindOf(metrics, exercise.target).fields : null;
-      const recorded = (set: SetValues): SetValues =>
-        fields
-          ? {
-              weightKg: fields.includes('weightKg') ? set.weightKg : null,
-              reps: fields.includes('reps') ? set.reps : null,
-              seconds: fields.includes('seconds') ? set.seconds : null,
-              meters: fields.includes('meters') ? set.meters : null,
-            }
-          : pickSetValues(set);
+      const metrics = metricsOf(exercise.exerciseId);
+      const kind = metrics ? setKindOf(metrics, exercise.target) : null;
+      // Without its metrics, as while the library loads, every value goes.
+      const recorded = (set: SetValues) => (kind ? recordedValues(set, kind) : pickSetValues(set));
       return {
         exerciseId: exercise.exerciseId,
         // Sent for every exercise, none as null, which an edit of the log keeps to (ADR 0137).
