@@ -216,7 +216,7 @@ private struct SetAction: View {
 }
 
 /// The clock of a timed set: 0:00 until it starts, then the time it runs, counted from its start,
-/// with the plan's target beside it (ADR 0124).
+/// with the target time beside it, the set's own or else the plan's (ADR 0124, ADR 0138).
 private struct ClockTile: View {
   let startedAt: Double?
   let target: Double?
@@ -244,7 +244,7 @@ private struct ClockTile: View {
     .tile()
   }
 
-  /// "TIME", or "TIME · TARGET 0:40" when the plan has a target time.
+  /// "TIME", or "TIME · TARGET 0:40" when there is a target time.
   private var label: String {
     guard let target, target > 0 else { return SetField.seconds.unit }
     let time = Duration.seconds(target).formatted(.time(pattern: .minuteSecond))
