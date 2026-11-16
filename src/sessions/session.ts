@@ -279,7 +279,7 @@ export function startSession(
     watchFollows = false,
   }: {
     bests?: ExerciseBests;
-    /** Each set's target, by the place of its exercise. */
+    /** Each set's target, by the place of its exercise, taken only where that exercise is still. */
     targets?: SetTargets;
     now?: number;
     move?: Session['move'];
