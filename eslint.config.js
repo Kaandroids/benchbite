@@ -8,5 +8,18 @@ const prettierConfig = require('eslint-config-prettier/flat');
 module.exports = defineConfig([
   globalIgnores(['dist/*', '.expo/*', 'supabase/functions/*', 'website/*']),
   expoConfig,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: __dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      // Only the app's own modules: following every package's imports takes minutes.
+      'import/no-cycle': ['error', { ignoreExternal: true }],
+    },
+  },
   prettierConfig,
 ]);
