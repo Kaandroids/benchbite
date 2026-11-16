@@ -563,8 +563,15 @@ export function addSet(value: Session, exercise: number): Session {
         return item;
       }
       const last = item.sets[item.sets.length - 1];
+      // It aims for the last set's time, as a set after the last target takes its target.
       const values = last
-        ? { weightKg: last.weightKg, reps: last.reps, seconds: null, meters: last.meters }
+        ? {
+            weightKg: last.weightKg,
+            reps: last.reps,
+            seconds: null,
+            meters: last.meters,
+            ...(last.targetSeconds !== undefined ? { targetSeconds: last.targetSeconds } : {}),
+          }
         : lastValues(item.target, [], 0);
       return { ...item, sets: [...item.sets, { ...values, done: false }] };
     }),

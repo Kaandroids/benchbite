@@ -111,6 +111,8 @@ describe('startSession', () => {
     // A target time is kept beside the time, which the clock measures.
     expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: null, targetSeconds: 45 });
     expect(session.exercises[2]?.sets[0]).not.toHaveProperty('targetSeconds');
+    // A set added aims for the last set's time.
+    expect(addSet(session, 1).exercises[1]?.sets[1]).toMatchObject({ targetSeconds: 45 });
   });
 
   it('starts on the watch too only when asked to', () => {
