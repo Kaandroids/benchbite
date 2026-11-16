@@ -212,6 +212,13 @@ xcrun simctl install <watch simulator id> \
 `xcrun simctl list pairs` shows the pair and the simulators' ids. Start a workout on the iPhone,
 and the watch shows it.
 
+The phone and the watch keep their own copies of the protocol between them
+(`src/watch/protocol.ts` and `targets/watch/Protocol.swift`), checked against the fixtures in
+`src/watch/fixtures`: Jest checks that the phone sends the state there and takes the watch's
+commands, and `pnpm check:watch`, on a Mac with Xcode, that the watch reads every field of that
+state and makes those commands. After changing the protocol on purpose, write the state again with
+`pnpm watch:fixtures` and the commands with `pnpm check:watch --write`, and run both checks.
+
 ## Add a language
 
 The app's text is in `src/i18n/locales/`, one file per language (ADR 0007). iOS takes the sentence
@@ -302,6 +309,8 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm watch:strings`    | Write the watch app's text to Swift                        |
 | `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
 | `pnpm check:rules`      | Check that the rule cases' pgTAP test is up to date        |
+| `pnpm watch:fixtures`   | Write the watch protocol's state fixtures from the phone   |
+| `pnpm check:watch`      | Check the watch's side of the protocol (Mac with Xcode)    |
 | `pnpm db:types`         | Generate TypeScript types from the local database          |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db          |
 | `pnpm import:foods`     | Import the food library from the BLS 4.0                   |
