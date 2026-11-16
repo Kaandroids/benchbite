@@ -67,7 +67,7 @@ export type WatchExercise = {
   fields: SetField[];
   /**
    * The values the watch changes with the Crown, and how; never the time, which the clock measures,
-   * so for a timed set only its distance, if it has one (ADR 0124).
+   * so for a set of a distance only its distance, timed or not (ADR 0124).
    */
   crown: Partial<Record<SetField, CrownRange>>;
   restSeconds: number;
@@ -173,17 +173,18 @@ const METERS_STEP = 50;
 /**
  * How the Crown turns a set's values: the weight by half a kilo turned slowly and by what its
  * equipment goes up by turned fast, down to none only when it is added to the body, and the reps
- * by one; for a timed set only its distance, by 50 m, as the clock measures the time; each up to
- * what a set can hold.
+ * by one; for a set of a distance only its distance, by 50 m, and for a timed one nothing, as the
+ * clock measures the time; each up to what a set can hold.
  */
 export function crownOf(
   kind: SetKind,
   equipment: LibraryExercise['equipment'] | undefined,
 ): Partial<Record<SetField, CrownRange>> {
+  if (kind.fields.includes('meters')) {
+    return { meters: { min: METERS_STEP, max: SET_LIMITS.meters, step: METERS_STEP } };
+  }
   if (kind.timed) {
-    return kind.fields.includes('meters')
-      ? { meters: { min: METERS_STEP, max: SET_LIMITS.meters, step: METERS_STEP } }
-      : {};
+    return {};
   }
   const step = weightStepOf(equipment);
   return {

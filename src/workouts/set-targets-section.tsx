@@ -39,7 +39,7 @@ export function SetTargetsSection({ exercise, details, onChange }: SetTargetsSec
   if (kind.fields.includes('meters')) {
     return null;
   }
-  const weighted = !kind.timed;
+  const weighted = kind.fields.includes('reps');
   const targets = exercise.setTargets;
 
   const describe = (target: SetTarget) => describeSet({ ...target, meters: null }, kind);

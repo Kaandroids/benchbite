@@ -22,6 +22,15 @@ describe('setKindOf', () => {
     expect(setKindOf(['distance', 'duration'], time).fields).toEqual(['meters', 'seconds']);
   });
 
+  it('logs a distance alone, with a tick, for an exercise that records no time', () => {
+    // A carry: the database takes no time for it (#625).
+    expect(setKindOf(['weight', 'distance'], time)).toEqual({
+      fields: ['meters'],
+      timed: false,
+      addedWeight: false,
+    });
+  });
+
   it('follows the target while the library is not loaded', () => {
     expect(setKindOf(undefined, reps).fields).toEqual(['weightKg', 'reps']);
     expect(setKindOf(undefined, { seconds: null, meters: 2000 }).fields).toEqual([

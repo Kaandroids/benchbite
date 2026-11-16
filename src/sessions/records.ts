@@ -36,7 +36,7 @@ export function recordValues({ weightKg, reps, seconds, meters }: SetValues, kin
   } else if (kind.fields.includes('meters')) {
     if (meters !== null) {
       values.longest_distance = meters;
-      if (seconds !== null) {
+      if (seconds !== null && kind.fields.includes('seconds')) {
         values.best_pace = Math.round(((seconds * 1000) / meters) * 10) / 10;
       }
     }

@@ -27,6 +27,17 @@ export function missingFields(set: SetValues, kind: SetKind): SetField[] {
       ...(set.reps === null ? (['reps'] as const) : []),
     ];
   }
-  // A time or a distance, whichever the exercise records.
-  return set.seconds === null && set.meters === null ? kind.fields : [];
+  // A time or a distance, whichever the exercise records: a carry's distance, not a time it lacks.
+  return kind.fields.every((field) => set[field] === null) ? kind.fields : [];
+}
+
+/** Only the values a set's exercise records, which the database refuses others of (#625). */
+export function recordedValues(set: SetValues, kind: SetKind): SetValues {
+  const kept = (field: SetField) => (kind.fields.includes(field) ? set[field] : null);
+  return {
+    weightKg: kept('weightKg'),
+    reps: kept('reps'),
+    seconds: kept('seconds'),
+    meters: kept('meters'),
+  };
 }

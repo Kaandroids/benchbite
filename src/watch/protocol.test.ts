@@ -211,6 +211,10 @@ describe('stateOf', () => {
     const rowing = setKindOf(['distance', 'duration'], { seconds: null, meters: 2000 });
     expect(crownOf(rowing, undefined)).toEqual({ meters: { min: 50, max: 1_000_000, step: 50 } });
     expect(crownOf(setKindOf(['duration'], { seconds: 45, meters: null }), undefined)).toEqual({});
+    // A carry turns its distance too, though it is ticked rather than timed.
+    expect(
+      crownOf(setKindOf(['weight', 'distance'], { seconds: null, meters: 50 }), undefined),
+    ).toEqual({ meters: { min: 50, max: 1_000_000, step: 50 } });
   });
 
   it('turns a weight added to the body down to none, and by the equipment’s step', () => {
