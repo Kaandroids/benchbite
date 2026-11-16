@@ -1,7 +1,9 @@
 // The watch's side of the protocol's fixtures in src/watch/fixtures (#541), on a Mac with Xcode:
 // compiles the watch's Protocol.swift with scripts/watch-check/main.swift, then checks that the
-// watch reads every field of each state the phone sends, but those it leaves to the phone, and
-// that the commands it makes are the fixtures'. `--write` writes the commands' fixture instead.
+// watch reads every field of each state the phone sends, but those it leaves to the phone, that
+// every field it reads has a value in a fixture, and that the commands it makes are the fixtures'.
+// A field without a value is given one in the states of src/watch/protocol-fixtures.test.ts, then
+// written with `pnpm watch:fixtures`. `--write` writes the commands' fixture instead.
 // Jest checks the phone's side (src/watch/protocol-fixtures.test.ts).
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -73,21 +75,22 @@ function valuesAt(json: Json | undefined, path: string[]): Json[] {
 const problems: string[] = [];
 const names = Object.keys(output.states);
 if (names.length === 0) problems.push('No state fixture was read.');
-for (const name of names) {
-  const sent = JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Json;
+const sentStates = Object.fromEntries(
+  names.map((name) => [name, JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Json]),
+);
+for (const [name, sent] of Object.entries(sentStates)) {
   for (const path of unread(sent, output.states[name], '')) {
     problems.push(`${name}: the watch does not read ${path}`);
   }
 }
 
 // Every field the watch reads has a value in a fixture: one the phone stopped sending, or sent as
-// null in every fixture, would go unchecked.
-const sentStates = names.map(
-  (name) => JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Json,
-);
+// null, or as an empty list whose items' fields go unlisted, in every fixture would go unchecked.
+const hasValue = (value: Json) =>
+  value !== null && !(typeof value === 'object' && Object.keys(value).length === 0);
 for (const path of output.read) {
-  const values = sentStates.flatMap((state) => valuesAt(state, path.split('.')));
-  if (!values.some((value) => value !== null)) {
+  const values = Object.values(sentStates).flatMap((state) => valuesAt(state, path.split('.')));
+  if (!values.some(hasValue)) {
     problems.push(`No fixture has a value for ${path}, which the watch reads`);
   }
 }
