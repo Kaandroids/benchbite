@@ -10,6 +10,7 @@ import { dbErrorMessage } from '@/lib/errors';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { useWorkoutName } from './format';
+import type { SetTarget } from './set-targets';
 import { changeInSuperset, joinWithNext, moveWithSupersets, tidySupersets } from './supersets';
 import { findWorkout, useSaveWorkout, useWorkoutLimits, useWorkouts } from './workouts';
 
@@ -45,12 +46,13 @@ export function useWorkoutEditor(id: number | undefined) {
             name: workout.name ?? '',
             weekdays: workout.weekdays,
             exercises: workout.exercises.map(
-              ({ exerciseId, sets, target, restSeconds, superset }) => ({
+              ({ exerciseId, sets, target, restSeconds, superset, setTargets }) => ({
                 exerciseId,
                 sets,
                 target,
                 restSeconds,
                 superset,
+                setTargets,
               }),
             ),
           }
@@ -127,6 +129,16 @@ export function useWorkoutEditor(id: number | undefined) {
     setExercises((exercises) =>
       tidySupersets(exercises.filter((exercise) => exercise.key !== key)),
     );
+  /**
+   * Changes the own set targets of the exercise as it is when the change is made, which a change
+   * waiting for last time's sets must not make from the exercise as it was before.
+   */
+  const changeTargets = (key: string, change: (exercise: DraftExercise) => SetTarget[] | null) =>
+    setExercises((exercises) =>
+      exercises.map((exercise) =>
+        exercise.key === key ? { ...exercise, setTargets: change(exercise) } : exercise,
+      ),
+    );
   /** Joins the exercise with the one after it into a superset, or parts them. */
   const joinExerciseWithNext = (key: string, joined: boolean) =>
     setExercises((exercises) =>
@@ -155,6 +167,7 @@ export function useWorkoutEditor(id: number | undefined) {
     setWeekdays,
     moveExercise,
     replaceExercise,
+    changeTargets,
     removeExercise,
     joinExerciseWithNext,
   };

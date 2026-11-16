@@ -76,6 +76,7 @@ export function addExercises(exercises: LibraryExercise[]) {
           target: defaultTarget(exercise.metrics),
           restSeconds: distance ? 0 : 90,
           superset: null,
+          setTargets: null,
         };
       }),
     ],

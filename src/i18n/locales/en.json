@@ -1087,7 +1087,18 @@
     "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}.",
     "restAfterRound": "Rest after the round",
     "supersetNext": "Superset with the next exercise",
-    "supersetNextNote": "{{name}}, with no rest between them"
+    "supersetNextNote": "{{name}}, with no rest between them",
+    "weight": "Weight",
+    "reps": "Reps",
+    "targets": "Targets",
+    "addTargets": "Add targets",
+    "addTargetsNote": "Optional: a weight and reps for each set. Without them, each set is aimed a little past last time.",
+    "addTargetsTimedNote": "Optional: a time for each set. Without them, each set is aimed a little past last time.",
+    "setNumber": "Set {{number}}",
+    "setTargetTitle": "Set {{number}} target",
+    "targetReps_one": "{{count}} rep",
+    "targetReps_other": "{{count}} reps",
+    "clearTargets": "Clear targets"
   },
   "onboarding": {
     "sections": {

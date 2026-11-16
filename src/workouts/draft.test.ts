@@ -55,6 +55,7 @@ describe('the draft', () => {
             target: { reps: { min: 8, max: 12 } },
             restSeconds: 60,
             superset: null,
+            setTargets: null,
           },
           {
             exerciseId: 'curl',
@@ -62,6 +63,7 @@ describe('the draft', () => {
             target: { reps: { min: 8, max: 12 } },
             restSeconds: 60,
             superset: null,
+            setTargets: null,
           },
         ],
       }),
@@ -84,6 +86,7 @@ describe('the draft', () => {
         target: { seconds: null, meters: 1000 },
         restSeconds: 0,
         superset: null,
+        setTargets: null,
       },
       {
         exerciseId: 'plank',
@@ -91,6 +94,7 @@ describe('the draft', () => {
         target: { seconds: 30, meters: null },
         restSeconds: 90,
         superset: null,
+        setTargets: null,
       },
     ]);
   });

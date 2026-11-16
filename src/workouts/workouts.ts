@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { WEIGHTS_KEY } from '@/weight/weights-key';
 
 import { reloadMoves } from './moves';
+import { setTargetsOf, type SetTarget } from './set-targets';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
@@ -21,6 +22,8 @@ export type WorkoutExercise = {
   restSeconds: number;
   /** The superset the exercise is in, by its number (ADR 0137); none on its own. */
   superset: number | null;
+  /** The user's own targets for its sets, in order (ADR 0138); none to work them out from last time. */
+  setTargets: SetTarget[] | null;
   primaryMuscles: Muscle[];
   /** The first picture of the exercise, as a path in the exercise-images bucket. */
   imagePath: string | null;
@@ -94,6 +97,7 @@ type ExerciseRow = Pick<
   | 'target_meters'
   | 'rest_seconds'
   | 'superset'
+  | 'set_targets'
 > & {
   exercises: Pick<
     Database['public']['Tables']['exercises']['Row'],
@@ -112,6 +116,7 @@ function workoutExercise(row: ExerciseRow): WorkoutExercise {
         : { seconds: row.target_seconds, meters: row.target_meters },
     restSeconds: row.rest_seconds,
     superset: row.superset,
+    setTargets: setTargetsOf(row.set_targets),
     primaryMuscles: row.exercises.primary_muscles,
     imagePath: row.exercises.image_paths.find((path) => path !== null) ?? null,
   };
@@ -125,7 +130,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       `id, name, weekdays, active, held, type, estimated_minutes,
       workout_exercises (
         position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
-        target_meters, rest_seconds, superset,
+        target_meters, rest_seconds, superset, set_targets,
         exercises (primary_muscles, image_paths)
       )`,
     )
@@ -247,7 +252,10 @@ export type WorkoutDraft = {
   /** Null keeps the plan builder's type as the name, in whatever language the app is in. */
   name: string | null;
   weekdays: number[];
-  exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds' | 'superset'>[];
+  exercises: Pick<
+    WorkoutExercise,
+    'exerciseId' | 'sets' | 'target' | 'restSeconds' | 'superset' | 'setTargets'
+  >[];
 };
 
 /**

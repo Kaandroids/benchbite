@@ -35,6 +35,7 @@ const exerciseRow = (position: number, exerciseId: string, more: object = {}) =>
   target_meters: null,
   rest_seconds: 90,
   superset: null,
+  set_targets: null,
   exercises: { primary_muscles: ['quadriceps'], image_paths: [`${exerciseId}/0.webp`] },
   ...more,
 });
@@ -85,7 +86,7 @@ describe('fetchWorkouts', () => {
             exerciseRow(1, 'lunge', {
               exercises: { primary_muscles: ['glutes'], image_paths: ['lunge/0.webp'] },
             }),
-            exerciseRow(0, 'squat'),
+            exerciseRow(0, 'squat', { set_targets: [{ weightKg: 80, reps: 10 }] }),
           ],
         }),
       ],
@@ -106,6 +107,7 @@ describe('fetchWorkouts', () => {
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
           superset: null,
+          setTargets: [{ weightKg: 80, reps: 10, seconds: null }],
           primaryMuscles: ['quadriceps'],
           imagePath: 'squat/0.webp',
         },
@@ -115,6 +117,7 @@ describe('fetchWorkouts', () => {
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
           superset: null,
+          setTargets: null,
           primaryMuscles: ['glutes'],
           imagePath: 'lunge/0.webp',
         },
@@ -124,6 +127,7 @@ describe('fetchWorkouts', () => {
           target: { seconds: 300, meters: null },
           restSeconds: 0,
           superset: null,
+          setTargets: null,
           primaryMuscles: ['quadriceps'],
           imagePath: null,
         },
@@ -228,6 +232,7 @@ describe('useSaveWorkout', () => {
         target: { reps: { min: 8, max: 12 } },
         restSeconds: 60,
         superset: null,
+        setTargets: null,
       },
     ],
   };

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { LOGS_KEY } from '@/history/history';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +6,25 @@ import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
 
 import type { ExerciseBests, LastSets, toLog } from './session';
+
+export const LAST_SETS_KEY = ['last-sets'];
+
+/** The latest sets of the exercises, read again each time, as a workout may have been logged since. */
+export function lastSetsQuery(exerciseIds: string[]) {
+  return {
+    queryKey: [...LAST_SETS_KEY, ...exerciseIds],
+    queryFn: () => fetchLastSets(exerciseIds),
+    staleTime: 0,
+  };
+}
+
+/** The latest sets of the exercises, or none when they cannot be read: they only fill in values. */
+export function fetchLastSetsOrNone(queryClient: QueryClient, exerciseIds: string[]) {
+  return queryClient.fetchQuery(lastSetsQuery(exerciseIds)).catch((error: unknown): LastSets => {
+    console.warn('Could not load the last sets', error);
+    return {};
+  });
+}
 
 /** The sets of each exercise's latest log, for filling in a new workout (last_sets()). */
 export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {

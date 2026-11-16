@@ -20,6 +20,19 @@ jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
 }));
+/** Resolves last time's sets when a test lets it, at once otherwise. */
+let mockLastSetsGate: Promise<void> = Promise.resolve();
+jest.mock('@/sessions/logs', () => ({
+  fetchLastSetsOrNone: async () => {
+    await mockLastSetsGate;
+    return {
+      bench: [
+        { weightKg: 75, reps: 12, seconds: null, meters: null },
+        { weightKg: 80, reps: 10, seconds: null, meters: null },
+      ],
+    };
+  },
+}));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
   useWorkouts: jest.fn(),
@@ -156,6 +169,7 @@ describe('EditorScreen', () => {
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 120,
           superset: null,
+          setTargets: null,
         },
         {
           exerciseId: 'rowing',
@@ -163,6 +177,7 @@ describe('EditorScreen', () => {
           target: { seconds: 300, meters: null },
           restSeconds: 0,
           superset: null,
+          setTargets: null,
         },
       ],
     });
@@ -206,6 +221,85 @@ describe('EditorScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Rowing' }));
     expect(screen.queryByLabelText('Superset with the next exercise')).toBeNull();
     expect(screen.getByText('Rest')).toBeTruthy();
+  });
+
+  it('adds targets from last time, changes one in a sheet of its own and saves them', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add targets/ }));
+    expect(await screen.findByRole('button', { name: 'Set 1, 75 kg × 8' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Set 2, 80 kg × 8' })).toHaveLength(1);
+    await fireEvent.press(screen.getByRole('button', { name: 'Set 2, 80 kg × 8' }));
+    expect(await screen.findByText('Set 2 target')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'More: Weight' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Less: Reps' }));
+    // The set's sheet is inside the exercise's, before its own buttons.
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Done' })[0]!);
+    expect(screen.getByRole('button', { name: 'Set 2, 82.5 kg × 7' })).toBeTruthy();
+    // One set fewer drops its target.
+    await fireEvent.press(screen.getByRole('button', { name: 'Less: Sets' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({
+            exerciseId: 'bench',
+            sets: 3,
+            setTargets: [
+              { weightKg: 75, reps: 8, seconds: null },
+              { weightKg: 82.5, reps: 7, seconds: null },
+              { weightKg: 80, reps: 8, seconds: null },
+            ],
+          }),
+          expect.objectContaining({ exerciseId: 'rowing', setTargets: null }),
+        ],
+      }),
+    );
+  });
+
+  it('keeps a change made while last time’s sets load', async () => {
+    let release = () => {};
+    mockLastSetsGate = new Promise((resolve) => {
+      release = resolve;
+    });
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add targets/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'More: Sets' }));
+    await act(async () => release());
+    mockLastSetsGate = Promise.resolve();
+    expect(await screen.findByRole('button', { name: 'Set 5, 80 kg × 8' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({ exerciseId: 'bench', sets: 5, setTargets: expect.any(Array) }),
+          expect.anything(),
+        ],
+      }),
+    );
+    expect(saveWorkout.mock.calls[0][0].exercises[0].setTargets).toHaveLength(5);
+  });
+
+  it('keeps a set target unchanged when its sheet is cancelled, and clears them all', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add targets/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Set 1, 75 kg × 8' }));
+    await screen.findByText('Set 1 target');
+    await fireEvent.press(screen.getByRole('button', { name: 'More: Reps' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Set 1, 75 kg × 8' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Clear targets' }));
+    expect(screen.getByRole('button', { name: /^Add targets/ })).toBeTruthy();
+  });
+
+  it('offers no targets for a distance', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Rowing' }));
+    expect(screen.queryByRole('button', { name: /^Add targets/ })).toBeNull();
   });
 
   it('opens the picker to add exercises', async () => {

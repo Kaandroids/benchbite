@@ -120,6 +120,7 @@ const exercise = (exerciseId: string) => ({
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,
   superset: null,
+  setTargets: null,
 });
 
 const session = (weekday: number, type: WeekSession['type'], exerciseCount = 0): WeekSession => ({

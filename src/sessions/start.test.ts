@@ -13,10 +13,14 @@ import { useStartMove } from './start-move';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
-jest.mock('./logs', () => ({
-  fetchLastSets: jest.fn().mockResolvedValue({}),
-  fetchBests: jest.fn().mockResolvedValue({}),
-}));
+jest.mock('./logs', () => {
+  const fetchLastSets = jest.fn().mockResolvedValue({});
+  return {
+    fetchLastSets,
+    fetchLastSetsOrNone: (_queryClient: unknown, ids: string[]) => fetchLastSets(ids),
+    fetchBests: jest.fn().mockResolvedValue({}),
+  };
+});
 jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('./session', () => ({ startSession: jest.fn() }));
 jest.mock('./start-move', () => ({ useStartMove: jest.fn() }));
