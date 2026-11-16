@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -114,6 +114,12 @@ create temporary table targets on commit drop as
   select * from public.set_targets(current_setting('test.workout')::bigint);
 grant select on targets to public;
 
+select results_eq(
+  $$ select distinct exercise_position, exercise_id from targets order by exercise_position $$,
+  $$ values (0::smallint, 'Barbell_Bench_Press_-_Medium_Grip'), (1::smallint, 'Bent_Over_Barbell_Row'),
+       (2::smallint, 'Dumbbell_Bench_Press'), (3::smallint, 'Pullups'), (4::smallint, 'Plank') $$,
+  'Each target names its exercise beside its place, so that the app can tell a workout changed since'
+);
 select results_eq(
   $$ select set_position, weight_kg, reps, own from targets where exercise_position = 0
      order by set_position $$,
