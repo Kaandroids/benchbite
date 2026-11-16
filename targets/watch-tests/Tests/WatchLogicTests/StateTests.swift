@@ -3,7 +3,7 @@ import XCTest
 @testable import WatchLogic
 
 final class StateTests: XCTestCase {
-  /// The state of the phone with `ended`, the workout shown having `follows`.
+  /// The phone's state with no workout under way, `ended` its ended workouts, in `version`.
   func state(ended: [[String: Any]], version: Int = protocolVersion) -> String {
     let json: [String: Any] = ["v": version, "seq": 3, "workout": NSNull(), "ended": ended]
     return String(data: try! JSONSerialization.data(withJSONObject: json), encoding: .utf8)!
