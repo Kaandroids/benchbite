@@ -1493,6 +1493,10 @@
         "noConsent": "Your consent to process your health data is missing. Go back to give it.",
         "daysChanged": "Your plan no longer matches your training days. Go back and choose them again."
       },
+      "notMedical": {
+        "title": "Not medical advice",
+        "body": "Your plan is an estimate from your answers. If you're pregnant, have a health condition or have had an eating disorder, talk to a doctor before you start."
+      },
       "editLater": "You can change all of this later.",
       "today": "Today"
     },
@@ -1990,7 +1994,7 @@
     "ask": "Ask Bite",
     "send": "Send",
     "stop": "Stop",
-    "mistakes": "Bite can make mistakes. Check important info.",
+    "disclaimer": "Bite is a coach, not a doctor, and can make mistakes.",
     "thinking": "Bite is thinking",
     "notes": {
       "saved": "Saved to notebook: {{text}}",

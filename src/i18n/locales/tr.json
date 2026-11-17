@@ -1493,6 +1493,10 @@
         "noConsent": "Sağlık verilerinin işlenmesine onayın eksik. Geri dönüp onay ver.",
         "daysChanged": "Planın artık antrenman günlerinle uyuşmuyor. Geri dönüp günleri yeniden seç."
       },
+      "notMedical": {
+        "title": "Tıbbi tavsiye değildir",
+        "body": "Planın, cevaplarına göre yapılmış bir tahmindir. Hamileysen, bir sağlık sorunun varsa ya da yeme bozukluğu yaşadıysan başlamadan önce bir doktora danış."
+      },
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",
       "today": "Bugün"
     },
@@ -1990,7 +1994,7 @@
     "ask": "Bite'a sor",
     "send": "Gönder",
     "stop": "Durdur",
-    "mistakes": "Bite hata yapabilir. Önemli bilgileri kontrol et.",
+    "disclaimer": "Bite bir koç, doktor değil; hata yapabilir.",
     "thinking": "Bite düşünüyor",
     "notes": {
       "saved": "Deftere kaydedildi: {{text}}",
