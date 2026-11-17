@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { goalPace, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
@@ -159,9 +159,12 @@ export function PlanStep() {
         })}
       </Card>
 
-      <Note tone="info" title={t('onboarding.plan.notMedical.title')}>
-        {t('onboarding.plan.notMedical.body')}
-      </Note>
+      {/* After the plan's cards, as it is about them */}
+      <Animated.View entering={FadeInDown.delay(450).duration(400)}>
+        <Note tone="info" title={t('onboarding.plan.notMedical.title')}>
+          {t('onboarding.plan.notMedical.body')}
+        </Note>
+      </Animated.View>
 
       <Text variant="caption" color="textMuted" align="center">
         {t('onboarding.plan.editLater')}
