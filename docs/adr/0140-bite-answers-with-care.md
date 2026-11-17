@@ -30,9 +30,6 @@ only of signs.
   calorie cuts, target weights or rates of loss, and suggests professional help. What the user
   logged and their targets as the app shows them may still be named, as a note kept for good
   would otherwise bar them in every later chat.
-- **"I recommend" is advice, not a card.** The check that tells Bite when it spoke of a card it did
-  not make no longer counts the Turkish "öneririm" or the German "ich schlage vor", so that a care
-  answer, as to see a doctor, costs no further request.
 
 ## Alternatives considered
 
