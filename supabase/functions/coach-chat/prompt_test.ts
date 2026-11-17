@@ -297,4 +297,7 @@ Deno.test('finds a card spoken of in each language, and not other words', async 
   assertEquals(mentionsCard('Eat a banana before you train.', 'en'), false);
   assertEquals(mentionsCard('Discard the yolks.', 'en'), false);
   assertEquals(mentionsCard('Antrenmandan önce muz ye.', 'tr'), false);
+  assertEquals(mentionsCard('Bir doktora danışmanı öneririm.', 'tr'), false);
+  assertEquals(mentionsCard('Ich schlage vor, dass du den Notruf anrufst.', 'de'), false);
+  assertEquals(mentionsCard('Das schlage ich dir vor.', 'de'), true);
 });
