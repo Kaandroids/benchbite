@@ -19,20 +19,15 @@ appId: com.benchbite.app.dev
 - inputText: 'benchbite-e2e'
 - tapOn: 'Create account'
 
-# The code Auth sent, which may take a moment to arrive
+# The code Auth sent
 - extendedWaitUntil:
     visible: 'Check your email'
     timeout: 15000
-- retry:
-    maxRetries: 5
-    commands:
-      - runScript:
-          file: scripts/email-code.js
-          env:
-            EMAIL: ${output.email}
-            SUBJECT: 'is your Benchbite code'
-- tapOn: '6-digit code'
-- inputText: ${output.code}
+- runFlow:
+    file: subflows/enter-email-code.yaml
+    env:
+      EMAIL: ${output.email}
+      SUBJECT: 'is your Benchbite code'
 - extendedWaitUntil:
     visible: 'Your account is ready'
     timeout: 15000
@@ -55,16 +50,11 @@ appId: com.benchbite.app.dev
 - extendedWaitUntil:
     visible: 'Delete for good'
     timeout: 15000
-- retry:
-    maxRetries: 5
-    commands:
-      - runScript:
-          file: scripts/email-code.js
-          env:
-            EMAIL: ${output.email}
-            SUBJECT: 'is your code to delete'
-- tapOn: '6-digit code'
-- inputText: ${output.code}
+- runFlow:
+    file: subflows/enter-email-code.yaml
+    env:
+      EMAIL: ${output.email}
+      SUBJECT: 'is your code to delete'
 - tapOn: 'Delete for good'
 
 # Signed out, on the first screen
