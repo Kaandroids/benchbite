@@ -1994,7 +1994,7 @@
     "ask": "Frag Bite",
     "send": "Senden",
     "stop": "Stopp",
-    "mistakes": "Bite kann Fehler machen. Prüfe wichtige Infos.",
+    "mistakes": "Bite ist ein Coach, kein Arzt, und kann Fehler machen.",
     "thinking": "Bite denkt nach",
     "notes": {
       "saved": "Im Notizbuch gespeichert: {{text}}",

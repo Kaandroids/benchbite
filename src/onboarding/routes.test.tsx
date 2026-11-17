@@ -418,7 +418,7 @@ describe('app tabs', () => {
     expect(app.getPathname()).toBe('/bite');
     // Once Bite has looked for the last chat.
     expect(
-      await screen.findByText('Bite can make mistakes. Check important info.'),
+      await screen.findByText('Bite is a coach, not a doctor, and can make mistakes.'),
     ).toBeOnTheScreen();
     expect(tabs()).toEqual([]);
   });
