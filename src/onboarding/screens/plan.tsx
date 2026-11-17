@@ -7,6 +7,7 @@ import { FadeInDown } from 'react-native-reanimated';
 import { goalPace, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
@@ -157,6 +158,10 @@ export function PlanStep() {
           );
         })}
       </Card>
+
+      <Note tone="info" title={t('onboarding.plan.notMedical.title')}>
+        {t('onboarding.plan.notMedical.body')}
+      </Note>
 
       <Text variant="caption" color="textMuted" align="center">
         {t('onboarding.plan.editLater')}

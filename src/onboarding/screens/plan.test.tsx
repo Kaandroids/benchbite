@@ -96,6 +96,12 @@ describe('PlanStep', () => {
     expect(screen.getByText('Protein')).toBeTruthy();
   });
 
+  it('says the plan is no medical advice, and when to see a doctor first', async () => {
+    await render(<PlanStep />);
+    expect(screen.getByText('Not medical advice')).toBeOnTheScreen();
+    expect(screen.getByText(/talk to a doctor before you start/)).toBeOnTheScreen();
+  });
+
   it('shows one entry per session with its weekday, type and exercises', async () => {
     await render(<PlanStep />);
     expect(screen.getByText('Monday')).toBeTruthy();

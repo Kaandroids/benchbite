@@ -1493,6 +1493,10 @@
         "noConsent": "Deine Einwilligung zur Verarbeitung deiner Gesundheitsdaten fehlt. Geh zurück, um sie zu geben.",
         "daysChanged": "Dein Plan passt nicht mehr zu deinen Trainingstagen. Geh zurück und wähle sie erneut."
       },
+      "notMedical": {
+        "title": "Keine medizinische Beratung",
+        "body": "Dein Plan ist eine Schätzung aus deinen Antworten. Wenn du schwanger bist, eine Erkrankung hast oder eine Essstörung hattest, sprich vor dem Start mit einer Ärztin oder einem Arzt."
+      },
       "editLater": "Du kannst das alles später ändern.",
       "today": "Heute"
     },
