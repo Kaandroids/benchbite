@@ -274,8 +274,10 @@ pgTAP test is behind the cases.
 
 The flows in `.maestro/` drive the development build on the iOS Simulator through whole journeys
 across screens and tabs, such as a new user's onboarding up to Today, logging a workout and finding
-it in the history, or logging a food and a glass of water (ADR 0139). A flow that needs a user
-starts with the onboarding's flow. They run against the local stack, so start what the app talks
+it in the history, logging a food and a glass of water, or making an account and deleting it
+(ADR 0139). A flow that needs a user starts with the onboarding's flow. The account's flow reads
+the codes Auth sends from Mailpit (see [Email](#email)), and turns off password AutoFill on the
+simulator first, whose suggestions and "Save Password?" Maestro cannot see. They run against the local stack, so start what the app talks
 to first, each in a terminal of its own:
 
 ```bash
