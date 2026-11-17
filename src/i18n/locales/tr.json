@@ -1994,7 +1994,7 @@
     "ask": "Bite'a sor",
     "send": "Gönder",
     "stop": "Durdur",
-    "mistakes": "Bite bir koç, doktor değil; hata yapabilir.",
+    "disclaimer": "Bite bir koç, doktor değil; hata yapabilir.",
     "thinking": "Bite düşünüyor",
     "notes": {
       "saved": "Deftere kaydedildi: {{text}}",

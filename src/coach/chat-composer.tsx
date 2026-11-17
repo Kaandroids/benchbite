@@ -235,7 +235,7 @@ export function ChatComposer({ onSend, onStop, refused, onRecording, onHold }: C
         </View>
       </View>
       <Text variant="caption" color="textMuted" align="center">
-        {t('bite.mistakes')}
+        {t('bite.disclaimer')}
       </Text>
       {picking ? (
         <PhotoSheet
