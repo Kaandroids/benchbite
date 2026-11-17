@@ -1,20 +1,20 @@
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
-type Tone = 'info' | 'warning' | 'danger';
+const TONES = {
+  info: { icon: 'info', color: 'info', background: 'infoBackground' },
+  warning: { icon: 'warning', color: 'warning', background: 'warningBackground' },
+  danger: { icon: 'error', color: 'danger', background: 'dangerBackground' },
+} as const satisfies Record<
+  string,
+  { icon: IconName; color: keyof ColorTokens; background: keyof ColorTokens }
+>;
 
-const TONES: Record<
-  Tone,
-  { icon: IconName; background: 'infoBackground' | 'warningBackground' | 'dangerBackground' }
-> = {
-  info: { icon: 'info', background: 'infoBackground' },
-  warning: { icon: 'warning', background: 'warningBackground' },
-  danger: { icon: 'error', background: 'dangerBackground' },
-};
+type Tone = keyof typeof TONES;
 
 /**
  * A message in a tinted box: something to know, such as that a plan is no medical advice, a
@@ -23,7 +23,7 @@ const TONES: Record<
  */
 export function Note({ tone, title, children }: { tone: Tone; title?: string; children: string }) {
   const { colors, radii, spacing } = useTheme();
-  const { icon, background } = TONES[tone];
+  const { icon, color, background } = TONES[tone];
   return (
     <View
       accessible
@@ -38,7 +38,7 @@ export function Note({ tone, title, children }: { tone: Tone; title?: string; ch
         },
       ]}
     >
-      <Icon name={icon} size={20} color={tone} />
+      <Icon name={icon} size={20} color={color} />
       <View style={[styles.flex, { gap: spacing.xs }]}>
         {title ? <Text variant="bodyStrong">{title}</Text> : null}
         <Text variant={title ? 'body' : 'bodyStrong'}>{children}</Text>
