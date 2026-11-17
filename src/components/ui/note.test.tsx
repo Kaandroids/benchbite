@@ -13,4 +13,15 @@ describe('Note', () => {
     expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
     expect(screen.getByText('Your data stays behind.')).toBeOnTheScreen();
   });
+
+  it('shows a title above the message, as one element to read', async () => {
+    await render(
+      <Note tone="info" title="Not medical advice">
+        Your plan is an estimate.
+      </Note>,
+    );
+    expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
+    expect(screen.getByText('Not medical advice')).toBeOnTheScreen();
+    expect(screen.getByText('Your plan is an estimate.')).toBeOnTheScreen();
+  });
 });
