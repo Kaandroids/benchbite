@@ -1,0 +1,10 @@
+# Types in the code of the newest email to EMAIL whose subject has SUBJECT.
+appId: com.benchbite.app.dev
+---
+- runScript:
+    file: ../scripts/email-code.js
+    env:
+      EMAIL: ${EMAIL}
+      SUBJECT: ${SUBJECT}
+- tapOn: '6-digit code'
+- inputText: ${output.code}

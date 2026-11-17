@@ -1,0 +1,63 @@
+# A guest makes an account with a code sent by email, keeps the plan, then deletes the account.
+appId: com.benchbite.app.dev
+---
+- runFlow: subflows/no-password-autofill.yaml
+- runFlow: onboarding.yaml
+- runScript: scripts/new-email.js
+
+- tapOn: 'Progress'
+- tapOn: 'Settings'
+- tapOn: 'Create an account'
+# Each field's label also matches its caption above it, in capitals: the field is the second match.
+- tapOn:
+    text: 'Email'
+    index: 1
+- inputText: ${output.email}
+- tapOn:
+    text: 'Password'
+    index: 1
+- inputText: 'benchbite-e2e'
+- tapOn: 'Create account'
+
+# The code Auth sent
+- extendedWaitUntil:
+    visible: 'Check your email'
+    timeout: 15000
+- runFlow:
+    file: subflows/enter-email-code.yaml
+    env:
+      EMAIL: ${output.email}
+      SUBJECT: 'is your Benchbite code'
+- extendedWaitUntil:
+    visible: 'Your account is ready'
+    timeout: 15000
+- tapOn: 'Continue'
+# The guest's plan is the account's now.
+- extendedWaitUntil:
+    visible: '.*your first week'
+    timeout: 15000
+
+# Delete it, with a second code
+- tapOn: 'Progress'
+- tapOn: 'Settings'
+- assertVisible: ${output.email}
+- scrollUntilVisible:
+    element: 'Delete account'
+- tapOn: 'Delete account'
+- assertVisible: 'Delete your account?'
+- tapOn: 'Delete account'
+- tapOn: 'Send code'
+- extendedWaitUntil:
+    visible: 'Delete for good'
+    timeout: 15000
+- runFlow:
+    file: subflows/enter-email-code.yaml
+    env:
+      EMAIL: ${output.email}
+      SUBJECT: 'is your code to delete'
+- tapOn: 'Delete for good'
+
+# Signed out, on the first screen
+- extendedWaitUntil:
+    visible: 'Get started for free'
+    timeout: 30000
