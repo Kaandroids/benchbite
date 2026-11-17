@@ -76,9 +76,9 @@ functions in schema pg_temp to public` after creating them.
 
 ### Email
 
-Locally, Auth sends email to Mailpit and not to anyone: read codes at <http://127.0.0.1:54324>. After
-changing `supabase/config.toml` or `supabase/templates/`, run `pnpm supabase stop` and
-`pnpm supabase start`, which keeps the data.
+Locally, Auth and the Edge Functions send email to Mailpit and not to anyone: read codes at
+<http://127.0.0.1:54324>. After changing `supabase/config.toml` or `supabase/templates/`, run
+`pnpm supabase stop` and `pnpm supabase start`, which keeps the data.
 
 ### Dev account
 
