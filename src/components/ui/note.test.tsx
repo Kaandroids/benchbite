@@ -2,9 +2,9 @@ import { render, screen } from '@/test/render';
 
 import { Note } from './note';
 
-type Node = { props: { accessible?: boolean }; parent: Node | null };
+type Element = ReturnType<typeof screen.getByText>;
 
-function accessibleAncestor(element: Node): Node | null {
+function accessibleAncestor(element: Element): Element | null {
   let node = element.parent;
   while (node && !node.props.accessible) {
     node = node.parent;
@@ -36,6 +36,7 @@ describe('Note', () => {
     // One stop for a screen reader: the nearest accessible element holds both.
     const box = accessibleAncestor(title);
     expect(box).toBe(accessibleAncestor(message));
+    // Fails, too, when neither has one.
     expect(box).toContainElement(message);
   });
 });
