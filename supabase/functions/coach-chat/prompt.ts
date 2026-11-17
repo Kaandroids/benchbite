@@ -45,13 +45,12 @@ const [IDEAL_LOSS, FASTEST_LOSS] = PACE_LEVELS.losing;
 /**
  * Words for a card in each language, as an answer speaks of one it made. An answer that uses them
  * when no card was made is told so (#386); used otherwise, as "I propose more sleep", they cost
- * one more request, in which Bite adds nothing. "I recommend", as "öneririm" or "ich schlage vor",
- * is advice, as to see a doctor, and no card.
+ * one more request, in which Bite adds nothing.
  */
 const CARD_WORDS: Record<Language, RegExp> = {
   en: /(?<!\p{L})(cards?|propos(e|ed|als?|ing))(?!\p{L})/iu,
-  de: /(?<!\p{L})(karten?|vorschl[aä]g|vorgeschlagen|schlage (ich|dir))/iu,
-  tr: /(?<!\p{L})(kart|öneri(?!r)|önerd)/iu,
+  de: /(?<!\p{L})(karten?|vorschl[aä]g|vorgeschlagen|schlage (ich|dir|vor))/iu,
+  tr: /(?<!\p{L})(kart|öneri|önerd)/iu,
 };
 
 /** Whether an answer speaks of a card, in the user's language. */
