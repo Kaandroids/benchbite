@@ -738,10 +738,16 @@ Deno.test(
     };
     const db = context(model, { search_foods: search });
 
-    await events(await handleChatRequest(ask(MESSAGE), db.ctx));
+    const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), db.ctx));
 
-    // Nothing more went to the model.
+    // Nothing more went to the model, and nothing was written into the thread, not even its photos.
     assertEquals(model.requests.length, 1);
+    assertEquals(answer.at(-1), { event: 'error', reason: 'not_saved' });
+    assertEquals(db.objects.size, 0);
+    assertEquals(
+      db.inserted.map((i) => i.table),
+      ['coach_threads'],
+    );
   },
 );
 

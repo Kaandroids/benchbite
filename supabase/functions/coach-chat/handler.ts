@@ -255,6 +255,11 @@ class Stop {
     return this.#cancelled;
   }
 
+  /** Whether the answer's thread was found deleted, so that nothing of the answer is saved. */
+  get gone() {
+    return this.#gone;
+  }
+
   /** Whether the answer was stopped, as far as is known now. */
   get stopped() {
     return this.#cancelled || this.#asked || this.#gone;
@@ -574,6 +579,8 @@ async function answer(
   }
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
+  // Nothing is written into a deleted thread, not even its media for a moment (ADR 0143).
+  if (stop.gone) return send({ event: 'error', reason: 'not_saved' });
   const end = ending(outcome, {
     // A proposal, a meal or a note made is kept with its card, even if the model ended without a
     // word.
