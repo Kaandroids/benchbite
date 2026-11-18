@@ -48,8 +48,8 @@ as $$
     ('password_changes', 'changed_at');
 $$;
 
--- The tables with a user_id that the export leaves out: proofs and limits of links and codes,
--- which hold only hashes and last minutes, and the work queues of the moment.
+-- The tables with a user_id or an owner_id that the export leaves out: proofs and limits of links
+-- and codes, which hold only hashes and last minutes, and the work queues of the moment.
 create function public.export_left_out()
 returns setof text
 language sql
