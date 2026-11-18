@@ -25,6 +25,7 @@ jest.mock('expo-router', () => {
     Redirect: ({ href }: { href: { params: { step: string } } }) => (
       <Text>Redirected to {href.params.step}</Text>
     ),
+    router: { navigate: jest.fn() },
   };
 });
 
@@ -202,6 +203,24 @@ describe('PlanStep', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     await fireEvent.press(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
     expect(mockStep.back).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('leads a refused consent or terms straight to their step, however far back', async () => {
+    const { router } = jest.requireMock<{ router: { navigate: jest.Mock } }>('expo-router');
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.mocked(saveOnboarding).mockRejectedValueOnce({ code: 'BB059' });
+    await render(<PlanStep />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Start my plan' }));
+    await waitFor(() =>
+      expect(screen.getByText(/Your acceptance of the terms of use is missing/)).toBeTruthy(),
+    );
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/onboarding/[step]',
+      params: { step: 'consent' },
+    });
+    expect(mockStep.back).not.toHaveBeenCalled();
     warn.mockRestore();
   });
 

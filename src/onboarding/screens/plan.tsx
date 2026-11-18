@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -82,7 +82,10 @@ export function PlanStep() {
                 : t(`onboarding.plan.refused.${failure}`)}
             </Text>
           ) : null}
-          {failure && failure !== 'connection' && back ? (
+          {failure === 'noConsent' || failure === 'noTerms' ? (
+            // Steps back, a draft saved before the terms were asked may be far from their box.
+            <Button label={t('common.back')} onPress={() => router.navigate(stepHref('consent'))} />
+          ) : failure && failure !== 'connection' && back ? (
             // Trying again would be refused again, so the way on is back to the answer.
             <Button label={t('common.back')} onPress={back} />
           ) : (
