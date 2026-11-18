@@ -20,9 +20,8 @@ error's message can hold a weight, a meal or what someone said to Bite.
   Functions will get a project of their own (#556).
 - **Errors and crashes only.** No tracing, logs, Session Replay, screenshots or view hierarchy,
   each of which could show what someone logged. They are turned off in `Sentry.init` as well as
-  by default, so that an SDK update cannot turn them on. Sessions stay, for the share of them
-  without a crash.
-- **Nothing of the person leaves the phone** (`src/lib/reporting.ts`):
+  by default, so that an SDK update cannot turn them on.
+- **JavaScript errors are scrubbed on the phone** (`src/lib/reporting.ts`):
   - `sendDefaultPii` is off: no IP address, user or route parameters.
   - `beforeSend` drops the user, the request, extra data and the device's name ("Kaan's iPhone"),
     and masks in messages addresses, tokens, ids and every number on its own, keeping the app's
@@ -33,10 +32,17 @@ error's message can hold a weight, a meal or what someone said to Bite.
   - It drops the hash that stays the same for a phone (`device_app_hash`), which would tell one
     person's errors apart.
   - Tests show that a realistic event keeps none of these.
-- **Sentry keeps none of it either.** The project prevents storing IP addresses, keeps its server
-  side data scrubbing on, and removes `user.geo`, the city Sentry otherwise works out from the IP
-  before dropping it (an advanced data scrubbing rule). A test error from a development build
-  showed each of these working.
+- **Native crashes are scrubbed by Sentry.** The native SDK sends its crashes, hangs and the
+  system's kills of the app without `beforeSend`, with the installation's id as the user, the
+  device's hash and name, and its own breadcrumbs. The project's advanced data scrubbing rules
+  remove the user, `device_app_hash` and `device.name` from every event as it arrives, before it is
+  stored; their exception text, which is the system's, is not masked.
+- **Sentry keeps none of it.** The project prevents storing IP addresses, keeps its server side
+  data scrubbing on, and also removes `user.geo`, the city Sentry otherwise works out from the IP.
+  A test error from a development build showed each of these working.
+- **No sessions.** Sessions would give the share of them without a crash, but carry the
+  installation's id, which no rule removes; the App Store and Google Play report crash rates
+  without it.
 - **The DSN is in the app, the auth token is not.** `EXPO_PUBLIC_SENTRY_DSN` only lets the app send
   events to the project, and every copy of the app needs it. `SENTRY_AUTH_TOKEN`, which uploads
   source maps and debug symbols at build time, is a secret kept on the build machine
