@@ -2717,5 +2717,21 @@
         "never": "Workouts stay on this phone, which tells you when a rest is over. You can still open Benchbite on the watch and join one."
       }
     }
+  },
+  "errorScreen": {
+    "app": {
+      "title": "Something went wrong",
+      "body": "Benchbite hit a problem it didn’t expect. What you logged is safe."
+    },
+    "section": {
+      "title": "This part didn’t load",
+      "body": "Something went wrong on this screen. The rest of Benchbite works."
+    },
+    "still": {
+      "title": "Still not working",
+      "body": "Close Benchbite and open it again."
+    },
+    "reported": "If it keeps happening, an update will fix it soon: we’ve been told.",
+    "goToday": "Go to Today"
   }
 }
