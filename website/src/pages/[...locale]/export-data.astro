@@ -1,0 +1,101 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { FUNCTIONS_URL } from '../../functions';
+import { localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { exportData } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="export-data" title={exportData.title}>
+  <main class="page">
+    <div>
+      <h1>{exportData.title}</h1>
+      <p class="muted lead">{exportData.text}</p>
+    </div>
+    <section class="card">
+      <h2 class="section-title">{exportData.inApp}</h2>
+      <ol>
+        {exportData.steps.map((step) => <li>{step}</li>)}
+      </ol>
+      <p class="guest-note">{exportData.guestNote}</p>
+    </section>
+    <section class="without-app" id="without-app">
+      <div>
+        <h2 class="section-title">{exportData.withoutApp}</h2>
+        <p>{exportData.withoutAppText}</p>
+      </div>
+      <form method="post" action={`${FUNCTIONS_URL}/request-data-export`}>
+        <input type="hidden" name="locale" value={locale} />
+        <label for="email">{exportData.emailLabel}</label>
+        <div class="row">
+          <input
+            class="field"
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            maxlength="254"
+            required
+            placeholder={exportData.emailPlaceholder}
+          />
+          <button class="button" type="submit">{exportData.send}</button>
+        </div>
+      </form>
+      <p class="muted link-note">{exportData.linkNote}</p>
+    </section>
+    <section>
+      <h2 class="section-title">{exportData.holds}</h2>
+      <p class="muted">{exportData.holdsText}</p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  ol {
+    margin: 0;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .without-app {
+    padding: 24px;
+    border-radius: 24px;
+    background: var(--lunch-background);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label {
+    font-weight: 800;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .field {
+    flex: 1 1 260px;
+  }
+
+  .link-note {
+    font-size: 16px;
+  }
+
+  .guest-note {
+    margin-top: 16px;
+  }
+</style>
