@@ -5,6 +5,8 @@ const DB_ERRORS = {
   tooYoung: 'BB002',
   noConsent: 'BB003',
   noTerms: 'BB059',
+  noAiConsent: 'BB060',
+  noHealthConsent: 'BB062',
   daysChanged: 'BB004',
   exerciseLimit: 'BB008',
   workoutLimit: 'BB009',

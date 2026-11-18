@@ -8,8 +8,7 @@ import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
-/** The consents a withdrawal is asked for. */
-export type Withdrawn = 'health' | 'ai';
+import type { Consent } from './consents';
 
 /** What each withdrawal deletes, as the user knows it. */
 const DELETES = {
@@ -22,7 +21,7 @@ const DELETES = {
 } as const;
 
 type WithdrawSheetProps = {
-  consent: Withdrawn;
+  consent: Consent;
   /** Withdraws it; the sheet waits while it does. */
   onWithdraw: () => void;
   withdrawing: boolean;

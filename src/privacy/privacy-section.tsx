@@ -12,8 +12,13 @@ import { PRIVACY_POLICY_URL } from '@/lib/links';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
-import { useConsents, useWithdrawAiConsent, useWithdrawHealthConsent } from './consents';
-import { WithdrawSheet, type Withdrawn } from './withdraw-sheet';
+import {
+  useConsents,
+  useWithdrawAiConsent,
+  useWithdrawHealthConsent,
+  type Consent,
+} from './consents';
+import { WithdrawSheet } from './withdraw-sheet';
 
 /**
  * The settings' privacy section (#652): each consent with when it was given and a way to withdraw
@@ -27,15 +32,15 @@ export function PrivacySection() {
   const consents = useConsents();
   const withdrawHealth = useWithdrawHealthConsent();
   const withdrawAi = useWithdrawAiConsent();
-  const [asking, setAsking] = useState<Withdrawn | null>(null);
+  const [asking, setAsking] = useState<Consent | null>(null);
   const withdrawing = asking === 'ai' ? withdrawAi : withdrawHealth;
 
-  const ask = (consent: Withdrawn) => {
+  const ask = (consent: Consent) => {
     withdrawHealth.reset();
     withdrawAi.reset();
     setAsking(consent);
   };
-  const shown: Withdrawn[] = isAccount ? ['health', 'ai'] : ['health'];
+  const shown: Consent[] = isAccount ? ['health', 'ai'] : ['health'];
 
   return (
     <>
@@ -82,7 +87,7 @@ export function PrivacySection() {
 }
 
 type ConsentRowProps = {
-  consent: Withdrawn;
+  consent: Consent;
   /** When it was given, if it holds. */
   given?: Date;
   /** Whether the consents were read, so that nothing is offered before it is known. */
