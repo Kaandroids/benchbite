@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { AccountSection, DeleteAccountButton } from '@/account/account-section';
 import { HealthSection } from '@/health/health-section';
+import { PrivacySection } from '@/privacy/privacy-section';
 import { healthStore } from '@/health/health';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
@@ -50,6 +51,9 @@ export function SettingsScreen() {
       </Section>
       <Section title={t('settings.language')}>
         <LanguageSection />
+      </Section>
+      <Section title={t('settings.privacy.title')}>
+        <PrivacySection />
       </Section>
       <DeleteAccountButton />
     </Screen>
