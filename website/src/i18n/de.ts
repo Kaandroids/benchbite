@@ -73,6 +73,7 @@ export const de: Messages = {
     support: 'Support',
     deleteAccount: 'Konto löschen',
     withdrawConsent: 'Einwilligung widerrufen',
+    exportData: 'Daten exportieren',
   },
   legal: {
     draft: 'Platzhalter. Der Rechtstext ist noch nicht geschrieben.',
@@ -307,6 +308,52 @@ export const de: Messages = {
     backToStart: 'Zurück zum Start',
     expiredTitle: 'Dieser Link funktioniert nicht mehr',
     expiredText: 'Dieser Link ist nach 30 Minuten abgelaufen oder wurde schon benutzt.',
+    askAgain: 'Neuen Link anfordern',
+  },
+  exportData: {
+    title: 'Deine Daten exportieren',
+    text: 'Hol dir eine Kopie von allem, was Benchbite über dich speichert, als eine Datei.',
+    inApp: 'In der App',
+    steps: [
+      'Öffne Benchbite und geh zu den Einstellungen.',
+      'Wähle unter Datenschutz „Exportieren“ neben Deine Daten.',
+    ],
+    guestNote:
+      'Nutzt du Benchbite als Gast? Exportiere in der App. Gastdaten haben keine E-Mail-Adresse, deshalb finden wir sie hier nicht.',
+    withoutApp: 'Ohne die App',
+    withoutAppText:
+      'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken einen Link, und du lädst die Datei auf der Seite herunter, die er öffnet.',
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'du@beispiel.de',
+    send: 'Link senden',
+    linkNote: 'Der Link funktioniert 30 Minuten lang.',
+    holds: 'In der Datei',
+    holdsText:
+      'Profil, Ziel und Gewichte; dein Plan, Trainings und Rekorde; Mahlzeiten, Wasser und Schritte; deine eigenen Lebensmittel, Rezepte und Übungen; Chats mit Bite und sein Notizbuch; deine Einwilligungen. Als JSON, ein Format, das andere Apps lesen. Fotos und Sprachnachrichten sind nicht darin; die Chats sagen, wo sie waren.',
+  },
+  exportLink: {
+    sentTitle: 'Schau in dein Postfach',
+    sentText:
+      'Wenn ein Konto diese Adresse nutzt, haben wir ihm einen Link zum Herunterladen seiner Daten geschickt.',
+    sentHow:
+      'Öffne den Link auf einem beliebigen Gerät und lade die Datei auf der Seite herunter, die er öffnet.',
+    sentNote:
+      'Der Link funktioniert 30 Minuten lang. Nichts angekommen? Schau im Spam-Ordner nach oder frag in einer Minute noch einmal.',
+    anotherEmail: 'Andere E-Mail verwenden',
+    downloadTitle: 'Deine Daten herunterladen',
+    downloadText: 'Die Datei enthält deine Gesundheitsdaten. Bewahre sie sicher auf.',
+    downloadNote: 'Eine Datei, als JSON, mit allem, was die Exportseite aufzählt.',
+    download: 'Herunterladen',
+    backToStart: 'Zurück zum Start',
+    again:
+      'Der Link funktioniert 30 Minuten lang, du kannst also noch einmal herunterladen, wenn es nicht klappt.',
+    failed: 'Die Datei konnte gerade nicht erstellt werden. Versuch es gleich noch einmal.',
+    noLink:
+      'Diese Seite öffnet sich über den Link in der E-Mail. Fordere einen Link auf der Exportseite an.',
+    noScript:
+      'Diese Seite braucht JavaScript, um den Link zu lesen. Du kannst deine Daten auch in der App exportieren.',
+    expiredTitle: 'Dieser Link funktioniert nicht mehr',
+    expiredText: 'Dieser Link ist nach 30 Minuten abgelaufen.',
     askAgain: 'Neuen Link anfordern',
   },
 };

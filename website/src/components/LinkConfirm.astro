@@ -14,21 +14,36 @@ type Props = {
   noLink: string;
   askAgain: { label: string; href: string };
   noScript: string;
+  /**
+   * A download, which leaves the page as it is: the usual button rather than the red one, pressed
+   * as often as needed while the link works.
+   */
+  download?: boolean;
 };
 
-const { locale, action, fields = {}, confirm, keep, failed, noLink, askAgain, noScript } =
-  Astro.props;
+const {
+  locale,
+  action,
+  fields = {},
+  confirm,
+  keep,
+  failed,
+  noLink,
+  askAgain,
+  noScript,
+  download = false,
+} = Astro.props;
 ---
 
 <!-- Shown once the script has read the link's token; the slot says what confirming does. -->
-<div class="content" id="with-link" hidden>
+<div class="content" id="with-link" data-download={download ? '' : undefined} hidden>
   <slot />
   <p class="failed" id="failed" role="alert" hidden>{failed}</p>
   <form method="post" action={`${FUNCTIONS_URL}/${action}`}>
     <input type="hidden" name="locale" value={locale} />
     {Object.entries(fields).map(([name, value]) => <input type="hidden" name={name} value={value} />)}
     <input type="hidden" name="token" />
-    <button class="button danger" type="submit">{confirm}</button>
+    <button class:list={['button', { danger: !download }]} type="submit">{confirm}</button>
     <a class="text-link" href={keep.href}>{keep.label}</a>
   </form>
 </div>
@@ -59,11 +74,15 @@ const { locale, action, fields = {}, confirm, keep, failed, noLink, askAgain, no
   readLink();
   window.addEventListener('hashchange', readLink);
 
-  // One press: a second, once the first has used the link, would find it gone.
+  // One press: a second, once the first has used the link, would find it gone. A download stays
+  // on the page and may be tried again, without the alert of a try that failed before; one that
+  // fails again comes back to it.
   const form = document.querySelector('#with-link form') as HTMLFormElement;
   const button = form.querySelector('button') as HTMLButtonElement;
+  const once = !(document.getElementById('with-link') as HTMLElement).hasAttribute('data-download');
   form.addEventListener('submit', () => {
-    button.disabled = true;
+    if (once) button.disabled = true;
+    else (document.getElementById('failed') as HTMLElement).hidden = true;
   });
   // A page brought back by Back can be sent again.
   window.addEventListener('pageshow', () => {

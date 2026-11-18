@@ -1,6 +1,7 @@
-// A link the website's forms ask for by email address: to delete an account (ADR 0094) or to
-// withdraw a consent (ADR 0146). The answer is the same page, after the same time, whether or not
-// the address has an account, so the forms tell nobody which addresses have one.
+// A link the website's forms ask for by email address: to delete an account (ADR 0094), to
+// withdraw a consent (ADR 0146) or to export the account's data (ADR 0148). The answer is the same
+// page, after the same time, whether or not the address has an account, so the forms tell nobody
+// which addresses have one.
 import { toBase64 } from './base64_bytes.ts';
 import type { Email, Send } from './email.ts';
 import { sha256Hex } from './hash.ts';

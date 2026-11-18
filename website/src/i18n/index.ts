@@ -11,8 +11,8 @@ export type Locale = (typeof LOCALES)[number];
 
 /**
  * The pages below the landing page, as they appear in addresses. The Edge Functions redirect to
- * the `delete-account/*` and `withdraw-consent/*` ones (supabase/functions/*-account-deletion and
- * *-consent-withdrawal): a new name goes there too.
+ * the `delete-account/*`, `withdraw-consent/*` and `export-data/*` ones (the functions
+ * *-account-deletion, *-consent-withdrawal and *-data-export): a new name goes there too.
  */
 export type Page =
   | 'privacy'
@@ -26,24 +26,23 @@ export type Page =
   | 'withdraw-consent'
   | 'withdraw-consent/sent'
   | 'withdraw-consent/done'
-  | 'withdraw-consent/expired';
+  | 'withdraw-consent/expired'
+  | 'export-data'
+  | 'export-data/sent'
+  | 'export-data/expired';
 
-/** What the sent, done and expired pages of a link say, as each kind of link has it. */
-export type LinkPagesCopy = Pick<
-  Messages['deleteLink'] & Messages['withdrawLink'],
-  | 'sentTitle'
-  | 'sentText'
-  | 'sentHow'
-  | 'sentNote'
-  | 'anotherEmail'
-  | 'doneTitle'
-  | 'doneText'
-  | 'doneNote'
-  | 'backToStart'
-  | 'expiredTitle'
-  | 'expiredText'
-  | 'askAgain'
+/** What the sent and expired pages of a link say, as every kind of link has them. */
+type LinkCopy = Messages['deleteLink'] & Messages['withdrawLink'] & Messages['exportLink'];
+export type LinkSentCopy = Pick<
+  LinkCopy,
+  'sentTitle' | 'sentText' | 'sentHow' | 'sentNote' | 'anotherEmail'
 >;
+/** The done page's, which only deleting an account and withdrawing a consent have. */
+export type LinkDoneCopy = Pick<
+  Messages['deleteLink'] & Messages['withdrawLink'],
+  'doneTitle' | 'doneText' | 'doneNote' | 'backToStart'
+>;
+export type LinkExpiredCopy = Pick<LinkCopy, 'expiredTitle' | 'expiredText' | 'askAgain'>;
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';

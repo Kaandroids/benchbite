@@ -163,3 +163,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0145](0145-start-the-onboarding-again-when-the-profile-is-gone.md)       | Start the onboarding again when the profile is gone                                     | Accepted                                             |
 | [0146](0146-withdraw-a-consent-from-the-website.md)                       | Withdraw a consent from the website                                                     | Accepted                                             |
 | [0147](0147-export-a-users-data.md)                                       | Export a user's data                                                                    | Accepted                                             |
+| [0148](0148-export-a-users-data-from-the-website.md)                      | Export a user's data from the website                                                   | Accepted                                             |

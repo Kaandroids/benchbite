@@ -42,9 +42,10 @@ To set it up once:
 3. In GitHub, under Settings → Environments, create the `website` environment, limit it to `main`,
    and add the two values as the secrets `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN`.
    Under Settings → Secrets and variables → Actions → Variables, add `SUPABASE_FUNCTIONS_URL`:
-   `https://<project-ref>.supabase.co/functions/v1`, where the forms of the delete and withdraw
-   pages post ([ADR 0094](adr/0094-delete-an-account-from-the-website.md),
-   [ADR 0146](adr/0146-withdraw-a-consent-from-the-website.md)). The workflow stops without it.
+   `https://<project-ref>.supabase.co/functions/v1`, where the forms of the delete, withdraw
+   and export pages post ([ADR 0094](adr/0094-delete-an-account-from-the-website.md),
+   [ADR 0146](adr/0146-withdraw-a-consent-from-the-website.md),
+   [ADR 0148](adr/0148-export-a-users-data-from-the-website.md)). The workflow stops without it.
 
 The token reaches the whole Netlify account, so replace it if it may have leaked. Before the site
 goes live, replace the placeholder texts and remove the `X-Robots-Tag` line from `website/public/_headers`, which keeps search
