@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email, email_confirmed_at, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'kaan@example.com', now(), false),
@@ -58,6 +58,23 @@ select is(
   public.start_data_export('kaan@example.com', '\x01', '\xa3'),
   null,
   'An address asking a fourth time from one IP within an hour gets no link'
+);
+
+select ok(
+  not exists (
+    select 1 from unnest(array['anon', 'authenticated']) r,
+      unnest(array[
+        'public.start_data_export(text, bytea, bytea)', 'public.export_data_by_link(bytea)',
+        'public.remove_old_data_exports()'
+      ]) f
+    where has_function_privilege(r, f, 'execute')
+  ) and not exists (
+    select 1 from unnest(array['anon', 'authenticated']) r,
+      unnest(array['public.data_export_links', 'public.data_export_requests']) t,
+      unnest(array['select', 'insert']) p
+    where has_table_privilege(r, t, p)
+  ),
+  'No client, signed in or not, can make, use or read a link'
 );
 
 set local role authenticated;
