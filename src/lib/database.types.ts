@@ -157,7 +157,7 @@ export type Database = {
           consent_version: string;
           granted_at?: string;
           id?: never;
-          user_id: string;
+          user_id?: string;
         };
         Update: {
           consent_version?: string;

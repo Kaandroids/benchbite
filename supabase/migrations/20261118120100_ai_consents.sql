@@ -4,7 +4,7 @@
 -- history shows which version was given when; it is deleted with the user.
 create table public.ai_consents (
   id bigint generated always as identity primary key,
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   consent_version text not null check (length(consent_version) between 1 and 32),
   granted_at timestamptz not null default now()
 );
