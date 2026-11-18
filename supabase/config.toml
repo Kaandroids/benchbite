@@ -488,6 +488,22 @@ verify_jwt = false
 import_map = "./functions/deno.json"
 entrypoint = "./functions/confirm-account-deletion/index.ts"
 
+# Sends a link to withdraw a consent, asked for by the website's form (ADR 0146). As
+# request-account-deletion, anyone can ask, so the platform's JWT check is off.
+[functions.request-consent-withdrawal]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/request-consent-withdrawal/index.ts"
+
+# Withdraws the consent a link from request-consent-withdrawal is for (ADR 0146). The link's
+# random, short-lived token is the proof, so the platform's JWT check is off.
+[functions.confirm-consent-withdrawal]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/confirm-consent-withdrawal/index.ts"
+
 # Removes the photos of deleted chats (ADR 0063). Only the pg_cron job calls it, with the secret
 # API key, which the function checks; the key is no JWT, so the platform's JWT check is off.
 [functions.purge-coach-media]
