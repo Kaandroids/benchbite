@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react-native';
 import type { ErrorEvent } from '@sentry/react-native';
 
 import {
+  isReporting,
   maskText,
   reportingOptions,
   scrubBreadcrumb,
@@ -202,6 +203,7 @@ describe('startReporting', () => {
     given(DSN, '1');
     startReporting();
     expect(Sentry.init).toHaveBeenCalledWith(reportingOptions(DSN, true));
+    expect(isReporting()).toBe(true);
   });
 
   it('starts nothing without a DSN, even when asked', () => {
