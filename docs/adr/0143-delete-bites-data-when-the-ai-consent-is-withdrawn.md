@@ -42,6 +42,8 @@ the withdrawal, so it belongs on the server, in one place.
 - The app and the website only call the function and say beforehand what it deletes.
 - Deleted data stays in the database's backups until they expire; the privacy policy must say how
   long.
-- An answer Bite is writing at that moment cannot save into its thread, which is gone: its message
-  fails the foreign key, and a note it saves fails the notes' policy, which needs the user's own
-  thread. The next message is refused by `ai_access()`.
+- No chat is started without a current consent: a new thread is refused (BB061), and a withdrawal
+  and a new thread of the same user wait for each other, so a thread started just before the
+  withdrawal is deleted by it and one started after is refused.
+- An answer Bite is writing at that moment stops at its next step, as its thread is gone, so nothing
+  more of it goes to the model; what it has not saved is not saved.
