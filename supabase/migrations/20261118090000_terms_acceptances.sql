@@ -22,11 +22,11 @@ grant select on public.terms_acceptances to authenticated;
 
 -- The onboarding is saved only with the terms accepted, as with the consent (BB059).
 create or replace function public.complete_onboarding(answers jsonb, plan jsonb)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
-AS $function$
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
 declare
   -- Named apart from the tables' columns, so that queries cannot confuse the two.
   caller_id uuid := (select auth.uid());
@@ -150,4 +150,4 @@ begin
     perform public.insert_workout_exercises(new_workout_id, caller_id, session -> 'exercises');
   end loop;
 end;
-$function$;
+$$;
