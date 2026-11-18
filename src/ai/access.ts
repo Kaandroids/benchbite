@@ -12,12 +12,14 @@ type AccessReason = Database['public']['Enums']['ai_access_reason'];
 type Feature = Database['public']['Enums']['ai_feature'];
 
 /**
- * Why the user may not use AI at all now, as ai_access() says: `service_paused` once all users
- * together have reached the month's AI spend limit (ADR 0134), which no plan lifts.
+ * Why the user may not use AI at all now, as ai_access() says: `consent_required` until the user
+ * consented to the AI features (ADR 0142); `service_paused` once all users together have reached
+ * the month's AI spend limit (ADR 0134), which no plan lifts.
  */
 export const REFUSALS = [
   'account_required',
   'plan_required',
+  'consent_required',
   'limit_reached',
   'service_paused',
 ] as const satisfies readonly AccessReason[];

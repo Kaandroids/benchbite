@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { type AiAccess, needsPremium, useChatAccess } from '@/ai/access';
+import { AiConsentScreen } from '@/ai/ai-consent-screen';
 import { LoadState } from '@/components/load-state';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
@@ -46,7 +47,8 @@ import { useVoicePlayback } from './use-voice-playback';
  * The chat with Bite (#294, ADR 0052): the one `thread` names, opened from the chats (#295), or a
  * new one. Opened from the tab bar, it goes on in the last chat while that is recent, and offers
  * it to continue otherwise (ADR 0055). A user whose plan has no chat reads the chats they have, or
- * sees what premium adds without one (#411).
+ * sees what premium adds without one (#411). Until the user consents to the AI features, it asks
+ * for that first (#290).
  */
 export function BiteScreen() {
   const access = useChatAccess();
@@ -87,6 +89,11 @@ export function BiteScreen() {
   }
   if (!open && !saved.data && access.readOnly) {
     return <BitePremiumScreen />;
+  }
+  // Nothing is sent to the model before the user consents (ADR 0142); once they do, access is
+  // read again and the chat opens.
+  if (!open && access.answer?.refusal === 'consent_required') {
+    return <AiConsentScreen onClose={() => router.back()} />;
   }
   if (!open) setOpenKey(key);
   // A thread of its own for each chat opened, so that one's messages never go on in another; a
