@@ -161,6 +161,7 @@ const answers = {
   displayName: 'Kaan',
   goal: 'lose_fat',
   consentedPolicyVersion: '2026-10-21',
+  acceptedTermsVersion: '2026-11-18',
   sex: 'male',
   birthYear: 1996,
   heightCm: 192,
@@ -195,6 +196,7 @@ update public.profiles set created_at = ${startTs}, updated_at = ${startTs},
   onboarding_completed_at = ${startTs} where user_id = '${uid}';
 update public.goals set created_at = ${startTs}, updated_at = ${startTs} where user_id = '${uid}';
 update public.health_data_consents set granted_at = ${startTs} where user_id = '${uid}';
+update public.terms_acceptances set accepted_at = ${startTs} where user_id = '${uid}';
 update public.workouts set created_at = ${startTs} where user_id = '${uid}';
 update public.weight_entries set measured_on = '${START}', created_at = ${startTs}
   where user_id = '${uid}';

@@ -28,6 +28,7 @@ export const ICONS = {
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   dance: { ios: 'figure.dance', android: 'nightlife', web: 'nightlife' },
+  document: { ios: 'doc.text', android: 'description', web: 'description' },
   down: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },
   dumbbell: { ios: 'dumbbell', android: 'fitness_center', web: 'fitness_center' },

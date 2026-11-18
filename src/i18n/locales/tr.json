@@ -1358,7 +1358,10 @@
         "body": "Sadece sen görebilirsin. İstediğin an geri çek ya da sil."
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
-      "policy": "Gizlilik politikasını oku"
+      "terms": "Kullanım şartlarını kabul ediyorum.",
+      "readPolicy": "Gizlilik politikasını oku",
+      "readTerms": "Kullanım şartlarını oku",
+      "read": "Oku"
     },
     "units": {
       "kg": "kg",
@@ -1491,6 +1494,7 @@
       "refused": {
         "tooYoung": "Benchbite 18 yaş ve üzeri içindir. Geri dönüp doğum yılını kontrol et.",
         "noConsent": "Sağlık verilerinin işlenmesine onayın eksik. Geri dönüp onay ver.",
+        "noTerms": "Kullanım şartlarını kabul etmen eksik. Geri dönüp kabul et.",
         "daysChanged": "Planın artık antrenman günlerinle uyuşmuyor. Geri dönüp günleri yeniden seç."
       },
       "notMedical": {
