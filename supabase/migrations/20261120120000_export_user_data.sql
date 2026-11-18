@@ -3,8 +3,9 @@
 -- for its owner's through export_user_data(), so both give the same file.
 
 -- The tables whose rows of a user are exported whole, but for the user's id, with what orders
--- them. Each table with a user_id is either here or in export_left_out(), which a test checks, so
--- that a table added later is not left out of the export unnoticed.
+-- them. Each table with a user_id or an owner_id is here, in export_nested() or in
+-- export_left_out(), which a test checks, so that a table added later is not left out of the
+-- export unnoticed.
 create function public.export_tables()
 returns table (name text, order_by text)
 language sql
@@ -58,9 +59,17 @@ as $$
   values
     ('account_deletion_codes'), ('account_deletion_links'), ('account_deletion_tries'),
     ('consent_withdrawal_links'), ('ai_calls_in_flight'), ('coach_media_deletions'),
-    ('coach_stops'), ('removed_meal_entries'),
-    -- Exported with their children below.
-    ('coach_threads'), ('recipes');
+    ('coach_stops'), ('removed_meal_entries');
+$$;
+
+-- The tables exported with the rows that hang off them, by export_user_data() itself.
+create function public.export_nested()
+returns setof text
+language sql
+immutable
+set search_path = ''
+as $$
+  values ('coach_threads'), ('recipes'), ('exercises');
 $$;
 
 -- The export of a user: the account, each table above, and what hangs off a row of the user's
@@ -134,7 +143,7 @@ end;
 $$;
 
 revoke execute on function public.export_tables(), public.export_left_out(),
-  public.export_user_data(uuid) from public, anon, authenticated;
+  public.export_nested(), public.export_user_data(uuid) from public, anon, authenticated;
 
 -- The caller's own export, for the app: guests too, as their data is on the server as well.
 create function public.export_my_data()

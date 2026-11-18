@@ -2628,6 +2628,7 @@ export type Database = {
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       export_left_out: { Args: Record<PropertyKey, never>; Returns: string[] };
       export_my_data: { Args: Record<PropertyKey, never>; Returns: Json };
+      export_nested: { Args: Record<PropertyKey, never>; Returns: string[] };
       export_tables: {
         Args: Record<PropertyKey, never>;
         Returns: {

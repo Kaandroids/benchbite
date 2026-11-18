@@ -21,11 +21,13 @@ select is(
   (select coalesce(array_agg(c.table_name::text order by 1), '{}')
     from information_schema.columns c
     join information_schema.tables t using (table_schema, table_name)
-    where c.table_schema = 'public' and c.column_name = 'user_id' and t.table_type = 'BASE TABLE'
+    where c.table_schema = 'public' and c.column_name in ('user_id', 'owner_id')
+      and t.table_type = 'BASE TABLE'
       and c.table_name not in (select name from public.export_tables())
+      and c.table_name not in (select public.export_nested())
       and c.table_name not in (select public.export_left_out())),
   '{}'::text[],
-  'Every table with a user_id is exported or left out on purpose'
+  'Every table with a user''s rows is exported or left out on purpose'
 );
 
 -- A and B each log a weight and a food of their own; A has a recipe, an exercise and a chat.

@@ -17,9 +17,11 @@ their account, which delete the data for good (ADR 0144, ADR 0087).
   chats, a recipe's ingredients within the recipe, and the user's own exercises with their names.
   The app calls `export_my_data()` for the signed-in user, guests too; the website's link will call
   `export_user_data()` for its owner (#553, part 2), so both give the same file.
-- **Each table with a user_id is exported or left out on purpose.** `export_tables()` lists those
-  exported, `export_left_out()` those left out, and a test fails for a table in neither, so that a
-  table added later cannot be missed. Left out are the hashes and limits of links and codes, which
+- **Each table with a user_id or owner_id is exported or left out on purpose.** `export_tables()`
+  lists those exported whole, `export_nested()` those exported with the rows that hang off them,
+  `export_left_out()` those left out, and a test fails for a table in none, so that a table added
+  later cannot be missed. A table that hangs off another, with no user of its own, is added to the
+  export by hand. Left out are the hashes and limits of links and codes, which
   last minutes, and the work queues of the moment, such as answers in flight and media to purge.
 - **Photos and voice messages are not in the file.** The messages name them by their path. A ZIP
   with the media is a later step; it would make the export much larger and slower.
