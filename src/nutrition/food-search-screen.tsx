@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
@@ -131,50 +132,55 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       />
     );
   return (
-    <Screen
-      // Back, not close: what was added stays.
-      onBack={() => router.back()}
-      title={t(`nutrition.addTo.${meal}`)}
-      action={
-        // As wide as the back button, so that the title stays in the middle.
-        <View style={styles.action}>
-          <RoundIconButton
-            icon="plus"
-            color="text"
-            background="track"
-            size={36}
-            label={t('nutrition.food.create')}
-            onPress={() =>
-              router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
-            }
+    // The search field opens the keyboard at once, which would cover Done and the list's end.
+    <KeyboardAvoiding>
+      <Screen
+        // Back, not close: what was added stays.
+        onBack={() => router.back()}
+        title={t(`nutrition.addTo.${meal}`)}
+        action={
+          // As wide as the back button, so that the title stays in the middle.
+          <View style={styles.action}>
+            <RoundIconButton
+              icon="plus"
+              color="text"
+              background="track"
+              size={36}
+              label={t('nutrition.food.create')}
+              onPress={() =>
+                router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
+              }
+            />
+          </View>
+        }
+        // Foods are saved as they are added; Done ends the screen, where a screen's main button is,
+        // so that nothing else there is taken for it.
+        footer={
+          <View style={{ gap: spacing.md }}>
+            {photoMeal.toast}
+            <Button label={t('common.done')} onPress={() => router.back()} />
+          </View>
+        }
+        scrolls={false}
+      >
+        <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
+          <SearchField
+            label={t('nutrition.search.placeholder')}
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            maxLength={50}
           />
+          <AddTiles onPhoto={photoMeal.openSheet} />
+          {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
+          {photoMeal.undoFailed ? (
+            <Note tone="danger">{t('nutrition.photo.undoError')}</Note>
+          ) : null}
         </View>
-      }
-      // Foods are saved as they are added; Done ends the screen, where a screen's main button is,
-      // so that nothing else there is taken for it.
-      footer={
-        <View style={{ gap: spacing.md }}>
-          {photoMeal.toast}
-          <Button label={t('common.done')} onPress={() => router.back()} />
-        </View>
-      }
-      scrolls={false}
-    >
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
-        <SearchField
-          label={t('nutrition.search.placeholder')}
-          value={query}
-          onChangeText={setQuery}
-          autoFocus
-          maxLength={50}
-        />
-        <AddTiles onPhoto={photoMeal.openSheet} />
-        {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
-        {photoMeal.undoFailed ? <Note tone="danger">{t('nutrition.photo.undoError')}</Note> : null}
-      </View>
-      {body}
-      {photoMeal.sheet}
-    </Screen>
+        {body}
+        {photoMeal.sheet}
+      </Screen>
+    </KeyboardAvoiding>
   );
 }
 
