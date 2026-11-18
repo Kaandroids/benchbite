@@ -1359,8 +1359,8 @@
       },
       "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
       "terms": "Ich akzeptiere die Nutzungsbedingungen.",
-      "policy": "Datenschutzerklärung lesen",
-      "termsLink": "Nutzungsbedingungen lesen",
+      "readPolicy": "Datenschutzerklärung lesen",
+      "readTerms": "Nutzungsbedingungen lesen",
       "read": "Lesen"
     },
     "units": {

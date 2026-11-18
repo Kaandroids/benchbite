@@ -1359,8 +1359,8 @@
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
       "terms": "Kullanım şartlarını kabul ediyorum.",
-      "policy": "Gizlilik politikasını oku",
-      "termsLink": "Kullanım şartlarını oku",
+      "readPolicy": "Gizlilik politikasını oku",
+      "readTerms": "Kullanım şartlarını oku",
       "read": "Oku"
     },
     "units": {

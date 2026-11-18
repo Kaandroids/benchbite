@@ -1359,8 +1359,8 @@
       },
       "agree": "I agree that Benchbite processes my health data for these purposes.",
       "terms": "I accept the Terms of use.",
-      "policy": "Read the privacy policy",
-      "termsLink": "Read the terms of use",
+      "readPolicy": "Read the privacy policy",
+      "readTerms": "Read the terms of use",
       "read": "Read"
     },
     "units": {
