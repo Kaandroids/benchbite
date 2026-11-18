@@ -111,7 +111,12 @@ function UserOnboardingProvider({
 
   // Finishing the onboarding, here or as the server reports it: the answers are saved, so the draft
   // with them goes.
+  // Whether the onboarding was finished since it last started again, here or as the server
+  // reported it: only then does an answer of the check below no longer finish it.
+  const answered = useRef(false);
+
   const finish = useCallback(() => {
+    answered.current = true;
     saveCompleted(userId, true);
     clearDraft(userId);
     setDraft(EMPTY_DRAFT);
@@ -125,9 +130,6 @@ function UserOnboardingProvider({
     setCompleted(false);
   }, [userId]);
 
-  // Whether the server answered the check below since the onboarding last started again: only its
-  // first answer may finish the onboarding.
-  const answered = useRef(false);
   const queryClient = useQueryClient();
   const restart = useCallback(() => {
     startOver();
@@ -167,11 +169,10 @@ function UserOnboardingProvider({
         if (!answered.current) {
           finish();
         }
+        // So that restarting it from the gallery sticks.
         answered.current = true;
       } else if (loadCompleted(userId)) {
         restart();
-      } else {
-        answered.current = true;
       }
       setChecking(false);
     };

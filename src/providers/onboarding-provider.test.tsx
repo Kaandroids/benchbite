@@ -221,6 +221,10 @@ describe('OnboardingProvider', () => {
     const { result } = await renderOnboarding();
     await waitFor(() => expect(result.current.completed).toBe(false));
 
+    // Opened again before the onboarding is finished on the other phone.
+    await act(async () => appStateListener?.('active'));
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(2));
+
     maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
     await act(async () => appStateListener?.('active'));
     await waitFor(() => expect(result.current.completed).toBe(true));
