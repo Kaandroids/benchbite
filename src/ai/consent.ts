@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase';
 
 import { ACCESS_KEY } from './access';
 
-// The version of the AI consent's text, recorded with each consent; raising it will ask users to
-// consent again.
+// The version of the AI consent's text, recorded with each consent. Raising it asks no one again
+// by itself: a migration must then make has_ai_consent() require that version (ADR 0142).
 export const AI_CONSENT_VERSION = '2026-11-18';
 
 /** Records the consent, then reads access again, so that what asked for it opens. */
