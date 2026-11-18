@@ -44,4 +44,4 @@ their account, which delete the data for good (ADR 0144, ADR 0087).
 - A column added to an exported table is exported as well, including one that should not be. A new
   column meant only for the server goes in a table of its own, or is removed in
   `export_user_data()`.
-- The export grows with the user's history; a year of logging is some hundred kilobytes.
+- The export grows with the user's history: a test account with 19 workouts gave 42 KB.
