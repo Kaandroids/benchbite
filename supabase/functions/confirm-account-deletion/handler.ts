@@ -4,6 +4,7 @@ import { deleteUser } from '../_shared/delete_user.ts';
 import { sha256Hex } from '../_shared/hash.ts';
 import { readForm } from '../_shared/request.ts';
 import { redirect, siteLocale, sitePage } from '../_shared/site.ts';
+import { isLinkToken } from '../_shared/site_link.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 export type ConfirmContext = {
@@ -26,7 +27,7 @@ export async function handleDeletionConfirm(
   // Back to the page with its token, in the fragment that stays in the browser, to try again.
   const failed = () => page(`delete-account/confirm#token=${token}&failed`);
 
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
+  if (!isLinkToken(token)) {
     return page('delete-account/expired');
   }
   const { data: userId, error } = await admin.rpc('account_deletion_user', {
