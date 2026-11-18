@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { localePath, type Locale, type Page } from '../i18n';
+import type { Messages } from '../i18n/en';
+
+type Props = {
+  locale: Locale;
+  page: Page;
+  copy: Messages['deleteLink'] | Messages['withdrawLink'];
+  /** The page that asks for a link, for another address. */
+  requestPage: Page;
+};
+
+const { locale, page, copy, requestPage } = Astro.props;
+---
+
+<!-- The page a form asking for a link sends on to, whether or not the address has an account. -->
+<Layout locale={locale} page={page} title={copy.sentTitle}>
+  <main class="page">
+    <div>
+      <h1>{copy.sentTitle}</h1>
+      <p class="muted lead">{copy.sentText}</p>
+    </div>
+    <section class="card">
+      <p>{copy.sentHow}</p>
+      <p class="muted">{copy.sentNote}</p>
+    </section>
+    <a class="text-link link" href={`${localePath(locale, requestPage)}#without-app`}>
+      {copy.anotherEmail}
+    </a>
+  </main>
+</Layout>
+
+<style>
+  .link {
+    align-self: flex-start;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+</style>

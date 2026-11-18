@@ -1,0 +1,34 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { localePath, type Locale, type Page } from '../i18n';
+import type { Messages } from '../i18n/en';
+
+type Props = {
+  locale: Locale;
+  page: Page;
+  copy: Messages['deleteLink'] | Messages['withdrawLink'];
+  /** The page that asks for a new link. */
+  requestPage: Page;
+};
+
+const { locale, page, copy, requestPage } = Astro.props;
+---
+
+<!-- The page a link sends on to once it no longer works. -->
+<Layout locale={locale} page={page} title={copy.expiredTitle}>
+  <main class="page">
+    <div>
+      <h1>{copy.expiredTitle}</h1>
+      <p class="muted lead">{copy.expiredText}</p>
+    </div>
+    <a class="button again" href={`${localePath(locale, requestPage)}#without-app`}>
+      {copy.askAgain}
+    </a>
+  </main>
+</Layout>
+
+<style>
+  .again {
+    align-self: flex-start;
+  }
+</style>
