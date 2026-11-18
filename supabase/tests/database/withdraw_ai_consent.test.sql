@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(18);
 
 -- A and B are premium and have consented; both chat with Bite.
 insert into auth.users (id, email, is_anonymous) values
@@ -113,6 +113,21 @@ select is(
   1::bigint,
   'Another user''s chats and notes are untouched'
 );
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is(
+  (select count(*) from public.ai_consent_withdrawals), 0::bigint,
+  'Users read only their own withdrawals'
+);
+reset role;
+set local role anon;
+select throws_ok(
+  $$ select * from public.ai_consent_withdrawals $$,
+  '42501',
+  null,
+  'anon cannot read withdrawals'
+);
+reset role;
 
 -- A consent given after the withdrawal counts again.
 insert into public.ai_consents (user_id, consent_version, granted_at)
