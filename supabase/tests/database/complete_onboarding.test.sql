@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(31);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -205,6 +205,10 @@ select throws_ok(
 -- Other users see nothing and cannot add workouts.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is_empty($$ select 1 from public.workouts $$, 'Users cannot read other users'' workouts');
+select is_empty(
+  $$ select 1 from public.terms_acceptances $$,
+  'Users cannot read other users'' acceptance of the terms'
+);
 select throws_ok(
   $$ insert into public.workouts (user_id, weekdays, type, estimated_minutes)
      values ('00000000-0000-0000-0000-00000000000b', '{2}', 'push', 30) $$,
@@ -230,6 +234,11 @@ select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
   '42501', null,
   'Anon cannot save an onboarding'
+);
+select throws_ok(
+  $$ select 1 from public.terms_acceptances $$,
+  '42501', null,
+  'Anon cannot read acceptances of the terms'
 );
 
 select * from finish();
