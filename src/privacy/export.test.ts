@@ -42,8 +42,8 @@ beforeEach(() => {
     .mockResolvedValue({ data: { format: 'benchbite-export' }, error: null } as never);
 });
 
-it('names the file after the day it was made', () => {
-  expect(exportFileName(new Date('2026-11-18T22:00:00Z'))).toBe('benchbite-data-2026-11-18.json');
+it('names the file after the device’s day it was made', () => {
+  expect(exportFileName(new Date(2026, 10, 19, 0, 30))).toBe('benchbite-data-2026-11-19.json');
 });
 
 it('writes what the server gathers to a file in the cache', async () => {

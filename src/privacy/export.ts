@@ -4,12 +4,13 @@ import { useMutation } from '@tanstack/react-query';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 const PREFIX = 'benchbite-data-';
 
-/** The export's name, with the day it was made: benchbite-data-2026-11-18.json. */
-export const exportFileName = (now: Date) => `${PREFIX}${now.toISOString().slice(0, 10)}.json`;
+/** The export's name, with the device's day it was made: benchbite-data-2026-11-18.json. */
+export const exportFileName = (now: Date) => `${PREFIX}${toIsoDate(now)}.json`;
 
 /**
  * Deletes the exports an earlier run left in the cache: one never shared, as when the app was
