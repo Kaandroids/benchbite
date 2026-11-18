@@ -42,5 +42,6 @@ the withdrawal, so it belongs on the server, in one place.
 - The app and the website only call the function and say beforehand what it deletes.
 - Deleted data stays in the database's backups until they expire; the privacy policy must say how
   long.
-- A chat answer running while the consent is withdrawn can still save its last message into a
-  thread that is gone, which fails; it starts no new chat, as `ai_access()` refuses the next call.
+- An answer Bite is writing at that moment cannot save into its thread, which is gone: its message
+  fails the foreign key, and a note it saves fails the notes' policy, which needs the user's own
+  thread. The next message is refused by `ai_access()`.
