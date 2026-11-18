@@ -4,17 +4,16 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
-import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
-import { TextLink } from '@/components/ui/text-link';
-import { PRIVACY_POLICY_URL } from '@/lib/links';
+import { PRIVACY_POLICY_URL, TERMS_URL } from '@/lib/links';
 import { TONES, useTheme, type Tone } from '@/theme';
 
-import { PRIVACY_POLICY_VERSION } from '../consent';
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../consent';
+import { ConsentBox } from '../consent-box';
 import { useStep } from '../use-step';
 
 const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName; tone: Tone }[] = [
@@ -24,27 +23,34 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName; tone: Tone }[] 
 ];
 
 /**
- * Explicit consent to process health data (GDPR Article 9), before any body data is asked. The
- * box starts unticked; leaving it unticked is how to decline, and the intro says the onboarding
- * cannot go on without it.
+ * Explicit consent to process health data (GDPR Article 9), before any body data is asked, and
+ * acceptance of the terms of use (ADR 0141), each in a box of its own beside the text it agrees
+ * to. The boxes start unticked; leaving one unticked is how to decline, and the intro says the
+ * onboarding cannot go on without the consent.
  *
- * The consent is saved only by Continue, with the current policy version. Unticking, or a saved
- * consent to an older policy, clears it at once, so no consent stays saved that the box does not
- * show.
+ * Both are saved only by Continue, with the current versions. Unticking, or a saved answer to an
+ * older version, clears it at once, so nothing stays saved that its box does not show.
  */
 export function ConsentStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { answers, answer, next, bar } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
+  const [accepted, setAccepted] = useState(answers.acceptedTermsVersion === TERMS_VERSION);
   const saved = answers.consentedPolicyVersion;
+  const savedTerms = answers.acceptedTermsVersion;
 
-  // A consent to an older policy no longer counts; the box shows it unticked, so clear it too.
+  // An answer to an older version no longer counts; its box shows it unticked, so clear it too.
   useEffect(() => {
     if (saved !== undefined && saved !== PRIVACY_POLICY_VERSION) {
       answer({ consentedPolicyVersion: undefined });
     }
   }, [saved, answer]);
+  useEffect(() => {
+    if (savedTerms !== undefined && savedTerms !== TERMS_VERSION) {
+      answer({ acceptedTermsVersion: undefined });
+    }
+  }, [savedTerms, answer]);
 
   return (
     <Screen
@@ -52,8 +58,13 @@ export function ConsentStep() {
       footer={
         <Button
           label={t('common.continue')}
-          disabled={!agreed}
-          onPress={() => next({ consentedPolicyVersion: PRIVACY_POLICY_VERSION })}
+          disabled={!agreed || !accepted}
+          onPress={() =>
+            next({
+              consentedPolicyVersion: PRIVACY_POLICY_VERSION,
+              acceptedTermsVersion: TERMS_VERSION,
+            })
+          }
         />
       }
     >
@@ -84,23 +95,30 @@ export function ConsentStep() {
           </View>
         ))}
       </Card>
-      {/* A little apart from the points, as the step's one answer. */}
-      <View style={{ marginTop: spacing.md }}>
-        <ChoiceCard
-          type="checkbox"
+      {/* A little apart from the points, as the step's answers. */}
+      <View style={{ marginTop: spacing.md, gap: spacing.md }}>
+        <ConsentBox
           title={t('onboarding.consent.agree')}
-          selected={agreed}
-          onPress={() => {
+          checked={agreed}
+          onToggle={() => {
             // Unticking withdraws a consent given earlier in this onboarding.
             if (agreed) answer({ consentedPolicyVersion: undefined });
             setAgreed(!agreed);
           }}
+          readLabel={t('onboarding.consent.policy')}
+          onRead={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+        <ConsentBox
+          title={t('onboarding.consent.terms')}
+          checked={accepted}
+          onToggle={() => {
+            if (accepted) answer({ acceptedTermsVersion: undefined });
+            setAccepted(!accepted);
+          }}
+          readLabel={t('onboarding.consent.termsLink')}
+          onRead={() => void Linking.openURL(TERMS_URL)}
         />
       </View>
-      <TextLink
-        label={t('onboarding.consent.policy')}
-        onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
-      />
     </Screen>
   );
 }
