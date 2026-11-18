@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { allLoaded } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
@@ -168,68 +169,71 @@ function IngredientSearch({
   const list = lists[tab];
 
   return (
-    <Screen
-      onBack={onClose}
-      title={
-        recipeName.trim()
-          ? t('nutrition.recipe.addTo', { name: recipeName.trim() })
-          : t('nutrition.recipe.addToNew')
-      }
-      footer={<Button label={t('common.done')} onPress={onClose} />}
-      scrolls={false}
-    >
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
-        <SearchField
-          label={t('nutrition.search.placeholder')}
-          value={query}
-          onChangeText={setQuery}
-          autoFocus
-          maxLength={50}
-        />
-        {full ? <Note tone="warning">{t('nutrition.recipe.full')}</Note> : null}
-      </View>
-      {typed.length === 0 ? (
-        <FlatList
-          data={list.query.isError ? [] : list.foods}
-          keyExtractor={(food) => refKey(food.ref)}
-          renderItem={({ item, index }) => row(item, index)}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
-          ListHeaderComponent={
-            <View
-              accessibilityRole="tablist"
-              accessibilityLabel={t('nutrition.quick.tabs')}
-              style={[styles.chips, { gap: spacing.sm, paddingBottom: spacing.md }]}
-            >
-              {(Object.keys(lists) as Tab[]).map((value) => (
-                <Chip
-                  key={value}
-                  label={t(`nutrition.quick.${value}`)}
-                  selected={tab === value}
-                  onPress={() => setTab(value)}
-                />
-              ))}
-            </View>
-          }
-          ListEmptyComponent={
-            <EmptyList
-              query={list.query}
-              icon={tab === 'favourites' ? 'star' : 'edit'}
-              title={list.empty[0]!}
-              message={list.empty[1]!}
-            />
-          }
-        />
-      ) : (
-        <SearchResults
-          typed={typed}
-          term={term}
-          search={search}
-          hint={t('nutrition.recipe.searchHint')}
-          renderRow={row}
-        />
-      )}
-    </Screen>
+    // The search field opens the keyboard at once, which would cover Done and the list's end.
+    <KeyboardAvoiding>
+      <Screen
+        onBack={onClose}
+        title={
+          recipeName.trim()
+            ? t('nutrition.recipe.addTo', { name: recipeName.trim() })
+            : t('nutrition.recipe.addToNew')
+        }
+        footer={<Button label={t('common.done')} onPress={onClose} />}
+        scrolls={false}
+      >
+        <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
+          <SearchField
+            label={t('nutrition.search.placeholder')}
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            maxLength={50}
+          />
+          {full ? <Note tone="warning">{t('nutrition.recipe.full')}</Note> : null}
+        </View>
+        {typed.length === 0 ? (
+          <FlatList
+            data={list.query.isError ? [] : list.foods}
+            keyExtractor={(food) => refKey(food.ref)}
+            renderItem={({ item, index }) => row(item, index)}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
+            ListHeaderComponent={
+              <View
+                accessibilityRole="tablist"
+                accessibilityLabel={t('nutrition.quick.tabs')}
+                style={[styles.chips, { gap: spacing.sm, paddingBottom: spacing.md }]}
+              >
+                {(Object.keys(lists) as Tab[]).map((value) => (
+                  <Chip
+                    key={value}
+                    label={t(`nutrition.quick.${value}`)}
+                    selected={tab === value}
+                    onPress={() => setTab(value)}
+                  />
+                ))}
+              </View>
+            }
+            ListEmptyComponent={
+              <EmptyList
+                query={list.query}
+                icon={tab === 'favourites' ? 'star' : 'edit'}
+                title={list.empty[0]!}
+                message={list.empty[1]!}
+              />
+            }
+          />
+        ) : (
+          <SearchResults
+            typed={typed}
+            term={term}
+            search={search}
+            hint={t('nutrition.recipe.searchHint')}
+            renderRow={row}
+          />
+        )}
+      </Screen>
+    </KeyboardAvoiding>
   );
 }
 
