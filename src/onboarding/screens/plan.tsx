@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -16,7 +16,8 @@ import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
-import { refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
+import { returnTo } from '../navigation';
+import { REFUSED_STEP, refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
 import { planDays } from '../plan-days';
 import { stepHref } from '../steps';
 import { useStep } from '../use-step';
@@ -36,7 +37,7 @@ export function PlanStep() {
   const { format } = useNumberFormat();
   const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
-  const { answers, next, back, bar } = useStep('plan');
+  const { answers, next, bar } = useStep('plan');
   const { targets, plan } = answers;
   const library = useExerciseLibrary();
   const [saving, setSaving] = useState(false);
@@ -82,12 +83,10 @@ export function PlanStep() {
                 : t(`onboarding.plan.refused.${failure}`)}
             </Text>
           ) : null}
-          {failure === 'noConsent' || failure === 'noTerms' ? (
-            // Steps back, a draft saved before the terms were asked may be far from their box.
-            <Button label={t('common.back')} onPress={() => router.navigate(stepHref('consent'))} />
-          ) : failure && failure !== 'connection' && back ? (
-            // Trying again would be refused again, so the way on is back to the answer.
-            <Button label={t('common.back')} onPress={back} />
+          {failure && failure !== 'connection' ? (
+            // Trying again would be refused again, so the way on is back to the answer's step,
+            // which may be far back in a draft saved before it was asked, as the terms.
+            <Button label={t('common.back')} onPress={() => returnTo(REFUSED_STEP[failure])} />
           ) : (
             <Button
               label={failure ? t('common.tryAgain') : t('onboarding.plan.start')}
