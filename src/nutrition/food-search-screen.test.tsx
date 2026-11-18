@@ -427,6 +427,16 @@ describe('FoodSearchScreen', () => {
     });
   });
 
+  it('asks for the AI consent from the photo tile before any photo is taken', async () => {
+    jest.mocked(useAiAccess).mockReturnValue({
+      data: { refusal: 'consent_required', byCount: true },
+    } as never);
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
+    expect(router.push).toHaveBeenCalledWith('/ai-consent');
+    expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
+  });
+
   it('keeps the sheet the tile opened when the answer comes later', async () => {
     const view = await render(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
     await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
