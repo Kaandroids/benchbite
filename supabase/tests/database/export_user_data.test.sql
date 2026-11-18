@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(14);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -91,6 +91,12 @@ select is(
   'Hi Bite',
   'A chat comes with its messages'
 );
+select ok(
+  (select not (d->'data'->'coach_threads'->0->'messages'->0 ?| array['model', 'input_tokens'])
+      and not d->'data' ? 'ai_usage'
+    from export),
+  'But not which model answered or what it cost, the service''s own'
+);
 select is(
   (select d->'data'->'exercises'->0->>'name' from export),
   'Hip thrust machine',
@@ -104,8 +110,8 @@ select is(
   'The export holds each exported and nested table, and no other'
 );
 select ok(
-  (select d->'data' ? 'health_data_consents' and d->'data' ? 'ai_usage' from export),
-  'It holds what the user cannot read themselves, as their consents and usage'
+  (select d->'data' ? 'health_data_consents' from export),
+  'It holds what the user cannot read themselves, as their consents'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');

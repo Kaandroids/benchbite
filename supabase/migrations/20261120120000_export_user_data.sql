@@ -44,12 +44,12 @@ as $$
     ('ai_consent_withdrawals', 'id'),
     ('terms_acceptances', 'id'),
     ('subscriptions', 'user_id'),
-    ('ai_usage', 'id'),
     ('password_changes', 'changed_at');
 $$;
 
 -- The tables with a user_id or an owner_id that the export leaves out: proofs and limits of links
--- and codes, which hold only hashes and last minutes, and the work queues of the moment.
+-- and codes, which hold only hashes and last minutes, the work queues of the moment, and the
+-- service's own record of the AI's models, tokens and costs.
 create function public.export_left_out()
 returns setof text
 language sql
@@ -59,7 +59,7 @@ as $$
   values
     ('account_deletion_codes'), ('account_deletion_links'), ('account_deletion_tries'),
     ('consent_withdrawal_links'), ('ai_calls_in_flight'), ('coach_media_deletions'),
-    ('coach_stops'), ('removed_meal_entries');
+    ('coach_stops'), ('removed_meal_entries'), ('ai_usage');
 $$;
 
 -- The tables exported with the rows that hang off them, by export_user_data() itself.
@@ -103,10 +103,12 @@ begin
   data := data || jsonb_build_object(
     'coach_threads', (
       select coalesce(jsonb_agg(to_jsonb(th) - 'user_id' || jsonb_build_object('messages', (
-        select coalesce(jsonb_agg(jsonb_build_object(
-          'role', m.role, 'content', m.content, 'expression', m.expression,
-          'interrupted', m.interrupted, 'created_at', m.created_at
-        ) order by m.id), '[]')
+        -- Which model answered and what it cost are the service's own, as in ai_usage.
+        select coalesce(jsonb_agg(
+          to_jsonb(m) - 'thread_id' - 'model' - 'input_tokens' - 'output_tokens'
+            - 'thinking_tokens' - 'cached_input_tokens'
+          order by m.id
+        ), '[]')
         from public.coach_messages m where m.thread_id = th.id
       )) order by th.id), '[]')
       from public.coach_threads th where th.user_id = target_id

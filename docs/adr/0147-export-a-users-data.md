@@ -23,6 +23,10 @@ their account, which delete the data for good (ADR 0144, ADR 0087).
   later cannot be missed. A table that hangs off another, with no user of its own, is added to the
   export by hand. Left out are the hashes and limits of links and codes, which
   last minutes, and the work queues of the moment, such as answers in flight and media to purge.
+- **The service's own record of the AI is left out:** which model answered each message, its
+  tokens, and the costs in `ai_usage`. They describe how Benchbite runs, not what the user gave it
+  (GDPR Art. 20 covers data the user provided). A request under Art. 15 for a full copy is answered
+  apart, with the lawyer's view on these columns.
 - **Photos and voice messages are not in the file.** The messages name them by their path. A ZIP
   with the media is a later step; it would make the export much larger and slower.
 - **The app writes the file to its cache and shares it** through the phone's share sheet with
