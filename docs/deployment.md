@@ -53,6 +53,10 @@ engines away.
 
 ## Monitoring
 
+The app's crashes and errors go to the `benchbite-app` project in Sentry's EU region
+(`https://benchbite.sentry.io`), without personal data
+([ADR 0149](adr/0149-report-crashes-and-errors-to-sentry.md)).
+
 The **Monitor** workflow checks the hosted project's scheduled jobs once a day and fails, which
 sends GitHub's usual email, when one stops working
 ([ADR 0067](adr/0067-check-scheduled-jobs-from-github-actions.md)). It checks two jobs:
