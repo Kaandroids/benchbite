@@ -72,6 +72,7 @@ export const de: Messages = {
     imprint: 'Impressum',
     support: 'Support',
     deleteAccount: 'Konto löschen',
+    withdrawConsent: 'Einwilligung widerrufen',
   },
   legal: {
     draft: 'Platzhalter. Der Rechtstext ist noch nicht geschrieben.',
@@ -229,6 +230,81 @@ export const de: Messages = {
     doneNote:
       'Die App auf deinem Handy startet jetzt als neuer Gast. Ein Abo läuft weiter, bis du es im App Store oder bei Google Play kündigst.',
     backToStart: 'Zur Startseite',
+    expiredTitle: 'Dieser Link funktioniert nicht mehr',
+    expiredText: 'Dieser Link ist nach 30 Minuten abgelaufen oder wurde schon benutzt.',
+    askAgain: 'Neuen Link anfordern',
+  },
+  withdrawConsent: {
+    title: 'Eine Einwilligung widerrufen',
+    text: 'Du kannst eine erteilte Einwilligung jederzeit widerrufen. Was vorher auf ihrer Grundlage geschah, bleibt rechtmäßig.',
+    inApp: 'In der App',
+    steps: [
+      'Öffne Benchbite und geh zu den Einstellungen.',
+      'Wähle unter Datenschutz „Widerrufen“ neben der Einwilligung.',
+    ],
+    guestNote:
+      'Nutzt du Benchbite als Gast? Widerrufe in der App. Gastdaten haben keine E-Mail-Adresse, deshalb finden wir sie hier nicht.',
+    withoutApp: 'Ohne die App',
+    withoutAppText:
+      'Wähle die Einwilligung und gib die E-Mail-Adresse deines Kontos ein. Wir schicken einen Link, und du bestätigst auf der Seite, die er öffnet.',
+    consentLabel: 'Einwilligung',
+    consents: {
+      ai: { title: 'KI-Funktionen', text: 'Bite und Mahlzeiten aus Fotos' },
+      health: {
+        title: 'Gesundheitsdaten',
+        text: 'Dein Profil und Plan. Ohne sie beginnt die App die Einrichtung neu.',
+      },
+    },
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'du@beispiel.de',
+    send: 'Link senden',
+    linkNote: 'Der Link funktioniert einmal, 30 Minuten lang.',
+    deleteInstead: 'Um alles zu beenden,',
+    deleteLink: 'lösch stattdessen dein Konto.',
+  },
+  withdrawLink: {
+    sentTitle: 'Schau in dein Postfach',
+    sentText:
+      'Wenn ein Konto diese Adresse nutzt, haben wir ihm einen Link zum Widerrufen geschickt.',
+    sentHow:
+      'Öffne den Link auf einem beliebigen Gerät und bestätige auf der Seite, die er öffnet. Das Öffnen ändert noch nichts.',
+    sentNote:
+      'Der Link funktioniert einmal, 30 Minuten lang. Nichts angekommen? Schau im Spam-Ordner nach oder frag in einer Minute noch einmal.',
+    anotherEmail: 'Andere E-Mail verwenden',
+    deletes: 'Wir löschen',
+    confirm: 'Widerrufen und löschen',
+    keep: 'Behalten',
+    health: {
+      title: 'Dein OK für Gesundheitsdaten widerrufen?',
+      text: 'Ohne es kann Benchbite deinen Plan nicht erstellen. Die App beginnt die Einrichtung neu.',
+      items: [
+        'Dein Profil, Gewicht und Plan',
+        'Alle Trainings, Mahlzeiten und Rekorde',
+        'Deine Chats mit Bite, da sie diese Daten auch brauchen',
+      ],
+      stays:
+        'dein Konto, Premium und deine eigenen Lebensmittel, Rezepte und Übungen. Um auch sie zu beenden, lösch dein Konto.',
+    },
+    ai: {
+      title: 'Dein OK für KI widerrufen?',
+      text: 'Bite und Mahlzeiten aus Fotos enden, und wir senden nichts mehr an Google.',
+      items: [
+        'Alle deine Chats mit Bite, mit ihren Fotos und Sprachnachrichten',
+        'Bites Notizbuch über dich',
+      ],
+      stays: 'Mahlzeiten, die du eingetragen hast, auch aus Fotos.',
+    },
+    staysLabel: 'Bleibt:',
+    failed: 'Der Widerruf hat gerade nicht geklappt. Versuch es gleich noch einmal.',
+    noLink:
+      'Diese Seite öffnet sich über den Link in der E-Mail. Fordere einen Link auf der Widerrufsseite an.',
+    noScript:
+      'Diese Seite braucht JavaScript, um den Link zu lesen. Du kannst die Einwilligung auch in der App widerrufen.',
+    doneTitle: 'Deine Einwilligung ist widerrufen',
+    doneText: 'Wir haben gelöscht, was auf ihr beruhte. Dein Konto bleibt.',
+    doneNote:
+      'Die App auf deinem Handy merkt es, wenn du sie das nächste Mal öffnest. Dort kannst du die Einwilligung jederzeit wieder erteilen.',
+    backToStart: 'Zurück zum Start',
     expiredTitle: 'Dieser Link funktioniert nicht mehr',
     expiredText: 'Dieser Link ist nach 30 Minuten abgelaufen oder wurde schon benutzt.',
     askAgain: 'Neuen Link anfordern',

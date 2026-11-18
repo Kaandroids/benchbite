@@ -70,6 +70,7 @@ export const en = {
     imprint: 'Imprint',
     support: 'Support',
     deleteAccount: 'Delete account',
+    withdrawConsent: 'Withdraw a consent',
   },
   legal: {
     draft: 'Placeholder. The legal text is not written yet.',
@@ -226,6 +227,79 @@ export const en = {
     doneText: 'Everything that was yours in Benchbite is gone. Thanks for training with us.',
     doneNote:
       'The app on your phone now starts again as a new guest. A store subscription keeps running until you cancel it in the App Store or Google Play.',
+    backToStart: 'Back to the start',
+    expiredTitle: 'This link no longer works',
+    expiredText: 'This link ran out after 30 minutes, or was already used.',
+    askAgain: 'Ask for a new link',
+  },
+  withdrawConsent: {
+    title: 'Withdraw a consent',
+    text: 'You can withdraw a consent you gave at any time. What was done with it before stays lawful.',
+    inApp: 'In the app',
+    steps: [
+      'Open Benchbite and go to Settings.',
+      'Under Privacy, choose Withdraw beside the consent.',
+    ],
+    guestNote:
+      "Using Benchbite as a guest? Withdraw in the app. Guest data has no email address, so we can't find it here.",
+    withoutApp: 'Without the app',
+    withoutAppText:
+      "Choose the consent and enter your account's email. We'll send a link, and you confirm on the page it opens.",
+    consentLabel: 'Consent',
+    consents: {
+      ai: { title: 'AI features', text: 'Bite and meals from photos' },
+      health: {
+        title: 'Health data',
+        text: 'Your profile and plan. Without it the app starts the setup again.',
+      },
+    },
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@example.com',
+    send: 'Send link',
+    linkNote: 'The link works once, for 30 minutes.',
+    deleteInstead: 'To end everything,',
+    deleteLink: 'delete your account instead.',
+  },
+  withdrawLink: {
+    sentTitle: 'Check your email',
+    sentText: 'If an account uses this address, we sent it a link to withdraw the consent.',
+    sentHow:
+      'Open the link on any device, then confirm on the page it opens. Opening it changes nothing yet.',
+    sentNote:
+      "The link works once, for 30 minutes. Didn't get it? Check your spam folder, or ask again in a minute.",
+    anotherEmail: 'Use another email',
+    deletes: 'We delete',
+    confirm: 'Withdraw and delete',
+    keep: 'Keep it',
+    health: {
+      title: 'Withdraw your OK for health data?',
+      text: "Benchbite can't build your plan without it. The app starts the setup again.",
+      items: [
+        'Your profile, weight and plan',
+        'All workouts, meals and records',
+        'Your chats with Bite, as they need this data too',
+      ],
+      stays:
+        'your account, premium, and your own foods, recipes and exercises. To end them too, delete your account.',
+    },
+    ai: {
+      title: 'Withdraw your OK for AI?',
+      text: 'Bite and meals from photos stop, and we send nothing more to Google.',
+      items: [
+        'All your chats with Bite, with their photos and voice messages',
+        "Bite's notebook about you",
+      ],
+      stays: "meals you've logged, also those from photos.",
+    },
+    staysLabel: 'Stays:',
+    failed: "We couldn't withdraw it just now. Try again in a moment.",
+    noLink: 'This page opens from the link in the email. Ask for a link on the withdraw page.',
+    noScript:
+      'This page needs JavaScript to read the link. You can also withdraw the consent in the app.',
+    doneTitle: 'Your consent is withdrawn',
+    doneText: 'We deleted what it covered. Your account stays.',
+    doneNote:
+      'The app on your phone sees it the next time you open it. You can give the consent again there at any time.',
     backToStart: 'Back to the start',
     expiredTitle: 'This link no longer works',
     expiredText: 'This link ran out after 30 minutes, or was already used.',
