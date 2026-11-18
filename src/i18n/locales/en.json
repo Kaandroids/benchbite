@@ -12,7 +12,9 @@
     "discard": "Discard",
     "done": "Done",
     "minutes": "{{minutes}} min",
-    "hours": "{{hours}} h {{minutes}} min"
+    "hours": "{{hours}} h {{minutes}} min",
+    "read": "Read",
+    "readPolicy": "Read the privacy policy"
   },
   "photoSheet": {
     "take": "Take a photo",
@@ -1359,9 +1361,7 @@
       },
       "agree": "I agree that Benchbite processes my health data for these purposes.",
       "terms": "I accept the Terms of use.",
-      "readPolicy": "Read the privacy policy",
-      "readTerms": "Read the terms of use",
-      "read": "Read"
+      "readTerms": "Read the terms of use"
     },
     "units": {
       "kg": "kg",

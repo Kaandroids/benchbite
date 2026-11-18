@@ -12,7 +12,9 @@
     "discard": "Sil",
     "done": "Bitti",
     "minutes": "{{minutes}} dk",
-    "hours": "{{hours}} sa {{minutes}} dk"
+    "hours": "{{hours}} sa {{minutes}} dk",
+    "read": "Oku",
+    "readPolicy": "Gizlilik politikasını oku"
   },
   "photoSheet": {
     "take": "Fotoğraf çek",
@@ -1359,9 +1361,7 @@
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
       "terms": "Kullanım şartlarını kabul ediyorum.",
-      "readPolicy": "Gizlilik politikasını oku",
-      "readTerms": "Kullanım şartlarını oku",
-      "read": "Oku"
+      "readTerms": "Kullanım şartlarını oku"
     },
     "units": {
       "kg": "kg",

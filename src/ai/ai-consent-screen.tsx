@@ -5,12 +5,12 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
+import { ConsentBox } from '@/components/ui/consent-box';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { PRIVACY_POLICY_URL } from '@/lib/links';
-import { ConsentBox } from '@/onboarding/consent-box';
 import { TONES, useTheme, type Tone } from '@/theme';
 
 import { useGiveAiConsent } from './consent';
@@ -100,7 +100,7 @@ export function AiConsentScreen({ onGiven, onClose }: AiConsentScreenProps) {
           title={t('bite.consent.agree')}
           checked={checked}
           onToggle={() => setChecked(!checked)}
-          readLabel={t('onboarding.consent.readPolicy')}
+          readLabel={t('common.readPolicy')}
           onRead={() => void Linking.openURL(PRIVACY_POLICY_URL)}
         />
       </View>

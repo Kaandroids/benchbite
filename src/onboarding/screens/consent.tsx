@@ -4,6 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
+import { ConsentBox } from '@/components/ui/consent-box';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
@@ -13,7 +14,6 @@ import { PRIVACY_POLICY_URL, TERMS_URL } from '@/lib/links';
 import { TONES, useTheme, type Tone } from '@/theme';
 
 import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../consent';
-import { ConsentBox } from '../consent-box';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
@@ -88,7 +88,7 @@ export function ConsentStep() {
           title={t('onboarding.consent.agree')}
           checked={consent.checked}
           onToggle={consent.toggle}
-          readLabel={t('onboarding.consent.readPolicy')}
+          readLabel={t('common.readPolicy')}
           onRead={() => void Linking.openURL(PRIVACY_POLICY_URL)}
         />
         <ConsentBox
