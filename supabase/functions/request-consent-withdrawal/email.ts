@@ -1,6 +1,6 @@
 // The email with the link to withdraw a consent (ADR 0146), in the language of the page it was
 // asked from, in the layout of _shared/account_email.ts.
-import { accountEmailHtml, escape, note, paragraph } from '../_shared/account_email.ts';
+import { type LinkEmailCopy, linkEmail } from '../_shared/account_email.ts';
 import type { Consent } from '../_shared/consents.ts';
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
@@ -43,13 +43,7 @@ const COPY = {
     note: 'Bağlantı bir kez, 30 dakika boyunca çalışır. Açmak hiçbir şeyi değiştirmez; sayfa önce sorar.',
     ignore: 'Bunu sen istemediysen bu e-postayı yok say; onayın olduğu gibi kalır.',
   },
-} satisfies Record<
-  SiteLocale,
-  { ask: Record<Consent, string> } & Record<
-    'subject' | 'title' | 'button' | 'note' | 'ignore',
-    string
-  >
->;
+} satisfies Record<SiteLocale, Omit<LinkEmailCopy, 'ask'> & { ask: Record<Consent, string> }>;
 
 export function withdrawalEmail(
   locale: SiteLocale,
@@ -58,16 +52,5 @@ export function withdrawalEmail(
   link: string,
 ): Email {
   const copy = COPY[locale];
-  const ask = copy.ask[consent];
-  const button = `<p style="margin: 0 0 16px">
-        <a href="${escape(link)}" style="display: inline-block; padding: 14px 24px; border-radius: 14px; background: #f25a00; color: #ffffff; font-weight: 800; text-decoration: none">${escape(copy.button)}</a>
-      </p>`;
-  const html = accountEmailHtml(locale, copy.title, [
-    paragraph(ask),
-    button,
-    note(copy.note),
-    note(copy.ignore),
-  ]);
-  const text = [copy.title, ask, link, copy.note, copy.ignore].join('\n\n');
-  return { to, subject: copy.subject, html, text };
+  return linkEmail(locale, { ...copy, ask: copy.ask[consent] }, to, link);
 }
