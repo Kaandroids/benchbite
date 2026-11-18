@@ -53,6 +53,7 @@ export function onboardingValue(changes: Partial<OnboardingValue> = {}): Onboard
     answer: jest.fn(),
     complete: jest.fn(),
     reset: jest.fn(),
+    restart: jest.fn(),
     ...changes,
   };
 }

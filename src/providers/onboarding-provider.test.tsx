@@ -1,9 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { sessionValue } from '@/test/context-mocks';
-import { act, renderHook, waitFor } from '@/test/render';
+import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
 import { useIsAccount, useSession } from './session-provider';
@@ -43,15 +44,20 @@ function signIn(userId: string | null, isAnonymous = true) {
   jest.mocked(useIsAccount).mockReturnValue(userId !== null && !isAnonymous);
 }
 
+/** A profile whose onboarding was finished, as the server answers. */
+const FINISHED = { onboarding_completed_at: '2026-10-01T10:00:00Z' };
+
 function storedDraft(userId: string) {
   const value = stored.get(`onboarding.${userId}.draft`);
   return value ? JSON.parse(value) : null;
 }
 
-function renderOnboarding() {
+function renderOnboarding(queryClient = createTestQueryClient()) {
   return renderHook(() => useOnboarding(), {
     wrapper: ({ children }: PropsWithChildren) => (
-      <OnboardingProvider>{children}</OnboardingProvider>
+      <QueryClientProvider client={queryClient}>
+        <OnboardingProvider>{children}</OnboardingProvider>
+      </QueryClientProvider>
     ),
   });
 }
@@ -88,6 +94,7 @@ describe('OnboardingProvider', () => {
     expect(result.current.completed).toBe(false);
 
     stored.set('onboarding.user-1.completed', 'true');
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
     const { result: completed } = await renderOnboarding();
     expect(completed.current.completed).toBe(true);
   });
@@ -176,8 +183,9 @@ describe('OnboardingProvider', () => {
     expect(result.current.draft.answers).toEqual({});
   });
 
-  it('never undoes a finished onboarding from the server', async () => {
+  it('keeps a finished onboarding whose profile is there', async () => {
     stored.set('onboarding.user-1.completed', 'true');
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
     const { result } = await renderOnboarding();
     await waitFor(() => expect(maybeSingle).toHaveBeenCalled());
     await act(async () => {});
@@ -185,7 +193,37 @@ describe('OnboardingProvider', () => {
     expect(stored.get('onboarding.user-1.completed')).toBe('true');
   });
 
-  it('asks the server again when the app returns to the foreground until it answers', async () => {
+  it('starts again once the profile of a finished onboarding is gone, with nothing kept', async () => {
+    stored.set('onboarding.user-1.completed', 'true');
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(['plan'], 'kept');
+    const { result } = await renderOnboarding(queryClient);
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(1));
+    expect(result.current.completed).toBe(true);
+
+    // The health data consent was withdrawn on another phone, which deleted the profile.
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+    await act(async () => appStateListener?.('active'));
+
+    await waitFor(() => expect(result.current.completed).toBe(false));
+    expect(stored.get('onboarding.user-1.completed')).toBeUndefined();
+    expect(queryClient.getQueryData(['plan'])).toBeUndefined();
+  });
+
+  it('keeps an onboarding restarted from the gallery, though the profile is there', async () => {
+    stored.set('onboarding.user-1.completed', 'true');
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
+    const { result } = await renderOnboarding();
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(1));
+
+    await act(() => result.current.reset());
+    await act(async () => appStateListener?.('active'));
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(2));
+    expect(result.current.completed).toBe(false);
+  });
+
+  it('asks the server again whenever the app returns to the foreground', async () => {
     maybeSingle.mockResolvedValueOnce({ data: null, error: new Error('offline') });
     const { result } = await renderOnboarding();
     await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(1));
@@ -193,16 +231,14 @@ describe('OnboardingProvider', () => {
     await act(async () => appStateListener?.('background'));
     expect(maybeSingle).toHaveBeenCalledTimes(1);
 
-    maybeSingle.mockResolvedValueOnce({
-      data: { onboarding_completed_at: '2026-10-01T10:00:00Z' },
-      error: null,
-    });
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
     await act(async () => appStateListener?.('active'));
     await waitFor(() => expect(result.current.completed).toBe(true));
     expect(maybeSingle).toHaveBeenCalledTimes(2);
 
     await act(async () => appStateListener?.('active'));
-    expect(maybeSingle).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(3));
+    expect(result.current.completed).toBe(true);
   });
 
   it('does not wait for the server for a guest', async () => {
