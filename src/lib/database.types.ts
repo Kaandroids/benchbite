@@ -2626,6 +2626,16 @@ export type Database = {
         }[];
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
+      export_left_out: { Args: Record<PropertyKey, never>; Returns: string[] };
+      export_my_data: { Args: Record<PropertyKey, never>; Returns: Json };
+      export_tables: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          name: string;
+          order_by: string;
+        }[];
+      };
+      export_user_data: { Args: { user_id: string }; Returns: Json };
       first_day_of_break: { Args: { today: string }; Returns: string };
       fitted_food_values: {
         Args: {
