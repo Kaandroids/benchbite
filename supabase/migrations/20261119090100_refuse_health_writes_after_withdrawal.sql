@@ -166,7 +166,10 @@ begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
-  -- After a write being made now, which this then deletes, or before it, which is then refused.
+  -- In the order other writes take them, the limits first (save_workout()), so that the two never
+  -- wait for each other. After a write being made now, which this then deletes, or before it,
+  -- which is then refused.
+  perform public.lock_user_limits(caller_id);
   perform public.lock_health_consent(caller_id);
   if not public.has_health_consent(caller_id) then
     raise exception 'There is no health data consent to withdraw' using errcode = 'BB062';
