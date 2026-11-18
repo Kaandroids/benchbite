@@ -2,6 +2,7 @@ import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
 import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
 import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
 import { Nunito_900Black } from '@expo-google-fonts/nunito/900Black';
+import * as Sentry from '@sentry/react-native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -18,6 +19,7 @@ import { SessionEnded } from '@/account/session-ended';
 import { AnimatedSplash } from '@/brand/animated-splash';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
+import { startReporting } from '@/lib/reporting';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
@@ -32,6 +34,8 @@ import { applyStoredPreferences } from '@/settings/preferences';
 import { fonts, useTheme } from '@/theme';
 import { WatchSync } from '@/watch/watch-sync';
 
+// First, so that what fails while the app starts is reported too (ADR 0149).
+startReporting();
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
 // The native splash screen follows the system's light or dark setting. Read it before the stored
@@ -41,7 +45,10 @@ showRemindersInForeground([REST_NOTIFICATION_ID]);
 // The look and language chosen in the settings, before the first screen shows.
 applyStoredPreferences();
 
-export default function RootLayout() {
+// Catches what fails anywhere below, and reports it with the screen it happened on.
+export default Sentry.wrap(RootLayout);
+
+function RootLayout() {
   return (
     // Gesture detectors, such as the one in the slider, only work inside this view.
     <GestureHandlerRootView style={styles.root}>
