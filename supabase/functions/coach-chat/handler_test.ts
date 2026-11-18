@@ -25,6 +25,8 @@ type Failures = {
   deletedThread?: number;
   /** The uploads, counted from 0, that storage fails. */
   failingUploads?: number[];
+  /** A new thread refused, as for a user who withdrew the AI consent since access was read. */
+  threadRefused?: boolean;
 };
 
 /**
@@ -38,7 +40,7 @@ type Failures = {
 function database(
   rpc: Record<string, unknown> = {},
   tables: Record<string, Row[]> = {},
-  { deletedThread, failingUploads = [] }: Failures = {},
+  { deletedThread, failingUploads = [], threadRefused }: Failures = {},
 ) {
   const inserted: { table: string; rows: Row[] }[] = [];
   const updated: { table: string; values: Row }[] = [];
@@ -75,6 +77,11 @@ function database(
       ...query(table),
       insert: (rows: Row | Row[]) => {
         const given = Array.isArray(rows) ? rows : [rows];
+        if (table === 'coach_threads' && threadRefused) {
+          const error = refused('BB061', 'The user has not consented to the AI features');
+          const builder = { select: () => builder, single: () => Promise.resolve(error) };
+          return builder;
+        }
         if (table === 'coach_messages') {
           const gone = (row: Row) =>
             row.thread_id === deletedThread || !threads.has(row.thread_id as number);
@@ -733,6 +740,17 @@ Deno.test('makes no more lookups once the thread is deleted, as by a withdrawn c
 
   // Nothing more went to the model.
   assertEquals(model.requests.length, 1);
+});
+
+Deno.test('says the consent is needed when the new thread is refused for want of it', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Yes.' }]);
+  const { ctx, inserted } = context(model, {}, {}, { threadRefused: true });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer, [{ event: 'error', reason: 'consent_required' }]);
+  assertEquals(model.requests.length, 0);
+  assertEquals(inserted, []);
 });
 
 Deno.test('takes only a request id that is one', async () => {

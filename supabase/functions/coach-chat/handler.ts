@@ -407,6 +407,10 @@ async function answer(
         .insert({ user_id: context.userId })
         .select('id')
         .single();
+      // The consent was withdrawn since access was read (BB061, ADR 0143).
+      if (created.error?.code === 'BB061') {
+        return send({ event: 'error', reason: 'consent_required' });
+      }
       if (created.error) throw created.error;
       threadId = created.data.id;
       send({ event: 'thread', threadId });
