@@ -46,7 +46,7 @@ type OnboardingContextValue = {
   /** Starts the onboarding again, for development. */
   reset: () => void;
   /**
-   * Starts again after the health data consent was withdrawn (ADR 0144): the onboarding, with
+   * Starts again after the health data consent was withdrawn (ADR 0145): the onboarding, with
    * nothing of before kept in the app.
    */
   restart: () => void;
@@ -141,7 +141,7 @@ function UserOnboardingProvider({
   // skips it here too. The server is asked once per user, and again whenever the app returns to
   // the foreground, so starting offline only delays the check. Only its first answer finishes the
   // onboarding, so restarting it from the gallery sticks. A finished onboarding whose profile is
-  // gone, as after the health data consent was withdrawn on another device (ADR 0144), starts
+  // gone, as after the health data consent was withdrawn on another device (ADR 0145), starts
   // again at any answer, so that this one stops logging data that may not be kept.
   useEffect(() => {
     answered.current = false;

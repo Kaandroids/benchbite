@@ -32,7 +32,7 @@ export function claimDevice(userId: string) {
 /**
  * Forgets what the device keeps for its user: the workout in progress, how workouts ended, the
  * reminders and the connection to the health store. For another user who signs in, and for a user
- * who starts again after withdrawing the health data consent (ADR 0144).
+ * who starts again after withdrawing the health data consent (ADR 0145).
  */
 export function forgetUserOnDevice() {
   endSession({ saved: false });
