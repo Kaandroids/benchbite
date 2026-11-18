@@ -132,6 +132,8 @@ function RootNavigator() {
             <Stack.Screen name="account/password" />
             {/* What premium adds, opened wherever the plan stops the user. */}
             <Stack.Screen name="premium" />
+            {/* The consent to the AI features, opened by a meal photo before it is taken. */}
+            <Stack.Screen name="ai-consent" />
             {/* Bite's chat, opened from the middle of the tab bar. */}
             <Stack.Screen name="bite/index" />
             <Stack.Screen name="bite/chats" />
