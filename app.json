@@ -99,7 +99,15 @@
           }
         }
       ],
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://de.sentry.io/",
+          "organization": "benchbite",
+          "project": "benchbite-app"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
