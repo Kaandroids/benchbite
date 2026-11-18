@@ -199,7 +199,10 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
       void loadOlder();
     }
   };
-  const refusal = chat.refusal ?? access?.refusal;
+  // A refusal for want of consent ends once access is read again and allows the chat, as after
+  // the user consents from its card; the others stay for the chat's life.
+  const consented = chat.refusal === 'consent_required' && access && !access.refusal;
+  const refusal = (consented ? undefined : chat.refusal) ?? access?.refusal;
   const readOnly = needsPremium(refusal);
   const busy = chat.status !== 'idle';
   // The same each render, so that the messages with notes do not render again.

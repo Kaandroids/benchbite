@@ -284,6 +284,27 @@ it('asks for the AI consent before a chat, and opens the chat once given', async
   expect(await screen.findByLabelText('Message')).toBeOnTheScreen();
 });
 
+it('opens the composer again once the user consents from a refusal in the chat', async () => {
+  // The read of access failed, so the chat opened and the server refused the message.
+  jest.mocked(supabase.rpc).mockRejectedValue(new Error('offline'));
+  const queryClient = createTestQueryClient();
+  const stream = liveStream();
+  await renderBite({ queryClient });
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  access('consent_required');
+  await stream.send({ event: 'error', reason: 'consent_required' });
+  await stream.end();
+
+  expect(await screen.findByText('Bite needs your OK')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
+
+  access();
+  await act(() => queryClient.invalidateQueries({ queryKey: ACCESS_KEY }));
+
+  expect(await screen.findByLabelText('Message')).toBeOnTheScreen();
+  expect(screen.queryByText('Bite needs your OK')).toBeNull();
+});
+
 it('leaves without the AI consent on Not now', async () => {
   access('consent_required');
   await renderBite();
