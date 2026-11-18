@@ -161,6 +161,7 @@ describe('reportingOptions', () => {
         attachViewHierarchy: false,
         enableCaptureFailedRequests: false,
         enableLogs: false,
+        enableAutoSessionTracking: false,
         beforeSend: scrubEvent,
         beforeBreadcrumb: scrubBreadcrumb,
       }),

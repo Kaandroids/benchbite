@@ -114,6 +114,11 @@ export function reportingOptions(dsn: string | undefined, development: boolean) 
     enableLogs: false,
     // The JavaScript SDK records the requests already, through beforeBreadcrumb.
     enableNetworkBreadcrumbs: false,
+    // Sessions carry the installation's id, which nothing on the way removes; the stores count
+    // crash-free sessions without it.
+    enableAutoSessionTracking: false,
+    // For JavaScript events only: the native SDK sends its crashes without them, and the project's
+    // server-side rules drop what they hold of the person (ADR 0149).
     beforeSend: scrubEvent,
     beforeBreadcrumb: scrubBreadcrumb,
   };
