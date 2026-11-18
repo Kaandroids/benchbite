@@ -71,6 +71,7 @@ export const en = {
     support: 'Support',
     deleteAccount: 'Delete account',
     withdrawConsent: 'Withdraw a consent',
+    exportData: 'Export your data',
   },
   legal: {
     draft: 'Placeholder. The legal text is not written yet.',
@@ -303,6 +304,45 @@ export const en = {
     backToStart: 'Back to the start',
     expiredTitle: 'This link no longer works',
     expiredText: 'This link ran out after 30 minutes, or was already used.',
+    askAgain: 'Ask for a new link',
+  },
+  exportData: {
+    title: 'Export your data',
+    text: 'Get a copy of everything Benchbite keeps about you, as one file.',
+    inApp: 'In the app',
+    steps: ['Open Benchbite and go to Settings.', 'Under Privacy, choose Export beside Your data.'],
+    guestNote:
+      "Using Benchbite as a guest? Export in the app. Guest data has no email address, so we can't find it here.",
+    withoutApp: 'Without the app',
+    withoutAppText:
+      "Enter your account's email. We'll send a link, and you download the file on the page it opens.",
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@example.com',
+    send: 'Send link',
+    linkNote: 'The link works for 30 minutes.',
+    holds: 'In the file',
+    holdsText:
+      'Profile, goal and weights; your plan, workouts and records; meals, water and steps; your own foods, recipes and exercises; chats with Bite and its notebook; your consents. As JSON, a format other apps read. Photos and voice messages are not in it; the chats say where they were.',
+  },
+  exportLink: {
+    sentTitle: 'Check your email',
+    sentText: 'If an account uses this address, we sent it a link to download its data.',
+    sentHow: 'Open the link on any device, then download the file on the page it opens.',
+    sentNote:
+      "The link works for 30 minutes. Didn't get it? Check your spam folder, or ask again in a minute.",
+    anotherEmail: 'Use another email',
+    downloadTitle: 'Download your data',
+    downloadText: 'The file holds your health data. Keep it somewhere safe.',
+    downloadNote: 'One file, as JSON, with everything listed on the export page.',
+    download: 'Download',
+    backToStart: 'Back to the start',
+    again: 'The link works for 30 minutes, so you can download again if it fails.',
+    failed: "We couldn't make the file just now. Try again in a moment.",
+    noLink: 'This page opens from the link in the email. Ask for a link on the export page.',
+    noScript:
+      'This page needs JavaScript to read the link. You can also export your data in the app.',
+    expiredTitle: 'This link no longer works',
+    expiredText: 'This link ran out after 30 minutes.',
     askAgain: 'Ask for a new link',
   },
 };

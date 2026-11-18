@@ -73,6 +73,7 @@ export const tr: Messages = {
     support: 'Destek',
     deleteAccount: 'Hesabı sil',
     withdrawConsent: 'Onayı geri çek',
+    exportData: 'Verileri dışa aktar',
   },
   legal: {
     draft: 'Yer tutucu. Yasal metin henüz yazılmadı.',
@@ -300,6 +301,49 @@ export const tr: Messages = {
     backToStart: 'Başa dön',
     expiredTitle: 'Bu bağlantı artık çalışmıyor',
     expiredText: 'Bu bağlantının 30 dakikalık süresi doldu ya da zaten kullanıldı.',
+    askAgain: 'Yeni bağlantı iste',
+  },
+  exportData: {
+    title: 'Verilerini dışa aktar',
+    text: 'Benchbite’ın senin hakkında tuttuğu her şeyin bir kopyasını tek bir dosya olarak al.',
+    inApp: 'Uygulamada',
+    steps: [
+      'Benchbite’ı aç ve Ayarlar’a git.',
+      'Gizlilik altında, Verilerin’in yanındaki Dışa aktar’ı seç.',
+    ],
+    guestNote:
+      'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamada dışa aktar. Misafir verilerinin e-posta adresi yok, bu yüzden onları burada bulamayız.',
+    withoutApp: 'Uygulama olmadan',
+    withoutAppText:
+      'Hesabının e-posta adresini gir. Bir bağlantı göndeririz, sen de dosyayı açtığı sayfadan indirirsin.',
+    emailLabel: 'E-posta',
+    emailPlaceholder: 'sen@ornek.com',
+    send: 'Bağlantı gönder',
+    linkNote: 'Bağlantı 30 dakika boyunca çalışır.',
+    holds: 'Dosyada',
+    holdsText:
+      'Profil, hedef ve kilolar; planın, antrenmanların ve rekorların; öğünler, su ve adımlar; kendi besinlerin, tariflerin ve egzersizlerin; Bite ile sohbetler ve onun defteri; onayların. JSON olarak, başka uygulamaların okuduğu bir biçimde. Fotoğraflar ve sesli mesajlar içinde değil; sohbetler nerede olduklarını söyler.',
+  },
+  exportLink: {
+    sentTitle: 'E-postana bak',
+    sentText:
+      'Bu adresi bir hesap kullanıyorsa, ona verilerini indirmesi için bir bağlantı gönderdik.',
+    sentHow: 'Bağlantıyı herhangi bir cihazda aç, sonra dosyayı açtığı sayfadan indir.',
+    sentNote:
+      'Bağlantı 30 dakika boyunca çalışır. Gelmedi mi? Spam klasörüne bak ya da bir dakika sonra tekrar iste.',
+    anotherEmail: 'Başka bir e-posta kullan',
+    downloadTitle: 'Verilerini indir',
+    downloadText: 'Dosyada sağlık verilerin var. Onu güvenli bir yerde sakla.',
+    downloadNote: 'Dışa aktarma sayfasında sayılan her şeyi içeren, JSON biçiminde tek bir dosya.',
+    download: 'İndir',
+    backToStart: 'Başa dön',
+    again: 'Bağlantı 30 dakika boyunca çalışır; olmazsa yeniden indirebilirsin.',
+    failed: 'Dosyayı şu an oluşturamadık. Birazdan tekrar dene.',
+    noLink: 'Bu sayfa e-postadaki bağlantıyla açılır. Dışa aktarma sayfasından bir bağlantı iste.',
+    noScript:
+      'Bu sayfanın bağlantıyı okuması için JavaScript gerekir. Verilerini uygulamada da dışa aktarabilirsin.',
+    expiredTitle: 'Bu bağlantı artık çalışmıyor',
+    expiredText: 'Bu bağlantının 30 dakikalık süresi doldu.',
     askAgain: 'Yeni bağlantı iste',
   },
 };
