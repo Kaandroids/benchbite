@@ -28,7 +28,8 @@ const COPY = {
     },
     button: 'Seite öffnen',
     note: 'Der Link funktioniert einmal, 30 Minuten lang. Das Öffnen ändert nichts; die Seite fragt erst nach.',
-    ignore: 'Warst du das nicht? Ignoriere diese E-Mail, dann bleibt deine Einwilligung, wie sie ist.',
+    ignore:
+      'Warst du das nicht? Ignoriere diese E-Mail, dann bleibt deine Einwilligung, wie sie ist.',
   },
   tr: {
     subject: 'Benchbite’ta bir onayı geri çek',
