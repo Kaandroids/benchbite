@@ -161,6 +161,7 @@ const answers = {
   displayName: 'Kaan',
   goal: 'lose_fat',
   consentedPolicyVersion: '2026-10-21',
+  acceptedTermsVersion: '2026-11-18',
   sex: 'male',
   birthYear: 1996,
   heightCm: 192,
