@@ -14,6 +14,7 @@ import { TONES, useTheme, type Tone } from '@/theme';
 
 import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../consent';
 import { ConsentBox } from '../consent-box';
+import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
 const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName; tone: Tone }[] = [
@@ -35,22 +36,8 @@ export function ConsentStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { answers, answer, next, bar } = useStep('consent');
-  const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
-  const [accepted, setAccepted] = useState(answers.acceptedTermsVersion === TERMS_VERSION);
-  const saved = answers.consentedPolicyVersion;
-  const savedTerms = answers.acceptedTermsVersion;
-
-  // An answer to an older version no longer counts; its box shows it unticked, so clear it too.
-  useEffect(() => {
-    if (saved !== undefined && saved !== PRIVACY_POLICY_VERSION) {
-      answer({ consentedPolicyVersion: undefined });
-    }
-  }, [saved, answer]);
-  useEffect(() => {
-    if (savedTerms !== undefined && savedTerms !== TERMS_VERSION) {
-      answer({ acceptedTermsVersion: undefined });
-    }
-  }, [savedTerms, answer]);
+  const consent = useAgreement('consentedPolicyVersion', PRIVACY_POLICY_VERSION, answers, answer);
+  const terms = useAgreement('acceptedTermsVersion', TERMS_VERSION, answers, answer);
 
   return (
     <Screen
@@ -58,7 +45,7 @@ export function ConsentStep() {
       footer={
         <Button
           label={t('common.continue')}
-          disabled={!agreed || !accepted}
+          disabled={!consent.checked || !terms.checked}
           onPress={() =>
             next({
               consentedPolicyVersion: PRIVACY_POLICY_VERSION,
@@ -99,28 +86,49 @@ export function ConsentStep() {
       <View style={{ marginTop: spacing.md, gap: spacing.md }}>
         <ConsentBox
           title={t('onboarding.consent.agree')}
-          checked={agreed}
-          onToggle={() => {
-            // Unticking withdraws a consent given earlier in this onboarding.
-            if (agreed) answer({ consentedPolicyVersion: undefined });
-            setAgreed(!agreed);
-          }}
-          readLabel={t('onboarding.consent.policy')}
+          checked={consent.checked}
+          onToggle={consent.toggle}
+          readLabel={t('onboarding.consent.readPolicy')}
           onRead={() => void Linking.openURL(PRIVACY_POLICY_URL)}
         />
         <ConsentBox
           title={t('onboarding.consent.terms')}
-          checked={accepted}
-          onToggle={() => {
-            if (accepted) answer({ acceptedTermsVersion: undefined });
-            setAccepted(!accepted);
-          }}
-          readLabel={t('onboarding.consent.termsLink')}
+          checked={terms.checked}
+          onToggle={terms.toggle}
+          readLabel={t('onboarding.consent.readTerms')}
           onRead={() => void Linking.openURL(TERMS_URL)}
         />
       </View>
     </Screen>
   );
+}
+
+/**
+ * One box's answer, kept as `key`: ticked only for the current `version` of its text, which
+ * Continue saves. Unticking, or a saved answer to an older version, withdraws it.
+ */
+function useAgreement(
+  key: 'consentedPolicyVersion' | 'acceptedTermsVersion',
+  version: string,
+  answers: OnboardingAnswers,
+  answer: (answers: Partial<OnboardingAnswers>) => void,
+) {
+  const saved = answers[key];
+  const [checked, setChecked] = useState(saved === version);
+
+  // An answer to an older version no longer counts; the box shows it unticked, so clear it too.
+  useEffect(() => {
+    if (saved !== undefined && saved !== version) {
+      answer({ [key]: undefined });
+    }
+  }, [key, saved, version, answer]);
+
+  const toggle = () => {
+    // Unticking withdraws an answer given earlier in this onboarding.
+    if (checked) answer({ [key]: undefined });
+    setChecked(!checked);
+  };
+  return { checked, toggle };
 }
 
 const styles = StyleSheet.create({
