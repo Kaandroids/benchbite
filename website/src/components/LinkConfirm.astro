@@ -75,12 +75,14 @@ const {
   window.addEventListener('hashchange', readLink);
 
   // One press: a second, once the first has used the link, would find it gone. A download stays
-  // on the page and may be tried again.
+  // on the page and may be tried again, without the alert of a try that failed before; one that
+  // fails again comes back to it.
   const form = document.querySelector('#with-link form') as HTMLFormElement;
   const button = form.querySelector('button') as HTMLButtonElement;
   const once = !(document.getElementById('with-link') as HTMLElement).hasAttribute('data-download');
   form.addEventListener('submit', () => {
-    button.disabled = once;
+    if (once) button.disabled = true;
+    else (document.getElementById('failed') as HTMLElement).hidden = true;
   });
   // A page brought back by Back can be sent again.
   window.addEventListener('pageshow', () => {
