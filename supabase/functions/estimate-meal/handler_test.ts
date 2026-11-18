@@ -317,6 +317,7 @@ Deno.test('refuses a user who may not call the model, before asking it', async (
   for (const [rpc, reason, status] of [
     [{ ai_access: { allowed: false, reason: 'plan_required' } }, 'plan_required', 403],
     [{ ai_access: { allowed: false, reason: 'account_required' } }, 'account_required', 403],
+    [{ ai_access: { allowed: false, reason: 'consent_required' } }, 'consent_required', 403],
     [{ ai_access: { allowed: false, reason: 'limit_reached' } }, 'limit_reached', 429],
     [{ ai_access: { allowed: false, reason: 'service_paused' } }, 'service_paused', 503],
     [

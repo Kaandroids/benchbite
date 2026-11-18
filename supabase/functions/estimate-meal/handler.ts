@@ -66,6 +66,7 @@ const STATUS: Record<EstimateReason, number> = {
   photos_too_large: 413,
   account_required: 403,
   plan_required: 403,
+  consent_required: 403,
   limit_reached: 429,
   request_too_large: 413,
   unpriced_model: 503,
