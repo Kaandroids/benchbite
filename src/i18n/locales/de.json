@@ -168,7 +168,42 @@
       "more": "Chatte mit Bite, und mehr",
       "hint": "Öffnet deinen Plan und was Premium bietet"
     },
-    "watch": "Uhr"
+    "watch": "Uhr",
+    "privacy": {
+      "title": "Datenschutz",
+      "givenOn": "Erteilt am {{date}}",
+      "notGiven": "Nicht erteilt",
+      "withdraw": "Widerrufen",
+      "give": "Erteilen",
+      "policy": "Datenschutzerklärung",
+      "note": "Ein Widerruf ändert nichts an dem, was vorher geschah.",
+      "deletes": "Wir löschen",
+      "confirm": "Widerrufen und löschen",
+      "failed": "Der Widerruf hat nicht geklappt. Versuch es noch einmal.",
+      "health": {
+        "title": "Gesundheitsdaten für deinen Plan",
+        "withdrawLabel": "Dein OK für Gesundheitsdaten widerrufen",
+        "withdrawTitle": "Dein OK für Gesundheitsdaten widerrufen?",
+        "withdrawBody": "Ohne es kann Benchbite deinen Plan nicht erstellen. Du beginnst die Einrichtung neu.",
+        "deletes": {
+          "profile": "Dein Profil, Gewicht und Plan",
+          "logs": "Alle Trainings, Mahlzeiten und Rekorde",
+          "bite": "Deine Chats mit Bite, da sie diese Daten auch brauchen"
+        },
+        "stays": "Bleibt: dein Konto, Premium und deine eigenen Lebensmittel, Rezepte und Übungen. Um auch sie zu beenden, lösch dein Konto."
+      },
+      "ai": {
+        "title": "KI: Bite und Mahlzeiten aus Fotos",
+        "withdrawLabel": "Dein OK für KI widerrufen",
+        "withdrawTitle": "Dein OK für KI widerrufen?",
+        "withdrawBody": "Bite und Mahlzeiten aus Fotos enden, und wir senden nichts mehr an Google.",
+        "deletes": {
+          "chats": "Alle deine Chats mit Bite, mit ihren Fotos und Sprachnachrichten",
+          "notebook": "Bites Notizbuch über dich"
+        },
+        "stays": "Bleibt: Mahlzeiten, die du eingetragen hast, auch aus Fotos."
+      }
+    }
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",

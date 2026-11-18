@@ -2933,6 +2933,13 @@ export type Database = {
           title: string;
         }[];
       };
+      my_consents: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          ai_given_at: string;
+          health_given_at: string;
+        }[];
+      };
       my_latest_weight_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;

@@ -26,15 +26,24 @@ export function claimDevice(userId: string) {
   if (owner === null) {
     return;
   }
+  forgetUserOnDevice();
+}
+
+/**
+ * Forgets what the device keeps for its user: the workout in progress, how workouts ended, the
+ * reminders and the connection to the health store. For another user who signs in, and for a user
+ * who starts again after withdrawing the health data consent (ADR 0145).
+ */
+export function forgetUserOnDevice() {
   endSession({ saved: false });
-  // How the previous user's workouts ended is theirs, and no watch of the next user's needs it.
+  // How the user's workouts ended is theirs, and no watch of the next user's needs it.
   forgetEndedSessions();
   saveReminderMinutes(null);
   void cancelReminders().catch((error: unknown) =>
     console.warn('Could not cancel the reminders', error),
   );
-  // The access the phone's store allowed stays: it is the phone owner's, and the new user reads
-  // nothing before connecting with their own consent (ADR 0108).
+  // The access the phone's store allowed stays: it is the phone owner's, and nothing is read
+  // before the user connects again with their own consent (ADR 0108).
   forgetHealthOnDevice();
 }
 

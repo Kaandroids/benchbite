@@ -168,7 +168,42 @@
       "more": "Bite ile sohbet ve fazlası",
       "hint": "Planını ve premium'un sunduklarını açar"
     },
-    "watch": "Saat"
+    "watch": "Saat",
+    "privacy": {
+      "title": "Gizlilik",
+      "givenOn": "{{date}} tarihinde verildi",
+      "notGiven": "Verilmedi",
+      "withdraw": "Geri çek",
+      "give": "Ver",
+      "policy": "Gizlilik politikası",
+      "note": "Geri çekmek, önceden yapılanları değiştirmez.",
+      "deletes": "Sileceklerimiz",
+      "confirm": "Geri çek ve sil",
+      "failed": "Geri çekilemedi. Tekrar dene.",
+      "health": {
+        "title": "Planın için sağlık verileri",
+        "withdrawLabel": "Sağlık verileri onayını geri çek",
+        "withdrawTitle": "Sağlık verileri onayını geri çekmek istiyor musun?",
+        "withdrawBody": "Benchbite onsuz planını oluşturamaz. Kurulumu yeniden başlarsın.",
+        "deletes": {
+          "profile": "Profilin, kilon ve planın",
+          "logs": "Tüm antrenmanlar, öğünler ve rekorlar",
+          "bite": "Bite ile sohbetlerin, çünkü onlar da bu verilere ihtiyaç duyar"
+        },
+        "stays": "Kalanlar: hesabın, premium ve kendi besinlerin, tariflerin ve egzersizlerin. Onları da bitirmek için hesabını sil."
+      },
+      "ai": {
+        "title": "Yapay zekâ: Bite ve fotoğraftan öğünler",
+        "withdrawLabel": "Yapay zekâ onayını geri çek",
+        "withdrawTitle": "Yapay zekâ onayını geri çekmek istiyor musun?",
+        "withdrawBody": "Bite ve fotoğraftan öğünler durur, Google’a artık hiçbir şey göndermeyiz.",
+        "deletes": {
+          "chats": "Bite ile tüm sohbetlerin, fotoğrafları ve sesli mesajlarıyla",
+          "notebook": "Bite’ın senin hakkındaki defteri"
+        },
+        "stays": "Kalanlar: kaydettiğin öğünler, fotoğraftan olanlar da."
+      }
+    }
   },
   "loadError": {
     "title": "Yüklenemedi",

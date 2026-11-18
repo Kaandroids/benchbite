@@ -4,11 +4,14 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppState } from 'react-native';
 
+import { forgetUserOnDevice } from '@/account/device-owner';
 import { supabase } from '@/lib/supabase';
 import {
   clearDraft,
@@ -42,6 +45,11 @@ type OnboardingContextValue = {
   complete: () => void;
   /** Starts the onboarding again, for development. */
   reset: () => void;
+  /**
+   * Starts again after the health data consent was withdrawn (ADR 0145): the onboarding, with
+   * nothing of before kept in the app.
+   */
+  restart: () => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -60,6 +68,7 @@ const LOADING: OnboardingContextValue = {
   answer: () => {},
   complete: () => {},
   reset: () => {},
+  restart: () => {},
 };
 
 /**
@@ -102,21 +111,45 @@ function UserOnboardingProvider({
 
   // Finishing the onboarding, here or as the server reports it: the answers are saved, so the draft
   // with them goes.
+  // Whether the onboarding was finished since it last started again, here or as the server
+  // reported it: only then does an answer of the check below no longer finish it.
+  const answered = useRef(false);
+
   const finish = useCallback(() => {
+    answered.current = true;
     saveCompleted(userId, true);
     clearDraft(userId);
     setDraft(EMPTY_DRAFT);
     setCompleted(true);
   }, [userId]);
 
+  const startOver = useCallback(() => {
+    saveCompleted(userId, false);
+    clearDraft(userId);
+    setDraft(EMPTY_DRAFT);
+    setCompleted(false);
+  }, [userId]);
+
+  const queryClient = useQueryClient();
+  const restart = useCallback(() => {
+    startOver();
+    forgetUserOnDevice();
+    queryClient.clear();
+    // An onboarding finished again, on another phone, finishes it here too.
+    answered.current = false;
+  }, [startOver, queryClient]);
+
   // Someone who finished the onboarding on another device, after signing in to their account,
   // skips it here too. The server is asked once per user, and again whenever the app returns to
-  // the foreground until it answers, so starting offline only delays the check. The answer can
-  // only finish the onboarding, never undo it, so restarting it from the gallery sticks.
+  // the foreground, so starting offline only delays the check. Only its first answer finishes the
+  // onboarding, so restarting it from the gallery sticks. A finished onboarding whose profile is
+  // gone, as after the health data consent was withdrawn on another device (ADR 0145), starts
+  // again at any answer, so that this one stops logging data that may not be kept.
   useEffect(() => {
-    let answered = false;
+    answered.current = false;
+    let stopped = false;
     const check = async () => {
-      if (answered) {
+      if (stopped) {
         return;
       }
       const { data, error } = await supabase
@@ -124,7 +157,7 @@ function UserOnboardingProvider({
         .select('onboarding_completed_at')
         .eq('user_id', userId)
         .maybeSingle();
-      if (answered) {
+      if (stopped) {
         return;
       }
       // Without an answer, the onboarding shows; it still skips once the server answers.
@@ -132,9 +165,14 @@ function UserOnboardingProvider({
         setChecking(false);
         return;
       }
-      answered = true;
       if (data?.onboarding_completed_at) {
-        finish();
+        if (!answered.current) {
+          finish();
+        }
+        // So that restarting it from the gallery sticks.
+        answered.current = true;
+      } else if (loadCompleted(userId)) {
+        restart();
       }
       setChecking(false);
     };
@@ -145,10 +183,10 @@ function UserOnboardingProvider({
       }
     });
     return () => {
-      answered = true;
+      stopped = true;
       subscription.remove();
     };
-  }, [userId, finish]);
+  }, [userId, finish, restart]);
 
   // A slow answer does not hold the app up: the onboarding shows, and still skips once it comes.
   useEffect(() => {
@@ -192,14 +230,10 @@ function UserOnboardingProvider({
           answers: pruneAnswers({ ...current.answers, ...answers }),
         })),
       complete: finish,
-      reset: () => {
-        saveCompleted(userId, false);
-        clearDraft(userId);
-        setDraft(EMPTY_DRAFT);
-        setCompleted(false);
-      },
+      restart,
+      reset: startOver,
     }),
-    [update, finish, userId],
+    [update, finish, restart, startOver],
   );
 
   const value = useMemo(

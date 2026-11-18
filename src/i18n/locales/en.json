@@ -168,7 +168,42 @@
       "more": "Chat with Bite, and more",
       "hint": "Opens your plan and what premium adds"
     },
-    "watch": "Watch"
+    "watch": "Watch",
+    "privacy": {
+      "title": "Privacy",
+      "givenOn": "Given on {{date}}",
+      "notGiven": "Not given",
+      "withdraw": "Withdraw",
+      "give": "Give",
+      "policy": "Privacy policy",
+      "note": "Withdrawing doesn’t change what was done before.",
+      "deletes": "We delete",
+      "confirm": "Withdraw and delete",
+      "failed": "Couldn’t withdraw it. Try again.",
+      "health": {
+        "title": "Health data for your plan",
+        "withdrawLabel": "Withdraw your OK for health data",
+        "withdrawTitle": "Withdraw your OK for health data?",
+        "withdrawBody": "Benchbite can’t build your plan without it. You’d start the setup again.",
+        "deletes": {
+          "profile": "Your profile, weight and plan",
+          "logs": "All workouts, meals and records",
+          "bite": "Your chats with Bite, as they need this data too"
+        },
+        "stays": "Stays: your account, premium, and your own foods, recipes and exercises. To end them too, delete your account."
+      },
+      "ai": {
+        "title": "AI: Bite and meals from photos",
+        "withdrawLabel": "Withdraw your OK for AI",
+        "withdrawTitle": "Withdraw your OK for AI?",
+        "withdrawBody": "Bite and meals from photos stop, and we send nothing more to Google.",
+        "deletes": {
+          "chats": "All your chats with Bite, with their photos and voice messages",
+          "notebook": "Bite’s notebook about you"
+        },
+        "stays": "Stays: meals you’ve logged, also those from photos."
+      }
+    }
   },
   "loadError": {
     "title": "This couldn't load",
