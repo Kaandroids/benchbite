@@ -31,7 +31,9 @@ cp .env.example .env.local
 ```
 
 `.env.local` holds the Supabase URL and publishable key the app connects to. It is ignored by
-Git, and the defaults point at the local Supabase stack.
+Git, and the defaults point at the local Supabase stack. The Sentry DSN in it is optional: a
+development build reports nothing unless `EXPO_PUBLIC_SENTRY_IN_DEV=1` is set too, to try the
+setup ([ADR 0149](adr/0149-report-crashes-and-errors-to-sentry.md)).
 
 ## Run Supabase locally
 

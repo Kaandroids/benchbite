@@ -53,6 +53,10 @@ engines away.
 
 ## Monitoring
 
+The app's crashes and errors go to the `benchbite-app` project in Sentry's EU region
+(`https://benchbite.sentry.io`), without personal data
+([ADR 0149](adr/0149-report-crashes-and-errors-to-sentry.md)).
+
 The **Monitor** workflow checks the hosted project's scheduled jobs once a day and fails, which
 sends GitHub's usual email, when one stops working
 ([ADR 0067](adr/0067-check-scheduled-jobs-from-github-actions.md)). It checks two jobs:
@@ -93,11 +97,17 @@ with Xcode and an Apple Developer account added in Xcode's settings.
    ```bash
    EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+   EXPO_PUBLIC_SENTRY_DSN=https://<key>@<org>.ingest.de.sentry.io/<project>
    ```
 
-   The URL is the project's root, without `/rest/v1`. This file takes precedence over `.env.local`,
-   which still points at the local stack. Never put a secret key in it: everything in it ends up in
-   the app.
+   The URL is the project's root, without `/rest/v1`. The DSN is the `benchbite-app` project's, from
+   Sentry's project settings under Client Keys ([ADR 0149](adr/0149-report-crashes-and-errors-to-sentry.md));
+   without it the build reports nothing. This file takes precedence over `.env.local`, which still
+   points at the local stack. Never put a secret key in it: everything in it ends up in the app.
+
+   For stack traces Sentry can read, put an auth token, from Sentry's settings under Auth Tokens,
+   in `.env.local` as `SENTRY_AUTH_TOKEN=...`: the build uploads its source maps and debug symbols
+   with it. It is a secret, and never ends up in the app; without it the build still works.
 
 2. Connect the iPhone, trust the Mac, and turn on **Developer Mode** (Settings → Privacy & Security).
 3. Find the iPhone's UDID with `xcrun devicectl list devices`, then build and install:

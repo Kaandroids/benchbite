@@ -164,3 +164,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0146](0146-withdraw-a-consent-from-the-website.md)                       | Withdraw a consent from the website                                                     | Accepted                                             |
 | [0147](0147-export-a-users-data.md)                                       | Export a user's data                                                                    | Accepted                                             |
 | [0148](0148-export-a-users-data-from-the-website.md)                      | Export a user's data from the website                                                   | Accepted                                             |
+| [0149](0149-report-crashes-and-errors-to-sentry.md)                       | Report crashes and errors to Sentry                                                     | Accepted                                             |

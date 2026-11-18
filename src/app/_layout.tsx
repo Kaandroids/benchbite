@@ -1,3 +1,6 @@
+// First, so that it starts before the other modules load (ADR 0149).
+import '@/lib/start-reporting';
+
 import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
 import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
 import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
@@ -18,6 +21,7 @@ import { SessionEnded } from '@/account/session-ended';
 import { AnimatedSplash } from '@/brand/animated-splash';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
+import { wrapRoot } from '@/lib/reporting';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
@@ -41,7 +45,10 @@ showRemindersInForeground([REST_NOTIFICATION_ID]);
 // The look and language chosen in the settings, before the first screen shows.
 applyStoredPreferences();
 
-export default function RootLayout() {
+// Reports know the screens and touches that led to an error; this catches nothing.
+export default wrapRoot(RootLayout);
+
+function RootLayout() {
   return (
     // Gesture detectors, such as the one in the slider, only work inside this view.
     <GestureHandlerRootView style={styles.root}>
