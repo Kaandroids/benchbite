@@ -1,11 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { localePath, type LinkPagesCopy, type Locale, type Page } from '../i18n';
+import { localePath, type LinkSentCopy, type Locale, type Page } from '../i18n';
 
 type Props = {
   locale: Locale;
   page: Page;
-  copy: LinkPagesCopy;
+  copy: LinkSentCopy;
   /** The page that asks for a link, for another address. */
   requestPage: Page;
 };
