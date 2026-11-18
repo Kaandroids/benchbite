@@ -724,23 +724,26 @@ Deno.test('makes no more lookups once the app stops the answer', async () => {
   assertEquals(inserted[1].rows.length, 1);
 });
 
-Deno.test('makes no more lookups once the thread is deleted, as by a withdrawn consent', async () => {
-  const model = new FakeModel(
-    [{ type: 'toolCall', id: 'c0', name: 'search_foods', args: { query: 'oats' } }],
-    [{ type: 'text', text: '[[neutral]] Oats.' }],
-  );
-  // The consent is withdrawn while the lookup runs, which deletes the thread.
-  const search = () => {
-    db.threads.delete(100);
-    return [];
-  };
-  const db = context(model, { search_foods: search });
+Deno.test(
+  'makes no more lookups once the thread is deleted, as by a withdrawn consent',
+  async () => {
+    const model = new FakeModel(
+      [{ type: 'toolCall', id: 'c0', name: 'search_foods', args: { query: 'oats' } }],
+      [{ type: 'text', text: '[[neutral]] Oats.' }],
+    );
+    // The consent is withdrawn while the lookup runs, which deletes the thread.
+    const search = () => {
+      db.threads.delete(100);
+      return [];
+    };
+    const db = context(model, { search_foods: search });
 
-  await events(await handleChatRequest(ask(MESSAGE), db.ctx));
+    await events(await handleChatRequest(ask(MESSAGE), db.ctx));
 
-  // Nothing more went to the model.
-  assertEquals(model.requests.length, 1);
-});
+    // Nothing more went to the model.
+    assertEquals(model.requests.length, 1);
+  },
+);
 
 Deno.test('says the consent is needed when the new thread is refused for want of it', async () => {
   const model = new FakeModel([{ type: 'text', text: '[[happy]] Yes.' }]);
