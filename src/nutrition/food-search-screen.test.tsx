@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 
 import { useAiAccess } from '@/ai/access';
-import { act, fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor, within } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
 import { useAddEntry, useCopyEntries, useUndoEstimate } from './entries';
@@ -18,6 +18,10 @@ import {
 } from './quick-foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/components/ui/keyboard-avoiding', () =>
+  jest.requireActual('@/test/keyboard-avoiding'),
+);
+
 jest.mock('@/ai/access', () => ({
   ...jest.requireActual<typeof import('@/ai/access')>('@/ai/access'),
   useAiAccess: jest.fn(),
@@ -110,6 +114,13 @@ beforeEach(() => {
 const MONDAY = new Date(2026, 10, 9);
 const WEDNESDAY = new Date(2026, 10, 4, 9, 0);
 describe('FoodSearchScreen', () => {
+  it('keeps Done above the keyboard, which the search field opens at once', async () => {
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    expect(
+      within(screen.getByTestId('keyboard-avoiding')).getByRole('button', { name: 'Done' }),
+    ).toBeTruthy();
+  });
+
   it('asks for two letters before searching', async () => {
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
     expect(screen.getByText('Add to lunch')).toBeTruthy();

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 
-import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { fireEvent, render, screen, waitFor, within } from '@/test/render';
 
 import { useFood, useFoodSearch, type Food, type FoodResult } from './foods';
 import { useFavouriteFoods, useMyFoods } from './quick-foods';
@@ -8,6 +8,10 @@ import { RecipeFormScreen } from './recipe-form-screen';
 import { useDeleteRecipe, useRecipe, useSaveRecipe, type Ingredient, type Recipe } from './recipes';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/components/ui/keyboard-avoiding', () =>
+  jest.requireActual('@/test/keyboard-avoiding'),
+);
+
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), replace: jest.fn(), dismissTo: jest.fn() },
 }));
@@ -187,6 +191,15 @@ describe('RecipeFormScreen, new', () => {
 });
 
 describe('RecipeFormScreen, picking ingredients', () => {
+  it('keeps the picker’s Done above the keyboard, in a modal of its own over the form', async () => {
+    await render(<RecipeFormScreen kind="new" meal="lunch" day="2026-10-28" />);
+    expect(screen.getAllByTestId('keyboard-avoiding')).toHaveLength(1);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add ingredient' }));
+    // The form's does not reach into the modal, so the picker has one of its own.
+    const [, picker] = screen.getAllByTestId('keyboard-avoiding');
+    expect(within(picker!).getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+
   it('offers the favourites and own foods before anything is typed, without recipes', async () => {
     await render(<RecipeFormScreen kind="new" meal="lunch" day="2026-10-28" />);
     await fireEvent.press(screen.getByRole('button', { name: 'Add ingredient' }));
