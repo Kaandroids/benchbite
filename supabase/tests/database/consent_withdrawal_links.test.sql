@@ -34,6 +34,8 @@ select public.complete_onboarding(
 );
 insert into public.ai_consents (consent_version) values ('2026-11-18');
 reset role;
+-- As the Edge Functions call, with the service role and no user.
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 insert into public.coach_threads (user_id) values ('00000000-0000-0000-0000-00000000000a');
 
 select is(
