@@ -56,6 +56,14 @@ create function pg_temp.kept_tables() returns text[] language sql as $$
     'health_data_consents', 'password_changes', 'recipes', 'subscriptions', 'terms_acceptances'
   ];
 $$;
+-- The tables with a user_id, but those kept on purpose.
+create function pg_temp.user_tables() returns setof text language sql as $$
+  select c.table_name::text from information_schema.columns c
+  join information_schema.tables t using (table_schema, table_name)
+  where c.table_schema = 'public' and c.column_name = 'user_id' and t.table_type = 'BASE TABLE'
+    and c.table_name <> all (pg_temp.kept_tables())
+  order by 1;
+$$;
 -- Every other table with a user_id that still holds a row of `owner`, so that a table added
 -- later is not left out of the withdrawal unnoticed.
 create function pg_temp.tables_holding(owner uuid) returns text[] language plpgsql as $$
@@ -64,13 +72,7 @@ declare
   found boolean;
   holding text[] := '{}';
 begin
-  for name in
-    select c.table_name from information_schema.columns c
-    join information_schema.tables t using (table_schema, table_name)
-    where c.table_schema = 'public' and c.column_name = 'user_id' and t.table_type = 'BASE TABLE'
-      and c.table_name <> all (pg_temp.kept_tables())
-    order by 1
-  loop
+  for name in select pg_temp.user_tables() loop
     execute format('select exists (select 1 from public.%I where user_id = $1)', name)
       into found using owner;
     if found then
@@ -80,19 +82,17 @@ begin
   return holding;
 end;
 $$;
--- The tables tables_holding() looks at that refuse no write while the consent is withdrawn,
--- but those that write themselves during the withdrawal or hold no health data.
-create function pg_temp.tables_and_holds() returns text[] language sql as $$
-  select coalesce(array_agg(c.table_name::text), '{}')
-  from information_schema.columns c
-  join information_schema.tables t using (table_schema, table_name)
-  where c.table_schema = 'public' and c.column_name = 'user_id' and t.table_type = 'BASE TABLE'
-    and c.table_name <> all (pg_temp.kept_tables() || array['removed_meal_entries', 'applied_plans'])
-    -- Bite's tables rest on the AI consent, which no thread is started without (ADR 0143).
-    and c.table_name not like 'coach\_%'
+-- The tables the withdrawal empties that do not refuse writes while it is withdrawn, but those
+-- written during the withdrawal or holding no health data, and Bite's, which rest on the AI
+-- consent that no thread is started without (ADR 0143).
+create function pg_temp.tables_without_hold() returns text[] language sql as $$
+  select coalesce(array_agg(n), '{}')
+  from pg_temp.user_tables() n
+  where n <> all (array['removed_meal_entries', 'applied_plans'])
+    and n not like 'coach\_%'
     and not exists (
       select 1 from pg_trigger g
-      where g.tgrelid = format('public.%I', c.table_name)::regclass
+      where g.tgrelid = format('public.%I', n)::regclass
         and g.tgfoid = 'public.refuse_write_after_health_withdrawal()'::regprocedure
     );
 $$;
@@ -263,7 +263,7 @@ select ok(
 -- is not left out of either.
 select is(
   array(
-    select n from unnest(pg_temp.tables_and_holds()) n order by 1
+    select n from unnest(pg_temp.tables_without_hold()) n order by 1
   ),
   '{}'::text[],
   'Every table the withdrawal empties refuses writes while it is withdrawn'
