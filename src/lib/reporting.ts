@@ -69,12 +69,13 @@ export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb | null {
 
 /**
  * An event with only what tells where the code failed: its exceptions, masked, with their stack
- * traces, the app's release, the system and the kind of device. The user, the device's name, the
- * request, extra data and the breadcrumbs' contents are dropped.
+ * traces, the app's release, the system and the kind of device. The user, the device's name and
+ * lasting id, the request, extra data and the breadcrumbs' contents are dropped.
  */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
   const { user: _user, request: _request, extra: _extra, server_name: _server, ...kept } = event;
   const device = kept.contexts?.device;
+  const app = kept.contexts?.app;
   return {
     ...kept,
     message: kept.message ? maskText(kept.message) : kept.message,
@@ -89,6 +90,8 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
       ...kept.contexts,
       // "Kaan's iPhone": the name someone gave their phone.
       ...(device ? { device: { ...device, name: undefined } } : {}),
+      // A hash that stays the same for a phone, which would tell one person's errors apart.
+      ...(app ? { app: { ...app, device_app_hash: undefined } } : {}),
     },
   };
 }

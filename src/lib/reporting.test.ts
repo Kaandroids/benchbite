@@ -102,6 +102,7 @@ describe('scrubEvent', () => {
     contexts: {
       device: { name: "Kaan's iPhone", model: 'iPhone18,2', family: 'iOS' },
       os: { name: 'iOS', version: '27.0' },
+      app: { app_version: '1.0.0', device_app_hash: 'de3d6d1741313aa9a309cbd20b081d47fcbfe4c8' },
     },
     breadcrumbs: [{ category: 'console', message: 'Lentil soup', timestamp: 1 }],
     tags: { 'event.origin': 'javascript' },
@@ -125,13 +126,21 @@ describe('scrubEvent', () => {
       family: 'iOS',
     });
     expect(scrubbed.contexts?.os).toEqual({ name: 'iOS', version: '27.0' });
+    expect(scrubbed.contexts?.app).toEqual({ app_version: '1.0.0', device_app_hash: undefined });
     expect(scrubbed.breadcrumbs).toEqual([{ category: 'console', timestamp: 1 }]);
     expect(scrubbed.tags).toEqual({ 'event.origin': 'javascript' });
   });
 
   it('leaves nothing of the user’s data anywhere in what is sent', () => {
     const sent = JSON.stringify(scrubEvent(event));
-    for (const secret of ['kaan@example.com', '72.5', 'Lentil soup', "Kaan's iPhone", '0000000a']) {
+    for (const secret of [
+      'kaan@example.com',
+      '72.5',
+      'Lentil soup',
+      "Kaan's iPhone",
+      '0000000a',
+      'de3d6d17',
+    ]) {
       expect(sent).not.toContain(secret);
     }
   });
