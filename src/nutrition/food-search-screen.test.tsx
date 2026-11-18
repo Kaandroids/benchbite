@@ -18,16 +18,9 @@ import {
 } from './quick-foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-/** Marks what is kept above the keyboard, which the real one measures in the window. */
-jest.mock('@/components/ui/keyboard-avoiding', () => {
-  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
-  return {
-    KeyboardAvoiding: ({ children }: { children: React.ReactNode }) => (
-      <View testID="keyboard-avoiding">{children}</View>
-    ),
-    useShrinksForKeyboard: () => true,
-  };
-});
+jest.mock('@/components/ui/keyboard-avoiding', () =>
+  jest.requireActual('@/test/keyboard-avoiding'),
+);
 
 jest.mock('@/ai/access', () => ({
   ...jest.requireActual<typeof import('@/ai/access')>('@/ai/access'),
