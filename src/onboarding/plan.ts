@@ -64,7 +64,7 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
 }
 
 /** Answers complete_onboarding refuses, which saving again cannot change. */
-const REFUSED = ['tooYoung', 'noConsent', 'daysChanged'] as const;
+const REFUSED = ['tooYoung', 'noConsent', 'noTerms', 'daysChanged'] as const;
 
 export type RefusedAnswer = (typeof REFUSED)[number];
 
