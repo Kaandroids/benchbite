@@ -3,9 +3,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
+import { useTabBarSpace } from '@/components/tab-space';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
@@ -25,6 +27,8 @@ type ErrorScreenProps = ErrorBoundaryProps & {
   scope: ErrorScope;
   /** Whether the screen can offer Today, which it cannot from Today itself. */
   offersToday?: boolean;
+  /** Whether it is in a tab, under the floating tab bar, which would cover its buttons. */
+  inTab?: boolean;
 };
 
 /**
@@ -32,7 +36,12 @@ type ErrorScreenProps = ErrorBoundaryProps & {
  * text says what happened, and Try again draws that part anew. Failing again soon after says so,
  * rather than the same words.
  */
-export function ErrorScreen({ scope, retry, offersToday = scope === 'section' }: ErrorScreenProps) {
+export function ErrorScreen({
+  scope,
+  retry,
+  offersToday = scope === 'section',
+  inTab = false,
+}: ErrorScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const [again] = useState(() => Date.now() - (retriedAt[scope] ?? -Infinity) < AGAIN_MS);
@@ -58,6 +67,7 @@ export function ErrorScreen({ scope, retry, offersToday = scope === 'section' }:
               onPress={() => router.navigate('/')}
             />
           ) : null}
+          {inTab ? <TabBarRoom /> : null}
         </View>
       }
       scrolls={false}
@@ -79,19 +89,31 @@ export function ErrorScreen({ scope, retry, offersToday = scope === 'section' }:
   );
 }
 
+/** Room under the buttons for the floating tab bar, past the safe area the screen keeps. */
+function TabBarRoom() {
+  const barSpace = useTabBarSpace();
+  const { bottom } = useSafeAreaInsets();
+  return <View testID="tab-bar-room" style={{ height: barSpace - bottom }} />;
+}
+
 /** The error screen of the whole app, for the root layout to export as its ErrorBoundary. */
 export const AppErrorBoundary = reportingErrorBoundary((props) => (
   <ErrorScreen {...props} scope="app" />
 ));
 
-/** The error screen of a tab or another part of the app, with the way to Today. */
-export const SectionErrorBoundary = reportingErrorBoundary((props) => (
-  <ErrorScreen {...props} scope="section" />
+/** The error screen of a tab, above its bar, with the way to Today. */
+export const TabErrorBoundary = reportingErrorBoundary((props) => (
+  <ErrorScreen {...props} scope="section" inTab />
 ));
 
-/** The error screen of Today itself, which has nowhere better to send to. */
+/** The error screen of Today itself, above the bar, which has nowhere better to send to. */
 export const TodayErrorBoundary = reportingErrorBoundary((props) => (
-  <ErrorScreen {...props} scope="section" offersToday={false} />
+  <ErrorScreen {...props} scope="section" inTab offersToday={false} />
+));
+
+/** The error screen of a screen over the tabs, such as Bite's, with the way to Today. */
+export const SectionErrorBoundary = reportingErrorBoundary((props) => (
+  <ErrorScreen {...props} scope="section" />
 ));
 
 const styles = StyleSheet.create({

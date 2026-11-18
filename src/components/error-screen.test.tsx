@@ -7,6 +7,7 @@ import {
   AppErrorBoundary,
   ErrorScreen,
   SectionErrorBoundary,
+  TabErrorBoundary,
   TodayErrorBoundary,
 } from './error-screen';
 
@@ -57,6 +58,17 @@ it('offers no Today on Today itself', async () => {
   await render(<TodayErrorBoundary error={error} retry={retry()} />);
   expect(screen.getByText('This part didn’t load')).toBeOnTheScreen();
   expect(screen.queryByText('Go to Today')).toBeNull();
+});
+
+it('keeps its buttons above the floating tab bar in a tab, and only there', async () => {
+  const tab = await render(<TabErrorBoundary error={error} retry={retry()} />);
+  expect(screen.getByTestId('tab-bar-room')).toBeOnTheScreen();
+  await tab.unmount();
+  await render(<TodayErrorBoundary error={error} retry={retry()} />);
+  expect(screen.getByTestId('tab-bar-room')).toBeOnTheScreen();
+  await screen.unmount();
+  await render(<SectionErrorBoundary error={error} retry={retry()} />);
+  expect(screen.queryByTestId('tab-bar-room')).toBeNull();
 });
 
 describe('failing again soon after Try again', () => {
