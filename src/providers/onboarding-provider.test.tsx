@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { forgetUserOnDevice } from '@/account/device-owner';
 import { supabase } from '@/lib/supabase';
 import { sessionValue } from '@/test/context-mocks';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
@@ -9,6 +10,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
 import { useIsAccount, useSession } from './session-provider';
 
+jest.mock('@/account/device-owner', () => ({ forgetUserOnDevice: jest.fn() }));
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
   return {
@@ -209,6 +211,19 @@ describe('OnboardingProvider', () => {
     await waitFor(() => expect(result.current.completed).toBe(false));
     expect(stored.get('onboarding.user-1.completed')).toBeUndefined();
     expect(queryClient.getQueryData(['plan'])).toBeUndefined();
+    // The workout in progress, the reminders and the health connection go too.
+    expect(forgetUserOnDevice).toHaveBeenCalled();
+  });
+
+  it('finishes again once the onboarding is finished again on another phone', async () => {
+    stored.set('onboarding.user-1.completed', 'true');
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+    const { result } = await renderOnboarding();
+    await waitFor(() => expect(result.current.completed).toBe(false));
+
+    maybeSingle.mockResolvedValue({ data: FINISHED, error: null });
+    await act(async () => appStateListener?.('active'));
+    await waitFor(() => expect(result.current.completed).toBe(true));
   });
 
   it('keeps an onboarding restarted from the gallery, though the profile is there', async () => {

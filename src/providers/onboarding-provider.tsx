@@ -11,6 +11,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { AppState } from 'react-native';
 
+import { forgetUserOnDevice } from '@/account/device-owner';
 import { supabase } from '@/lib/supabase';
 import {
   clearDraft,
@@ -117,20 +118,24 @@ function UserOnboardingProvider({
     setCompleted(true);
   }, [userId]);
 
-  const queryClient = useQueryClient();
-  const restart = useCallback(() => {
+  const startOver = useCallback(() => {
     saveCompleted(userId, false);
     clearDraft(userId);
     setDraft(EMPTY_DRAFT);
     setCompleted(false);
-    queryClient.clear();
-  }, [userId, queryClient]);
+  }, [userId]);
 
-  // Read by the check below without running it again whenever the onboarding finishes.
-  const completedRef = useRef(completed);
-  useEffect(() => {
-    completedRef.current = completed;
-  }, [completed]);
+  // Whether the server answered the check below since the onboarding last started again: only its
+  // first answer may finish the onboarding.
+  const answered = useRef(false);
+  const queryClient = useQueryClient();
+  const restart = useCallback(() => {
+    startOver();
+    forgetUserOnDevice();
+    queryClient.clear();
+    // An onboarding finished again, on another phone, finishes it here too.
+    answered.current = false;
+  }, [startOver, queryClient]);
 
   // Someone who finished the onboarding on another device, after signing in to their account,
   // skips it here too. The server is asked once per user, and again whenever the app returns to
@@ -139,7 +144,7 @@ function UserOnboardingProvider({
   // gone, as after the health data consent was withdrawn on another device (ADR 0144), starts
   // again at any answer, so that this one stops logging data that may not be kept.
   useEffect(() => {
-    let answered = false;
+    answered.current = false;
     let stopped = false;
     const check = async () => {
       if (stopped) {
@@ -159,13 +164,15 @@ function UserOnboardingProvider({
         return;
       }
       if (data?.onboarding_completed_at) {
-        if (!answered) {
+        if (!answered.current) {
           finish();
         }
-      } else if (completedRef.current) {
+        answered.current = true;
+      } else if (loadCompleted(userId)) {
         restart();
+      } else {
+        answered.current = true;
       }
-      answered = true;
       setChecking(false);
     };
     void check();
@@ -223,14 +230,9 @@ function UserOnboardingProvider({
         })),
       complete: finish,
       restart,
-      reset: () => {
-        saveCompleted(userId, false);
-        clearDraft(userId);
-        setDraft(EMPTY_DRAFT);
-        setCompleted(false);
-      },
+      reset: startOver,
     }),
-    [update, finish, restart, userId],
+    [update, finish, restart, startOver],
   );
 
   const value = useMemo(
