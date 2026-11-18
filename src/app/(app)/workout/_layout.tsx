@@ -1,6 +1,10 @@
 import { Stack } from 'expo-router';
 
+import { SectionErrorBoundary } from '@/components/error-screen';
 import { useTheme } from '@/theme';
+
+// In place of the tab when it fails as it draws; the tab bar stays.
+export const ErrorBoundary = SectionErrorBoundary;
 
 // The list goes beneath a screen opened in the tab from elsewhere with the anchor, as openWorkout()
 // and openLog() in src/workouts/open.ts do, so that back returns to it.
