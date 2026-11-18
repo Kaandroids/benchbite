@@ -202,6 +202,25 @@
           "notebook": "Bites Notizbuch über dich"
         },
         "stays": "Bleibt: Mahlzeiten, die du eingetragen hast, auch aus Fotos."
+      },
+      "export": {
+        "row": "Deine Daten",
+        "rowBody": "Eine Kopie von allem, als Datei",
+        "open": "Exportieren",
+        "title": "Deine Daten exportieren",
+        "body": "Eine Datei mit allem, was Benchbite über dich speichert, zum Aufbewahren oder für eine andere App.",
+        "holdsTitle": "In der Datei",
+        "holds": {
+          "profile": "Profil, Ziel, Gewichte und Zielwerte",
+          "training": "Dein Plan, Trainings mit jedem Satz, und Rekorde",
+          "food": "Mahlzeiten, Wasser und Schritte, deine eigenen Lebensmittel und Rezepte",
+          "bite": "Chats mit Bite und Bites Notizbuch",
+          "consents": "Deine Einwilligungen, und wann du sie erteilt hast"
+        },
+        "format": "Als JSON, ein Format, das andere Apps lesen. Fotos und Sprachnachrichten sind nicht darin; die Chats sagen, wo sie waren.",
+        "confirm": "Exportieren",
+        "failed": "Die Datei konnte nicht erstellt werden. Versuch es noch einmal.",
+        "first": "Erst deine Daten exportieren"
       }
     }
   },

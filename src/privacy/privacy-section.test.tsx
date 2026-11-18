@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 
 import { useIsAccount } from '@/providers/session-provider';
-import { fireEvent, render, screen } from '@/test/render';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { useConsents, useWithdrawAiConsent, useWithdrawHealthConsent } from './consents';
+import { shareExport, useWriteExport } from './export';
 import { PrivacySection } from './privacy-section';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -13,11 +14,12 @@ jest.mock('./consents', () => ({
   useWithdrawAiConsent: jest.fn(),
   useWithdrawHealthConsent: jest.fn(),
 }));
+jest.mock('./export', () => ({ useWriteExport: jest.fn(), shareExport: jest.fn() }));
 
 const GIVEN = new Date('2026-11-18T10:00:00Z');
 
-/** A withdrawal as the mutation is, with `state` changes. */
-function withdrawal(state: object = {}) {
+/** A mutation as the hook returns it, with `state` changes. */
+function mutation(state: object = {}) {
   return {
     mutate: jest.fn(),
     reset: jest.fn(),
@@ -34,8 +36,10 @@ beforeEach(() => {
     data: { health: GIVEN, ai: GIVEN },
     isSuccess: true,
   } as never);
-  jest.mocked(useWithdrawHealthConsent).mockReturnValue(withdrawal());
-  jest.mocked(useWithdrawAiConsent).mockReturnValue(withdrawal());
+  jest.mocked(useWithdrawHealthConsent).mockReturnValue(mutation());
+  jest.mocked(useWithdrawAiConsent).mockReturnValue(mutation());
+  jest.mocked(useWriteExport).mockReturnValue(mutation());
+  jest.mocked(shareExport).mockResolvedValue();
 });
 
 it('shows each consent with when it was given, and a way to withdraw it', async () => {
@@ -65,7 +69,7 @@ it('offers the AI consent when it is not given', async () => {
 });
 
 it('says what withdrawing the AI consent deletes before it does', async () => {
-  const withdraw = withdrawal();
+  const withdraw = mutation();
   jest.mocked(useWithdrawAiConsent).mockReturnValue(withdraw);
   await render(<PrivacySection />);
 
@@ -79,7 +83,7 @@ it('says what withdrawing the AI consent deletes before it does', async () => {
 });
 
 it('says what withdrawing the health data consent deletes, and when it failed', async () => {
-  jest.mocked(useWithdrawHealthConsent).mockReturnValue(withdrawal({ isError: true }));
+  jest.mocked(useWithdrawHealthConsent).mockReturnValue(mutation({ isError: true }));
   await render(<PrivacySection />);
 
   await fireEvent.press(screen.getByRole('button', { name: 'Withdraw your OK for health data' }));
@@ -88,11 +92,43 @@ it('says what withdrawing the health data consent deletes, and when it failed', 
 });
 
 it('closes the sheet on Cancel without withdrawing', async () => {
-  const withdraw = withdrawal();
+  const withdraw = mutation();
   jest.mocked(useWithdrawAiConsent).mockReturnValue(withdraw);
   await render(<PrivacySection />);
   await fireEvent.press(screen.getByRole('button', { name: 'Withdraw your OK for AI' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
   expect(screen.queryByText('Withdraw your OK for AI?')).toBeNull();
   expect((withdraw as { mutate: jest.Mock }).mutate).not.toHaveBeenCalled();
+});
+
+it('exports the data: says what the file holds, makes it, and shares it once the sheet closes', async () => {
+  const file = { uri: 'file:///cache/benchbite-data.json' };
+  const write = mutation({
+    mutate: jest.fn((_: unknown, { onSuccess }: { onSuccess: (made: object) => void }) =>
+      onSuccess(file),
+    ),
+  });
+  jest.mocked(useWriteExport).mockReturnValue(write);
+  await render(<PrivacySection />);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Export your data' }));
+  expect(screen.getByText('Chats with Bite and Bite’s notebook')).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Export' }));
+  expect(screen.queryByText('In the file')).toBeNull();
+  await waitFor(() => expect(shareExport).toHaveBeenCalledWith(file, 'Export your data'));
+});
+
+it('says when the file could not be made', async () => {
+  jest.mocked(useWriteExport).mockReturnValue(mutation({ isError: true }));
+  await render(<PrivacySection />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Export your data' }));
+  expect(screen.getByText('Couldn’t make the file. Try again.')).toBeOnTheScreen();
+});
+
+it('offers to export the data first from a withdrawal', async () => {
+  await render(<PrivacySection />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Withdraw your OK for health data' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Export your data first' }));
+  expect(await screen.findByText('In the file')).toBeOnTheScreen();
+  expect(screen.queryByText('Withdraw your OK for health data?')).toBeNull();
 });

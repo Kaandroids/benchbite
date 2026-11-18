@@ -202,6 +202,25 @@
           "notebook": "Bite’s notebook about you"
         },
         "stays": "Stays: meals you’ve logged, also those from photos."
+      },
+      "export": {
+        "row": "Your data",
+        "rowBody": "A copy of everything, as a file",
+        "open": "Export",
+        "title": "Export your data",
+        "body": "One file with everything Benchbite keeps about you, to keep or to take to another app.",
+        "holdsTitle": "In the file",
+        "holds": {
+          "profile": "Profile, goal, weights and targets",
+          "training": "Your plan, workouts with every set, and records",
+          "food": "Meals, water and steps, your own foods and recipes",
+          "bite": "Chats with Bite and Bite’s notebook",
+          "consents": "Your consents, and when you gave them"
+        },
+        "format": "As JSON, a format other apps read. Photos and voice messages aren’t in it; the chats say where they were.",
+        "confirm": "Export",
+        "failed": "Couldn’t make the file. Try again.",
+        "first": "Export your data first"
       }
     }
   },

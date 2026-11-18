@@ -24,18 +24,22 @@ type WithdrawSheetProps = {
   consent: Consent;
   /** Withdraws it; the sheet waits while it does. */
   onWithdraw: () => void;
+  /** Exports the user's data first, in a sheet of its own. */
+  onExport: () => void;
   withdrawing: boolean;
   failed: boolean;
   onClose: () => void;
 };
 
 /**
- * Asks once more before a consent is withdrawn (#652): what goes and what stays, then a button that
- * withdraws it and deletes, as the server does (ADR 0143, 0144).
+ * Asks once more before a consent is withdrawn (#652): what goes and what stays, a way to export
+ * the data first (#553), then a button that withdraws it and deletes, as the server does
+ * (ADR 0143, 0144).
  */
 export function WithdrawSheet({
   consent,
   onWithdraw,
+  onExport,
   withdrawing,
   failed,
   onClose,
@@ -68,6 +72,12 @@ export function WithdrawSheet({
         <Icon name="check" size={18} color="success" />
         <Text style={styles.flex}>{t(`settings.privacy.${consent}.stays`)}</Text>
       </View>
+      <TextLink
+        label={t('settings.privacy.export.first')}
+        size="regular"
+        disabled={withdrawing}
+        onPress={onExport}
+      />
       {failed ? (
         <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
           {t('settings.privacy.failed')}

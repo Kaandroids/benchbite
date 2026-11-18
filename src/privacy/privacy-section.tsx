@@ -6,6 +6,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { PillButton } from '@/components/ui/pill-button';
+import { closeThen } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
 import { PRIVACY_POLICY_URL } from '@/lib/links';
@@ -18,12 +19,14 @@ import {
   useWithdrawHealthConsent,
   type Consent,
 } from './consents';
+import { ExportSheet } from './export-sheet';
 import { WithdrawSheet } from './withdraw-sheet';
 
 /**
  * The settings' privacy section (#652): each consent with when it was given and a way to withdraw
- * it, which asks first in a sheet; the AI consent, when not given, a way to give it; and the
- * privacy policy. Guests see only the health data consent, as the AI features need an account.
+ * it, which asks first in a sheet; the AI consent, when not given, a way to give it; an export of
+ * all the user's data (#553), which the withdrawals offer too; and the privacy policy. Guests see
+ * only the health data consent, as the AI features need an account, and export as well.
  */
 export function PrivacySection() {
   const { t } = useTranslation();
@@ -33,6 +36,7 @@ export function PrivacySection() {
   const withdrawHealth = useWithdrawHealthConsent();
   const withdrawAi = useWithdrawAiConsent();
   const [asking, setAsking] = useState<Consent | null>(null);
+  const [exporting, setExporting] = useState(false);
   const withdrawing = asking === 'ai' ? withdrawAi : withdrawHealth;
 
   const ask = (consent: Consent) => {
@@ -55,6 +59,26 @@ export function PrivacySection() {
             onWithdraw={() => ask(consent)}
           />
         ))}
+        <View
+          style={[
+            styles.row,
+            { gap: spacing.md, paddingVertical: spacing.md },
+            listDivider(false, colors.border),
+          ]}
+        >
+          <View style={styles.flex}>
+            <Text variant="label">{t('settings.privacy.export.row')}</Text>
+            <Text variant="caption" color="textMuted">
+              {t('settings.privacy.export.rowBody')}
+            </Text>
+          </View>
+          <PillButton
+            label={t('settings.privacy.export.open')}
+            accessibilityLabel={t('settings.privacy.export.title')}
+            variant="neutral"
+            onPress={() => setExporting(true)}
+          />
+        </View>
         <Pressable
           accessibilityRole="link"
           onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
@@ -79,9 +103,14 @@ export function PrivacySection() {
           withdrawing={withdrawing.isPending}
           failed={withdrawing.isError}
           onWithdraw={() => withdrawing.mutate(undefined, { onSuccess: () => setAsking(null) })}
+          onExport={closeThen(
+            () => setAsking(null),
+            () => setExporting(true),
+          )}
           onClose={() => setAsking(null)}
         />
       ) : null}
+      {exporting ? <ExportSheet onClose={() => setExporting(false)} /> : null}
     </>
   );
 }

@@ -202,6 +202,25 @@
           "notebook": "Bite’ın senin hakkındaki defteri"
         },
         "stays": "Kalanlar: kaydettiğin öğünler, fotoğraftan olanlar da."
+      },
+      "export": {
+        "row": "Verilerin",
+        "rowBody": "Her şeyin bir kopyası, dosya olarak",
+        "open": "Dışa aktar",
+        "title": "Verilerini dışa aktar",
+        "body": "Benchbite’ın senin hakkında tuttuğu her şeyi içeren tek bir dosya; saklamak ya da başka bir uygulamaya taşımak için.",
+        "holdsTitle": "Dosyada",
+        "holds": {
+          "profile": "Profil, hedef, kilolar ve hedef değerler",
+          "training": "Planın, her setiyle antrenmanlar ve rekorlar",
+          "food": "Öğünler, su ve adımlar, kendi besinlerin ve tariflerin",
+          "bite": "Bite ile sohbetler ve Bite’ın defteri",
+          "consents": "Onayların ve onları ne zaman verdiğin"
+        },
+        "format": "JSON olarak, başka uygulamaların okuduğu bir biçimde. Fotoğraflar ve sesli mesajlar içinde değil; sohbetler nerede olduklarını söyler.",
+        "confirm": "Dışa aktar",
+        "failed": "Dosya oluşturulamadı. Tekrar dene.",
+        "first": "Önce verilerini dışa aktar"
       }
     }
   },
