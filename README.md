@@ -117,6 +117,7 @@ flowchart LR
     fn["Edge Functions<br/>Deno"]
   end
   gemini["Gemini"]
+  sentry["Sentry<br/>EU region"]
 
   watch <-- "the workout in progress" --> app
   watch -- "heart rate, calories" --> health
@@ -128,6 +129,7 @@ flowchart LR
   fn --> db
   fn -- "behind our own model interface" --> gemini
   db -- "scheduled jobs" --> fn
+  app -- "crashes and errors, scrubbed" --> sentry
 ```
 
 | Layer             | Technology                                                                |
@@ -137,6 +139,7 @@ flowchart LR
 | Backend           | Supabase: Postgres with row level security, Auth, Storage, Edge Functions |
 | Server-side logic | Postgres functions, triggers and pg_cron; Edge Functions in Deno          |
 | AI                | Gemini, behind an interface of our own                                    |
+| Crash reporting   | Sentry, in its EU region, errors and crashes only                         |
 | Website           | Astro, on Netlify                                                         |
 | Tests             | Jest and React Native Testing Library, pgTAP, Deno test, Maestro          |
 
