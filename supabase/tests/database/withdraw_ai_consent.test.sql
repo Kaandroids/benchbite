@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(19);
 
 -- A and B are premium and have consented; both chat with Bite.
 insert into auth.users (id, email, is_anonymous) values
@@ -29,8 +29,16 @@ insert into public.coach_notes (user_id, category, text, thread_id) values
   ('00000000-0000-0000-0000-00000000000b', 'health', 'Bad knee', 3);
 insert into public.coach_stops (user_id, request_id) values
   ('00000000-0000-0000-0000-00000000000a', gen_random_uuid());
-insert into public.weight_entries (user_id, weight_kg) values
-  ('00000000-0000-0000-0000-00000000000a', 80);
+-- A logged a meal from one of Bite's cards in chat 1.
+with entry as (
+  insert into public.meal_entries (user_id, day, meal, food_id, grams)
+  values ('00000000-0000-0000-0000-00000000000a', current_date, 'lunch', 'C133000', 100)
+  returning id
+)
+insert into public.coach_meal_cards (user_id, thread_id, day, meal, items, status, entry_ids)
+select '00000000-0000-0000-0000-00000000000a', 1, current_date, 'lunch', '[]', 'logged',
+  array[entry.id]
+from entry;
 insert into public.ai_usage
   (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
    thinking_tokens, cost_usd)
@@ -98,9 +106,14 @@ select is(
   'and so are the stops of its answers'
 );
 select is(
-  (select count(*) from public.weight_entries where user_id = '00000000-0000-0000-0000-00000000000a'),
+  (select count(*) from public.coach_meal_cards where user_id = '00000000-0000-0000-0000-00000000000a'),
+  0::bigint,
+  'Its meal cards go with the chats'
+);
+select is(
+  (select count(*) from public.meal_entries where user_id = '00000000-0000-0000-0000-00000000000a'),
   1::bigint,
-  'The logs stay, as they rest on the health data consent'
+  'but the meals logged from them stay, as they rest on the health data consent'
 );
 select is(
   (select count(*) from public.ai_usage where user_id = '00000000-0000-0000-0000-00000000000a'),
