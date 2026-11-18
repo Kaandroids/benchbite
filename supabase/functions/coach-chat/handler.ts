@@ -241,6 +241,8 @@ const STOP_CHECK_MS = 1000;
 class Stop {
   #cancelled = false;
   #asked = false;
+  #gone = false;
+  #thread?: number;
   #lookedAt = 0;
 
   constructor(
@@ -253,9 +255,22 @@ class Stop {
     return this.#cancelled;
   }
 
+  /** Whether the answer's thread was found deleted, so that nothing of the answer is saved. */
+  get gone() {
+    return this.#gone;
+  }
+
   /** Whether the answer was stopped, as far as is known now. */
   get stopped() {
-    return this.#cancelled || this.#asked;
+    return this.#cancelled || this.#asked || this.#gone;
+  }
+
+  /**
+   * Looks from now on whether the answer's thread is still there: one deleted, as when the AI
+   * consent is withdrawn (ADR 0143), stops the answer, so that nothing more goes to the model.
+   */
+  follow(threadId: number) {
+    this.#thread = threadId;
   }
 
   cancel() {
@@ -263,19 +278,31 @@ class Stop {
   }
 
   async look({ now = false } = {}): Promise<boolean> {
-    if (this.stopped || !this.requestId) return this.stopped;
+    if (this.stopped || (!this.requestId && this.#thread === undefined)) return this.stopped;
     const every = this.context.stopCheckMs ?? STOP_CHECK_MS;
     if (!now && Date.now() - this.#lookedAt < every) return false;
     this.#lookedAt = Date.now();
-    const { data, error } = await this.context.admin
-      .from('coach_stops')
-      .select('request_id')
-      .eq('request_id', this.requestId)
-      .eq('user_id', this.context.userId)
-      .maybeSingle();
-    if (error) logError('Could not look for a stop', error);
-    this.#asked = !!data;
-    return this.#asked;
+    if (this.requestId) {
+      const { data, error } = await this.context.admin
+        .from('coach_stops')
+        .select('request_id')
+        .eq('request_id', this.requestId)
+        .eq('user_id', this.context.userId)
+        .maybeSingle();
+      if (error) logError('Could not look for a stop', error);
+      this.#asked = !!data;
+    }
+    if (!this.#asked && this.#thread !== undefined) {
+      const { data, error } = await this.context.admin
+        .from('coach_threads')
+        .select('id')
+        .eq('id', this.#thread)
+        .maybeSingle();
+      // A failed read stops nothing, as a failed read of the stops does not.
+      if (error) logError('Could not look for the thread', error);
+      else this.#gone = !data;
+    }
+    return this.stopped;
   }
 
   /** Removes the stop of this request, if the app sent one. */
@@ -385,10 +412,15 @@ async function answer(
         .insert({ user_id: context.userId })
         .select('id')
         .single();
+      // The consent was withdrawn since access was read (BB061, ADR 0143).
+      if (created.error?.code === 'BB061') {
+        return send({ event: 'error', reason: 'consent_required' });
+      }
       if (created.error) throw created.error;
       threadId = created.data.id;
       send({ event: 'thread', threadId });
     }
+    stop.follow(threadId);
     const snapshot = await loadSnapshot(context.supabase, request.today, request.localTime);
     const messages: Message[] = [
       ...history,
@@ -547,6 +579,8 @@ async function answer(
   }
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
+  // Nothing is written into a deleted thread, not even its media for a moment (ADR 0143).
+  if (stop.gone) return send({ event: 'error', reason: 'not_saved' });
   const end = ending(outcome, {
     // A proposal, a meal or a note made is kept with its card, even if the model ended without a
     // word.

@@ -145,6 +145,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_consent_withdrawals: {
+        Row: {
+          id: number;
+          user_id: string;
+          withdrawn_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Update: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Relationships: [];
+      };
       ai_consents: {
         Row: {
           consent_version: string;
@@ -2740,6 +2759,7 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      lock_ai_consent: { Args: { user_id: string }; Returns: undefined };
       lock_own_alternative: {
         Args: { alternative_id: number };
         Returns: {
@@ -3347,6 +3367,7 @@ export type Database = {
         };
         Returns: unknown;
       };
+      withdraw_ai_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {

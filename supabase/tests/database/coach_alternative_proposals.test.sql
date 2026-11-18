@@ -8,6 +8,9 @@ select plan(52);
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com');
+-- They have consented to the AI features, which a chat needs (ADR 0143).
+insert into public.ai_consents (user_id, consent_version)
+select id, 'test' from auth.users where id not in (select user_id from public.ai_consents);
 
 -- On premium, so that a workout may have 5 versions (ADR 0078).
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
