@@ -12,7 +12,9 @@
     "discard": "Verwerfen",
     "done": "Fertig",
     "minutes": "{{minutes}} Min.",
-    "hours": "{{hours}} Std. {{minutes}} Min."
+    "hours": "{{hours}} Std. {{minutes}} Min.",
+    "read": "Lesen",
+    "readPolicy": "Datenschutzerklärung lesen"
   },
   "photoSheet": {
     "take": "Foto aufnehmen",
@@ -1359,9 +1361,7 @@
       },
       "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
       "terms": "Ich akzeptiere die Nutzungsbedingungen.",
-      "readPolicy": "Datenschutzerklärung lesen",
-      "readTerms": "Nutzungsbedingungen lesen",
-      "read": "Lesen"
+      "readTerms": "Nutzungsbedingungen lesen"
     },
     "units": {
       "kg": "kg",
@@ -2117,6 +2117,10 @@
       "service_paused": {
         "title": "Bite macht eine kurze Pause",
         "message": "Ich bin bald zurück. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
+      },
+      "consent_required": {
+        "title": "Bite braucht dein OK",
+        "message": "Erlaube Bite, KI zu nutzen, um weiterzumachen. Dein Plan, deine Mahlzeiten und Trainings funktionieren wie gewohnt."
       }
     },
     "stopped": "Gestoppt",
@@ -2321,7 +2325,27 @@
         }
       }
     },
-    "locked": "Der Chat mit Bite gehört zu Premium"
+    "locked": "Der Chat mit Bite gehört zu Premium",
+    "consent": {
+      "title": "Bite nutzt KI",
+      "intro": "Bite und Mahlzeiten aus Fotos nutzen die KI von Google. Bevor wir ihr deine Daten senden, brauchen wir dein OK.",
+      "what": {
+        "title": "Was wir senden",
+        "body": "Deine Nachrichten, Fotos und Sprachnachrichten und was eine Antwort braucht: deine Ziele, deinen Plan, deine Trainings und Mahlzeiten."
+      },
+      "who": {
+        "title": "Wer sie erhält",
+        "body": "Google Cloud, in der EU, in unserem Auftrag. Google trainiert seine KI nicht damit."
+      },
+      "control": {
+        "title": "Deine Kontrolle",
+        "body": "Du kannst es jederzeit in den Einstellungen widerrufen. Dann löschen wir deine Chats mit Bite."
+      },
+      "agree": "Ich willige ein, dass Benchbite diese Gesundheitsdaten für diese Funktionen an Google sendet.",
+      "give": "OK geben",
+      "notNow": "Nicht jetzt",
+      "notSaved": "Dein OK wurde nicht gespeichert. Versuch es noch einmal."
+    }
   },
   "premium": {
     "yearlySave": "Jährlich · −{{percent}} %",

@@ -25,7 +25,8 @@ type LoggedEstimateOptions = {
 
 /**
  * Logging a meal from photos from the add screen (#299): the sheet that takes or chooses the
- * photos and opens the photo screen with them, or says the week's are used up (#411); and, once
+ * photos and opens the photo screen with them, says the week's are used up (#411), or asks for the
+ * consent to the AI features first (#290); and, once
  * that screen logged the meal, the toast that says so and offers to undo it (ADR 0060).
  */
 export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstimateOptions): {
@@ -60,8 +61,12 @@ export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstima
     undoEstimate.mutate(estimate, { onSuccess: () => onUndone(estimate.foods.map(refKey)) });
 
   return {
-    // The week's photos used up says so at once, rather than after taking one.
-    openSheet: () => setOpen({ usedUpUntil }),
+    // The week's photos used up says so at once, rather than after taking one, and the consent
+    // to the AI features is asked before any photo is taken (ADR 0142).
+    openSheet: () =>
+      access.data?.refusal === 'consent_required'
+        ? router.push('/ai-consent')
+        : setOpen({ usedUpUntil }),
     sheet: !open ? null : open.usedUpUntil ? (
       <PhotosUsedUpSheet until={open.usedUpUntil} onClose={() => setOpen(null)} />
     ) : (

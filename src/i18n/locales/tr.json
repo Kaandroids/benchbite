@@ -12,7 +12,9 @@
     "discard": "Sil",
     "done": "Bitti",
     "minutes": "{{minutes}} dk",
-    "hours": "{{hours}} sa {{minutes}} dk"
+    "hours": "{{hours}} sa {{minutes}} dk",
+    "read": "Oku",
+    "readPolicy": "Gizlilik politikasını oku"
   },
   "photoSheet": {
     "take": "Fotoğraf çek",
@@ -1359,9 +1361,7 @@
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
       "terms": "Kullanım şartlarını kabul ediyorum.",
-      "readPolicy": "Gizlilik politikasını oku",
-      "readTerms": "Kullanım şartlarını oku",
-      "read": "Oku"
+      "readTerms": "Kullanım şartlarını oku"
     },
     "units": {
       "kg": "kg",
@@ -2117,6 +2117,10 @@
       "service_paused": {
         "title": "Bite kısa bir mola veriyor",
         "message": "Yakında geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
+      },
+      "consent_required": {
+        "title": "Bite onayına ihtiyaç duyuyor",
+        "message": "Devam etmek için Bite’ın yapay zekâ kullanmasına izin ver. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışır."
       }
     },
     "stopped": "Durduruldu",
@@ -2321,7 +2325,27 @@
         }
       }
     },
-    "locked": "Bite ile sohbet premium ile gelir"
+    "locked": "Bite ile sohbet premium ile gelir",
+    "consent": {
+      "title": "Bite yapay zekâ kullanır",
+      "intro": "Bite ve fotoğraftan öğünler Google’ın yapay zekâsını kullanır. Verilerini ona göndermeden önce onayına ihtiyacımız var.",
+      "what": {
+        "title": "Ne gönderiyoruz",
+        "body": "Mesajların, fotoğrafların ve sesli mesajların, ve bir cevabın ihtiyaç duydukları: hedeflerin, planın, antrenmanların ve öğünlerin."
+      },
+      "who": {
+        "title": "Kim alıyor",
+        "body": "Google Cloud, AB’de, bizim adımıza. Yapay zekâsını bununla eğitmez."
+      },
+      "control": {
+        "title": "Kontrol sende",
+        "body": "İstediğin an Ayarlar’dan geri çekebilirsin. O zaman Bite ile sohbetlerini sileriz."
+      },
+      "agree": "Benchbite’ın bu sağlık verilerini bu özellikler için Google’a göndermesini kabul ediyorum.",
+      "give": "Onay ver",
+      "notNow": "Şimdi değil",
+      "notSaved": "Onayın kaydedilemedi. Tekrar dene."
+    }
   },
   "premium": {
     "yearlySave": "Yıllık · −%{{percent}}",

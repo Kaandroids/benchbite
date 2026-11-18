@@ -20,7 +20,8 @@ type RefusalCardProps = {
 /**
  * Why the user cannot use Bite now, in place of what asks it: the month's use is up (board 12), in
  * the chat too; on meal photos, the plan has no Bite (board 12b) or a guest needs an account; or,
- * once all users together reach the month's AI spend limit, Bite is taking a short break (ADR 0134).
+ * once all users together reach the month's AI spend limit, Bite is taking a short break (ADR 0134);
+ * or the user has not consented to the AI features, which it asks for (ADR 0142).
  */
 export function RefusalCard({ refusal, resetsAt }: RefusalCardProps) {
   const { t } = useTranslation();
@@ -45,6 +46,12 @@ export function RefusalCard({ refusal, resetsAt }: RefusalCardProps) {
           label={t('settings.createAccount')}
           size="small"
           onPress={() => router.push('/account/create')}
+        />
+      ) : refusal === 'consent_required' ? (
+        <Button
+          label={t('bite.consent.give')}
+          size="small"
+          onPress={() => router.push('/ai-consent')}
         />
       ) : null}
     </Card>

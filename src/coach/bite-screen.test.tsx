@@ -265,6 +265,55 @@ it('shows what premium adds to a user without a plan or a chat', async () => {
   expect(screen.queryByLabelText('Message')).toBeNull();
 });
 
+it('asks for the AI consent before a chat, and opens the chat once given', async () => {
+  access('consent_required');
+  const insert = jest.fn().mockResolvedValue({ error: null });
+  jest.mocked(supabase.from).mockReturnValue({ insert } as never);
+  await renderBite();
+
+  expect(await screen.findByText('Bite runs on AI')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
+  const agree = screen.getByRole('checkbox', {
+    name: 'I agree that Benchbite sends this health data to Google for these features.',
+  });
+  await fireEvent.press(agree);
+  access();
+  await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+
+  expect(insert).toHaveBeenCalledWith({ consent_version: '2026-11-18' });
+  expect(await screen.findByLabelText('Message')).toBeOnTheScreen();
+});
+
+it('opens the composer again once the user consents from a refusal in the chat', async () => {
+  // The read of access failed, so the chat opened and the server refused the message.
+  jest.mocked(supabase.rpc).mockRejectedValue(new Error('offline'));
+  const queryClient = createTestQueryClient();
+  const stream = liveStream();
+  await renderBite({ queryClient });
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  access('consent_required');
+  await stream.send({ event: 'error', reason: 'consent_required' });
+  await stream.end();
+
+  expect(await screen.findByText('Bite needs your OK')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
+
+  access();
+  await act(() => queryClient.invalidateQueries({ queryKey: ACCESS_KEY }));
+
+  expect(await screen.findByLabelText('Message')).toBeOnTheScreen();
+  expect(screen.queryByText('Bite needs your OK')).toBeNull();
+});
+
+it('leaves without the AI consent on Not now', async () => {
+  access('consent_required');
+  await renderBite();
+
+  await fireEvent.press(await screen.findByRole('button', { name: 'Not now' }));
+
+  expect(router.back).toHaveBeenCalled();
+});
+
 it('shows a guest what premium adds', async () => {
   access('account_required');
   await renderBite();

@@ -72,7 +72,7 @@ export function ConsentBox({ title, checked, onToggle, readLabel, onRead }: Cons
         >
           <Icon name="document" size={20} color="primaryText" />
           <Text variant="captionStrong" color="primaryText">
-            {t('onboarding.consent.read')}
+            {t('common.read')}
           </Text>
         </Pressable>
       </View>
