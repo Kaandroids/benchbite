@@ -28,6 +28,23 @@ export type Page =
   | 'withdraw-consent/done'
   | 'withdraw-consent/expired';
 
+/** What the sent, done and expired pages of a link say, as each kind of link has it. */
+export type LinkPagesCopy = Pick<
+  Messages['deleteLink'] & Messages['withdrawLink'],
+  | 'sentTitle'
+  | 'sentText'
+  | 'sentHow'
+  | 'sentNote'
+  | 'anotherEmail'
+  | 'doneTitle'
+  | 'doneText'
+  | 'doneNote'
+  | 'backToStart'
+  | 'expiredTitle'
+  | 'expiredText'
+  | 'askAgain'
+>;
+
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';
 

@@ -1,12 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { localePath, type Locale, type Page } from '../i18n';
-import type { Messages } from '../i18n/en';
+import { localePath, type LinkPagesCopy, type Locale, type Page } from '../i18n';
 
 type Props = {
   locale: Locale;
   page: Page;
-  copy: Messages['deleteLink'] | Messages['withdrawLink'];
+  copy: LinkPagesCopy;
 };
 
 const { locale, page, copy } = Astro.props;
