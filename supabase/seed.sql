@@ -42,6 +42,7 @@ select set_config(
 select public.complete_onboarding(
   jsonb_build_object(
     'displayName', 'Dev', 'goal', 'lose_fat', 'consentedPolicyVersion', '2026-10-21',
+    'acceptedTermsVersion', '2026-11-18',
     'sex', 'male', 'birthYear', extract(year from current_date)::integer - 30, 'heightCm', 180,
     'weightKg', 85, 'targetWeightKg', 78, 'weeklyPaceKg', 0.5, 'activityLevel', 'light',
     'experience', 'beginner', 'trainingDays', jsonb_build_array(1, 3, 5), 'setup', 'gym',

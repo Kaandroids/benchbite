@@ -19,6 +19,9 @@ jest.mock('@/exercises/library', () => ({
   useExerciseLibrary: jest.fn(),
 }));
 
+const mockReturnTo = jest.fn();
+jest.mock('@/onboarding/navigation', () => ({ returnTo: (step: string) => mockReturnTo(step) }));
+
 jest.mock('expo-router', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
@@ -201,7 +204,21 @@ describe('PlanStep', () => {
     );
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     await fireEvent.press(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
-    expect(mockStep.back).toHaveBeenCalled();
+    expect(mockReturnTo).toHaveBeenCalledWith('birth-year');
+    warn.mockRestore();
+  });
+
+  it('leads a refused consent or terms straight to their step, however far back', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.mocked(saveOnboarding).mockRejectedValueOnce({ code: 'BB059' });
+    await render(<PlanStep />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Start my plan' }));
+    await waitFor(() =>
+      expect(screen.getByText(/Your acceptance of the terms of use is missing/)).toBeTruthy(),
+    );
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
+    expect(mockReturnTo).toHaveBeenCalledWith('consent');
+    expect(mockStep.back).not.toHaveBeenCalled();
     warn.mockRestore();
   });
 

@@ -19,6 +19,7 @@ appId: com.benchbite.app.dev
 - tapOn: 'Continue'
 - tapOn: 'Continue'
 - tapOn: 'I agree that.*'
+- tapOn: 'I accept the Terms of use.'
 - tapOn: 'Continue'
 - tapOn: 'Male'
 - tapOn: 'Continue'

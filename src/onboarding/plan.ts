@@ -7,6 +7,7 @@ import { targetsFrom, type NutritionTargets } from '@/nutrition/targets';
 import type { Plan } from '@shared/plan/types';
 
 import { planRequest, required } from './plan-request';
+import type { Step } from './steps';
 import type { OnboardingAnswers } from './types';
 
 /** The generate-plan Edge Function's response. */
@@ -64,9 +65,17 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
 }
 
 /** Answers complete_onboarding refuses, which saving again cannot change. */
-const REFUSED = ['tooYoung', 'noConsent', 'daysChanged'] as const;
+const REFUSED = ['tooYoung', 'noConsent', 'noTerms', 'daysChanged'] as const;
 
 export type RefusedAnswer = (typeof REFUSED)[number];
+
+/** The step that asks each refused answer, which can be far before the plan in an old draft. */
+export const REFUSED_STEP: Record<RefusedAnswer, Step> = {
+  tooYoung: 'birth-year',
+  noConsent: 'consent',
+  noTerms: 'consent',
+  daysChanged: 'training-days',
+};
 
 /** The answer the server refused to save, or null when saving again may work. */
 export function refusedAnswer(error: unknown): RefusedAnswer | null {
