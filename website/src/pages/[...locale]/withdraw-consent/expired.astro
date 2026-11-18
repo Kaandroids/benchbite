@@ -1,0 +1,27 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { withdrawLink } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="withdraw-consent/expired" title={withdrawLink.expiredTitle}>
+  <main class="page">
+    <div>
+      <h1>{withdrawLink.expiredTitle}</h1>
+      <p class="muted lead">{withdrawLink.expiredText}</p>
+    </div>
+    <a class="button again" href={`${localePath(locale, 'withdraw-consent')}#without-app`}>
+      {withdrawLink.askAgain}
+    </a>
+  </main>
+</Layout>
+
+<style>
+  .again {
+    align-self: flex-start;
+  }
+</style>
