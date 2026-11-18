@@ -2,7 +2,8 @@ import { assert, assertEquals } from '@std/assert';
 
 import type { Email } from '../_shared/email.ts';
 import type { Client } from '../_shared/supabase.ts';
-import { clientIp, handleDeletionRequest } from './handler.ts';
+import { clientIp } from '../_shared/site_link.ts';
+import { handleDeletionRequest } from './handler.ts';
 
 const SITE = 'https://www.benchbite.com';
 

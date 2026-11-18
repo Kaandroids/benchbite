@@ -1,0 +1,32 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { localePath, type LinkPagesCopy, type Locale, type Page } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  page: Page;
+  copy: LinkPagesCopy;
+};
+
+const { locale, page, copy } = Astro.props;
+---
+
+<!-- The page a confirmed link sends on to. -->
+<Layout locale={locale} page={page} title={copy.doneTitle}>
+  <main class="page">
+    <div>
+      <h1>{copy.doneTitle}</h1>
+      <p class="muted lead">{copy.doneText}</p>
+    </div>
+    <section class="card">
+      <p>{copy.doneNote}</p>
+    </section>
+    <a class="text-link link" href={localePath(locale)}>{copy.backToStart}</a>
+  </main>
+</Layout>
+
+<style>
+  .link {
+    align-self: flex-start;
+  }
+</style>

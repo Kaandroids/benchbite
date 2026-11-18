@@ -11,8 +11,8 @@ export type Locale = (typeof LOCALES)[number];
 
 /**
  * The pages below the landing page, as they appear in addresses. The Edge Functions redirect to
- * the `delete-account/*` ones (supabase/functions/request-account-deletion and
- * confirm-account-deletion): a new name goes there too.
+ * the `delete-account/*` and `withdraw-consent/*` ones (supabase/functions/*-account-deletion and
+ * *-consent-withdrawal): a new name goes there too.
  */
 export type Page =
   | 'privacy'
@@ -22,7 +22,28 @@ export type Page =
   | 'delete-account'
   | 'delete-account/sent'
   | 'delete-account/done'
-  | 'delete-account/expired';
+  | 'delete-account/expired'
+  | 'withdraw-consent'
+  | 'withdraw-consent/sent'
+  | 'withdraw-consent/done'
+  | 'withdraw-consent/expired';
+
+/** What the sent, done and expired pages of a link say, as each kind of link has it. */
+export type LinkPagesCopy = Pick<
+  Messages['deleteLink'] & Messages['withdrawLink'],
+  | 'sentTitle'
+  | 'sentText'
+  | 'sentHow'
+  | 'sentNote'
+  | 'anotherEmail'
+  | 'doneTitle'
+  | 'doneText'
+  | 'doneNote'
+  | 'backToStart'
+  | 'expiredTitle'
+  | 'expiredText'
+  | 'askAgain'
+>;
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';

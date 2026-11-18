@@ -72,6 +72,7 @@ export const tr: Messages = {
     imprint: 'Künye',
     support: 'Destek',
     deleteAccount: 'Hesabı sil',
+    withdrawConsent: 'Onayı geri çek',
   },
   legal: {
     draft: 'Yer tutucu. Yasal metin henüz yazılmadı.',
@@ -223,6 +224,80 @@ export const tr: Messages = {
     doneNote:
       'Telefonundaki uygulama artık yeni bir misafir olarak başlar. Mağaza aboneliği, App Store veya Google Play’den iptal edene kadar sürer.',
     backToStart: 'Ana sayfaya dön',
+    expiredTitle: 'Bu bağlantı artık çalışmıyor',
+    expiredText: 'Bu bağlantının 30 dakikalık süresi doldu ya da zaten kullanıldı.',
+    askAgain: 'Yeni bağlantı iste',
+  },
+  withdrawConsent: {
+    title: 'Bir onayı geri çek',
+    text: 'Verdiğin bir onayı istediğin zaman geri çekebilirsin. Ondan önce yapılanlar hukuka uygun kalır.',
+    inApp: 'Uygulamada',
+    steps: [
+      'Benchbite’ı aç ve Ayarlar’a git.',
+      'Gizlilik altında, onayın yanındaki Geri çek’i seç.',
+    ],
+    guestNote:
+      'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamada geri çek. Misafir verilerinin e-posta adresi yok, bu yüzden onları burada bulamayız.',
+    withoutApp: 'Uygulama olmadan',
+    withoutAppText:
+      'Onayı seç ve hesabının e-posta adresini gir. Bir bağlantı göndeririz, sen de açtığı sayfada onaylarsın.',
+    consentLabel: 'Onay',
+    consents: {
+      ai: { title: 'Yapay zekâ özellikleri', text: 'Bite ve fotoğraftan öğünler' },
+      health: {
+        title: 'Sağlık verileri',
+        text: 'Profilin ve planın. Onsuz uygulama kurulumu yeniden başlatır.',
+      },
+    },
+    emailLabel: 'E-posta',
+    emailPlaceholder: 'sen@ornek.com',
+    send: 'Bağlantı gönder',
+    linkNote: 'Bağlantı bir kez, 30 dakika boyunca çalışır.',
+    deleteInstead: 'Her şeyi bitirmek için',
+    deleteLink: 'bunun yerine hesabını sil.',
+  },
+  withdrawLink: {
+    sentTitle: 'E-postana bak',
+    sentText:
+      'Bu adresi bir hesap kullanıyorsa, ona onayı geri çekmek için bir bağlantı gönderdik.',
+    sentHow:
+      'Bağlantıyı herhangi bir cihazda aç, sonra açtığı sayfada onayla. Açmak henüz hiçbir şeyi değiştirmez.',
+    sentNote:
+      'Bağlantı bir kez, 30 dakika boyunca çalışır. Gelmedi mi? Spam klasörüne bak ya da bir dakika sonra tekrar iste.',
+    anotherEmail: 'Başka bir e-posta kullan',
+    deletes: 'Sileceklerimiz',
+    confirm: 'Geri çek ve sil',
+    keep: 'Vazgeç',
+    health: {
+      title: 'Sağlık verileri onayını geri çekmek istiyor musun?',
+      text: 'Benchbite onsuz planını oluşturamaz. Uygulama kurulumu yeniden başlatır.',
+      items: [
+        'Profilin, kilon ve planın',
+        'Tüm antrenmanlar, öğünler ve rekorlar',
+        'Bite ile sohbetlerin, çünkü onlar da bu verilere ihtiyaç duyar',
+      ],
+      stays:
+        'hesabın, premium ve kendi besinlerin, tariflerin ve egzersizlerin. Onları da bitirmek için hesabını sil.',
+    },
+    ai: {
+      title: 'Yapay zekâ onayını geri çekmek istiyor musun?',
+      text: 'Bite ve fotoğraftan öğünler durur, Google’a artık hiçbir şey göndermeyiz.',
+      items: [
+        'Bite ile tüm sohbetlerin, fotoğrafları ve sesli mesajlarıyla',
+        'Bite’ın senin hakkındaki defteri',
+      ],
+      stays: 'kaydettiğin öğünler, fotoğraftan olanlar da.',
+    },
+    staysLabel: 'Kalanlar:',
+    failed: 'Şu an geri çekemedik. Birazdan tekrar dene.',
+    noLink: 'Bu sayfa e-postadaki bağlantıyla açılır. Geri çekme sayfasından bir bağlantı iste.',
+    noScript:
+      'Bu sayfanın bağlantıyı okuması için JavaScript gerekir. Onayı uygulamada da geri çekebilirsin.',
+    doneTitle: 'Onayın geri çekildi',
+    doneText: 'Ona dayananları sildik. Hesabın kalıyor.',
+    doneNote:
+      'Telefonundaki uygulama bunu bir sonraki açışında görür. Onayı orada istediğin zaman yeniden verebilirsin.',
+    backToStart: 'Başa dön',
     expiredTitle: 'Bu bağlantı artık çalışmıyor',
     expiredText: 'Bu bağlantının 30 dakikalık süresi doldu ya da zaten kullanıldı.',
     askAgain: 'Yeni bağlantı iste',

@@ -161,3 +161,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0143](0143-delete-bites-data-when-the-ai-consent-is-withdrawn.md)        | Delete Bite's data when the AI consent is withdrawn                                     | Accepted                                             |
 | [0144](0144-delete-the-logs-when-the-health-data-consent-is-withdrawn.md) | Delete the logs when the health data consent is withdrawn                               | Accepted, amended by ADR-0145                        |
 | [0145](0145-start-the-onboarding-again-when-the-profile-is-gone.md)       | Start the onboarding again when the profile is gone                                     | Accepted                                             |
+| [0146](0146-withdraw-a-consent-from-the-website.md)                       | Withdraw a consent from the website                                                     | Accepted                                             |

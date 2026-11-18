@@ -1,0 +1,94 @@
+---
+import { FUNCTIONS_URL } from '../functions';
+
+type Props = {
+  locale: string;
+  /** The Edge Function the form posts to. */
+  action: string;
+  /** More of the form's fields, as the consent of a withdrawal. */
+  fields?: Record<string, string>;
+  confirm: string;
+  /** The way out without confirming. */
+  keep: { label: string; href: string };
+  failed: string;
+  noLink: string;
+  askAgain: { label: string; href: string };
+  noScript: string;
+};
+
+const { locale, action, fields = {}, confirm, keep, failed, noLink, askAgain, noScript } =
+  Astro.props;
+---
+
+<!-- Shown once the script has read the link's token; the slot says what confirming does. -->
+<div class="content" id="with-link" hidden>
+  <slot />
+  <p class="failed" id="failed" role="alert" hidden>{failed}</p>
+  <form method="post" action={`${FUNCTIONS_URL}/${action}`}>
+    <input type="hidden" name="locale" value={locale} />
+    {Object.entries(fields).map(([name, value]) => <input type="hidden" name={name} value={value} />)}
+    <input type="hidden" name="token" />
+    <button class="button danger" type="submit">{confirm}</button>
+    <a class="text-link" href={keep.href}>{keep.label}</a>
+  </form>
+</div>
+<p class="card" id="no-link" hidden>
+  {noLink} <a href={askAgain.href}>{askAgain.label}</a>
+</p>
+<noscript><p class="card">{noScript}</p></noscript>
+
+<script>
+  // The site's only script (ADR 0094): the link holds its token in the fragment, which no server
+  // sees, and this puts it into the form. It then leaves the address, so the token is not kept in
+  // the history. It runs again when only the fragment changes, which loads no new page.
+  function readLink() {
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const token = fragment.get('token');
+    const content = document.getElementById('with-link') as HTMLElement;
+    const noLink = document.getElementById('no-link') as HTMLElement;
+    if (token) {
+      (content.querySelector('input[name="token"]') as HTMLInputElement).value = token;
+      content.hidden = false;
+      noLink.hidden = true;
+      (document.getElementById('failed') as HTMLElement).hidden = !fragment.has('failed');
+      window.history.replaceState(null, '', window.location.pathname);
+    } else if (content.hidden) {
+      noLink.hidden = false;
+    }
+  }
+  readLink();
+  window.addEventListener('hashchange', readLink);
+
+  // One press: a second, once the first has used the link, would find it gone.
+  const form = document.querySelector('#with-link form') as HTMLFormElement;
+  const button = form.querySelector('button') as HTMLButtonElement;
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+  });
+  // A page brought back by Back can be sent again.
+  window.addEventListener('pageshow', () => {
+    button.disabled = false;
+  });
+</script>
+
+<style>
+  .failed {
+    padding: 16px 20px;
+    border-radius: 16px;
+    border: 2px solid var(--danger);
+    background: var(--danger-background);
+  }
+
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+</style>

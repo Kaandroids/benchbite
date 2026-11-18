@@ -1,6 +1,6 @@
 // The email with the link to delete an account (ADR 0094), in the language of the page it was asked
 // from, in the layout of _shared/account_email.ts.
-import { accountEmailHtml, escape, note, paragraph } from '../_shared/account_email.ts';
+import { type LinkEmailCopy, linkEmail } from '../_shared/account_email.ts';
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
 
@@ -29,19 +29,8 @@ const COPY = {
     note: 'Bağlantı bir kez, 30 dakika boyunca çalışır. Açmak hiçbir şeyi silmez; sayfa önce sorar.',
     ignore: 'Bunu sen istemediysen bu e-postayı yok say; hesabın olduğu gibi kalır.',
   },
-} satisfies Record<SiteLocale, Record<string, string>>;
+} satisfies Record<SiteLocale, LinkEmailCopy>;
 
 export function deletionEmail(locale: SiteLocale, to: string, link: string): Email {
-  const copy = COPY[locale];
-  const button = `<p style="margin: 0 0 16px">
-        <a href="${escape(link)}" style="display: inline-block; padding: 14px 24px; border-radius: 14px; background: #f25a00; color: #ffffff; font-weight: 800; text-decoration: none">${escape(copy.button)}</a>
-      </p>`;
-  const html = accountEmailHtml(locale, copy.title, [
-    paragraph(copy.ask),
-    button,
-    note(copy.note),
-    note(copy.ignore),
-  ]);
-  const text = [copy.title, copy.ask, link, copy.note, copy.ignore].join('\n\n');
-  return { to, subject: copy.subject, html, text };
+  return linkEmail(locale, COPY[locale], to, link);
 }

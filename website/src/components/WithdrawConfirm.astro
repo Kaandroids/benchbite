@@ -1,0 +1,70 @@
+---
+import LinkConfirm from './LinkConfirm.astro';
+import { localePath, messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  consent: 'health' | 'ai';
+};
+
+const { locale, consent } = Astro.props;
+const { withdrawLink } = messagesFor(locale);
+const copy = withdrawLink[consent];
+---
+
+<main class="page">
+  <div>
+    <h1>{copy.title}</h1>
+    <p class="muted lead">{copy.text}</p>
+  </div>
+  <LinkConfirm
+    locale={locale}
+    action="confirm-consent-withdrawal"
+    fields={{ consent }}
+    confirm={withdrawLink.confirm}
+    keep={{ label: withdrawLink.keep, href: localePath(locale) }}
+    failed={withdrawLink.failed}
+    noLink={withdrawLink.noLink}
+    askAgain={{
+      label: withdrawLink.askAgain,
+      href: `${localePath(locale, 'withdraw-consent')}#without-app`,
+    }}
+    noScript={withdrawLink.noScript}
+  >
+    <section class="deletes">
+      <h2>{withdrawLink.deletes}</h2>
+      <ul>
+        {copy.items.map((item) => <li>{item}</li>)}
+      </ul>
+    </section>
+    <p><strong>{withdrawLink.staysLabel}</strong> {copy.stays}</p>
+  </LinkConfirm>
+</main>
+
+<style>
+  .deletes {
+    padding: 20px 24px;
+    border-radius: 24px;
+    background: var(--danger-background);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  strong {
+    font-weight: 800;
+  }
+</style>
