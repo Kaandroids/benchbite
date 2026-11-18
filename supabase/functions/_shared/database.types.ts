@@ -737,6 +737,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      data_export_links: {
+        Row: {
+          created_at: string;
+          email: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      data_export_requests: {
+        Row: {
+          created_at: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        Update: {
+          created_at?: string;
+          email_hash?: string;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       day_nutrition_targets: {
         Row: {
           calories: number;
@@ -2626,6 +2670,7 @@ export type Database = {
         }[];
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
+      export_data_by_link: { Args: { p_token_hash: string }; Returns: Json };
       export_left_out: { Args: Record<PropertyKey, never>; Returns: string[] };
       export_my_data: { Args: Record<PropertyKey, never>; Returns: Json };
       export_nested: { Args: Record<PropertyKey, never>; Returns: string[] };
@@ -3202,6 +3247,7 @@ export type Database = {
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
       remove_old_account_deletions: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_old_consent_withdrawals: { Args: Record<PropertyKey, never>; Returns: undefined };
+      remove_old_data_exports: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_unconfirmed_users: { Args: Record<PropertyKey, never>; Returns: undefined };
       rename_workout_alternative: {
         Args: { alternative_id: number; name: string };
@@ -3336,6 +3382,10 @@ export type Database = {
       };
       start_consent_withdrawal: {
         Args: { p_consent: string; p_email: string; p_ip_hash: string; p_token_hash: string };
+        Returns: string;
+      };
+      start_data_export: {
+        Args: { p_email: string; p_ip_hash: string; p_token_hash: string };
         Returns: string;
       };
       start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
