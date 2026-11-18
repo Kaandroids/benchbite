@@ -30,6 +30,7 @@ export type LinkRequest = {
   link: (form: URLSearchParams) => Link | undefined;
 };
 
+/** A link a form can ask for: the page it opens, how it is made and the email that carries it. */
 export type Link = {
   /** The site's page the link opens. */
   page: string;
@@ -85,15 +86,15 @@ export async function requestLink(
   const form = await readForm(req);
   const locale = siteLocale(form.get('locale'));
   const email = (form.get('email') ?? '').trim();
-  const kind = linkOf(form);
+  const requested = linkOf(form);
 
-  if (kind && email.includes('@') && email.length <= 254) {
+  if (requested && email.includes('@') && email.length <= 254) {
     try {
       const token = newToken();
       // The database decides what counts as the same address, and hashes it for the limits. It
       // answers with the address the account has, which the link goes to rather than the typed
       // one: the two can differ, as with a look-alike character the match folds (#530).
-      const { data: stored, error } = await kind.start(admin, {
+      const { data: stored, error } = await requested.start(admin, {
         email,
         ipHash: await sha256Hex(clientIp(req.headers)),
         tokenHash: await sha256Hex(token),
@@ -102,10 +103,10 @@ export async function requestLink(
         logError(`Starting the ${what} failed`, error);
       } else if (stored) {
         // In the fragment, which browsers never send to a server, so no log holds the token.
-        const link = `${sitePage(siteUrl, locale, kind.page)}#token=${token}`;
+        const link = `${sitePage(siteUrl, locale, requested.page)}#token=${token}`;
         // Sent after the answer: waiting for it would make only addresses with an account slow.
         inBackground(
-          send(kind.email(locale, stored, link)).catch((cause) =>
+          send(requested.email(locale, stored, link)).catch((cause) =>
             logError(`Sending the link for the ${what} failed`, cause),
           ),
         );
