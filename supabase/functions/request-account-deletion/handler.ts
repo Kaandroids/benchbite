@@ -4,16 +4,18 @@ import { type LinkRequestContext, requestLink } from '../_shared/site_link.ts';
 import { deletionEmail } from './email.ts';
 
 export function handleDeletionRequest(req: Request, ctx: LinkRequestContext): Promise<Response> {
-  return requestLink(req, ctx, () => ({
+  return requestLink(req, ctx, {
     sentPage: 'delete-account/sent',
-    linkPage: 'delete-account/confirm',
-    start: (admin, { email, ipHash, tokenHash }) =>
-      admin.rpc('start_account_deletion', {
-        p_email: email,
-        p_ip_hash: ipHash,
-        p_token_hash: tokenHash,
-      }),
-    email: deletionEmail,
     what: 'deletion of an account',
-  }));
+    link: () => ({
+      page: 'delete-account/confirm',
+      start: (admin, { email, ipHash, tokenHash }) =>
+        admin.rpc('start_account_deletion', {
+          p_email: email,
+          p_ip_hash: ipHash,
+          p_token_hash: tokenHash,
+        }),
+      email: deletionEmail,
+    }),
+  });
 }

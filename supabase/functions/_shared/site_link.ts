@@ -22,10 +22,17 @@ export type LinkRequestContext = {
 
 /** What one kind of link needs. */
 export type LinkRequest = {
-  /** The site's page the form is sent on to. */
+  /** The site's page the form is sent on to, whatever it asked. */
   sentPage: string;
+  /** What failed, for the log: "deletion of an account". */
+  what: string;
+  /** The link a form asks for, or none when the form names nothing a link is made for. */
+  link: (form: URLSearchParams) => Link | undefined;
+};
+
+export type Link = {
   /** The site's page the link opens. */
-  linkPage: string;
+  page: string;
   /**
    * Records the request and makes a link with the token's hash, answering with the address the
    * account has, or null when no link was made.
@@ -35,8 +42,6 @@ export type LinkRequest = {
     args: { email: string; ipHash: string; tokenHash: string },
   ) => PromiseLike<{ data: string | null; error: unknown }>;
   email: (locale: SiteLocale, to: string, link: string) => Email;
-  /** What failed, for the log: "deletion of an account". */
-  what: string;
 };
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -67,11 +72,11 @@ export function clientIp(headers: Headers): string {
   );
 }
 
-/** Takes a form asking for a link, made by `kind` when the form holds an address. */
+/** Takes a form asking for a link, made when the form holds an address and names a link. */
 export async function requestLink(
   req: Request,
   { admin, send, inBackground, siteUrl, minimumMs = 1500, wait = sleep }: LinkRequestContext,
-  kind: (form: URLSearchParams) => LinkRequest,
+  { sentPage, what, link: linkOf }: LinkRequest,
 ): Promise<Response> {
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
@@ -80,15 +85,15 @@ export async function requestLink(
   const form = await readForm(req);
   const locale = siteLocale(form.get('locale'));
   const email = (form.get('email') ?? '').trim();
-  const { sentPage, linkPage, start, email: linkEmail, what } = kind(form);
+  const kind = linkOf(form);
 
-  if (email.includes('@') && email.length <= 254) {
+  if (kind && email.includes('@') && email.length <= 254) {
     try {
       const token = newToken();
       // The database decides what counts as the same address, and hashes it for the limits. It
       // answers with the address the account has, which the link goes to rather than the typed
       // one: the two can differ, as with a look-alike character the match folds (#530).
-      const { data: stored, error } = await start(admin, {
+      const { data: stored, error } = await kind.start(admin, {
         email,
         ipHash: await sha256Hex(clientIp(req.headers)),
         tokenHash: await sha256Hex(token),
@@ -97,10 +102,10 @@ export async function requestLink(
         logError(`Starting the ${what} failed`, error);
       } else if (stored) {
         // In the fragment, which browsers never send to a server, so no log holds the token.
-        const link = `${sitePage(siteUrl, locale, linkPage)}#token=${token}`;
+        const link = `${sitePage(siteUrl, locale, kind.page)}#token=${token}`;
         // Sent after the answer: waiting for it would make only addresses with an account slow.
         inBackground(
-          send(linkEmail(locale, stored, link)).catch((cause) =>
+          send(kind.email(locale, stored, link)).catch((cause) =>
             logError(`Sending the link for the ${what} failed`, cause),
           ),
         );
