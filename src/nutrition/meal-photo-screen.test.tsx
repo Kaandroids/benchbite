@@ -384,4 +384,14 @@ describe('MealPhotoScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Create an account' }));
     expect(router.push).toHaveBeenCalledWith('/account/create');
   });
+
+  it('offers the AI consent when the estimate was refused for want of it', async () => {
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('consent_required'));
+
+    expect(screen.getByText('Bite needs your OK')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Give your OK' }));
+    expect(router.push).toHaveBeenCalledWith('/ai-consent');
+  });
 });
