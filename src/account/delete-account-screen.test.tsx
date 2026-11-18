@@ -307,3 +307,9 @@ describe('an account', () => {
     expect(supabase.functions.invoke).toHaveBeenCalledTimes(1);
   });
 });
+
+it('offers to export the data before the account goes', async () => {
+  await render(<DeleteAccountScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Export your data first' }));
+  expect(screen.getByText('In the file')).toBeOnTheScreen();
+});

@@ -13,6 +13,7 @@ import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { ExportSheet } from '@/privacy/export-sheet';
 import { useIsAccount, useUserEmail } from '@/providers/session-provider';
 import { useTheme, type ColorTokens } from '@/theme';
 
@@ -91,6 +92,7 @@ function WhatGoesScreen({ isAccount, email, onCodeSent }: WhatGoesScreenProps) {
   const sendCode = useSendDeletionCode();
   const { message } = useAccountError(sendCode.error ?? deleteAccount.error);
   const [asking, setAsking] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const pending = deleteAccount.isPending || sendCode.isPending;
 
   return (
@@ -143,6 +145,14 @@ function WhatGoesScreen({ isAccount, email, onCodeSent }: WhatGoesScreenProps) {
           </View>
         ))}
       </Card>
+      <View style={[styles.exportLink, { marginTop: spacing.lg }]}>
+        <TextLink
+          label={t('settings.privacy.export.first')}
+          size="regular"
+          onPress={() => setExporting(true)}
+        />
+      </View>
+      {exporting ? <ExportSheet onClose={() => setExporting(false)} /> : null}
       {asking ? (
         <BiteSheet
           title={t('account.delete.sheetTitle')}
@@ -313,6 +323,9 @@ function DeleteFooter({ message, disabled, deleting, onDelete }: DeleteFooterPro
 }
 
 const styles = StyleSheet.create({
+  exportLink: {
+    alignItems: 'flex-start',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
