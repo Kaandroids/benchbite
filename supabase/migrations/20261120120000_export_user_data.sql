@@ -75,7 +75,8 @@ stable
 set search_path = ''
 as $$
 declare
-  owner_id uuid := export_user_data.user_id;
+  -- Named apart from the tables' columns, so that queries cannot confuse the two.
+  target_id uuid := export_user_data.user_id;
   data jsonb := '{}';
   rows jsonb;
   t record;
@@ -86,7 +87,7 @@ begin
       'select coalesce(jsonb_agg(to_jsonb(r) - ''user_id'' order by r.%I), ''[]'') '
         'from public.%I r where r.user_id = $1',
       t.order_by, t.name
-    ) into rows using owner_id;
+    ) into rows using target_id;
     data := data || jsonb_build_object(t.name, rows);
   end loop;
 
@@ -99,21 +100,21 @@ begin
         ) order by m.id), '[]')
         from public.coach_messages m where m.thread_id = th.id
       )) order by th.id), '[]')
-      from public.coach_threads th where th.user_id = owner_id
+      from public.coach_threads th where th.user_id = target_id
     ),
     'recipes', (
       select coalesce(jsonb_agg(to_jsonb(re) - 'user_id' || jsonb_build_object('ingredients', (
         select coalesce(jsonb_agg(to_jsonb(i) - 'recipe_id' order by i.position), '[]')
         from public.recipe_ingredients i where i.recipe_id = re.id
       )) order by re.id), '[]')
-      from public.recipes re where re.user_id = owner_id
+      from public.recipes re where re.user_id = target_id
     ),
     'exercises', (
       select coalesce(jsonb_agg(to_jsonb(x) - 'owner_id' || jsonb_build_object('names', (
         select coalesce(jsonb_object_agg(n.language, n.name), '{}')
         from public.exercise_translations n where n.exercise_id = x.id
       )) order by x.id), '[]')
-      from public.exercises x where x.owner_id = export_user_data.user_id
+      from public.exercises x where x.owner_id = target_id
     )
   );
 
@@ -125,7 +126,7 @@ begin
       select jsonb_build_object(
         'id', u.id, 'email', u.email, 'created_at', u.created_at, 'guest', u.is_anonymous
       )
-      from auth.users u where u.id = owner_id
+      from auth.users u where u.id = target_id
     ),
     'data', data
   );
