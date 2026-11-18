@@ -23,7 +23,14 @@ subscription.
   `withdraw_ai_consent()` now shares.
 - **Deleted:** the profile, goal, weights and targets; meals, water and steps; workout logs with
   their sets, workouts with their exercises and alternatives, the plan's days and moves; streaks.
-  Without a profile, the app starts the onboarding again.
+  The app then starts the onboarding again on every device (part 2 of #652).
+- **Nothing is written again while it is withdrawn.** Another phone of the user, or an import
+  running at that moment, would otherwise write their health data again, and an AI consent given
+  afterwards would send it to the model. A trigger on each table that rests on the consent, and on
+  `ai_consents`, refuses a row while the consent is withdrawn and not given again (BB063); a lock
+  makes the withdrawal and such a write wait for each other. Users who never consented, as before
+  the onboarding, are not held. `complete_onboarding()` saves the consent first, so the onboarding
+  can be done again.
 - **Kept, as they have another basis:** the account and its subscription (the contract);
   `ai_usage`; the consents, acceptances and withdrawals (the proof, Art. 7(1)); what deleting the
   account and changing its password keep.
@@ -42,8 +49,9 @@ subscription.
 
 ## Consequences
 
-- The app and the website only call the function and say beforehand what it deletes; the app then
-  shows the onboarding.
+- The app and the website only call the function and say beforehand what it deletes. The app
+  treats BB063 as a withdrawn consent and shows the onboarding, also on a device that did not
+  withdraw it.
 - A test checks that no table with a `user_id`, other than those kept on purpose, holds a row of the
   user after the withdrawal, so a table added later must be deleted here or kept on purpose.
 - Deleted data stays in the database's backups until they expire, as in ADR 0143.
