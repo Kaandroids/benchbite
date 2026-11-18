@@ -3,5 +3,4 @@
 import type { ComponentType } from 'react';
 
 export const init = jest.fn();
-export const captureException = jest.fn();
 export const wrap = <P extends object>(component: ComponentType<P>) => component;
