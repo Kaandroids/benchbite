@@ -2759,6 +2759,7 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      lock_ai_consent: { Args: { user_id: string }; Returns: undefined };
       lock_own_alternative: {
         Args: { alternative_id: number };
         Returns: {

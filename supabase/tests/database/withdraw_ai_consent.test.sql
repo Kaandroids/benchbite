@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(21);
 
 -- A and B are premium and have consented; both chat with Bite.
 insert into auth.users (id, email, is_anonymous) values
@@ -142,9 +142,21 @@ select throws_ok(
 );
 reset role;
 
+-- The chat function starts threads with the service role, as an answer begins.
+select throws_ok(
+  $$ insert into public.coach_threads (user_id) values ('00000000-0000-0000-0000-00000000000a') $$,
+  'BB061',
+  null,
+  'No chat is started after the withdrawal'
+);
+
 -- A consent given after the withdrawal counts again.
 insert into public.ai_consents (user_id, consent_version, granted_at)
 values ('00000000-0000-0000-0000-00000000000a', '2026-11-18', now() + interval '1 second');
+select lives_ok(
+  $$ insert into public.coach_threads (user_id) values ('00000000-0000-0000-0000-00000000000a') $$,
+  'A chat is started again once the user consents'
+);
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   (select reason from public.ai_access('coach_chat')), null,
