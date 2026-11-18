@@ -28,7 +28,11 @@ subscription.
   running at that moment, would otherwise write their health data again, and an AI consent given
   afterwards would send it to the model. A trigger on each table that rests on the consent, and on
   `ai_consents`, refuses a row while the consent is withdrawn and not given again (BB063); a lock
-  makes the withdrawal and such a write wait for each other. Users who never consented, as before
+  makes the withdrawal and such a write wait for each other, taken after the plan's limits as other
+  writes take them. Left out are `removed_meal_entries`, which the withdrawal itself writes, and
+  `applied_plans`, the plan's limits, which hold no health data and which the subscription writes
+  again. A user gives only their own AI consent, its user taken from the session, so that the
+  refusal cannot tell one user whether another withdrew theirs. Users who never consented, as before
   the onboarding, are not held. `complete_onboarding()` saves the consent first, so the onboarding
   can be done again.
 - **Kept, as they have another basis:** the account and its subscription (the contract);
