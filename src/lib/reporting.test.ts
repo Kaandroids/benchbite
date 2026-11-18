@@ -173,7 +173,39 @@ describe('reportingOptions', () => {
 });
 
 describe('startReporting', () => {
+  const DSN = 'https://key@o1.ingest.de.sentry.io/1';
+  const saved = {
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    inDev: process.env.EXPO_PUBLIC_SENTRY_IN_DEV,
+  };
+
+  /** The two variables as a test sets them, whatever the shell has. */
+  function given(dsn: string | undefined, inDev: string | undefined) {
+    for (const [name, value] of [
+      ['EXPO_PUBLIC_SENTRY_DSN', dsn],
+      ['EXPO_PUBLIC_SENTRY_IN_DEV', inDev],
+    ] as const) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+
+  afterEach(() => given(saved.dsn, saved.inDev));
+
   it('starts nothing in development unless asked', () => {
+    given(DSN, undefined);
+    startReporting();
+    expect(Sentry.init).not.toHaveBeenCalled();
+  });
+
+  it('starts in development when asked, with the options above', () => {
+    given(DSN, '1');
+    startReporting();
+    expect(Sentry.init).toHaveBeenCalledWith(reportingOptions(DSN, true));
+  });
+
+  it('starts nothing without a DSN, even when asked', () => {
+    given(undefined, '1');
     startReporting();
     expect(Sentry.init).not.toHaveBeenCalled();
   });
