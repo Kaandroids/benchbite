@@ -31,31 +31,17 @@ export type Page =
   | 'export-data/sent'
   | 'export-data/expired';
 
-/** What the sent, done and expired pages of a link say, as each kind of link has it. */
-export type LinkPagesCopy = Pick<
-  Messages['deleteLink'] & Messages['withdrawLink'],
-  | 'sentTitle'
-  | 'sentText'
-  | 'sentHow'
-  | 'sentNote'
-  | 'anotherEmail'
-  | 'doneTitle'
-  | 'doneText'
-  | 'doneNote'
-  | 'backToStart'
-  | 'expiredTitle'
-  | 'expiredText'
-  | 'askAgain'
->;
+/** What the sent, done and expired pages of a link say, as each kind of link that has one does. */
+type LinkCopy = Messages['deleteLink'] & Messages['withdrawLink'] & Messages['exportLink'];
 export type LinkSentCopy = Pick<
-  LinkPagesCopy,
+  LinkCopy,
   'sentTitle' | 'sentText' | 'sentHow' | 'sentNote' | 'anotherEmail'
 >;
 export type LinkDoneCopy = Pick<
-  LinkPagesCopy,
+  Messages['deleteLink'] & Messages['withdrawLink'],
   'doneTitle' | 'doneText' | 'doneNote' | 'backToStart'
 >;
-export type LinkExpiredCopy = Pick<LinkPagesCopy, 'expiredTitle' | 'expiredText' | 'askAgain'>;
+export type LinkExpiredCopy = Pick<LinkCopy, 'expiredTitle' | 'expiredText' | 'askAgain'>;
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';
