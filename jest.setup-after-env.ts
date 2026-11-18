@@ -20,3 +20,6 @@ jest.mock('expo-notifications', () => require('./src/test/expo-notifications'));
 
 // The health store's native modules do not load in tests; this stand-in has no store.
 jest.mock('./src/health/platform', () => require('./src/test/health-platform'));
+
+// Sentry sends nothing in tests; this stand-in's functions are mocks (ADR 0149).
+jest.mock('@sentry/react-native', () => require('./src/test/sentry'));

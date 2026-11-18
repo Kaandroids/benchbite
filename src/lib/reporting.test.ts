@@ -9,8 +9,6 @@ import {
   startReporting,
 } from './reporting';
 
-jest.mock('@sentry/react-native', () => ({ init: jest.fn() }));
-
 beforeEach(() => {
   jest.clearAllMocks();
 });
