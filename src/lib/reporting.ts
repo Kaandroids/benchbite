@@ -44,27 +44,18 @@ function scrubException(exception: Exception): Exception {
  */
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb | null {
   const { type, category, level, timestamp } = breadcrumb;
+  const kept = { type, category, level, timestamp };
+  const data = breadcrumb.data ?? {};
   if (type === 'http' || category === 'fetch' || category === 'xhr') {
-    const data = breadcrumb.data ?? {};
     return {
-      type,
-      category,
-      level,
-      timestamp,
+      ...kept,
       data: { method: data.method, url: maskUrl(data.url), status_code: data.status_code },
     };
   }
   if (category === 'navigation') {
-    const data = breadcrumb.data ?? {};
-    return {
-      type,
-      category,
-      level,
-      timestamp,
-      data: { from: maskUrl(data.from), to: maskUrl(data.to) },
-    };
+    return { ...kept, data: { from: maskUrl(data.from), to: maskUrl(data.to) } };
   }
-  return { type, category, level, timestamp };
+  return kept;
 }
 
 /**
@@ -138,3 +129,9 @@ export function startReporting() {
     Sentry.init(options);
   }
 }
+
+/**
+ * Wraps the root layout so that reports know the screens and the touches that led to an error. It
+ * is no error boundary: what fails while rendering still reaches Sentry through the global handler.
+ */
+export const wrapRoot = Sentry.wrap;
