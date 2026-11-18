@@ -31,12 +31,13 @@ export type Page =
   | 'export-data/sent'
   | 'export-data/expired';
 
-/** What the sent, done and expired pages of a link say, as each kind of link that has one does. */
+/** What the sent and expired pages of a link say, as every kind of link has them. */
 type LinkCopy = Messages['deleteLink'] & Messages['withdrawLink'] & Messages['exportLink'];
 export type LinkSentCopy = Pick<
   LinkCopy,
   'sentTitle' | 'sentText' | 'sentHow' | 'sentNote' | 'anotherEmail'
 >;
+/** The done page's, which only deleting an account and withdrawing a consent have. */
 export type LinkDoneCopy = Pick<
   Messages['deleteLink'] & Messages['withdrawLink'],
   'doneTitle' | 'doneText' | 'doneNote' | 'backToStart'
