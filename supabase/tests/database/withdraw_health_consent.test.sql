@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -79,6 +79,22 @@ begin
   end loop;
   return holding;
 end;
+$$;
+-- The tables tables_holding() looks at that refuse no write while the consent is withdrawn,
+-- but those that write themselves during the withdrawal or hold no health data.
+create function pg_temp.tables_and_holds() returns text[] language sql as $$
+  select coalesce(array_agg(c.table_name::text), '{}')
+  from information_schema.columns c
+  join information_schema.tables t using (table_schema, table_name)
+  where c.table_schema = 'public' and c.column_name = 'user_id' and t.table_type = 'BASE TABLE'
+    and c.table_name <> all (pg_temp.kept_tables() || array['removed_meal_entries', 'applied_plans'])
+    -- Bite's tables rest on the AI consent, which no thread is started without (ADR 0143).
+    and c.table_name not like 'coach\_%'
+    and not exists (
+      select 1 from pg_trigger g
+      where g.tgrelid = format('public.%I', c.table_name)::regclass
+        and g.tgfoid = 'public.refuse_write_after_health_withdrawal()'::regprocedure
+    );
 $$;
 grant execute on all functions in schema pg_temp to public;
 
@@ -241,6 +257,16 @@ select ok(
   not has_function_privilege('authenticated', 'public.end_ai_consent(uuid)', 'execute')
     and not has_function_privilege('authenticated', 'public.has_health_consent(uuid)', 'execute'),
   'Its helpers are closed to clients'
+);
+
+-- Every table the withdrawal deletes is held while it is withdrawn, so that a table added later
+-- is not left out of either.
+select is(
+  array(
+    select n from unnest(pg_temp.tables_and_holds()) n order by 1
+  ),
+  '{}'::text[],
+  'Every table the withdrawal empties refuses writes while it is withdrawn'
 );
 
 -- Users who never consented, as before the onboarding, are not held.
