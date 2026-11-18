@@ -158,3 +158,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0140](0140-bite-answers-with-care.md)                                | Bite answers a crisis, a health condition and an eating disorder with care              | Accepted                                             |
 | [0141](0141-accept-the-terms-beside-the-health-data-consent.md)       | Accept the terms of use beside the health data consent                                  | Accepted                                             |
 | [0142](0142-ask-for-the-ai-consent-at-first-use.md)                   | Ask for the AI consent at first use                                                     | Accepted                                             |
+| [0143](0143-delete-bites-data-when-the-ai-consent-is-withdrawn.md)    | Delete Bite's data when the AI consent is withdrawn                                     | Accepted                                             |
