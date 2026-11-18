@@ -1,5 +1,5 @@
 // Exporting all of the user's data as one file (#553, ADR 0147): the server gathers it, the phone
-// writes it to its cache and shares it, and deletes it once it is shared.
+// writes it to its cache and shares it, and the next export deletes it.
 import { useMutation } from '@tanstack/react-query';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -13,8 +13,8 @@ const PREFIX = 'benchbite-data-';
 export const exportFileName = (now: Date) => `${PREFIX}${toIsoDate(now)}.json`;
 
 /**
- * Deletes the exports an earlier run left in the cache: one never shared, as when the app was
- * closed in between, or one whose share could not be awaited.
+ * Deletes the exports an earlier run left in the cache: the one shared last, and one never shared,
+ * as when the app was closed in between.
  */
 function removeLeftExports() {
   for (const entry of Paths.cache.list()) {
@@ -40,19 +40,15 @@ export async function writeExport(now = new Date()): Promise<File> {
 }
 
 /**
- * Shares the file through the phone's share sheet, then deletes it: it holds health data, which
- * should stay only where the user put it.
+ * Shares the file through the phone's share sheet. It stays in the cache until the next export:
+ * on Android the sheet returns before an app that reads in the background, as Drive does, is done.
  */
-export async function shareExport(file: File, dialogTitle: string): Promise<void> {
-  try {
-    await Sharing.shareAsync(file.uri, {
-      mimeType: 'application/json',
-      UTI: 'public.json',
-      dialogTitle,
-    });
-  } finally {
-    if (file.exists) file.delete();
-  }
+export function shareExport(file: File, dialogTitle: string): Promise<void> {
+  return Sharing.shareAsync(file.uri, {
+    mimeType: 'application/json',
+    UTI: 'public.json',
+    dialogTitle,
+  });
 }
 
 /** Makes the file; sharing it is the caller's, once its sheet has closed. */

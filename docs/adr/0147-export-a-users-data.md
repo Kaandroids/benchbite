@@ -26,8 +26,10 @@ their account, which delete the data for good (ADR 0144, ADR 0087).
 - **Photos and voice messages are not in the file.** The messages name them by their path. A ZIP
   with the media is a later step; it would make the export much larger and slower.
 - **The app writes the file to its cache and shares it** through the phone's share sheet with
-  `expo-sharing`, and deletes it afterwards, as it holds health data. The share sheet opens once the
-  export's sheet has closed, as iOS shows no sheet over another.
+  `expo-sharing`. The share sheet opens once the export's sheet has closed, as iOS shows no sheet
+  over another. The file holds health data, so the next export deletes any earlier one first, and a
+  file that could not be written is deleted at once. It is not deleted as the share sheet closes:
+  on Android that is before an app that reads in the background, as Drive does, is done with it.
 - **The export is offered where data is about to go:** in Settings › Privacy, in the sheets that
   withdraw a consent, and on the delete account screen.
 
@@ -43,6 +45,8 @@ their account, which delete the data for good (ADR 0144, ADR 0087).
 ## Consequences
 
 - `expo-sharing` is a native module: the app needs a new development build.
+- The last export stays in the app's cache, which only the app can read, until the next export or
+  until the system clears the cache.
 - A column added to an exported table is exported as well, including one that should not be. A new
   column meant only for the server goes in a table of its own, or is removed in
   `export_user_data()`.

@@ -76,18 +76,13 @@ it('deletes a file it could not finish writing', async () => {
   expect(Files.made[0]!.delete).toHaveBeenCalled();
 });
 
-it('shares the file as JSON, then deletes it, also when sharing fails', async () => {
+it('shares the file as JSON, and leaves it for the next export to delete', async () => {
   const file = (await writeExport(new Date(2026, 10, 18, 10))) as MockFile;
-
   await shareExport(file, 'Export your data');
   expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/benchbite-data-2026-11-18.json', {
     mimeType: 'application/json',
     UTI: 'public.json',
     dialogTitle: 'Export your data',
   });
-  expect(file.delete).toHaveBeenCalledTimes(1);
-
-  jest.mocked(Sharing.shareAsync).mockRejectedValueOnce(new Error('no'));
-  await expect(shareExport(file, 'Export your data')).rejects.toThrow('no');
-  expect(file.delete).toHaveBeenCalledTimes(2);
+  expect(file.delete).not.toHaveBeenCalled();
 });
