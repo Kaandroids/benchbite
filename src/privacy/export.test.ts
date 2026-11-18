@@ -67,6 +67,7 @@ it('writes nothing when the server fails', async () => {
   jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('down') } as never);
   await expect(writeExport()).rejects.toThrow('down');
   expect(Paths.cache.list).not.toHaveBeenCalled();
+  expect(Files.made).toHaveLength(0);
 });
 
 it('deletes a file it could not finish writing', async () => {
