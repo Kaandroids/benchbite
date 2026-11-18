@@ -52,8 +52,8 @@ create function pg_temp.kept_tables() returns text[] language sql as $$
   select array[
     'account_deletion_codes', 'account_deletion_links', 'account_deletion_tries',
     'ai_calls_in_flight', 'ai_consent_withdrawals', 'ai_consents', 'ai_usage',
-    'coach_media_deletions', 'custom_foods', 'favourite_foods', 'health_data_consent_withdrawals',
-    'health_data_consents', 'password_changes', 'recipes', 'subscriptions', 'terms_acceptances'
+    'coach_media_deletions', 'consent_withdrawal_links', 'custom_foods', 'favourite_foods',
+    'health_data_consent_withdrawals', 'health_data_consents', 'password_changes', 'recipes', 'subscriptions', 'terms_acceptances'
   ];
 $$;
 -- The tables with a user_id, but those kept on purpose.
