@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
@@ -31,8 +31,7 @@ export function PillButton({
 }: PillButtonProps) {
   const { colors, radii, spacing } = useTheme();
   const primary = variant === 'primary';
-  const neutral = variant === 'neutral';
-  const danger = variant === 'danger';
+  const look = LOOKS[primary && disabled ? 'disabled' : variant];
   return (
     <Pressable
       accessibilityRole="button"
@@ -45,42 +44,32 @@ export function PillButton({
         {
           borderRadius: radii.full,
           paddingHorizontal: primary ? spacing.lg : spacing.md,
-          backgroundColor: primary
-            ? disabled
-              ? colors.track
-              : colors.primaryButton
-            : neutral
-              ? colors.track
-              : danger
-                ? colors.dangerFaintBackground
-                : colors.iconBackground,
-          borderWidth: danger ? 1.5 : 0,
-          borderColor: colors.dangerFaintBorder,
+          backgroundColor: colors[look.background],
           opacity: pressed ? 0.6 : 1,
           gap: spacing.xs,
         },
+        look.border ? { borderWidth: 1.5, borderColor: colors[look.border] } : null,
       ]}
     >
       {icon ? <Icon name={icon} size={16} color={primary ? 'onPrimary' : 'primary'} /> : null}
-      <Text
-        variant="label"
-        color={
-          primary
-            ? disabled
-              ? 'textMuted'
-              : 'onPrimary'
-            : neutral
-              ? 'text'
-              : danger
-                ? 'danger'
-                : 'primaryText'
-        }
-      >
+      <Text variant="label" color={look.text}>
         {label}
       </Text>
     </Pressable>
   );
 }
+
+/** Each variant's colours, and a primary button's while it is disabled. */
+const LOOKS: Record<
+  NonNullable<PillButtonProps['variant']> | 'disabled',
+  { background: keyof ColorTokens; text: keyof ColorTokens; border?: keyof ColorTokens }
+> = {
+  soft: { background: 'iconBackground', text: 'primaryText' },
+  primary: { background: 'primaryButton', text: 'onPrimary' },
+  disabled: { background: 'track', text: 'textMuted' },
+  neutral: { background: 'track', text: 'text' },
+  danger: { background: 'dangerFaintBackground', text: 'danger', border: 'dangerFaintBorder' },
+};
 
 const styles = StyleSheet.create({
   pill: {
