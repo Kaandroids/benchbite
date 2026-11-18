@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
+import { CONSENTS_KEY } from '@/privacy/consents';
 
 import { ACCESS_KEY } from './access';
 
@@ -20,6 +21,10 @@ export function useGiveAiConsent() {
         .insert({ consent_version: AI_CONSENT_VERSION });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCESS_KEY }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ACCESS_KEY }),
+        queryClient.invalidateQueries({ queryKey: CONSENTS_KEY }),
+      ]),
   });
 }
