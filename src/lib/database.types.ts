@@ -647,6 +647,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      consent_withdrawal_links: {
+        Row: {
+          consent: string;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          consent: string;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          consent?: string;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      consent_withdrawal_requests: {
+        Row: {
+          created_at: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        Update: {
+          created_at?: string;
+          email_hash?: string;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       custom_foods: {
         Row: {
           archived_at: string | null;
@@ -3143,6 +3190,7 @@ export type Database = {
       };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
       remove_old_account_deletions: { Args: Record<PropertyKey, never>; Returns: undefined };
+      remove_old_consent_withdrawals: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_unconfirmed_users: { Args: Record<PropertyKey, never>; Returns: undefined };
       rename_workout_alternative: {
         Args: { alternative_id: number; name: string };
@@ -3275,6 +3323,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      start_consent_withdrawal: {
+        Args: { p_consent: string; p_email: string; p_ip_hash: string; p_token_hash: string };
+        Returns: string;
+      };
       start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
       stop_coach_request: { Args: { request_id: string }; Returns: undefined };
       streak: {
@@ -3398,7 +3450,13 @@ export type Database = {
         Returns: unknown;
       };
       withdraw_ai_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
+      withdraw_ai_consent_of: { Args: { user_id: string }; Returns: undefined };
+      withdraw_consent_by_link: {
+        Args: { p_consent: string; p_token_hash: string };
+        Returns: boolean;
+      };
       withdraw_health_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
+      withdraw_health_consent_of: { Args: { user_id: string }; Returns: undefined };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
