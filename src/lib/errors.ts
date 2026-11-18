@@ -1,9 +1,10 @@
-// The codes the database raises for requests it refuses (BB001 to BB058 in the migrations, and
+// The codes the database raises for requests it refuses (BB001 to BB059 in the migrations, and
 // some of Postgres's own), named by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',
   tooYoung: 'BB002',
   noConsent: 'BB003',
+  noTerms: 'BB059',
   daysChanged: 'BB004',
   exerciseLimit: 'BB008',
   workoutLimit: 'BB009',

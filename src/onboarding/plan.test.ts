@@ -243,6 +243,7 @@ describe('refusedAnswer', () => {
   it('names the answer the server refused, and nothing for other errors', () => {
     expect(refusedAnswer({ code: 'BB002' })).toBe('tooYoung');
     expect(refusedAnswer({ code: 'BB003' })).toBe('noConsent');
+    expect(refusedAnswer({ code: 'BB059' })).toBe('noTerms');
     expect(refusedAnswer({ code: 'BB004' })).toBe('daysChanged');
     expect(refusedAnswer({ code: 'BB005' })).toBeNull();
     expect(refusedAnswer(new Error('offline'))).toBeNull();

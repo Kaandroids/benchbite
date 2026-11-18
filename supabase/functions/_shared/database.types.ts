@@ -1656,6 +1656,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      terms_acceptances: {
+        Row: {
+          accepted_at: string;
+          id: number;
+          terms_version: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_at?: string;
+          id?: never;
+          terms_version: string;
+          user_id: string;
+        };
+        Update: {
+          accepted_at?: string;
+          id?: never;
+          terms_version?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_streaks: {
         Row: {
           answered_through: string | null;
