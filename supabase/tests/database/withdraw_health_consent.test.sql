@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(22);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -204,6 +204,18 @@ select throws_ok(
 select throws_ok(
   $$ insert into public.ai_consents (consent_version) values ('2026-11-18') $$,
   'BB063', null, 'and the AI consent cannot be given, so nothing goes to the model'
+);
+
+-- The subscription stays the contract: it can change, and the plans' limits are applied for all.
+reset role;
+select lives_ok(
+  $$ update public.subscriptions set period_end = period_end + interval '1 month'
+     where user_id = '00000000-0000-0000-0000-00000000000a' $$,
+  'The subscription can still change'
+);
+select lives_ok(
+  $$ select public.apply_changed_plan_limits() $$,
+  'and the plans'' limits are still applied'
 );
 
 -- The onboarding can be done again, with a new consent. The withdrawal is moved back, as it would

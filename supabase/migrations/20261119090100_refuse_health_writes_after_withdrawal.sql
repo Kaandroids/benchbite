@@ -51,7 +51,8 @@ revoke execute on function public.refuse_write_after_health_withdrawal()
   from public, anon, authenticated;
 
 -- The tables whose rows rest on the consent, and the AI consent, which sends that data to the model.
--- removed_meal_entries is left out: deleting the meals writes it during the withdrawal.
+-- Left out: removed_meal_entries, which deleting the meals writes during the withdrawal, and
+-- applied_plans, the plan's limits, which the subscription keeps writing and hold no health data.
 create trigger profiles_need_health_consent
   before insert on public.profiles
   for each row execute function public.refuse_write_after_health_withdrawal();
@@ -112,9 +113,6 @@ create trigger planned_days_kept_need_health_consent
   before insert on public.planned_days_kept
   for each row execute function public.refuse_write_after_health_withdrawal();
 
-create trigger applied_plans_need_health_consent
-  before insert on public.applied_plans
-  for each row execute function public.refuse_write_after_health_withdrawal();
 
 create trigger day_nutrition_targets_need_health_consent
   before insert on public.day_nutrition_targets
