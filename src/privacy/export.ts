@@ -6,17 +6,35 @@ import * as Sharing from 'expo-sharing';
 
 import { supabase } from '@/lib/supabase';
 
+const PREFIX = 'benchbite-data-';
+
 /** The export's name, with the day it was made: benchbite-data-2026-11-18.json. */
-export const exportFileName = (now: Date) =>
-  `benchbite-data-${now.toISOString().slice(0, 10)}.json`;
+export const exportFileName = (now: Date) => `${PREFIX}${now.toISOString().slice(0, 10)}.json`;
+
+/**
+ * Deletes the exports an earlier run left in the cache: one never shared, as when the app was
+ * closed in between, or one whose share could not be awaited.
+ */
+function removeLeftExports() {
+  for (const entry of Paths.cache.list()) {
+    if (entry instanceof File && entry.name.startsWith(PREFIX)) entry.delete();
+  }
+}
 
 /** Writes the user's data to a file in the cache, as the server gives it, and returns it. */
 export async function writeExport(now = new Date()): Promise<File> {
   const { data, error } = await supabase.rpc('export_my_data');
   if (error) throw error;
+  removeLeftExports();
   const file = new File(Paths.cache, exportFileName(now));
-  file.create({ overwrite: true });
-  await file.write(JSON.stringify(data, null, 2));
+  try {
+    file.create({ overwrite: true });
+    await file.write(JSON.stringify(data, null, 2));
+  } catch (cause) {
+    // Half a file of health data is of no use, and should not stay.
+    if (file.exists) file.delete();
+    throw cause;
+  }
   return file;
 }
 
