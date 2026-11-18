@@ -76,8 +76,7 @@ select throws_ok(
   'A user cannot consent for another'
 );
 select lives_ok(
-  $$ insert into public.ai_consents (user_id, consent_version)
-     values ('00000000-0000-0000-0000-00000000000a', '2026-11-18') $$,
+  $$ insert into public.ai_consents (consent_version) values ('2026-11-18') $$,
   'A user consents for themselves'
 );
 select is(

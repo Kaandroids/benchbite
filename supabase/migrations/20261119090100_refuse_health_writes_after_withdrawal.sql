@@ -152,6 +152,11 @@ as $$
   );
 $$;
 
+-- A user gives only their own AI consent: its user is the caller, never named, so that the trigger
+-- above cannot tell one user whether another withdrew their consent.
+revoke insert on public.ai_consents from authenticated;
+grant insert (consent_version) on public.ai_consents to authenticated;
+
 -- As before, holding the consent while it withdraws it, and recording the withdrawal last.
 create or replace function public.withdraw_health_consent()
 returns void
