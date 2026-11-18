@@ -51,12 +51,10 @@ function database(
   let nextId = 100;
   const threads = new Set((tables.coach_threads ?? []).map((row) => row.id as number));
   const refused = (code: string, message: string) => ({ data: null, error: { code, message } });
-  // The threads there now, those given first and those started since, less those deleted.
-  const liveThreads = () => {
-    const given = (tables.coach_threads ?? []).filter((row) => threads.has(row.id as number));
-    const started = [...threads].filter((id) => !given.some((row) => row.id === id));
-    return [...given, ...started.map((id) => ({ id }))];
-  };
+  // The threads there now: those given, with their rows, and those started since.
+  const liveThreads = () =>
+    [...threads].map((id) => (tables.coach_threads ?? []).find((row) => row.id === id) ?? { id });
+
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
       const data = rows ?? (table === 'coach_threads' ? liveThreads() : (tables[table] ?? []));
