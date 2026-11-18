@@ -145,6 +145,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_consents: {
+        Row: {
+          consent_version: string;
+          granted_at: string;
+          id: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          consent_version: string;
+          granted_at?: string;
+          id?: never;
+          user_id: string;
+        };
+        Update: {
+          consent_version?: string;
+          granted_at?: string;
+          id?: never;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       ai_feature_limits: {
         Row: {
           feature: Database['public']['Enums']['ai_feature'];
@@ -2577,6 +2599,7 @@ export type Database = {
       };
       guest_inactivity_period: { Args: Record<PropertyKey, never>; Returns: string };
       guest_still_inactive: { Args: { p_user: string }; Returns: boolean };
+      has_ai_consent: { Args: { user_id: string }; Returns: boolean };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
@@ -3357,7 +3380,8 @@ export type Database = {
         | 'request_too_large'
         | 'unpriced_model'
         | 'call_in_progress'
-        | 'service_paused';
+        | 'service_paused'
+        | 'consent_required';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       billing_period: 'monthly' | 'yearly';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
@@ -3660,6 +3684,7 @@ export const Constants = {
         'unpriced_model',
         'call_in_progress',
         'service_paused',
+        'consent_required',
       ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       billing_period: ['monthly', 'yearly'],
