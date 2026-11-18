@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -95,6 +95,13 @@ select is(
   (select d->'data'->'exercises'->0->>'name' from export),
   'Hip thrust machine',
   'And the user''s own exercises'
+);
+select is(
+  (select array_agg(k order by k) from export, jsonb_object_keys(d->'data') k),
+  (select array_agg(n order by n) from (
+    select name n from public.export_tables() union select public.export_nested()
+  ) s),
+  'The export holds each exported and nested table, and no other'
 );
 select ok(
   (select d->'data' ? 'health_data_consents' and d->'data' ? 'ai_usage' from export),
