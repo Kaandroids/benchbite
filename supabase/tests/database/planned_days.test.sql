@@ -364,7 +364,8 @@ grant execute on all functions in schema pg_temp to public;
 create function pg_temp.onboard(today date) returns void language sql as $$
   select public.complete_onboarding(
     jsonb_build_object(
-      'goal', 'stay_healthy', 'consentedPolicyVersion', '2026-10-21', 'sex', 'female',
+      'goal', 'stay_healthy', 'consentedPolicyVersion', '2026-10-21', 'acceptedTermsVersion', '2026-11-18',
+      'sex', 'female',
       'birthYear', extract(year from current_date)::integer - 30, 'heightCm', 168, 'weightKg', 70,
       'activityLevel', 'light', 'experience', 'beginner',
       'trainingDays', pg_temp.days(), 'setup', 'gym',

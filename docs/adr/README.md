@@ -156,3 +156,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0138](0138-set-targets.md)                                           | Give each set a target, the user's own or worked out from last time                     | Accepted                                             |
 | [0139](0139-test-whole-journeys-with-maestro.md)                      | Test whole journeys with Maestro on the iOS Simulator                                   | Accepted                                             |
 | [0140](0140-bite-answers-with-care.md)                                | Bite answers a crisis, a health condition and an eating disorder with care              | Accepted                                             |
+| [0141](0141-accept-the-terms-beside-the-health-data-consent.md)       | Accept the terms of use beside the health data consent                                  | Accepted                                             |

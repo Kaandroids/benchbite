@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -21,7 +21,8 @@ grant execute on all functions in schema pg_temp to public;
 -- conditioning on the third.
 create function pg_temp.answers(changes jsonb default '{}') returns jsonb language sql as $$
   select jsonb_build_object(
-    'goal', 'lose_fat', 'consentedPolicyVersion', '2026-10-21', 'sex', 'female',
+    'goal', 'lose_fat', 'consentedPolicyVersion', '2026-10-21', 'acceptedTermsVersion', '2026-11-18',
+    'sex', 'female',
     'birthYear', extract(year from current_date)::integer - 30, 'heightCm', 168, 'weightKg', 70,
     'targetWeightKg', 64, 'weeklyPaceKg', 0.5, 'activityLevel', 'light',
     'experience', 'beginner', 'trainingDays', jsonb_build_array(1, 3, 4), 'setup', 'gym',
@@ -60,6 +61,11 @@ select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers('{"consentedPolicyVersion": null}'), pg_temp.plan()) $$,
   'BB003', 'Health data consent is required',
   'Saving without consent is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(pg_temp.answers('{"acceptedTermsVersion": ""}'), pg_temp.plan()) $$,
+  'BB059', 'The terms of use must be accepted',
+  'Saving without the terms accepted is rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers('{"trainingDays": [1, 3]}'), pg_temp.plan()) $$,
@@ -153,6 +159,17 @@ select results_eq(
 );
 select is((select count(*)::integer from public.health_data_consents), 1, 'The consent is saved');
 select results_eq(
+  $$ select terms_version from public.terms_acceptances $$,
+  $$ values ('2026-11-18') $$,
+  'The accepted version of the terms is saved'
+);
+select throws_ok(
+  $$ insert into public.terms_acceptances (user_id, terms_version)
+     values ((select auth.uid()), '2026-11-18') $$,
+  '42501', null,
+  'Users cannot record an acceptance themselves'
+);
+select results_eq(
   $$ select weekdays, type::text, active from public.workouts order by weekdays $$,
   $$ values ('{1,4}'::smallint[], 'full_body', true), ('{3}'::smallint[], 'lower', true) $$,
   'Each session of the plan is saved as an active workout on its weekdays'
@@ -188,6 +205,10 @@ select throws_ok(
 -- Other users see nothing and cannot add workouts.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is_empty($$ select 1 from public.workouts $$, 'Users cannot read other users'' workouts');
+select is_empty(
+  $$ select 1 from public.terms_acceptances $$,
+  'Users cannot read other users'' acceptance of the terms'
+);
 select throws_ok(
   $$ insert into public.workouts (user_id, weekdays, type, estimated_minutes)
      values ('00000000-0000-0000-0000-00000000000b', '{2}', 'push', 30) $$,
@@ -213,6 +234,11 @@ select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
   '42501', null,
   'Anon cannot save an onboarding'
+);
+select throws_ok(
+  $$ select 1 from public.terms_acceptances $$,
+  '42501', null,
+  'Anon cannot read acceptances of the terms'
 );
 
 select * from finish();

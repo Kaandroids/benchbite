@@ -18,6 +18,8 @@ export type OnboardingAnswers = {
   goal?: Goal;
   /** The privacy policy version the user consented to for health data. */
   consentedPolicyVersion?: string;
+  /** The version of the terms of use the user accepted. */
+  acceptedTermsVersion?: string;
   sex?: Enums['sex'];
   birthYear?: number;
   heightCm?: number;
