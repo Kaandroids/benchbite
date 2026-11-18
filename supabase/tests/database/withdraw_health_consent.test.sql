@@ -4,11 +4,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.com');
+  ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.com');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -185,11 +186,38 @@ select is(
   'The media of Bite''s chats are queued for the purge'
 );
 
--- The onboarding can be done again, with a new consent.
+-- While it is withdrawn, nothing that rests on it is written again, as by another phone.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ select public.import_steps(jsonb_build_array(jsonb_build_object('day', current_date, 'steps', 9000)), current_date) $$,
+  'BB063', null, 'Steps are not imported after the withdrawal'
+);
+select throws_ok(
+  $$ select public.add_water(current_date, 250) $$,
+  'BB063', null, 'Water is not logged'
+);
+select throws_ok(
+  $$ insert into public.meal_entries (day, meal, food_id, grams)
+     values (current_date, 'lunch', 'C133000', 100) $$,
+  'BB063', null, 'Meals are not logged'
+);
+select throws_ok(
+  $$ insert into public.ai_consents (consent_version) values ('2026-11-18') $$,
+  'BB063', null, 'and the AI consent cannot be given, so nothing goes to the model'
+);
+
+-- The onboarding can be done again, with a new consent. The withdrawal is moved back, as it would
+-- be in a transaction of its own.
+reset role;
+update public.health_data_consent_withdrawals set withdrawn_at = now() - interval '1 minute';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select lives_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
   'The user can finish the onboarding again'
+);
+select lives_ok(
+  $$ select public.add_water(current_date, 250) $$,
+  'and log again'
 );
 
 reset role;
@@ -201,6 +229,13 @@ select ok(
   not has_function_privilege('authenticated', 'public.end_ai_consent(uuid)', 'execute')
     and not has_function_privilege('authenticated', 'public.has_health_consent(uuid)', 'execute'),
   'Its helpers are closed to clients'
+);
+
+-- Users who never consented, as before the onboarding, are not held.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
+select lives_ok(
+  $$ select public.add_water(current_date, 250) $$,
+  'A user before the onboarding logs as before'
 );
 
 select * from finish();

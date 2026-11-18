@@ -2643,6 +2643,7 @@ export type Database = {
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
+      health_consent_withdrawn: { Args: { user_id: string }; Returns: boolean };
       health_source_name: { Args: { source: string }; Returns: string };
       heart_rate_kcal: {
         Args: {
@@ -2781,6 +2782,7 @@ export type Database = {
         }[];
       };
       lock_ai_consent: { Args: { user_id: string }; Returns: undefined };
+      lock_health_consent: { Args: { user_id: string }; Returns: undefined };
       lock_own_alternative: {
         Args: { alternative_id: number };
         Returns: {
