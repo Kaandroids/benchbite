@@ -989,6 +989,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      health_data_consent_withdrawals: {
+        Row: {
+          id: number;
+          user_id: string;
+          withdrawn_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Update: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Relationships: [];
+      };
       health_data_consents: {
         Row: {
           granted_at: string;
@@ -2519,6 +2538,7 @@ export type Database = {
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
+      end_ai_consent: { Args: { user_id: string }; Returns: undefined };
       exercise_bests: {
         Args: { exercise_ids: string[] };
         Returns: {
@@ -2619,9 +2639,11 @@ export type Database = {
       guest_inactivity_period: { Args: Record<PropertyKey, never>; Returns: string };
       guest_still_inactive: { Args: { p_user: string }; Returns: boolean };
       has_ai_consent: { Args: { user_id: string }; Returns: boolean };
+      has_health_consent: { Args: { user_id: string }; Returns: boolean };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
+      health_consent_withdrawn: { Args: { user_id: string }; Returns: boolean };
       health_source_name: { Args: { source: string }; Returns: string };
       heart_rate_kcal: {
         Args: {
@@ -2760,6 +2782,7 @@ export type Database = {
         }[];
       };
       lock_ai_consent: { Args: { user_id: string }; Returns: undefined };
+      lock_health_consent: { Args: { user_id: string }; Returns: undefined };
       lock_own_alternative: {
         Args: { alternative_id: number };
         Returns: {
@@ -3368,6 +3391,7 @@ export type Database = {
         Returns: unknown;
       };
       withdraw_ai_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
+      withdraw_health_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
