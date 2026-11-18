@@ -30,7 +30,13 @@ error's message can hold a weight, a meal or what someone said to Bite.
   - `beforeBreadcrumb` keeps of a breadcrumb only its kind, level and time; of a request its
     method, the path of its URL and its status; of a navigation its paths without query. What was
     logged, typed or tapped is dropped.
+  - It drops the hash that stays the same for a phone (`device_app_hash`), which would tell one
+    person's errors apart.
   - Tests show that a realistic event keeps none of these.
+- **Sentry keeps none of it either.** The project prevents storing IP addresses, keeps its server
+  side data scrubbing on, and removes `user.geo`, the city Sentry otherwise works out from the IP
+  before dropping it (an advanced data scrubbing rule). A test error from a development build
+  showed each of these working.
 - **The DSN is in the app, the auth token is not.** `EXPO_PUBLIC_SENTRY_DSN` only lets the app send
   events to the project, and every copy of the app needs it. `SENTRY_AUTH_TOKEN`, which uploads
   source maps and debug symbols at build time, is a secret kept on the build machine
