@@ -394,4 +394,18 @@ describe('MealPhotoScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Give your OK' }));
     expect(router.push).toHaveBeenCalledWith('/ai-consent');
   });
+
+  it('sends the same photos again once the user consented', async () => {
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('consent_required'));
+
+    pendingEstimate();
+    await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+    expect(estimateMeal).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(estimateMeal).mock.calls[1]?.[0]).toEqual(
+      jest.mocked(estimateMeal).mock.calls[0]?.[0],
+    );
+    expect(screen.queryByText('Bite needs your OK')).toBeNull();
+  });
 });

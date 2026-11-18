@@ -116,7 +116,11 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
         }
       />
     );
-  } else if (state.kind === 'notFood' || (state.kind === 'failed' && !refusal)) {
+  } else if (
+    state.kind === 'notFood' ||
+    // Once the user consents from its card, the same photos are sent again.
+    (state.kind === 'failed' && (!refusal || refusal === 'consent_required'))
+  ) {
     const retry = state.kind === 'failed' && !blocked;
     footer = (
       <Buttons
