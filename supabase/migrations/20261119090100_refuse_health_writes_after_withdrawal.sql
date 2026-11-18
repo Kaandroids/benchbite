@@ -134,7 +134,9 @@ create trigger ai_consents_need_health_consent
   before insert on public.ai_consents
   for each row execute function public.refuse_write_after_health_withdrawal();
 
--- As before, and no AI consent counts while the health data consent is withdrawn.
+-- As before, and no AI consent counts while the health data consent is withdrawn. The withdrawal
+-- ends the AI consent and the trigger above refuses a new one; this holds as well should either
+-- change.
 create or replace function public.has_ai_consent(user_id uuid)
 returns boolean
 language sql
