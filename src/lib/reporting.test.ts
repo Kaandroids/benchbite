@@ -1,0 +1,172 @@
+import * as Sentry from '@sentry/react-native';
+import type { ErrorEvent } from '@sentry/react-native';
+
+import {
+  maskText,
+  reportingOptions,
+  scrubBreadcrumb,
+  scrubEvent,
+  startReporting,
+} from './reporting';
+
+jest.mock('@sentry/react-native', () => ({ init: jest.fn() }));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe('maskText', () => {
+  it('masks addresses, tokens, ids and numbers, and keeps the shape and the error codes', () => {
+    expect(
+      maskText(
+        'BB063: kaan@example.com logged 72.5 kg for 00000000-0000-0000-0000-00000000000a with eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl',
+      ),
+    ).toBe('BB063: [email] logged [n] kg for [id] with [token]');
+  });
+});
+
+describe('scrubBreadcrumb', () => {
+  it('keeps of a request its method, the path of its URL and its status', () => {
+    expect(
+      scrubBreadcrumb({
+        type: 'http',
+        category: 'fetch',
+        level: 'info',
+        timestamp: 1,
+        data: {
+          method: 'GET',
+          url: 'https://x.supabase.co/rest/v1/meal_entries?user_id=eq.00000000-0000-0000-0000-00000000000a&day=eq.2026-11-18',
+          status_code: 500,
+          request_body: '{"grams":200}',
+        },
+      }),
+    ).toEqual({
+      type: 'http',
+      category: 'fetch',
+      level: 'info',
+      timestamp: 1,
+      data: { method: 'GET', url: 'https://x.supabase.co/rest/v1/meal_entries', status_code: 500 },
+    });
+  });
+
+  it('drops what was logged or tapped', () => {
+    expect(
+      scrubBreadcrumb({
+        category: 'console',
+        level: 'warning',
+        timestamp: 2,
+        message: 'Saving 72.5 kg failed',
+        data: { arguments: ['Saving 72.5 kg failed'] },
+      }),
+    ).toEqual({ category: 'console', level: 'warning', timestamp: 2 });
+    expect(
+      scrubBreadcrumb({
+        category: 'touch',
+        timestamp: 3,
+        message: 'Lentil soup',
+        data: { path: [] },
+      }),
+    ).toEqual({ category: 'touch', timestamp: 3 });
+  });
+
+  it('keeps of a navigation the paths, without what they carry', () => {
+    expect(
+      scrubBreadcrumb({
+        category: 'navigation',
+        timestamp: 4,
+        data: { from: '/nutrition/food/42?meal=lunch', to: '/nutrition/search' },
+      }),
+    ).toEqual({
+      category: 'navigation',
+      timestamp: 4,
+      data: { from: '/nutrition/food/[n]', to: '/nutrition/search' },
+    });
+  });
+});
+
+describe('scrubEvent', () => {
+  const event: ErrorEvent = {
+    type: undefined,
+    message: 'Could not save 72.5 kg',
+    exception: {
+      values: [
+        {
+          type: 'Error',
+          value: 'insert into weight_entries failed for kaan@example.com',
+          stacktrace: { frames: [{ filename: 'app:///index.bundle', lineno: 10, colno: 2 }] },
+        },
+      ],
+    },
+    user: { id: '00000000-0000-0000-0000-00000000000a', email: 'kaan@example.com' },
+    request: { url: 'https://x.supabase.co/rest/v1/weight_entries', data: '{"weight_kg":72.5}' },
+    extra: { weight: 72.5 },
+    server_name: "Kaan's iPhone",
+    contexts: {
+      device: { name: "Kaan's iPhone", model: 'iPhone18,2', family: 'iOS' },
+      os: { name: 'iOS', version: '27.0' },
+    },
+    breadcrumbs: [{ category: 'console', message: 'Lentil soup', timestamp: 1 }],
+    tags: { 'event.origin': 'javascript' },
+  };
+
+  it('sends where the code failed, and none of the user, their device’s name or their data', () => {
+    const scrubbed = scrubEvent(event);
+    expect(scrubbed.user).toBeUndefined();
+    expect(scrubbed.request).toBeUndefined();
+    expect(scrubbed.extra).toBeUndefined();
+    expect(scrubbed.server_name).toBeUndefined();
+    expect(scrubbed.message).toBe('Could not save [n] kg');
+    expect(scrubbed.exception?.values?.[0]).toEqual({
+      type: 'Error',
+      value: 'insert into weight_entries failed for [email]',
+      stacktrace: { frames: [{ filename: 'app:///index.bundle', lineno: 10, colno: 2 }] },
+    });
+    expect(scrubbed.contexts?.device).toEqual({
+      name: undefined,
+      model: 'iPhone18,2',
+      family: 'iOS',
+    });
+    expect(scrubbed.contexts?.os).toEqual({ name: 'iOS', version: '27.0' });
+    expect(scrubbed.breadcrumbs).toEqual([{ category: 'console', timestamp: 1 }]);
+    expect(scrubbed.tags).toEqual({ 'event.origin': 'javascript' });
+  });
+
+  it('leaves nothing of the user’s data anywhere in what is sent', () => {
+    const sent = JSON.stringify(scrubEvent(event));
+    for (const secret of ['kaan@example.com', '72.5', 'Lentil soup', "Kaan's iPhone", '0000000a']) {
+      expect(sent).not.toContain(secret);
+    }
+  });
+});
+
+describe('reportingOptions', () => {
+  it('reports nothing without a DSN', () => {
+    expect(reportingOptions(undefined, false)).toBeNull();
+  });
+
+  it('keeps what is sent to the least, scrubbed, and names the environment', () => {
+    expect(reportingOptions('https://key@o1.ingest.de.sentry.io/1', false)).toEqual(
+      expect.objectContaining({
+        dsn: 'https://key@o1.ingest.de.sentry.io/1',
+        environment: 'production',
+        sendDefaultPii: false,
+        attachScreenshot: false,
+        attachViewHierarchy: false,
+        enableCaptureFailedRequests: false,
+        enableLogs: false,
+        beforeSend: scrubEvent,
+        beforeBreadcrumb: scrubBreadcrumb,
+      }),
+    );
+    expect(reportingOptions('https://key@o1.ingest.de.sentry.io/1', true)?.environment).toBe(
+      'development',
+    );
+  });
+});
+
+describe('startReporting', () => {
+  it('starts nothing in development unless asked', () => {
+    startReporting();
+    expect(Sentry.init).not.toHaveBeenCalled();
+  });
+});
