@@ -49,9 +49,15 @@ function database(
   let nextId = 100;
   const threads = new Set((tables.coach_threads ?? []).map((row) => row.id as number));
   const refused = (code: string, message: string) => ({ data: null, error: { code, message } });
+  // The threads there now, those given first and those started since, less those deleted.
+  const liveThreads = () => {
+    const given = (tables.coach_threads ?? []).filter((row) => threads.has(row.id as number));
+    const started = [...threads].filter((id) => !given.some((row) => row.id === id));
+    return [...given, ...started.map((id) => ({ id }))];
+  };
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
-      const data = rows ?? tables[table] ?? [];
+      const data = rows ?? (table === 'coach_threads' ? liveThreads() : (tables[table] ?? []));
       return { data, error: null };
     };
     const builder: Record<string, unknown> = {
@@ -709,6 +715,24 @@ Deno.test('makes no more lookups once the app stops the answer', async () => {
     ['coach_threads', 'coach_messages'],
   );
   assertEquals(inserted[1].rows.length, 1);
+});
+
+Deno.test('makes no more lookups once the thread is deleted, as by a withdrawn consent', async () => {
+  const model = new FakeModel(
+    [{ type: 'toolCall', id: 'c0', name: 'search_foods', args: { query: 'oats' } }],
+    [{ type: 'text', text: '[[neutral]] Oats.' }],
+  );
+  // The consent is withdrawn while the lookup runs, which deletes the thread.
+  const search = () => {
+    db.threads.delete(100);
+    return [];
+  };
+  const db = context(model, { search_foods: search });
+
+  await events(await handleChatRequest(ask(MESSAGE), db.ctx));
+
+  // Nothing more went to the model.
+  assertEquals(model.requests.length, 1);
 });
 
 Deno.test('takes only a request id that is one', async () => {
