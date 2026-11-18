@@ -38,6 +38,9 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false),
   ('00000000-0000-0000-0000-00000000000c', 'c@example.com', false),
   ('00000000-0000-0000-0000-00000000000d', null, true);
+-- They have consented to the AI features (#290), which ai_consents.test.sql tests.
+insert into public.ai_consents (user_id, consent_version) select id, 'test' from auth.users
+  where id::text like '00000000-0000-0000-0000-%';
 -- C's account is two days old, so its free week began then.
 update auth.users set created_at = now() - interval '2 days'
   where id = '00000000-0000-0000-0000-00000000000c';
