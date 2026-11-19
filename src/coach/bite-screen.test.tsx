@@ -125,7 +125,7 @@ it('greets the user by name, with questions to ask', async () => {
   expect(screen.getByText("Hi Sam, I'm Bite")).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'How was my week?' })).toBeOnTheScreen();
   expect(
-    screen.getByText('Bite is a coach, not a doctor, and can make mistakes.'),
+    screen.getByText('Bite is an AI coach, not a doctor, and can make mistakes.'),
   ).toBeOnTheScreen();
 });
 
