@@ -141,7 +141,8 @@ export function startReporting() {
 
 /**
  * Wraps the root layout so that reports know the screens and the touches that led to an error. It
- * is no error boundary: what fails while rendering still reaches Sentry through the global handler.
+ * is no error boundary: what fails while rendering reaches the route's error boundary, which
+ * reports it (`reportingErrorBoundary` below).
  */
 export const wrapRoot = Sentry.wrap;
 
