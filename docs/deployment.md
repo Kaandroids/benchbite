@@ -10,8 +10,24 @@ The hosted Supabase project is deployed by the **Deploy Supabase** workflow in G
 settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
 the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
 `SUPABASE_DB_PASSWORD` from the repository's `production` environment, with `SMTP_PASSWORD`, the Lettermint project token that sends the account emails ([ADR 0091](adr/0091-confirm-accounts-with-a-code.md)). The Edge Functions' own
-secrets, such as `GEMINI_API_KEY` and `LETTERMINT_API_TOKEN` (a Lettermint project token, for the emails Edge Functions send, [ADR 0094](adr/0094-delete-an-account-from-the-website.md)), are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
+secrets, such as `GEMINI_BACKEND` and `VERTEX_SERVICE_ACCOUNT` (below) and `LETTERMINT_API_TOKEN` (a Lettermint project token, for the emails Edge Functions send, [ADR 0094](adr/0094-delete-an-account-from-the-website.md)), are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
+
+Bite calls Gemini on Vertex AI in the EU
+([ADR 0153](adr/0153-call-gemini-on-vertex-ai-in-the-eu.md)). To set it up once:
+
+1. In a Google Cloud project with billing, enable the Vertex AI API, and accept the Cloud Data
+   Processing Addendum under IAM & Admin → Privacy & Security.
+2. Create a service account with the Vertex AI User role alone, and a JSON key for it.
+3. Set two Edge Function secrets: `GEMINI_BACKEND` to `vertex`, and `VERTEX_SERVICE_ACCOUNT` to the
+   key file as base64 on one line (`base64 -i key.json | tr -d '\n'`). Keep the file out of the
+   repository, and delete it once the secret is set.
+4. Create a budget for the project under Billing → Budgets & alerts. It warns and stops nothing:
+   the project's own spend limit does
+   ([ADR 0134](adr/0134-pause-bite-at-the-providers-spend-limit.md)).
+
+To replace a key that may have leaked, delete it in Google Cloud, create another and set the
+secret again.
 
 The scheduled photo purge and the removal of inactive guests read the project URL and a secret
 API key from the project's Vault ([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),

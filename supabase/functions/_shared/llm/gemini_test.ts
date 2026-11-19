@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from '@std/assert';
-import { geminiSchema, GeminiModel } from './gemini.ts';
+import { developerApi, geminiSchema, GeminiModel } from './gemini.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from './types.ts';
 
 const CHAT = { model: 'gemini-chat', thinking: 'low' } as const;
@@ -8,7 +8,7 @@ const CHAT = { model: 'gemini-chat', thinking: 'low' } as const;
 function gemini(response: () => Response) {
   const calls: { url: string; headers: Headers; body: unknown }[] = [];
   const model = new GeminiModel({
-    apiKey: 'test-key',
+    endpoint: developerApi('test-key'),
     models: () => CHAT,
     fetch: (input, init) => {
       calls.push({
