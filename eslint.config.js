@@ -28,6 +28,11 @@ module.exports = defineConfig([
             "CallExpression[callee.name='useMutation'] > ObjectExpression:not(:has(> Property[key.name='meta']))",
           message: "Give the mutation a meta: { where: 'Could not …' }, which names it in reports.",
         },
+        {
+          selector:
+            "CallExpression[callee.name='useMutation'][arguments.0.type!='ObjectExpression']",
+          message: 'Pass useMutation its options as an object, so that its meta can be checked.',
+        },
       ],
     },
   },
