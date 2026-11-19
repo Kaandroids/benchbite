@@ -333,12 +333,12 @@ async function modelError(response: Response): Promise<ModelError> {
   });
 }
 
-function messageOf(error: unknown): string {
+export function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
 /** Too many requests and passing outages are worth another try; a wrong request is not. */
-function isRetryable(status: number): boolean {
+export function isRetryable(status: number): boolean {
   return status === 429 || status >= 500;
 }
 

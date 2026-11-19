@@ -5,7 +5,7 @@
 // Deno.
 import { fromBase64, toBase64 } from '../base64_bytes.ts';
 import { isObject } from '../json.ts';
-import type { GeminiEndpoint } from './gemini.ts';
+import { type GeminiEndpoint, isRetryable, messageOf } from './gemini.ts';
 import { ModelError } from './types.ts';
 
 /**
@@ -23,6 +23,9 @@ const TOKEN_SECONDS = 3600;
 /** A token is renewed this long before it ends, in seconds, so that no request carries one that
  * ends on its way. */
 const RENEW_BEFORE_SECONDS = 300;
+/** How long Google may take to give a token, in milliseconds: the requests of a worker wait for the
+ * same one, so one that hangs would hold them all. */
+const TOKEN_TIMEOUT_MS = 5000;
 
 /** What a service account's key file says, as far as a token needs it. */
 export type ServiceAccount = { projectId: string; clientEmail: string; privateKey: string };
@@ -131,10 +134,10 @@ async function askToken(
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
         assertion,
       }),
+      signal: AbortSignal.timeout(TOKEN_TIMEOUT_MS),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new ModelError(`Vertex AI: no access token: ${message}`, {
+    throw new ModelError(`Vertex AI: no access token: ${messageOf(error)}`, {
       status: 503,
       retryable: true,
       billed: false,
@@ -146,7 +149,7 @@ async function askToken(
     throw new ModelError(`Vertex AI: no access token: ${response.status}${reason}`, {
       status: response.ok ? 502 : response.status,
       // A refused claim, as of a deleted key, stays refused; limits and outages pass.
-      retryable: response.ok || response.status === 429 || response.status >= 500,
+      retryable: response.ok || isRetryable(response.status),
       billed: false,
     });
   }

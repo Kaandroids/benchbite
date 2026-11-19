@@ -207,6 +207,27 @@ Deno.test('throws a retryable model error when Google cannot be reached', async 
   assertEquals([error.status, error.retryable, error.billed], [503, true, false]);
 });
 
+Deno.test('gives Google five seconds for a token, and asks anew after one that hung', async () => {
+  let signal: AbortSignal | null | undefined;
+  const hung: typeof fetch = (_input, init) => {
+    signal = init?.signal;
+    return Promise.reject(new DOMException('The signal timed out', 'TimeoutError'));
+  };
+  forgetTokens();
+
+  const error = await assertRejects(
+    () => vertexAi(ACCOUNT, { fetch: hung }).headers(),
+    ModelError,
+    'timed out',
+  );
+  assertEquals([error.status, error.retryable, error.billed], [503, true, false]);
+  assertEquals(signal instanceof AbortSignal, true);
+
+  // Without forgetting anything: the request that hung is not waited for again.
+  const again = vertexAi(ACCOUNT, { fetch: () => Promise.resolve(granted('token-1')()) });
+  assertEquals(await again.headers(), { authorization: 'Bearer token-1' });
+});
+
 Deno.test('says a key that cannot sign without telling it', async () => {
   forgetTokens();
   const endpoint = vertexAi(
