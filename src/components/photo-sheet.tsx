@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { pickPhotos, type PhotoSource } from '@/lib/photos';
+import { reportError } from '@/lib/reporting';
 import { useTheme } from '@/theme';
 
 type PhotoSheetProps = {
@@ -35,7 +36,7 @@ export function PhotoSheet({ title, hint, limit, onPick, onClose }: PhotoSheetPr
           }
         })
         // A picker that fails to open leaves the screen as it was.
-        .catch(() => {});
+        .catch((error: unknown) => reportError('Could not pick photos', error));
     });
   };
 
