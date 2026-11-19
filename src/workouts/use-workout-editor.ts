@@ -6,7 +6,6 @@ import { Alert } from 'react-native';
 import { allLoaded } from '@/components/load-state';
 import { useExerciseLibrary } from '@/exercises/library';
 import { dbErrorMessage } from '@/lib/errors';
-import { reportError } from '@/lib/reporting';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
@@ -86,7 +85,6 @@ export function useWorkoutEditor(id: number | undefined) {
       });
       router.back();
     } catch (error) {
-      reportError('Could not save the workout', error);
       // The limits can change after they were loaded, or another device can add a workout.
       Alert.alert(
         t('common.notSaved'),
