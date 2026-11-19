@@ -12,7 +12,7 @@ Deno.test('sets up Gemini through its API key', () => {
   );
 });
 
-Deno.test('refuses a missing backend or key, Vertex for now, and an unknown backend', () => {
+Deno.test('refuses a missing backend or key, and an unknown backend', () => {
   assertThrows(
     () => languageModel(env({ GEMINI_API_KEY: 'key' })),
     Error,
@@ -24,14 +24,41 @@ Deno.test('refuses a missing backend or key, Vertex for now, and an unknown back
     'GEMINI_API_KEY is not set',
   );
   assertThrows(
-    () => languageModel(env({ GEMINI_BACKEND: 'vertex', GEMINI_API_KEY: 'key' })),
-    Error,
-    'not supported yet',
-  );
-  assertThrows(
     () => languageModel(env({ GEMINI_BACKEND: 'other', GEMINI_API_KEY: 'key' })),
     Error,
     'Unknown GEMINI_BACKEND',
+  );
+});
+
+Deno.test('sets up Gemini on Vertex AI as a service account', () => {
+  const account = btoa(
+    JSON.stringify({ project_id: 'project', client_email: 'bite@project', private_key: 'key' }),
+  );
+  assertInstanceOf(
+    languageModel(env({ GEMINI_BACKEND: 'vertex', VERTEX_SERVICE_ACCOUNT: account })),
+    GeminiModel,
+  );
+});
+
+Deno.test('refuses Vertex AI without a service account, or with what is not one', () => {
+  assertThrows(
+    // The Developer API's key does not stand in for it.
+    () => languageModel(env({ GEMINI_BACKEND: 'vertex', GEMINI_API_KEY: 'key' })),
+    Error,
+    'VERTEX_SERVICE_ACCOUNT is not set',
+  );
+  assertThrows(
+    () => languageModel(env({ GEMINI_BACKEND: 'vertex', VERTEX_SERVICE_ACCOUNT: '{not base64}' })),
+    Error,
+    'not the base64 of a key file',
+  );
+  assertThrows(
+    () =>
+      languageModel(
+        env({ GEMINI_BACKEND: 'vertex', VERTEX_SERVICE_ACCOUNT: btoa('{"project_id":"p"}') }),
+      ),
+    Error,
+    'not a service account key',
   );
 });
 

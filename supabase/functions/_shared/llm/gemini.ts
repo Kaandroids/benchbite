@@ -1,4 +1,5 @@
-// Gemini behind our language model (ADR 0049), through the Gemini Developer API with an API key.
+// Gemini behind our language model (ADR 0049), through the Gemini Developer API with an API key
+// or through Vertex AI (vertex.ts, ADR 0153), which take the same requests at their own addresses.
 // The requests are plain REST, so that no SDK has to follow Deno.
 import { isObject } from '../json.ts';
 import type { ModelConfig } from './config.ts';
@@ -16,13 +17,34 @@ import {
   type Usage,
 } from './types.ts';
 
-const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+const DEVELOPER_API = 'https://generativelanguage.googleapis.com/v1beta';
+
+/** Where Gemini is called, and as whom: the two APIs differ in nothing else but how they count. */
+export type GeminiEndpoint = {
+  /** The address of a model's method, such as `generateContent`. */
+  url(model: string, method: string): string;
+  /** The headers that sign a request. */
+  headers(): Promise<Record<string, string>>;
+  /** The body of `countTokens` for what a request would send. */
+  countBody(model: string, request: Record<string, unknown>): unknown;
+};
+
+/** The Gemini Developer API with an API key, for development with test data only (ADR 0049). */
+export function developerApi(apiKey: string): GeminiEndpoint {
+  return {
+    url: (model, method) => `${DEVELOPER_API}/models/${model}:${method}`,
+    headers: () => Promise.resolve({ 'x-goog-api-key': apiKey }),
+    countBody: (model, request) => ({
+      generateContentRequest: { model: `models/${model}`, ...request },
+    }),
+  };
+}
 
 /** An answer whose connection ended before it did: worth another try, and billed for what came. */
 const BROKE_OFF = { status: 503, retryable: true, billed: true };
 
 export type GeminiOptions = {
-  apiKey: string;
+  endpoint: GeminiEndpoint;
   /** The model and settings of each task. */
   models: (task: Task) => ModelConfig;
   /** For tests. */
@@ -66,12 +88,11 @@ export class GeminiModel implements LanguageModel {
 
   async countTokens(request: ModelRequest): Promise<number> {
     const config = this.#options.models(request.task);
-    const response = await this.#post(config.model, 'countTokens', {
-      generateContentRequest: {
-        model: `models/${config.model}`,
-        ...toGeminiRequest(request, config),
-      },
-    });
+    const response = await this.#post(
+      config.model,
+      'countTokens',
+      this.#options.endpoint.countBody(config.model, toGeminiRequest(request, config)),
+    );
     const body = (await response.json()) as { totalTokens?: number };
     if (typeof body.totalTokens !== 'number') {
       throw new ModelError('Gemini: countTokens gave no count', {
@@ -154,9 +175,10 @@ export class GeminiModel implements LanguageModel {
   }
 
   async #post(model: string, method: string, body: unknown): Promise<Response> {
-    const response = await (this.#options.fetch ?? fetch)(`${BASE_URL}/models/${model}:${method}`, {
+    const { endpoint } = this.#options;
+    const response = await (this.#options.fetch ?? fetch)(endpoint.url(model, method), {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': this.#options.apiKey },
+      headers: { 'content-type': 'application/json', ...(await endpoint.headers()) },
       body: JSON.stringify(body),
     });
     if (!response.ok) throw await modelError(response);
