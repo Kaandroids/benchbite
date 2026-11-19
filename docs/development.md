@@ -121,7 +121,10 @@ The AI coach calls Gemini from the Edge Functions
 `supabase/functions/.env.example` to `supabase/functions/.env`, which sets `GEMINI_BACKEND=studio`,
 and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
-they need no key.
+they need no key. Use that key with test data only: the hosted project calls Gemini on Vertex AI in
+the EU instead ([ADR 0153](adr/0153-call-gemini-on-vertex-ai-in-the-eu.md)), which
+`GEMINI_BACKEND=vertex` does locally too, with a service account's key in `VERTEX_SERVICE_ACCOUNT`
+as the example file says.
 
 Scheduled jobs call `purge-coach-media`, which removes the photos of deleted chats, and
 `remove-inactive-guests`, which deletes guests inactive for 90 days, with the project URL and
