@@ -239,7 +239,7 @@ it('shows why the user cannot chat in place of the composer', async () => {
   access('limit_reached');
   await renderBite();
 
-  expect(await screen.findByText("You've used Bite for this month")).toBeOnTheScreen();
+  expect(await screen.findByText("You've used up Bite for now")).toBeOnTheScreen();
   expect(screen.getByText(/I'm back on November 1/)).toBeOnTheScreen();
   expect(screen.queryByLabelText('Message')).toBeNull();
   expect(screen.queryByRole('button', { name: 'How was my week?' })).toBeNull();
@@ -557,7 +557,7 @@ it('shows a refusal that comes with an answer', async () => {
   await stream.send({ event: 'error', reason: 'limit_reached' });
   await stream.end();
 
-  expect(screen.getByText("You've used Bite for this month")).toBeOnTheScreen();
+  expect(screen.getByText("You've used up Bite for now")).toBeOnTheScreen();
 });
 
 it('closes', async () => {

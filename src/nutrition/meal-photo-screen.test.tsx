@@ -306,7 +306,7 @@ describe('MealPhotoScreen', () => {
     await first.fail(new EstimateFailure('limit_reached'));
 
     expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
-    expect(screen.queryByText("You've used Bite for this month")).toBeNull();
+    expect(screen.queryByText("You've used up Bite for now")).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
     expect(router.back).toHaveBeenCalled();
   });
@@ -350,7 +350,7 @@ describe('MealPhotoScreen', () => {
     await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
     await first.fail(new EstimateFailure('limit_reached'));
 
-    expect(screen.queryByText("You've used Bite for this month")).toBeNull();
+    expect(screen.queryByText("You've used up Bite for now")).toBeNull();
     expect(screen.queryByText("You've used this week's meal photos")).toBeNull();
   });
 
@@ -371,7 +371,7 @@ describe('MealPhotoScreen', () => {
     await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
     await first.fail(new EstimateFailure('limit_reached'));
 
-    expect(screen.getByText("You've used Bite for this month")).toBeTruthy();
+    expect(screen.getByText("You've used up Bite for now")).toBeTruthy();
   });
 
   it('tells why Bite cannot be used now, as the chat does', async () => {
