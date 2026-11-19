@@ -166,3 +166,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0148](0148-export-a-users-data-from-the-website.md)                      | Export a user's data from the website                                                   | Accepted                                             |
 | [0149](0149-report-crashes-and-errors-to-sentry.md)                       | Report crashes and errors to Sentry                                                     | Accepted                                             |
 | [0150](0150-show-an-error-screen-in-place-of-what-fails.md)               | Show an error screen in place of what fails                                             | Accepted                                             |
+| [0151](0151-report-the-errors-the-app-catches.md)                         | Report the errors the app catches                                                       | Accepted                                             |
