@@ -22,8 +22,10 @@ that fails shows "could not load" and is gone.
   Supabase's errors carry no stack to their origin, so the name is what tells where one came from.
 - **What the app expects is not sent:** no network or a request given up, a session that ended,
   and the refusals a screen explains to the person: the database's with the app's own codes (BB…),
-  Auth's of what was typed (4xx), and the account's wrong password and refused codes, which say so
-  themselves. A server's failure (5xx) is sent. They would bury the errors that are bugs.
+  Auth's of what was typed (4xx), and the account's wrong password and the refusals of its
+  functions that the screens have words for, which say so themselves. A server's failure (5xx) is
+  sent, and a refusal the screens only call unknown. The expected would bury the errors that are
+  bugs.
 - **Postgres's own refusals are expected only where a mutation says so,** with
   `meta: { expects: ['uniqueViolation'] }`: a name already used is no bug when saving a food or a
   recipe, nor a row gone for an alternative, but either is one anywhere else.
@@ -42,7 +44,7 @@ that fails shows "could not load" and is gone.
 
 ## Consequences
 
-- A new kind of expected failure must be added to `isExpected()` or to its mutation's `expects`,
-  or it is reported.
+- A new kind of expected failure must be added to `isExpected()`, to its mutation's `expects`, or
+  marked by its own error class with `expected`, or it is reported.
 - Two warnings stay `console.warn`: messages from the watch that are no commands, which are no
   errors.
