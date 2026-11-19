@@ -104,7 +104,8 @@ function byFolder(files: Files): [string, Coverage][] {
   return [...folders].sort(([a], [b]) => a.localeCompare(b));
 }
 
-const cell = (count: Count) => `${percent(count).toFixed(1)}%`;
+/** A share to one decimal, rounded down, so that one just under a threshold does not read as it. */
+const cell = (count: Count) => `${(Math.floor(percent(count) * 10) / 10).toFixed(1)}%`;
 const row = (name: string, coverage: Coverage) =>
   `| ${name} | ${METRICS.map((metric) => cell(coverage[metric])).join(' | ')} |`;
 const HEAD = ['| | Lines | Functions | Branches |', '| --- | ---: | ---: | ---: |'];
