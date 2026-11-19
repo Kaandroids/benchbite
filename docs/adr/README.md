@@ -168,3 +168,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0150](0150-show-an-error-screen-in-place-of-what-fails.md)               | Show an error screen in place of what fails                                             | Accepted                                             |
 | [0151](0151-report-the-errors-the-app-catches.md)                         | Report the errors the app catches                                                       | Accepted                                             |
 | [0152](0152-check-the-edge-functions-coverage-and-show-both.md)           | Check the Edge Functions' coverage and show both coverages                              | Accepted                                             |
+| [0153](0153-call-gemini-on-vertex-ai-in-the-eu.md)                        | Call Gemini on Vertex AI in the EU                                                      | Accepted                                             |
