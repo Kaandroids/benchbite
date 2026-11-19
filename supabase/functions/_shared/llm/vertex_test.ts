@@ -208,20 +208,36 @@ Deno.test('throws a retryable model error when Google cannot be reached', async 
 });
 
 Deno.test('gives Google five seconds for a token, and asks anew after one that hung', async () => {
-  let signal: AbortSignal | null | undefined;
-  const hung: typeof fetch = (_input, init) => {
-    signal = init?.signal;
-    return Promise.reject(new DOMException('The signal timed out', 'TimeoutError'));
-  };
   forgetTokens();
+  // The time limit, in the test's hands: how long it was set for, and when it runs out.
+  const limit = new AbortController();
+  const timeout = AbortSignal.timeout;
+  let limitMs: number | undefined;
+  AbortSignal.timeout = (ms) => {
+    limitMs = ms;
+    return limit.signal;
+  };
+  try {
+    // A request that never answers, and ends only when its signal says so.
+    const hung: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+      });
+    let settled = false;
+    const asking = vertexAi(ACCOUNT, { fetch: hung })
+      .headers()
+      .finally(() => (settled = true));
+    // Past the signing, to where the request waits for Google.
+    while (limitMs === undefined) await new Promise((resolve) => setTimeout(resolve, 1));
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    assertEquals([limitMs, settled], [5000, false]);
 
-  const error = await assertRejects(
-    () => vertexAi(ACCOUNT, { fetch: hung }).headers(),
-    ModelError,
-    'timed out',
-  );
-  assertEquals([error.status, error.retryable, error.billed], [503, true, false]);
-  assertEquals(signal instanceof AbortSignal, true);
+    limit.abort(new DOMException('The signal timed out', 'TimeoutError'));
+    const error = await assertRejects(() => asking, ModelError, 'timed out');
+    assertEquals([error.status, error.retryable, error.billed], [503, true, false]);
+  } finally {
+    AbortSignal.timeout = timeout;
+  }
 
   // Without forgetting anything: the request that hung is not waited for again.
   const again = vertexAi(ACCOUNT, { fetch: () => Promise.resolve(granted('token-1')()) });
