@@ -4,7 +4,8 @@
 // every field it reads has a value in a fixture, and that the commands it makes are the fixtures'.
 // A field without a value is given one in the states of src/watch/protocol-fixtures.test.ts, then
 // written with `pnpm watch:fixtures`. `--write` writes the commands' fixture instead.
-// Jest checks the phone's side (src/watch/protocol-fixtures.test.ts).
+// Jest checks the phone's side (src/watch/protocol-fixtures.test.ts). It also checks that the watch
+// reads the states of the screenshots' samples (scripts/watch-sample.ts).
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -85,6 +86,34 @@ for (const [name, sent] of Object.entries(sentStates)) {
   }
 }
 
+// The samples the watch shows without a phone, for its screenshots (scripts/watch-sample.ts), are
+// states written by hand: the watch reads each of them whole too. They are no fixtures, and count
+// for no field's value below. The scenes are SCENES there: change them together.
+for (const scene of ['set', 'rest', 'summary']) {
+  const sample = JSON.parse(
+    execFileSync('node', [join(ROOT, 'scripts/watch-sample.ts'), scene], { encoding: 'utf8' }),
+  ) as { states: Json[] };
+  const folder = mkdtempSync(join(tmpdir(), `watch-sample-${scene}-`));
+  sample.states.forEach((state, index) =>
+    writeFileSync(join(folder, `state-${index}.json`), JSON.stringify(state)),
+  );
+  try {
+    // Its error names the field it could not read.
+    const { states } = JSON.parse(
+      execFileSync(binary, [folder], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }),
+    ) as {
+      states: Record<string, Json>;
+    };
+    sample.states.forEach((state, index) => {
+      for (const path of unread(state, states[`state-${index}.json`], '')) {
+        problems.push(`The sample ${scene}: the watch does not read ${path}`);
+      }
+    });
+  } catch {
+    problems.push(`The watch cannot read the sample ${scene} of scripts/watch-sample.ts.`);
+  }
+}
+
 // Every field the watch reads has a value in a fixture: one the phone stopped sending, or sent as
 // null, or as an empty list whose items' fields go unlisted, in every fixture would go unchecked.
 const hasValue = (value: Json) =>
@@ -112,4 +141,6 @@ if (problems.length > 0) {
   console.error(problems.join('\n'));
   process.exit(1);
 }
-console.log(`The watch reads ${names.length} states and makes the commands of the fixtures.`);
+console.log(
+  `The watch reads ${names.length} states and makes the commands of the fixtures, and reads the samples.`,
+);

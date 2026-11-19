@@ -86,20 +86,20 @@
   </tr>
   <tr>
     <td><img src="docs/media/today-dark.png" width="200" alt="Today in dark mode"></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td><img src="docs/media/watch-set.png" width="200" alt="The Apple Watch app at a set: the heart rate, the weight and the reps, and Done"></td>
+    <td><img src="docs/media/watch-rest.png" width="200" alt="The Apple Watch app counting a rest down, with the set after it"></td>
+    <td><img src="docs/media/watch-summary.png" width="200" alt="The Apple Watch app's summary of a saved workout: time, sets, average heart rate and calories"></td>
   </tr>
   <tr>
     <td align="center">Dark mode</td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td align="center">A set on the watch</td>
+    <td align="center">A rest on the watch</td>
+    <td align="center">Saved, on the watch</td>
   </tr>
 </table>
 
-The screenshots show a demo account made with `pnpm seed:demo`; [docs/media](docs/media/README.md)
-says how to take them again.
+The screenshots show a demo account made with `pnpm seed:demo`, and the watch's a sample like
+its Upper body workout; [docs/media](docs/media/README.md) says how to take them again.
 
 ## Architecture
 

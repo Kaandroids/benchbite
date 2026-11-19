@@ -59,6 +59,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   override init() {
     super.init()
+    #if DEBUG
+      // A sample stands in for the phone, which is then not listened to (Sample.swift).
+      if let sample = Sample.launched {
+        reachable = true
+        sample.states.forEach(show)
+        return
+      }
+    #endif
     guard WCSession.isSupported() else { return }
     WCSession.default.delegate = self
     WCSession.default.activate()
@@ -171,34 +179,37 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     guard let json = payload["state"] as? String, let state = WatchState.decode(json) else {
       return
     }
-    DispatchQueue.main.async {
-      guard state.seq > self.lastSeq else { return }
-      self.lastSeq = state.seq
-      if let language = state.language, language != self.language {
-        self.language = language
-      }
-      // The workout shown is saved: its summary shows until the next runs or it is closed.
-      if state.workout != nil {
-        self.finished = nil
-      } else if let finished = FinishedWorkout.saved(self.workout, in: state) {
-        self.finished = finished
-      }
-      self.workout = state.workout
-      self.ended = state.ended
-      MainActor.assumeIsolated { self.onState?(state) }
-      // Applied, or for a workout the phone no longer runs, which it drops without saying so.
-      let applied = Set(state.workout?.applied ?? [])
-      // A finish the phone took while the workout goes on: it could not save it.
-      if let workout = state.workout,
-        self.waiting.values.contains(where: {
-          $0.workoutId == workout.id && $0.change.isFinish && applied.contains($0.id)
-        })
-      {
-        self.unsaved = workout.id
-      }
-      self.waiting = self.waiting.filter { id, command in
-        !applied.contains(id) && command.workoutId == state.workout?.id
-      }
+    DispatchQueue.main.async { self.show(state) }
+  }
+
+  /// Shows a state, unless an older one than what is shown; on the main thread.
+  private func show(_ state: WatchState) {
+    guard state.seq > lastSeq else { return }
+    lastSeq = state.seq
+    if let language = state.language, language != self.language {
+      self.language = language
+    }
+    // The workout shown is saved: its summary shows until the next runs or it is closed.
+    if state.workout != nil {
+      finished = nil
+    } else if let finished = FinishedWorkout.saved(workout, in: state) {
+      self.finished = finished
+    }
+    workout = state.workout
+    ended = state.ended
+    MainActor.assumeIsolated { onState?(state) }
+    // Applied, or for a workout the phone no longer runs, which it drops without saying so.
+    let applied = Set(state.workout?.applied ?? [])
+    // A finish the phone took while the workout goes on: it could not save it.
+    if let workout = state.workout,
+      waiting.values.contains(where: {
+        $0.workoutId == workout.id && $0.change.isFinish && applied.contains($0.id)
+      })
+    {
+      unsaved = workout.id
+    }
+    waiting = waiting.filter { id, command in
+      !applied.contains(id) && command.workoutId == state.workout?.id
     }
   }
 

@@ -74,6 +74,16 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// refuses is started again once the app is active, not taken for stopped from outside.
   private var startedInBackground: String?
 
+  #if DEBUG
+    /// Shows what a sample says a session measured, with no session of its own (Sample.swift).
+    func show(_ sample: Sample) {
+      heartRate = sample.bpm
+      if let workoutId = sample.states.compactMap(\.workout).last?.id {
+        totals = Totals(workoutId: workoutId, averageBpm: sample.averageBpm, kcal: sample.kcal)
+      }
+    }
+  #endif
+
   /// Takes up the session the system kept running while the app was ended, which it says by
   /// launching the app to recover it; until then nothing starts or ends.
   func recover() {

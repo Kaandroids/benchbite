@@ -28,6 +28,13 @@ final class AppDelegate: NSObject, WKApplicationDelegate {
 
   @MainActor override init() {
     super.init()
+    #if DEBUG
+      // A sample shows its own heart rate and totals; the session never hears of its workout.
+      if let sample = Sample.launched {
+        workoutSession.show(sample)
+        return
+      }
+    #endif
     phone.onState = { [workoutSession] state in workoutSession.sync(state) }
     // The watch says it is there while it measures a workout.
     workoutSession.$measuring.removeDuplicates()
