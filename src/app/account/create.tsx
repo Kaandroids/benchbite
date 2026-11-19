@@ -2,7 +2,11 @@ import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 
 import { CreateAccountScreen } from '@/account/create-account-screen';
+import { SectionErrorBoundary } from '@/components/error-screen';
 import { useIsAccount } from '@/providers/session-provider';
+
+// In place of the screen when it fails as it draws, with the way to Today (ADR 0150).
+export const ErrorBoundary = SectionErrorBoundary;
 
 export default function CreateAccountRoute() {
   // Only a guest creates an account, also when a link opens this screen. Decided once, as the
