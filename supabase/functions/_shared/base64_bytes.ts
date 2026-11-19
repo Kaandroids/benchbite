@@ -20,6 +20,11 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(text);
 }
 
+/** Bytes as base64 a URL takes, without padding, as a link's token and a JWT's parts are written. */
+export function toBase64Url(bytes: Uint8Array): string {
+  return toBase64(bytes).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+}
+
 /** How long bytes are as base64, padded. */
 export function encodedBytes(bytes: number): number {
   return Math.ceil(bytes / 3) * 4;

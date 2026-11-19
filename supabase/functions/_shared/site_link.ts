@@ -2,7 +2,7 @@
 // withdraw a consent (ADR 0146) or to export the account's data (ADR 0148). The answer is the same
 // page, after the same time, whether or not the address has an account, so the forms tell nobody
 // which addresses have one.
-import { toBase64 } from './base64_bytes.ts';
+import { toBase64Url } from './base64_bytes.ts';
 import type { Email, Send } from './email.ts';
 import { sha256Hex } from './hash.ts';
 import { readForm } from './request.ts';
@@ -50,10 +50,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 /** A token nobody can guess: 32 random bytes, as base64url. */
 export function newToken(): string {
-  return toBase64(crypto.getRandomValues(new Uint8Array(32)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
 }
 
 /** Whether a form's token looks like one newToken() makes. */

@@ -3,7 +3,7 @@
 // signed by a service account rather than an API key: the account's key signs a claim, which Google
 // exchanges for an access token of an hour. Plain REST and Web Crypto, so that no SDK has to follow
 // Deno.
-import { fromBase64, toBase64 } from '../base64_bytes.ts';
+import { fromBase64, toBase64Url } from '../base64_bytes.ts';
 import { isObject } from '../json.ts';
 import { type GeminiEndpoint, isRetryable, messageOf } from './gemini.ts';
 import { ModelError } from './types.ts';
@@ -159,15 +159,18 @@ async function askToken(
 
 /** The claim to be the account, as a JWT signed with its key (RS256). */
 async function signedClaim(account: ServiceAccount, seconds: number): Promise<string> {
-  const header = base64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const claim = base64Url(
-    JSON.stringify({
-      iss: account.clientEmail,
-      scope: SCOPE,
-      aud: TOKEN_URL,
-      iat: seconds,
-      exp: seconds + TOKEN_SECONDS,
-    }),
+  const text = new TextEncoder();
+  const header = toBase64Url(text.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const claim = toBase64Url(
+    text.encode(
+      JSON.stringify({
+        iss: account.clientEmail,
+        scope: SCOPE,
+        aud: TOKEN_URL,
+        iat: seconds,
+        exp: seconds + TOKEN_SECONDS,
+      }),
+    ),
   );
   const key = await crypto.subtle.importKey(
     'pkcs8',
@@ -180,13 +183,7 @@ async function signedClaim(account: ServiceAccount, seconds: number): Promise<st
   const signature = await crypto.subtle.sign(
     'RSASSA-PKCS1-v1_5',
     key,
-    new TextEncoder().encode(`${header}.${claim}`),
+    text.encode(`${header}.${claim}`),
   );
-  return `${header}.${claim}.${base64Url(new Uint8Array(signature))}`;
-}
-
-/** Base64 as a URL takes it, without padding, as a JWT's parts are written. */
-function base64Url(data: string | Uint8Array): string {
-  const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-  return toBase64(bytes).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+  return `${header}.${claim}.${toBase64Url(new Uint8Array(signature))}`;
 }
