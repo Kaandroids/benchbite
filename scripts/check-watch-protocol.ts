@@ -85,6 +85,31 @@ for (const [name, sent] of Object.entries(sentStates)) {
   }
 }
 
+// The samples the watch shows without a phone, for its screenshots (scripts/watch-sample.ts), are
+// states written by hand: the watch reads each of them whole too. They are no fixtures, and count
+// for no field's value below.
+for (const scene of ['set', 'rest', 'summary']) {
+  const sample = JSON.parse(
+    execFileSync('node', [join(ROOT, 'scripts/watch-sample.ts'), scene], { encoding: 'utf8' }),
+  ) as { states: Json[] };
+  const folder = mkdtempSync(join(tmpdir(), `watch-sample-${scene}-`));
+  sample.states.forEach((state, index) =>
+    writeFileSync(join(folder, `state-${index}.json`), JSON.stringify(state)),
+  );
+  try {
+    const { states } = JSON.parse(execFileSync(binary, [folder], { encoding: 'utf8' })) as {
+      states: Record<string, Json>;
+    };
+    sample.states.forEach((state, index) => {
+      for (const path of unread(state, states[`state-${index}.json`], '')) {
+        problems.push(`The sample ${scene}: the watch does not read ${path}`);
+      }
+    });
+  } catch {
+    problems.push(`The watch cannot read the sample ${scene} of scripts/watch-sample.ts.`);
+  }
+}
+
 // Every field the watch reads has a value in a fixture: one the phone stopped sending, or sent as
 // null, or as an empty list whose items' fields go unlisted, in every fixture would go unchecked.
 const hasValue = (value: Json) =>
