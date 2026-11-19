@@ -1,6 +1,6 @@
 # 0134. Pause Bite at the provider's spend limit, and warn before it
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0153
 - **Date:** 2026-11-14
 
 ## Context
