@@ -37,6 +37,7 @@ export function useAddWater(day: string) {
   const queryClient = useQueryClient();
   const mutationKey = ['add-water', day];
   return useMutation({
+    meta: { where: 'Could not add water' },
     mutationKey,
     mutationFn: async (ml: number) => {
       const { error } = await supabase.rpc('add_water', { on_day: day, amount_ml: ml });

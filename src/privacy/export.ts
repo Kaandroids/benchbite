@@ -53,5 +53,8 @@ export function shareExport(file: File, dialogTitle: string): Promise<void> {
 
 /** Makes the file; sharing it is the caller's, once its sheet has closed. */
 export function useWriteExport() {
-  return useMutation({ mutationFn: () => writeExport() });
+  return useMutation({
+    meta: { where: 'Could not export the data' },
+    mutationFn: () => writeExport(),
+  });
 }

@@ -109,6 +109,7 @@ export function useProposalStates(ids: number[]) {
 export function useDecideProposal(card: ShownProposal) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not decide the proposal' },
     mutationFn: async (decision: ProposalDecision) => {
       const { data, error } = await supabase.rpc('decide_coach_proposal', {
         proposal_id: card.id,

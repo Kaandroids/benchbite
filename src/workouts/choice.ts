@@ -88,6 +88,7 @@ export function firstAlternative(candidates: ChoiceAlternative[]) {
 export function useChooseWhatStays() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save what stays' },
     mutationFn: async ({
       workouts,
       alternatives,

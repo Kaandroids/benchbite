@@ -34,6 +34,7 @@ export function useSetWaterGoal() {
   const queryClient = useQueryClient();
   const session = useSession();
   return useMutation({
+    meta: { where: 'Could not save the water goal' },
     mutationKey: MUTATION_KEY,
     mutationFn: async (ml: number) => {
       if (session.status !== 'ready') {

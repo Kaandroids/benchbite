@@ -215,6 +215,7 @@ export function useWeek() {
 export function useSetWorkoutActive() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not set the workout active' },
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
       // With the device's today, as every change to the plan, so that the days before it keep
       // the plan they had (ADR 0041).
@@ -319,6 +320,7 @@ export function useCurrentWorkoutLimits() {
 export function useSaveWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save the workout' },
     mutationFn: async (draft: WorkoutDraft) => {
       const { data, error } = await supabase.rpc('save_workout', {
         workout: draft,
@@ -341,6 +343,7 @@ export function useSaveWorkout() {
 export function useDeleteWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not delete the workout' },
     mutationFn: async (id: number) => {
       const { error } = await supabase.rpc('delete_workout', {
         workout_id: id,

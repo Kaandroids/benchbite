@@ -88,6 +88,7 @@ export async function fetchBests(exerciseIds: string[]): Promise<ExerciseBests> 
 export function useLogWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not log the workout' },
     mutationFn: async (log: ReturnType<typeof toLog>) => {
       const { data, error } = await supabase.rpc('log_workout', { log });
       if (error) {

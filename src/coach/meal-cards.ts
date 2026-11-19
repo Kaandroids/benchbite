@@ -94,6 +94,7 @@ export type MealCardAction = { action: 'log'; grams: number[] } | { action: 'und
 export function useMealCardAction(card: MealCard) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not act on a meal card' },
     mutationFn: async (request: MealCardAction) => {
       const { data, error } =
         request.action === 'log'

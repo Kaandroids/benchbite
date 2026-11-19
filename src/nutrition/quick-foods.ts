@@ -116,6 +116,7 @@ export function useFavouriteKeys(): Set<string> {
 export function useSetFavourite() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not set the favourite' },
     mutationFn: async ({ food, favourite }: { food: FoodRef; favourite: boolean }) => {
       if (favourite) {
         const { error } = await supabase.from('favourite_foods').insert(foodColumns(food));

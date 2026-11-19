@@ -29,6 +29,7 @@ function columnsOf({ name, per100g, portion }: CustomFoodValues) {
 export function useCreateFood() {
   const reload = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not create the food', expects: ['uniqueViolation'] },
     mutationFn: async (values: CustomFoodValues): Promise<number> => {
       const { data, error } = await supabase
         .from('custom_foods')
@@ -48,6 +49,7 @@ export function useCreateFood() {
 export function useUpdateFood() {
   const reload = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not save the food', expects: ['uniqueViolation'] },
     mutationFn: async ({ id, values }: { id: number; values: CustomFoodValues }) => {
       const { error } = await supabase.from('custom_foods').update(columnsOf(values)).eq('id', id);
       if (error) {
@@ -65,6 +67,7 @@ export function useUpdateFood() {
 export function useDeleteFood() {
   const reload = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not delete the food' },
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('custom_foods')

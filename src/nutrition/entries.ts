@@ -55,6 +55,7 @@ function useReloadDay() {
 export function useAddEntry() {
   const reload = useReloadDay();
   return useMutation({
+    meta: { where: 'Could not add the meal entry' },
     mutationFn: async (entry: NewEntry) => {
       const { error } = await supabase.from('meal_entries').insert({
         day: entry.day,
@@ -77,6 +78,7 @@ export function useAddEntry() {
 export function useUpdateEntry() {
   const reload = useReloadDay();
   return useMutation({
+    meta: { where: 'Could not save the meal entry' },
     mutationFn: async ({ id, amount }: { id: number; day: string; amount: Amount }) => {
       const { error } = await supabase
         .from('meal_entries')
@@ -97,6 +99,7 @@ export function useUpdateEntry() {
 export function useRemoveEntry() {
   const reload = useReloadDay();
   return useMutation({
+    meta: { where: 'Could not remove the meal entry' },
     mutationFn: async (entry: LoggedEntry) => {
       const { error } = await supabase.from('meal_entries').delete().eq('id', entry.id);
       if (error) {
@@ -117,6 +120,7 @@ export function useRemoveEntry() {
 export function useRestoreEntry() {
   const reload = useReloadDay();
   return useMutation({
+    meta: { where: 'Could not restore the meal entry' },
     mutationFn: async (entry: LoggedEntry) => {
       const { error } = await supabase.rpc('restore_meal_entry', { entry_id: entry.id });
       if (error) {
@@ -135,6 +139,7 @@ export function useRestoreEntry() {
 export function useCopyEntries() {
   const reload = useReloadDay();
   return useMutation({
+    meta: { where: 'Could not copy the meal' },
     mutationFn: async ({ ids, day, meal }: { ids: number[]; day: string; meal: Meal }) => {
       const { data, error } = await supabase.rpc('copy_meal_entries', {
         entry_ids: ids,
@@ -173,6 +178,7 @@ export function useLogEstimate() {
   const reload = useReloadDay();
   const reloadFoods = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not log the estimated meal' },
     mutationFn: async ({
       day,
       meal,
@@ -221,6 +227,7 @@ export function useUndoEstimate() {
   const reload = useReloadDay();
   const reloadFoods = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not undo the estimated meal' },
     mutationFn: async ({ entryIds, createdFoodIds }: LoggedEstimate) => {
       const { error } = await supabase.rpc('undo_meal_estimate', {
         entry_ids: entryIds,

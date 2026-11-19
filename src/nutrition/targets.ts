@@ -139,6 +139,7 @@ function useReloadTargets() {
 export function useSetOwnTargets() {
   const reload = useReloadTargets();
   return useMutation({
+    meta: { where: 'Could not save the own targets' },
     mutationFn: async (targets: NutritionTargets) => {
       const { error } = await supabase.rpc('save_own_nutrition_targets', {
         targets: { ...targets, inUse: true },
@@ -156,6 +157,7 @@ export function useSetOwnTargets() {
 export function useUseCalculatedTargets() {
   const reload = useReloadTargets();
   return useMutation({
+    meta: { where: 'Could not go back to the calculated targets' },
     mutationFn: async () => {
       const { error } = await supabase.rpc('use_calculated_nutrition_targets', {
         today: toIsoDate(new Date()),
@@ -233,6 +235,7 @@ export type TargetAnswers = Pick<
 export function useRecalculateTargets() {
   const reload = useReloadTargets();
   return useMutation({
+    meta: { where: 'Could not recalculate the targets' },
     mutationFn: async (answers: TargetAnswers) => {
       const { error } = await supabase.rpc('recalculate_nutrition_targets', {
         goal: answers.goal,

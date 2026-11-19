@@ -141,6 +141,7 @@ export function toExercise(form: CustomExerciseForm, imagePaths: (string | null)
 export function useCreateExercise() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not create the exercise' },
     mutationFn: (form: CustomExerciseForm): Promise<LibraryExercise> =>
       savingPhotos(form, async (imagePaths) => {
         const exercise = toExercise(form, imagePaths);
@@ -174,6 +175,7 @@ export function useCreateExercise() {
 export function useEditExercise(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save the exercise' },
     mutationFn: async ({ form, before }: { form: CustomExerciseForm; before: string[] }) => {
       const imagePaths = await savingPhotos(form, async (paths) => {
         const { error } = await supabase.rpc('edit_exercise', {
@@ -199,6 +201,7 @@ export function useEditExercise(id: string) {
 export function useArchiveExercise(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not archive the exercise' },
     mutationFn: async (archived: boolean) => {
       const { error } = await supabase.rpc('archive_exercise', { exercise_id: id, archived });
       if (error) {

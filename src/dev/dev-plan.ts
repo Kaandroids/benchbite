@@ -31,6 +31,7 @@ export function useDevPlan() {
 export function useSetDevPlan() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not set the plan in the dev tools' },
     mutationFn: async (plan: Plan) => {
       const { data, error } = await supabase.rpc('dev_set_plan', { plan });
       if (error) {

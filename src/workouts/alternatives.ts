@@ -107,6 +107,7 @@ export function useAlternativeError() {
 export function useSwitchAlternative() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not switch the alternative', expects: ['notFound'] },
     mutationFn: async (alternativeId: number) => {
       const { error } = await supabase.rpc('use_workout_alternative', {
         alternative_id: alternativeId,
@@ -196,6 +197,7 @@ export type NewAlternative = { empty: true } | { copyOf: number | null };
 export function useAddAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not add the alternative', expects: ['notFound'] },
     mutationFn: async (from: NewAlternative) => {
       const { data, error } = await supabase.rpc('add_workout_alternative', {
         workout_id: workoutId,
@@ -224,6 +226,7 @@ export function useAddAlternative(workoutId: number) {
 export function useRenameAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not rename the alternative', expects: ['notFound'] },
     mutationFn: async ({ id, name }: { id: number; name: string }) => {
       const { error } = await supabase.rpc('rename_workout_alternative', {
         alternative_id: id,
@@ -244,6 +247,7 @@ export function useRenameAlternative(workoutId: number) {
 export function useDeleteAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not delete the alternative', expects: ['notFound'] },
     mutationFn: async (alternativeId: number) => {
       const { error } = await supabase.rpc('delete_workout_alternative', {
         alternative_id: alternativeId,
@@ -273,6 +277,7 @@ export function useReorderAlternatives(workoutId: number) {
   // This one is still pending while it settles, so it is the last when it is the only one.
   const last = () => queryClient.isMutating({ mutationKey }) === 1;
   return useMutation({
+    meta: { where: 'Could not reorder the alternatives', expects: ['notFound'] },
     mutationKey,
     // One order at a time, so that on a slow connection an earlier one cannot land last.
     scope: { id: `workout-alternatives-${workoutId}` },

@@ -15,6 +15,7 @@ export const AI_CONSENT_VERSION = '2026-11-18';
 export function useGiveAiConsent() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save the AI consent' },
     mutationFn: async () => {
       const { error } = await supabase
         .from('ai_consents')
