@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
-import { render, screen } from '@/test/render';
+import { cleanup, render, screen } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
 import { QueryProvider } from './query-provider';
@@ -23,9 +23,13 @@ function Owner() {
 
 describe('QueryProvider', () => {
   // The app's query client removes unused data after a few minutes; fake timers keep that timer
-  // from holding Jest open.
+  // from holding Jest open. It is set as the screen unmounts, which the testing library does after
+  // this file's own afterEach, so the screen is unmounted here, while the timers are still fake.
   beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  afterEach(async () => {
+    await cleanup();
+    jest.useRealTimers();
+  });
 
   it("never shows a previous user's data to the next one", async () => {
     signIn('guest-1');
