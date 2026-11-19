@@ -98,8 +98,8 @@
   </tr>
 </table>
 
-The screenshots show a demo account made with `pnpm seed:demo`, and the watch's a sample of its
-Upper body workout; [docs/media](docs/media/README.md) says how to take them again.
+The screenshots show a demo account made with `pnpm seed:demo`, and the watch's a sample like
+its Upper body workout; [docs/media](docs/media/README.md) says how to take them again.
 
 ## Architecture
 

@@ -56,8 +56,8 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
 
 The simulators pass the phone's states to the watch but not the watch's commands to the phone, so
 a watch there never follows a workout. A debug build of the watch app shows a sample instead,
-given at launch (`targets/watch/Sample.swift`): `scripts/watch-sample.ts` prints the demo account's
-Upper body workout at a set (`set`), in a rest (`rest`) or saved (`summary`).
+given at launch (`targets/watch/Sample.swift`): `scripts/watch-sample.ts` prints a workout like the
+demo account's Upper body at a set (`set`), in a rest (`rest`) or saved (`summary`).
 
 1. Build with `pnpm ios` and install the watch app on an Apple Watch simulator (46 mm), as
    [Development](../development.md#the-apple-watch-app) says.
