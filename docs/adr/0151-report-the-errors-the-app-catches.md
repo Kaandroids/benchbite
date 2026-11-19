@@ -17,10 +17,16 @@ that fails shows "could not load" and is gone.
   error to Sentry with `where`, what failed in the app's words, as a tag. It goes through the same
   scrubbing as every event, and `where` is masked too, as it can name a stored key.
 - **The query client reports every request that fails:** its query and mutation caches call
-  `reportError`, naming a query by the first part of its key. Screens need no code for it.
-- **What the app expects is not sent:** no network or a request given up, a session that ended, and
-  the database's own refusals (BB…), which the screen explains to the person. They would bury the
-  errors that are bugs.
+  `reportError`. A query is named by the first part of its key. A mutation names itself with
+  `meta: { where: 'Could not save the workout' }`, which a lint rule asks every `useMutation` for:
+  Supabase's errors carry no stack to their origin, so the name is what tells where one came from.
+- **What the app expects is not sent:** no network or a request given up, a session that ended,
+  and the refusals a screen explains to the person: the database's with the app's own codes (BB…),
+  Auth's of what was typed (4xx), and the account's wrong password and refused codes, which say so
+  themselves. A server's failure (5xx) is sent. They would bury the errors that are bugs.
+- **Postgres's own refusals are expected only where a mutation says so,** with
+  `meta: { expects: ['uniqueViolation'] }`: a name already used is no bug when saving a food or a
+  recipe, nor a row gone for an alternative, but either is one anywhere else.
 - **An error is sent once,** though it is caught where it happened and by the query client.
 - **Supabase's errors are plain objects;** they are sent as an `Error` with their message, named
   by their code, without their details and hint, which can hold a row's values.
@@ -36,6 +42,7 @@ that fails shows "could not load" and is gone.
 
 ## Consequences
 
-- A new kind of expected failure must be added to `isExpected()`, or it is reported.
+- A new kind of expected failure must be added to `isExpected()` or to its mutation's `expects`,
+  or it is reported.
 - Two warnings stay `console.warn`: messages from the watch that are no commands, which are no
   errors.
