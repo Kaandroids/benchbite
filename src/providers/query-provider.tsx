@@ -8,9 +8,21 @@ import {
 import { useState, type PropsWithChildren } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { isDbError, type DbError } from '@/lib/errors';
 import { reportError } from '@/lib/reporting';
 
 import { useSession } from './session-provider';
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    mutationMeta: {
+      /** What failed, in the app's words, when the mutation fails: "Could not save the workout". */
+      where: string;
+      /** The database's refusals its screen explains, which are then no error to report. */
+      expects?: readonly DbError[];
+    };
+  }
+}
 
 // React Native has no window focus events. Data counts as refocused when the app returns to the
 // foreground, so screens show what changed elsewhere, for example on another device.
@@ -25,18 +37,20 @@ focusManager.setEventListener((setFocused) => {
 
 export function createQueryClient() {
   return new QueryClient({
-    // Every request that fails is reported (#550), as screens show their own message and go on;
-    // reportError leaves out those the app expects, as no network. A query is named by the first
-    // part of its key, which names what it loads.
+    // Every request that fails is reported (#550, ADR 0151), as screens show their own message and
+    // go on; reportError leaves out what the app expects, as no network. A query is named by the
+    // first part of its key, which names what it loads; a mutation by its `meta.where`, which a
+    // lint rule asks every one for.
     queryCache: new QueryCache({
       onError: (error, query) => reportError(`Could not load ${String(query.queryKey[0])}`, error),
     }),
     mutationCache: new MutationCache({
-      onError: (error, _variables, _context, mutation) =>
-        reportError(
-          `Could not save ${String(mutation.options.mutationKey?.[0] ?? 'a change')}`,
-          error,
-        ),
+      onError: (error, _variables, _context, mutation) => {
+        const { where = 'Could not save a change', expects = [] } = mutation.meta ?? {};
+        if (!expects.some((name) => isDbError(error, name))) {
+          reportError(where, error);
+        }
+      },
     }),
     defaultOptions: {
       queries: {

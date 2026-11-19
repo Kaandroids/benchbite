@@ -54,7 +54,10 @@ describe('QueryProvider', () => {
 });
 
 describe('createQueryClient', () => {
-  beforeEach(() => jest.useFakeTimers());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
   afterEach(() => jest.useRealTimers());
 
   it('reports a query that fails, named by its key', async () => {
@@ -71,18 +74,38 @@ describe('createQueryClient', () => {
     client.clear();
   });
 
-  it('reports a change that fails, named by its key or as a change', async () => {
+  /** Runs a change that fails with `error`, as a hook's mutation with this `meta` would. */
+  async function fail(
+    error: unknown,
+    meta?: { where: string; expects?: readonly ['uniqueViolation'] },
+  ) {
     const client = createQueryClient();
-    const error = new Error('down');
-    for (const mutationKey of [['weight'], undefined]) {
-      await client
-        .getMutationCache()
-        .build(client, { mutationKey, mutationFn: () => Promise.reject(error) })
-        .execute(undefined)
-        .catch(() => {});
-    }
-    expect(reportError).toHaveBeenCalledWith('Could not save weight', error);
-    expect(reportError).toHaveBeenCalledWith('Could not save a change', error);
+    await client
+      .getMutationCache()
+      .build(client, { meta, mutationFn: () => Promise.reject(error) })
+      .execute(undefined)
+      .catch(() => {});
     client.clear();
+  }
+
+  it('reports a change that fails under the name it gives', async () => {
+    const error = new Error('down');
+    await fail(error, { where: 'Could not save the workout' });
+    expect(reportError).toHaveBeenCalledWith('Could not save the workout', error);
+  });
+
+  it('reports a change without a name as a change', async () => {
+    const error = new Error('down');
+    await fail(error);
+    expect(reportError).toHaveBeenCalledWith('Could not save a change', error);
+  });
+
+  it('reports no refusal the change expects, and any other', async () => {
+    const meta = { where: 'Could not save the food', expects: ['uniqueViolation'] } as const;
+    await fail({ code: '23505', message: 'duplicate key' }, meta);
+    expect(reportError).not.toHaveBeenCalled();
+    const other = { code: '23503', message: 'foreign key' };
+    await fail(other, meta);
+    expect(reportError).toHaveBeenCalledWith('Could not save the food', other);
   });
 });
