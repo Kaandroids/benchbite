@@ -307,6 +307,18 @@ describe('reportError', () => {
     expect(sent.message).toBe('insert or update violates a foreign key');
   });
 
+  it('sends a server’s failure, which is no refusal', () => {
+    const { reporting, sentry } = load(true);
+    for (const error of [
+      Object.assign(new Error('Bad gateway'), { name: 'AuthRetryableFetchError', status: 502 }),
+      Object.assign(new Error('Unexpected failure'), { name: 'AuthApiError', status: 500 }),
+      Object.assign(new Error('The function refused: unknown'), { expected: false }),
+    ]) {
+      reporting.reportError('Could not log in', error);
+    }
+    expect(sentry.captureException).toHaveBeenCalledTimes(3);
+  });
+
   it('sends an error once, also when it is caught in two places', () => {
     const { reporting, sentry } = load(true);
     const error = new Error('boom');
@@ -322,8 +334,13 @@ describe('reportError', () => {
       Object.assign(new Error('Aborted'), { name: 'AbortError' }),
       Object.assign(new Error('Failed to send a request'), { name: 'FunctionsFetchError' }),
       { code: 'BB009', message: 'Workout limit reached' },
-      { code: 'PGRST301', message: 'JWT expired' },
+      { code: 'PGRST301', message: 'JWT cryptographic operation failed' },
+      { code: 'PGRST303', message: 'JWT expired' },
       Object.assign(new Error('Auth session missing!'), { name: 'AuthSessionMissingError' }),
+      Object.assign(new Error('No answer'), { name: 'AuthRetryableFetchError', status: 0 }),
+      Object.assign(new Error('Invalid login credentials'), { name: 'AuthApiError', status: 400 }),
+      Object.assign(new Error('Too short'), { name: 'AuthWeakPasswordError', status: 422 }),
+      Object.assign(new Error('The function refused: wrong_code'), { expected: true }),
     ]) {
       reporting.reportError('Could not save the workout', error);
     }

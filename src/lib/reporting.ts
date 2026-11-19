@@ -158,22 +158,34 @@ export const reportingErrorBoundary = (
 const UNREACHABLE = /network request failed|failed to fetch|network error|timed out|offline/i;
 
 /**
- * Whether an error is one the app expects and handles, and Sentry need not hear of: no network, a
- * request given up, or a refusal the database gives with one of the app's own codes (BB…), which
- * the screen explains to the person.
+ * Whether an error is one the app expects and handles, and Sentry need not hear of:
+ * - no network, or a request given up;
+ * - a session that ended, which the app asks to log in again for;
+ * - a refusal the screen explains to the person: the database's with one of the app's own codes
+ *   (BB…), Auth's of what was typed (4xx), and an error that says so itself with `expected`, as
+ *   the account's wrong password.
+ * A server's failure (5xx) is none of these.
  */
 export function isExpected(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) {
     return false;
   }
-  const { name, message, code } = error as { name?: unknown; message?: unknown; code?: unknown };
+  const { name, message, code, status, expected } = error as Record<string, unknown>;
+  const refusedByAuth =
+    (name === 'AuthApiError' || name === 'AuthWeakPasswordError') &&
+    typeof status === 'number' &&
+    status < 500;
   return (
+    expected === true ||
+    refusedByAuth ||
     name === 'AbortError' ||
     name === 'FunctionsFetchError' ||
-    name === 'AuthRetryableFetchError' ||
-    // A session that ended, as on another phone: the app asks to log in again.
+    // Auth reports a server error (502 to 504) under this name too; only no answer is expected.
+    (name === 'AuthRetryableFetchError' && status === 0) ||
     name === 'AuthSessionMissingError' ||
+    // PostgREST's for a token it cannot read, and for one that ran out.
     code === 'PGRST301' ||
+    code === 'PGRST303' ||
     (typeof code === 'string' && code.startsWith('BB')) ||
     (typeof message === 'string' && UNREACHABLE.test(message))
   );

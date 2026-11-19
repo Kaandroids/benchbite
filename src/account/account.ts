@@ -92,18 +92,28 @@ const FUNCTION_ERRORS: Record<AccountRefusal, AccountError> = {
 };
 
 /** The current password given to change it was not the account's. */
-class WrongCurrentPassword extends Error {}
+class WrongCurrentPassword extends Error {
+  /** A refusal the screen explains, which reportError() leaves out. */
+  readonly expected = true;
+}
 
 /** The password given to confirm deleting the account was not its own. */
-class WrongPassword extends Error {}
+class WrongPassword extends Error {
+  /** A refusal the screen explains, which reportError() leaves out. */
+  readonly expected = true;
+}
 
 /** An Edge Function's answer that it did not do what was asked, with its reason. */
 class FunctionRefusal extends Error {
+  /** A refusal the screen explains, which reportError() leaves out; a server error is none. */
+  readonly expected: boolean;
+
   constructor(
     readonly reason: string,
     readonly status: number,
   ) {
     super(`The function refused: ${reason}`);
+    this.expected = status < 500;
   }
 }
 
