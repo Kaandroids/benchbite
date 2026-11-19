@@ -51,6 +51,8 @@ jobs:
         run: |
           version=$(node -p "require('./targets/watch/expo-target.config.js').deploymentTarget")
           xcrun -sdk watchsimulator swiftc -typecheck -target "arm64-apple-watchos${version}-simulator" targets/watch/*.swift
+          # And as a debug build, which has the sample for the screenshots (Sample.swift).
+          xcrun -sdk watchsimulator swiftc -typecheck -DDEBUG -target "arm64-apple-watchos${version}-simulator" targets/watch/*.swift
 
       # `pnpm test:watch`: the watch's logic, with XCTest.
       - name: Watch tests
