@@ -18,7 +18,9 @@ blank screen and no way on but closing the app (#550). Errors are now reported t
   - Workout, Nutrition and Progress's layouts, and Today, so that the tab bar stays and the other
     tabs keep working. Their screen keeps its buttons above the floating tab bar, and offers Today,
     but on Today itself.
-  - Bite's screens, which open over the tabs, with the way to Today.
+  - Every screen that opens over the tabs, with the way to Today: Bite's, the workout in progress,
+    Settings, Premium, the AI consent and the account's screens. A new screen over the tabs exports
+    `SectionErrorBoundary` too.
   - The onboarding and the root layout, for the whole app, with Try again only.
 - **What a boundary catches is reported:** React hands it to the boundary, not to the global
   handler, so each boundary is wrapped with Sentry's `wrapExpoRouterErrorBoundary`, through
@@ -31,8 +33,9 @@ blank screen and no way on but closing the app (#550). Errors are now reported t
 ## Alternatives considered
 
 - **One boundary at the root:** simpler, but every failure would take the tab bar with it.
-- **A boundary on every screen:** each route would need its own export, for the same screen as its
-  tab's layout gives.
+- **A boundary on every screen in the tabs:** each route would need its own export, for the same
+  screen as its tab's layout gives. Screens over the tabs have no such layout, so each exports its
+  own.
 - **React's own error boundary component around the providers:** Expo Router already has one per
   route, with a retry that redraws the route.
 
