@@ -1,5 +1,5 @@
 import type { ErrorBoundaryProps } from 'expo-router';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -20,8 +20,11 @@ export type ErrorScope = 'app' | 'section';
 /** How long after Try again a new failure counts as the same one failing again. */
 const AGAIN_MS = 30_000;
 
-/** When Try again was last pressed, for each scope, kept as the screen goes and comes back. */
-const retriedAt: Partial<Record<ErrorScope, number>> = {};
+/**
+ * When Try again was last pressed on each screen, by its path, kept as the error screen goes and
+ * comes back; a failure elsewhere is a new one.
+ */
+const retriedAt: Partial<Record<string, number>> = {};
 
 type ErrorScreenProps = ErrorBoundaryProps & {
   scope: ErrorScope;
@@ -44,11 +47,12 @@ export function ErrorScreen({
 }: ErrorScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const [again] = useState(() => Date.now() - (retriedAt[scope] ?? -Infinity) < AGAIN_MS);
+  const path = usePathname();
+  const [again] = useState(() => Date.now() - (retriedAt[path] ?? -Infinity) < AGAIN_MS);
   const [retrying, setRetrying] = useState(false);
 
   const tryAgain = () => {
-    retriedAt[scope] = Date.now();
+    retriedAt[path] = Date.now();
     setRetrying(true);
     void retry().finally(() => setRetrying(false));
   };

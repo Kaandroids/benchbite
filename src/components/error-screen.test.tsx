@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 
 import { isReporting } from '@/lib/reporting';
 import { fireEvent, render, screen } from '@/test/render';
@@ -11,7 +11,10 @@ import {
   TodayErrorBoundary,
 } from './error-screen';
 
-jest.mock('expo-router', () => ({ router: { navigate: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { navigate: jest.fn() },
+  usePathname: jest.fn(() => '/workout'),
+}));
 jest.mock('@/lib/reporting', () => ({
   isReporting: jest.fn(() => false),
   reportingErrorBoundary: <T,>(boundary: T) => boundary,
@@ -24,6 +27,7 @@ let hour = 0;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(usePathname).mockReturnValue('/workout');
   hour += 1;
   jest.useFakeTimers({ now: new Date(Date.UTC(2026, 10, 19, hour)) });
 });
@@ -94,6 +98,16 @@ describe('failing again soon after Try again', () => {
         'Close Benchbite and open it again. If it keeps happening, an update will fix it soon: we’ve been told.',
       ),
     ).toBeOnTheScreen();
+  });
+
+  it('takes a first failure elsewhere as a new one', async () => {
+    const first = await render(<TabErrorBoundary error={error} retry={retry()} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+    await first.unmount();
+    jest.advanceTimersByTime(5_000);
+    jest.mocked(usePathname).mockReturnValue('/bite/notebook');
+    await render(<SectionErrorBoundary error={error} retry={retry()} />);
+    expect(screen.getByText('This part didn’t load')).toBeOnTheScreen();
   });
 
   it('takes a failure long after Try again as a new one', async () => {
