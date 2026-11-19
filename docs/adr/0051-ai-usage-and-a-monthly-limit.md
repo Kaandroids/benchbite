@@ -1,6 +1,6 @@
 # 0051. What AI costs, and a limit per user and month
 
-- **Status:** Accepted, amended by ADR-0078
+- **Status:** Accepted, amended by ADR-0078 and ADR-0153
 - **Date:** 2026-10-30
 
 ## Context
