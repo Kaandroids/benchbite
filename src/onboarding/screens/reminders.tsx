@@ -7,6 +7,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
+import { reportError } from '@/lib/reporting';
 import { cancelReminders, requestReminderPermission } from '@/reminders/reminders';
 import { saveReminderMinutes } from '@/reminders/settings';
 import { useTheme } from '@/theme';
@@ -39,7 +40,7 @@ export function RemindersStep() {
   const withoutReminders = () => {
     saveReminderMinutes(null);
     void cancelReminders().catch((error: unknown) =>
-      console.warn('Could not cancel the reminders', error),
+      reportError('Could not cancel the reminders', error),
     );
     next({ reminderMinutes: undefined });
   };
@@ -56,7 +57,7 @@ export function RemindersStep() {
       next({ reminderMinutes: minutes });
     } catch (error) {
       // Reminders are a convenience; failing to set them must not stop the onboarding.
-      console.warn('Could not turn on the reminders', error);
+      reportError('Could not turn on the reminders', error);
       withoutReminders();
     } finally {
       setEnabling(false);

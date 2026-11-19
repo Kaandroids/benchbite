@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { createListeners } from '@/lib/listeners';
+import { reportError } from '@/lib/reporting';
 
 import { link } from './link';
 import { NO_WATCH, type WatchStatus } from './types';
@@ -31,7 +32,7 @@ function subscribe(listener: () => void) {
       .then((first) => {
         if (!heard) changed(first);
       })
-      .catch((error: unknown) => console.warn('Could not read the watch status', error));
+      .catch((error: unknown) => reportError('Could not read the watch status', error));
   }
   return unsubscribe;
 }
@@ -51,7 +52,7 @@ export async function readWatchStatus(): Promise<WatchStatus> {
     changed(next);
     return next;
   } catch (error) {
-    console.warn('Could not read the watch status', error);
+    reportError('Could not read the watch status', error);
     return status;
   }
 }

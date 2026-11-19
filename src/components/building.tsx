@@ -20,6 +20,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { BittenPlate } from '@/brand/bitten-plate';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { reportError } from '@/lib/reporting';
 import { useTheme } from '@/theme';
 
 /** Each line about the work shows at least this long, so the work is seen being done. */
@@ -106,7 +107,7 @@ export function Building<T>({
         setLine(count);
         finish(result);
       } catch (cause) {
-        console.warn('Could not finish the work', cause);
+        reportError('Could not finish the work', cause);
         if (!cancelled) {
           setFailed(true);
           fail();

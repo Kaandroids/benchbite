@@ -11,6 +11,7 @@ import { Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
+import { reportError } from '@/lib/reporting';
 import { typography, useTheme } from '@/theme';
 
 import {
@@ -70,7 +71,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
   );
 
   const failed = (error: unknown) => {
-    console.warn('Could not save the exercise', error);
+    reportError('Could not save the exercise', error);
     Alert.alert(t('customExercise.saveErrorTitle'), t('customExercise.saveError'));
   };
   const save = () =>

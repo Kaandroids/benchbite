@@ -2,12 +2,14 @@
 // nothing stored, or the value is not kept: losing one of these values is better than a crash.
 import { Storage } from 'expo-sqlite/kv-store';
 
+import { reportError } from './reporting';
+
 /** The value stored under a key, or null when there is none or it cannot be read. */
 export function readItem(key: string): string | null {
   try {
     return Storage.getItemSync(key);
   } catch (error) {
-    console.warn(`Could not read ${key}`, error);
+    reportError(`Could not read ${key}`, error);
     return null;
   }
 }
@@ -21,7 +23,7 @@ export function writeItem(key: string, value: string | null) {
       Storage.setItemSync(key, value);
     }
   } catch (error) {
-    console.warn(`Could not write ${key}`, error);
+    reportError(`Could not write ${key}`, error);
   }
 }
 
@@ -38,7 +40,7 @@ export function readVersioned<T>(key: string, version: number, field: string): T
     const parsed = JSON.parse(stored) as { version?: number } & Record<string, T | undefined>;
     return parsed.version === version ? (parsed[field] ?? null) : null;
   } catch (error) {
-    console.warn(`Could not read ${key}`, error);
+    reportError(`Could not read ${key}`, error);
     return null;
   }
 }

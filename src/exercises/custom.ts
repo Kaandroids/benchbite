@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 
 import { EXERCISES_KEY, INSTRUCTIONS_KEY, type LibraryExercise } from './library';
@@ -64,7 +65,7 @@ export function formOf(exercise: LibraryExercise, instructions: string[]): Custo
 
 /** Removes photos uploaded for a save that failed; one left behind costs storage only. */
 const discard = (paths: string[]) =>
-  removePhotos(paths).catch((error: unknown) => console.warn('Could not remove photos', error));
+  removePhotos(paths).catch((error: unknown) => reportError('Could not remove photos', error));
 
 /**
  * Uploads the form's new photos and saves the exercise with the paths of all of them in their

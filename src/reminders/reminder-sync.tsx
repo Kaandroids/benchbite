@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { fromIsoDate, toIsoDate } from '@/i18n/dates';
+import { reportError } from '@/lib/reporting';
 import { useWeekSchedule } from '@/week/use-week-schedule';
 import { upcomingWorkouts } from '@/workouts/week-schedule';
 
@@ -42,7 +43,7 @@ export function ReminderSync() {
       return;
     }
     scheduleReminders(JSON.parse(key) as Reminder[], minutes).catch((error: unknown) =>
-      console.warn('Could not schedule the reminders', error),
+      reportError('Could not schedule the reminders', error),
     );
   }, [key]);
 

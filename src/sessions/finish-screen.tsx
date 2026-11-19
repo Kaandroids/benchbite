@@ -14,6 +14,7 @@ import { WatchCard } from '@/health/watch-card';
 import { hasHeartRate, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { dbErrorMessage } from '@/lib/errors';
+import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -113,7 +114,7 @@ export function FinishScreen({ next }: { next?: number }) {
       }
     } catch (error) {
       saving.current = false;
-      console.warn('Could not save the workout', error);
+      reportError('Could not save the workout', error);
       Alert.alert(
         t('common.notSaved'),
         dbErrorMessage(

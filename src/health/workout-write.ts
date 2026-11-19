@@ -4,6 +4,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
 import { recentLogs } from '@/history/history';
+import { reportError } from '@/lib/reporting';
 
 import {
   isHealthConnected,
@@ -73,7 +74,7 @@ const saveRecent = oneAtATimeThenAgain(async (): Promise<boolean> => {
     try {
       await saveToHealth(log);
     } catch (error) {
-      console.warn('Could not save a workout to the health store', error);
+      reportError('Could not save a workout to the health store', error);
     }
   }
   return logs.length > 0;
@@ -85,7 +86,7 @@ export async function removeSavedWorkout(logId: number): Promise<void> {
   try {
     await removeWorkout(logId);
   } catch (error) {
-    console.warn('Could not take the workout out of the health store', error);
+    reportError('Could not take the workout out of the health store', error);
   }
 }
 

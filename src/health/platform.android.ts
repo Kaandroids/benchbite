@@ -18,6 +18,7 @@ import {
 import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
+import { reportError } from '@/lib/reporting';
 import { appName } from '@/modules/app-names';
 
 import { HEALTH_CONNECT_ACTIVITIES } from './activities';
@@ -148,7 +149,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
       const kcal = energy.ACTIVE_CALORIES_TOTAL.inKilocalories;
       activeKcal = kcal > 0 ? kcal : null;
     } catch (error) {
-      console.warn('Could not read the active calories', error);
+      reportError('Could not read the active calories', error);
     }
   }
   return {
@@ -158,7 +159,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     // The samples only draw the chart: without them the read keeps its average and highest.
     samples: heartRateSamples(
       await heartRatePoints(from, to).catch((error: unknown) => {
-        console.warn('Could not read the heart rate samples', error);
+        reportError('Could not read the heart rate samples', error);
         return [];
       }),
       from,

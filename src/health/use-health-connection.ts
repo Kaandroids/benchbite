@@ -9,6 +9,8 @@ import {
 } from './health';
 import { READ_KINDS } from './read-kinds';
 
+import { reportError } from '@/lib/reporting';
+
 /** Why the last step did not connect or disconnect as asked. */
 export type HealthProblem = 'denied' | 'unavailable' | 'failed' | 'releaseFailed';
 
@@ -32,7 +34,7 @@ export function useHealthConnection() {
       .then((allowed) => {
         if (current && !allowed) setHealthConnected(false);
       })
-      .catch((error: unknown) => console.warn('Could not check the access to health data', error));
+      .catch((error: unknown) => reportError('Could not check the access to health data', error));
     return () => {
       current = false;
     };
@@ -52,7 +54,7 @@ export function useHealthConnection() {
       else if (availability === 'missing') setSheet('install');
       else setProblem('unavailable');
     } catch (error) {
-      console.warn('Could not check the health store', error);
+      reportError('Could not check the health store', error);
       setProblem('failed');
     }
   };
@@ -73,7 +75,7 @@ export function useHealthConnection() {
       setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');
     } catch (error) {
-      console.warn('Could not ask for the access to health data', error);
+      reportError('Could not ask for the access to health data', error);
       setProblem('failed');
     } finally {
       setBusy(false);
@@ -89,7 +91,7 @@ export function useHealthConnection() {
     try {
       await releaseHealthAccess();
     } catch (error) {
-      console.warn('Could not give up the access to health data', error);
+      reportError('Could not give up the access to health data', error);
       setProblem('releaseFailed');
     } finally {
       setBusy(false);

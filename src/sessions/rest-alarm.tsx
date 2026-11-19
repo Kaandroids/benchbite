@@ -19,6 +19,7 @@ import { Alert, AppState, Linking, Platform } from 'react-native';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { createListeners } from '@/lib/listeners';
+import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { link } from '@/watch/link';
 
@@ -60,7 +61,7 @@ export function useNotificationPermission(): NotificationPermission | null {
   useEffect(() => {
     const read = () =>
       void refreshPermission().catch((error: unknown) =>
-        console.warn('Could not read the notification permission', error),
+        reportError('Could not read the notification permission', error),
       );
     read();
     const subscription = AppState.addEventListener('change', (state) => {
@@ -225,7 +226,7 @@ export function RestAlarm() {
   useEffect(() => {
     if (endsAt === undefined || endsAt <= Date.now()) {
       void cancelRestEnd().catch((error: unknown) =>
-        console.warn('Could not cancel the rest notification', error),
+        reportError('Could not cancel the rest notification', error),
       );
       return;
     }
@@ -233,7 +234,7 @@ export function RestAlarm() {
       title: t('session.restOver.title'),
       body: name ? t('session.restOver.next', { name }) : t('session.restOver.body'),
       channelName: t('session.restOver.channel'),
-    }).catch((error: unknown) => console.warn('Could not schedule the rest notification', error));
+    }).catch((error: unknown) => reportError('Could not schedule the rest notification', error));
     const timer = setTimeout(() => {
       ended(endsAt);
       updateSession((current) =>

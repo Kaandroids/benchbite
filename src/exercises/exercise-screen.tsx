@@ -8,6 +8,7 @@ import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
+import { reportError } from '@/lib/reporting';
 import { useTheme } from '@/theme';
 
 import { useArchiveExercise } from './custom';
@@ -79,7 +80,7 @@ export function ExerciseScreen({
         }
       },
       (error: unknown) => {
-        console.warn('Could not archive the exercise', error);
+        reportError('Could not archive the exercise', error);
         Alert.alert(t('customExercise.archiveErrorTitle'), t('customExercise.archiveError'));
       },
     );

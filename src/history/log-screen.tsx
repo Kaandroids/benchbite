@@ -19,6 +19,7 @@ import { useAwaitingWatch } from '@/health/workout-health';
 import { removeSavedWorkout, useSavedToHealth } from '@/health/workout-write';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { reportError } from '@/lib/reporting';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
 import { useSetWords } from '@/sets/set-words';
@@ -121,7 +122,7 @@ export function LogScreen({ id }: { id: number }) {
               router.back();
             },
             (error: unknown) => {
-              console.warn('Could not delete the workout log', error);
+              reportError('Could not delete the workout log', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
             },
           ),

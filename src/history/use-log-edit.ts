@@ -7,6 +7,7 @@ import { Alert } from 'react-native';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import { findExercise, type LibraryExercise } from '@/exercises/library';
 import { isDbError } from '@/lib/errors';
+import { reportError } from '@/lib/reporting';
 import { setKindOf } from '@/sets/fields';
 import { EMPTY_SET, missingFields } from '@/sets/values';
 
@@ -101,7 +102,7 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
       });
       leaveWithoutAsking(() => router.back());
     } catch (error) {
-      console.warn('Could not save the workout log', error);
+      reportError('Could not save the workout log', error);
       Alert.alert(
         t('common.notSaved'),
         isDbError(error, 'logNotFound')

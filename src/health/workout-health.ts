@@ -3,6 +3,7 @@
 // set_workout_health() decides what of a read is kept; this side reads, sends and shows.
 import { useQuery } from '@tanstack/react-query';
 
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { useNow } from '@/lib/use-now';
 
@@ -30,7 +31,7 @@ export async function readWorkoutHealth(from: Date, to: Date): Promise<WorkoutSt
   try {
     return await workoutStats(from, to);
   } catch (error) {
-    console.warn('Could not read the workout from the health store', error);
+    reportError('Could not read the workout from the health store', error);
     return null;
   }
 }

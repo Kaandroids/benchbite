@@ -5,6 +5,8 @@ import { setReadSync, useHealthConnected, useReadSync, type HealthRead } from '.
 import { healthStore } from './health';
 import { READ_KINDS } from './read-kinds';
 
+import { reportError } from '@/lib/reporting';
+
 /**
  * Asking once to read a kind, for a user who connected the store before it was read (ADR 0100,
  * 0103): whether to ask, bringing it in, and not now, which ends the asking.
@@ -23,7 +25,7 @@ export function useReadAsk(kind: HealthRead) {
       setReadSync(kind, allowed ? 'on' : 'off');
       if (allowed) await READ_KINDS[kind].bringIn(queryClient);
     } catch (error) {
-      console.warn(`Could not bring in the ${kind} from the health store`, error);
+      reportError(`Could not bring in the ${kind} from the health store`, error);
     } finally {
       setBusy(false);
     }

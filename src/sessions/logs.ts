@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { LOGS_KEY } from '@/history/history';
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
@@ -21,7 +22,7 @@ export function lastSetsQuery(exerciseIds: string[]) {
 /** The latest sets of the exercises, or none when they cannot be read: they only fill in values. */
 export function fetchLastSetsOrNone(queryClient: QueryClient, exerciseIds: string[]) {
   return queryClient.fetchQuery(lastSetsQuery(exerciseIds)).catch((error: unknown): LastSets => {
-    console.warn('Could not load the last sets', error);
+    reportError('Could not load the last sets', error);
     return {};
   });
 }

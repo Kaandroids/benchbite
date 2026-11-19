@@ -19,6 +19,7 @@ import {
 import { applicationId } from 'expo-application';
 
 import { toIsoDate } from '@/i18n/dates';
+import { reportError } from '@/lib/reporting';
 
 import { HEALTHKIT_ACTIVITIES } from './activities';
 import { inBatches } from './batches';
@@ -98,7 +99,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     ascending: true,
     limit: 0,
   }).catch((error: unknown) => {
-    console.warn('Could not read the heart rate samples', error);
+    reportError('Could not read the heart rate samples', error);
     return [];
   });
   return {
