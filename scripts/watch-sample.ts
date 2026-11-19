@@ -1,5 +1,6 @@
 // Prints a sample for the Apple Watch app to show without a phone, for the README's screenshots
-// (docs/media/README.md): the demo account's Upper body workout, at a set, in a rest, or saved.
+// (docs/media/README.md): a workout like the demo account's Upper body, at a set, in a rest, or
+// saved. Its values are kept by hand; `pnpm check:watch` checks that the watch reads them.
 // A debug build of the watch app takes it at launch (targets/watch/Sample.swift):
 //
 //   SIMCTL_CHILD_BENCHBITE_SAMPLE="$(node scripts/watch-sample.ts set)" \
@@ -56,17 +57,17 @@ function exercise(exerciseId: string, name: string, kg: number, reps: number, do
 }
 
 /**
- * The workout a quarter of an hour in: two sets of the bench press done, the third next. The one
- * saved started long enough ago for all its sets.
+ * The workout a quarter of an hour in: two sets of the bench press done, the third next, after a
+ * rest in that scene. The one saved started long enough ago for all its sets.
  */
-function workout(resting: boolean) {
+function workout(scene: Scene) {
   return {
     id: WORKOUT_ID,
     name: 'Upper body',
     startedAt: now - (scene === 'summary' ? 52 : 14) * MINUTE,
     current: 0,
     next: { exercise: 0, set: 2 },
-    rest: resting ? { endsAt: now + 78_000, seconds: 90 } : null,
+    rest: scene === 'rest' ? { endsAt: now + 78_000, seconds: 90 } : null,
     clock: null,
     setsToSave: 2,
     exercises: [
@@ -81,7 +82,7 @@ function workout(resting: boolean) {
 }
 
 const state = (seq: number, content: object) => ({ v: 1, seq, language: 'en', ...content });
-const underWay = state(1, { ended: [], workout: workout(scene === 'rest') });
+const underWay = state(1, { ended: [], workout: workout(scene) });
 /** The phone saved it: every set, two of them records. */
 const saved = state(2, {
   ended: [{ id: WORKOUT_ID, saved: true, endedAt: now, setsSaved: 12, setCount: 12, records: 2 }],
