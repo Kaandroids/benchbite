@@ -95,3 +95,11 @@ it('loads where the cards stand again when one was added elsewhere', async () =>
   await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['coach-meal-cards'] }));
   expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-30'] });
 });
+
+it('expects its card’s row to be gone, as with its chat deleted elsewhere', async () => {
+  jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: { code: 'P0002' } } as never);
+  const queryClient = createTestQueryClient();
+  const { result } = await renderHook(() => useMealCardAction(CARD), { queryClient });
+  await act(() => result.current.mutateAsync({ action: 'undo' }).catch(() => {}));
+  expect(queryClient.getMutationCache().getAll()[0]!.meta?.expects).toContain('notFound');
+});

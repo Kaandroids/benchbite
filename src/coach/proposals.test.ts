@@ -228,4 +228,12 @@ describe('useDecideProposal', () => {
     });
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['coach-proposals'] }));
   });
+
+  it('expects its proposal’s row to be gone, as with its chat deleted elsewhere', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: { code: 'P0002' } } as never);
+    const queryClient = createTestQueryClient();
+    const { result } = await renderHook(() => useDecideProposal(TARGETS), { queryClient });
+    await act(() => result.current.mutateAsync('undo').catch(() => {}));
+    expect(queryClient.getMutationCache().getAll()[0]!.meta?.expects).toContain('notFound');
+  });
 });

@@ -109,7 +109,8 @@ export function useProposalStates(ids: number[]) {
 export function useDecideProposal(card: ShownProposal) {
   const queryClient = useQueryClient();
   return useMutation({
-    meta: { where: 'Could not decide the proposal' },
+    // The card says it is out of date when its row is gone, as with its chat deleted elsewhere.
+    meta: { where: 'Could not decide the proposal', expects: ['notFound'] },
     mutationFn: async (decision: ProposalDecision) => {
       const { data, error } = await supabase.rpc('decide_coach_proposal', {
         proposal_id: card.id,

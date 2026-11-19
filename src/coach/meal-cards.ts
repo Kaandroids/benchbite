@@ -94,7 +94,8 @@ export type MealCardAction = { action: 'log'; grams: number[] } | { action: 'und
 export function useMealCardAction(card: MealCard) {
   const queryClient = useQueryClient();
   return useMutation({
-    meta: { where: 'Could not act on a meal card' },
+    // The card says it is out of date when its row is gone, as with its chat deleted elsewhere.
+    meta: { where: 'Could not act on a meal card', expects: ['notFound'] },
     mutationFn: async (request: MealCardAction) => {
       const { data, error } =
         request.action === 'log'
