@@ -153,3 +153,57 @@ export const wrapRoot = Sentry.wrap;
 export const reportingErrorBoundary = (
   boundary: ComponentType<ErrorBoundaryProps>,
 ): ComponentType<ErrorBoundaryProps> => Sentry.wrapExpoRouterErrorBoundary(boundary);
+
+/** What a failed request's error says when the phone could not reach the server, or gave up. */
+const UNREACHABLE = /network request failed|failed to fetch|network error|timed out|offline/i;
+
+/**
+ * Whether an error is one the app expects and handles, and Sentry need not hear of: no network, a
+ * request given up, or a refusal the database gives with one of the app's own codes (BB…), which
+ * the screen explains to the person.
+ */
+export function isExpected(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  const { name, message, code } = error as { name?: unknown; message?: unknown; code?: unknown };
+  return (
+    name === 'AbortError' ||
+    name === 'FunctionsFetchError' ||
+    name === 'AuthRetryableFetchError' ||
+    (typeof code === 'string' && code.startsWith('BB')) ||
+    (typeof message === 'string' && UNREACHABLE.test(message))
+  );
+}
+
+/**
+ * An Error for what was thrown or returned: Supabase answers with plain objects, which Sentry
+ * would send as a list of their keys rather than as an error with a message and a code.
+ */
+function toError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+  const { message, code } = (error ?? {}) as { message?: unknown; code?: unknown };
+  const made = new Error(typeof message === 'string' ? message : String(error));
+  if (typeof code === 'string') {
+    made.name = code;
+  }
+  return made;
+}
+
+/**
+ * Reports an error the app caught and went on from (#550): in development to the console, as
+ * before, and to Sentry when reporting is on, unless it is one the app expects. `where` names what
+ * failed in the app's words, such as "Could not save the workout": it groups the reports, and must
+ * hold nothing of the person.
+ */
+export function reportError(where: string, error: unknown) {
+  if (__DEV__) {
+    console.warn(where, error);
+  }
+  if (!started || isExpected(error)) {
+    return;
+  }
+  Sentry.captureException(toError(error), { tags: { where } });
+}

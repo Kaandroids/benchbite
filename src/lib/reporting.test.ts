@@ -223,3 +223,89 @@ describe('reportingErrorBoundary', () => {
     expect(Sentry.wrapExpoRouterErrorBoundary).toHaveBeenCalledWith(Boundary);
   });
 });
+
+describe('reportError', () => {
+  const DSN = 'https://key@o1.ingest.de.sentry.io/1';
+
+  /** A fresh module, with reporting started or not, and the Sentry stand-in it uses. */
+  function load(started: boolean) {
+    const saved = {
+      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+      inDev: process.env.EXPO_PUBLIC_SENTRY_IN_DEV,
+    };
+    process.env.EXPO_PUBLIC_SENTRY_DSN = DSN;
+    process.env.EXPO_PUBLIC_SENTRY_IN_DEV = '1';
+    let loaded!: { reporting: typeof import('./reporting'); sentry: typeof Sentry };
+    jest.isolateModules(() => {
+      loaded = {
+        reporting: jest.requireActual<typeof import('./reporting')>('./reporting'),
+        sentry: jest.requireMock<typeof Sentry>('@sentry/react-native'),
+      };
+    });
+    if (started) loaded.reporting.startReporting();
+    for (const [name, value] of [
+      ['EXPO_PUBLIC_SENTRY_DSN', saved.dsn],
+      ['EXPO_PUBLIC_SENTRY_IN_DEV', saved.inDev],
+    ] as const) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+    return loaded;
+  }
+
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.mocked(console.warn).mockRestore();
+  });
+
+  it('writes to the console in development, as before', () => {
+    const { reporting } = load(false);
+    const error = new Error('down');
+    reporting.reportError('Could not save the workout', error);
+    expect(console.warn).toHaveBeenCalledWith('Could not save the workout', error);
+  });
+
+  it('sends nothing before reporting starts', () => {
+    const { reporting, sentry } = load(false);
+    reporting.reportError('Could not save the workout', new Error('down'));
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it('sends an unexpected error, with what failed as a tag', () => {
+    const { reporting, sentry } = load(true);
+    const error = new Error('Cannot read property of undefined');
+    reporting.reportError('Could not save the workout', error);
+    expect(sentry.captureException).toHaveBeenCalledWith(error, {
+      tags: { where: 'Could not save the workout' },
+    });
+  });
+
+  it('sends a Supabase error as an Error with its message and code', () => {
+    const { reporting, sentry } = load(true);
+    reporting.reportError('Could not save the workout', {
+      code: '23503',
+      message: 'insert or update violates a foreign key',
+      details: 'Key (workout_id)=(42) is not present',
+    });
+    const sent = jest.mocked(sentry.captureException).mock.calls[0]![0] as Error;
+    expect(sent).toBeInstanceOf(Error);
+    expect(sent.name).toBe('23503');
+    expect(sent.message).toBe('insert or update violates a foreign key');
+  });
+
+  it('sends nothing the app expects: no network, a request given up, or its own refusals', () => {
+    const { reporting, sentry } = load(true);
+    for (const error of [
+      new TypeError('Network request failed'),
+      Object.assign(new Error('Aborted'), { name: 'AbortError' }),
+      Object.assign(new Error('Failed to send a request'), { name: 'FunctionsFetchError' }),
+      { code: 'BB009', message: 'Workout limit reached' },
+    ]) {
+      reporting.reportError('Could not save the workout', error);
+    }
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+});

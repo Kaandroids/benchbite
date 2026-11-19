@@ -3,6 +3,7 @@
 import type { ComponentType } from 'react';
 
 export const init = jest.fn();
+export const captureException = jest.fn();
 export const wrap = <P extends object>(component: ComponentType<P>) => component;
 export const wrapExpoRouterErrorBoundary = jest.fn(
   <P extends object>(component: ComponentType<P>) => component,
