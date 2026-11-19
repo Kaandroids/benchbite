@@ -54,15 +54,15 @@ values ('test-flash', '2000-01-01', 0.75, 0.075, 3.75);
 create temporary table calls (name text primary key, call_id uuid) on commit drop;
 grant select, insert, update on calls to authenticated, service_role;
 
--- Prices: Gemini 3.8 Flash costs twice as much from 2027.
+-- Prices, Vertex AI's (ADR 0153): Gemini 3.8 Flash costs twice as much from 2027.
 select is(
   (public.ai_model_price('gemini-3.8-flash', '2026-12-31 23:59:59+00')).output_usd,
-  3.7500::numeric,
+  4.1250::numeric,
   'A price holds until the next one starts'
 );
 select is(
   (public.ai_model_price('gemini-3.8-flash', '2027-01-01 00:00:00+00')).output_usd,
-  7.5000::numeric,
+  8.2500::numeric,
   'and the next one holds from its start'
 );
 select ok(
@@ -72,7 +72,7 @@ select ok(
 );
 
 -- A chat call of A's, sending 32,000 tokens, the most chat allows, on Flash-Lite: with the most
--- it may answer, 2,048 tokens, 32,000 × $0.30 + 2,048 × $2.50, per million, is set aside.
+-- it may answer, 2,048 tokens, 32,000 × $0.33 + 2,048 × $2.75, per million, is set aside.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 insert into calls select 'chat', call_id
@@ -80,7 +80,7 @@ insert into calls select 'chat', call_id
 select ok((select call_id from calls where name = 'chat') is not null, 'A user with a budget starts a call');
 select results_eq(
   $$ select budget_usd, used_usd, resets_at = now() + interval '6 days' from public.ai_access() $$,
-  $$ values (1.50::numeric, 0.014720::numeric, true) $$,
+  $$ values (1.50::numeric, 0.016192::numeric, true) $$,
   'which sets the most it may cost aside from the week''s budget, which has less left'
 );
 select results_eq(
@@ -115,7 +115,7 @@ select results_eq(
 select is(
   (select used_usd from public.ai_access()),
   -- Chat, the meal photo, the review and this one.
-  0.014720 + 0.017250 + 0.090360 + 0.005120,
+  0.016192 + 0.017250 + 0.090360 + 0.005632,
   'only the most it may answer'
 );
 
@@ -133,12 +133,12 @@ select results_eq(
 );
 
 -- The chat function records A's chat call: 1,000,000 input tokens, 400,000 of them cached, and
--- 100,000 output tokens: 600,000 × $0.30 + 400,000 × $0.03 + 100,000 × $2.50, per million.
+-- 100,000 output tokens: 600,000 × $0.33 + 400,000 × $0.033 + 100,000 × $2.75, per million.
 set local role service_role;
 
 select is(
   public.record_ai_usage((select call_id from calls where name = 'chat'), 1000000, 400000, 100000, 20000),
-  0.442000::numeric,
+  0.486200::numeric,
   'A call costs its input, cached input and output at the prices of the model it started on'
 );
 select results_eq(
@@ -146,7 +146,7 @@ select results_eq(
        thinking_tokens, cost_usd, estimated
      from public.ai_usage u join calls c on c.call_id = u.call_id where c.name = 'chat' $$,
   $$ values ('00000000-0000-0000-0000-00000000000a'::uuid, 'coach_chat', 'gemini-3.5-flash-lite',
-       1000000, 400000, 100000, 20000, 0.442000, false) $$,
+       1000000, 400000, 100000, 20000, 0.486200, false) $$,
   'and is recorded for the user and feature it was started for'
 );
 select is_empty(
@@ -183,7 +183,7 @@ values ('00000000-0000-0000-0000-0000000000ff', '00000000-0000-0000-0000-0000000
   'gemini-3.8-flash', '2026-12-31 23:59:50+00', 0);
 select is(
   public.record_ai_usage('00000000-0000-0000-0000-0000000000ff', 0, 0, 1000000, 0),
-  3.750000::numeric,
+  4.125000::numeric,
   'A call is priced at the price in force when it started'
 );
 select is(
@@ -233,7 +233,7 @@ insert into calls select 'chat 3', call_id
 select ok((select call_id from calls where name = 'chat 3') is not null, 'and gives it up after them');
 select results_eq(
   $$ select cost_usd, estimated from public.ai_usage where feature = 'coach_voice' $$,
-  $$ values (0.005120::numeric, true) $$,
+  $$ values (0.005632::numeric, true) $$,
   'A start counts every call of the user''s left behind, of any feature'
 );
 
@@ -241,18 +241,18 @@ set local role service_role;
 select results_eq(
   $$ select cost_usd, estimated from public.ai_usage
      where call_id = (select call_id from calls where name = 'chat 2') $$,
-  $$ values (0.014720::numeric, true) $$,
+  $$ values (0.016192::numeric, true) $$,
   'A call left behind is counted at the most it could have cost'
 );
 select is(
   public.record_ai_usage((select call_id from calls where name = 'chat 2'), 1000, 0, 100, 0),
-  0.000550::numeric,
+  0.000605::numeric,
   'and when it records after all, at what it did cost'
 );
 select results_eq(
   $$ select cost_usd, estimated from public.ai_usage
      where call_id = (select call_id from calls where name = 'chat 2') $$,
-  $$ values (0.000550::numeric, false) $$,
+  $$ values (0.000605::numeric, false) $$,
   'which replaces the most it was counted at'
 );
 select ok(
@@ -347,7 +347,7 @@ insert into public.ai_usage
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   (select used_usd from public.ai_access()),
-  0.538031::numeric,
+  0.582798::numeric,
   'Only the calls of this budget period count'
 );
 
