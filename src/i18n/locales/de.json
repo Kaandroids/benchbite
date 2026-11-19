@@ -2052,7 +2052,7 @@
     "ask": "Frag Bite",
     "send": "Senden",
     "stop": "Stopp",
-    "disclaimer": "Bite ist ein Coach, kein Arzt, und kann Fehler machen.",
+    "disclaimer": "Bite ist ein KI-Coach, kein Arzt, und kann Fehler machen.",
     "thinking": "Bite denkt nach",
     "notes": {
       "saved": "Im Notizbuch gespeichert: {{text}}",

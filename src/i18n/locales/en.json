@@ -2052,7 +2052,7 @@
     "ask": "Ask Bite",
     "send": "Send",
     "stop": "Stop",
-    "disclaimer": "Bite is a coach, not a doctor, and can make mistakes.",
+    "disclaimer": "Bite is an AI coach, not a doctor, and can make mistakes.",
     "thinking": "Bite is thinking",
     "notes": {
       "saved": "Saved to notebook: {{text}}",

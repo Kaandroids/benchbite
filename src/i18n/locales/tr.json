@@ -2052,7 +2052,7 @@
     "ask": "Bite'a sor",
     "send": "Gönder",
     "stop": "Durdur",
-    "disclaimer": "Bite bir koç, doktor değil; hata yapabilir.",
+    "disclaimer": "Bite bir yapay zekâ koçu, doktor değil; hata yapabilir.",
     "thinking": "Bite düşünüyor",
     "notes": {
       "saved": "Deftere kaydedildi: {{text}}",
