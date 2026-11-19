@@ -6,6 +6,8 @@
 
 <p align="center">
   <a href="https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml"><img src="https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Kaandroids/benchbite/badges/app.json" alt="Test coverage of the app"></a>
+  <a href="https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Kaandroids/benchbite/badges/functions.json" alt="Test coverage of the Edge Functions"></a>
   <img src="https://img.shields.io/badge/Expo-SDK%2058-000020?logo=expo" alt="Expo SDK 58">
   <img src="https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white" alt="Supabase">
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
@@ -156,8 +158,10 @@ flowchart LR
   [CONTRIBUTING.md](CONTRIBUTING.md) describes the flow.
 - **Checked on every pull request.** CI runs types, lint, formatting, the app's tests,
   translations and the Edge Functions' checks, and on a local Supabase stack the database tests,
-  the generated types and every plan the plan builder can make. A change to the Apple Watch app is
-  type-checked and tested, and its protocol with the phone checked, on a Mac.
+  the generated types and every plan the plan builder can make. The tests must keep running most
+  of the code: a pull request that lets the coverage of the app or of the Edge Functions fall under
+  its thresholds fails, and the badges above show where `main` stands. A change to the Apple Watch
+  app is type-checked and tested, and its protocol with the phone checked, on a Mac.
 - **Watched in production.** A daily workflow checks the hosted project's scheduled jobs and the
   month's AI spend, and Dependabot keeps dependencies current.
 - **Security first.** Row level security on every table, schema changes only through migrations,

@@ -18,16 +18,18 @@ Benchbite uses an AI-assisted workflow:
 The `main` branch is protected: changes require a pull request and an approving review.
 
 Every pull request runs the [CI workflow](.github/workflows/ci.yml): types, lint, formatting, the
-app's tests and their coverage, translations, the shared rule cases and Edge Functions, and on a
-local Supabase stack the database tests, the generated types and every generated plan. A change to
-the Apple Watch app or its protocol also runs the [Watch workflow](.github/workflows/watch.yml) on a
-Mac. Run the main checks locally before pushing:
+app's tests and their coverage, translations, the shared rule cases, the Edge Functions and their
+tests' coverage, and on a local Supabase stack the database tests, the generated types and every
+generated plan. A change to the Apple Watch app or its protocol also runs the
+[Watch workflow](.github/workflows/watch.yml) on a Mac. Run the main checks locally before pushing:
 
 ```bash
 pnpm typecheck
 pnpm lint
 pnpm format:check
 pnpm test --coverage   # the tests, and their coverage as CI checks it
+pnpm functions:check   # the Edge Functions: types, lint and tests
+pnpm coverage:report   # the coverage of both, as the run's summary shows it
 pnpm supabase test db   # with the local stack running
 ```
 

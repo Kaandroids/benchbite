@@ -361,13 +361,23 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm import:foods`     | Import the food library from the BLS 4.0                   |
 | `pnpm icons`            | Draw the app icons, splash image and favicon from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions               |
+| `pnpm coverage:report`  | Report the coverage of the app's and the functions' tests  |
 | `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools        |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack      |
 | `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
 | `pnpm e2e`              | Run the end-to-end flows on the iOS Simulator              |
 
 When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
-with the lines no test runs.
+with the lines no test runs. The Edge Functions' is in `coverage/functions/html/index.html` after
+`pnpm functions:check`.
+
+`pnpm coverage:report`, run after a plain `pnpm test --coverage` and `pnpm functions:check`, prints
+the two by folder, as the summary of a CI run shows them, and fails when the Edge Functions fall
+under their thresholds (`scripts/coverage-report.ts`); the app's thresholds are Jest's
+(`jest.config.js`). It reads the summary Jest writes with its own reporters, which
+`--coverageReporters=text` replaces. On `main`, CI also writes the two numbers to the `badges`
+branch, which the README's badges read
+([ADR 0152](adr/0152-check-the-edge-functions-coverage-and-show-both.md)).
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.
