@@ -3,8 +3,6 @@ import { Alert } from 'react-native';
 
 import { useDeleteWorkout } from './workouts';
 
-import { reportError } from '@/lib/reporting';
-
 type ConfirmDeleteOptions = {
   /** Runs once the user confirms, before the delete, such as to leave the workout's screen. */
   onConfirm?: () => void;
@@ -30,7 +28,6 @@ export function useConfirmDeleteWorkout() {
           remove.mutateAsync(id).then(
             () => onDeleted?.(),
             (error: unknown) => {
-              reportError('Could not delete the workout', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
             },
           );
