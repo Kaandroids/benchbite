@@ -104,8 +104,14 @@ function byFolder(files: Files): [string, Coverage][] {
   return [...folders].sort(([a], [b]) => a.localeCompare(b));
 }
 
-/** A share to one decimal, rounded down, so that one just under a threshold does not read as it. */
-const cell = (count: Count) => `${(Math.floor(percent(count) * 10) / 10).toFixed(1)}%`;
+/**
+ * The share covered in tenths of a percent, rounded down, so that one just under a threshold does
+ * not read as it. Counted in whole numbers: as a fraction, 241 of 250 falls a hair short of 96.4.
+ */
+const tenths = ({ total, covered }: Count) =>
+  total === 0 ? 1000 : Math.floor((covered * 1000) / total);
+
+const cell = (count: Count) => `${(tenths(count) / 10).toFixed(1)}%`;
 const row = (name: string, coverage: Coverage) =>
   `| ${name} | ${METRICS.map((metric) => cell(coverage[metric])).join(' | ')} |`;
 const HEAD = ['| | Lines | Functions | Branches |', '| --- | ---: | ---: | ---: |'];
@@ -124,10 +130,10 @@ function folderTable(title: string, files: Files): string[] {
 
 /** What shields.io draws a badge from (its endpoint schema): the lines covered, by colour. */
 function badge(label: string, coverage: Coverage) {
-  const lines = percent(coverage.lines);
+  const lines = Math.floor(tenths(coverage.lines) / 10);
   const color =
     lines >= 90 ? 'brightgreen' : lines >= 80 ? 'green' : lines >= 70 ? 'yellow' : 'red';
-  return { schemaVersion: 1, label, message: `${Math.floor(lines)}%`, color };
+  return { schemaVersion: 1, label, message: `${lines}%`, color };
 }
 
 for (const [path, command] of [
