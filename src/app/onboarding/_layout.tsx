@@ -1,7 +1,11 @@
 import { Stack } from 'expo-router';
 
+import { AppErrorBoundary } from '@/components/error-screen';
 import { canGoBackFrom, isPassing, isStep, STEPS } from '@/onboarding/steps';
 import { useTheme } from '@/theme';
+
+// In place of the onboarding when it fails as it draws, with no Today to go to yet.
+export const ErrorBoundary = AppErrorBoundary;
 
 /** Whether the step replaces a passing step when it opens, which moves forwards. */
 function followsPassingStep(step: string): boolean {

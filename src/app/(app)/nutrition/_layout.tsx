@@ -1,6 +1,10 @@
 import { Stack } from 'expo-router';
 
+import { TabErrorBoundary } from '@/components/error-screen';
 import { useTheme } from '@/theme';
+
+// In place of the tab when it fails as it draws; the tab bar stays.
+export const ErrorBoundary = TabErrorBoundary;
 
 /** The Nutrition tab: the day, and the screens that add a food to it. */
 export default function NutritionLayout() {

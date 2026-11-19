@@ -2,7 +2,9 @@ import * as Sentry from '@sentry/react-native';
 import type { ErrorEvent } from '@sentry/react-native';
 
 import {
+  isReporting,
   maskText,
+  reportingErrorBoundary,
   reportingOptions,
   scrubBreadcrumb,
   scrubEvent,
@@ -202,11 +204,22 @@ describe('startReporting', () => {
     given(DSN, '1');
     startReporting();
     expect(Sentry.init).toHaveBeenCalledWith(reportingOptions(DSN, true));
+    expect(isReporting()).toBe(true);
   });
 
   it('starts nothing without a DSN, even when asked', () => {
     given(undefined, '1');
     startReporting();
     expect(Sentry.init).not.toHaveBeenCalled();
+  });
+});
+
+describe('reportingErrorBoundary', () => {
+  it('has Sentry report what the boundary catches', () => {
+    const Boundary = () => null;
+    const Reporting = () => null;
+    jest.mocked(Sentry.wrapExpoRouterErrorBoundary).mockReturnValueOnce(Reporting);
+    expect(reportingErrorBoundary(Boundary)).toBe(Reporting);
+    expect(Sentry.wrapExpoRouterErrorBoundary).toHaveBeenCalledWith(Boundary);
   });
 });

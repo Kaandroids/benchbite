@@ -3,6 +3,14 @@
 // data, as a health app's errors may carry weights, meals or what was said to Bite.
 import * as Sentry from '@sentry/react-native';
 import type { Breadcrumb, ErrorEvent, Exception } from '@sentry/react-native';
+import type { ErrorBoundaryProps } from 'expo-router';
+import type { ComponentType } from 'react';
+
+/** Whether reporting started, so that the app says it was told only when it was. */
+let started = false;
+
+/** Whether errors are reported, as in a release build with a DSN. */
+export const isReporting = () => started;
 
 const EMAIL = /[^\s@"'<>()]+@[^\s@"'<>()]+\.[^\s@"'<>()]+/g;
 const JWT = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
@@ -127,11 +135,21 @@ export function startReporting() {
   const options = reportingOptions(process.env.EXPO_PUBLIC_SENTRY_DSN, __DEV__);
   if (options) {
     Sentry.init(options);
+    started = true;
   }
 }
 
 /**
  * Wraps the root layout so that reports know the screens and the touches that led to an error. It
- * is no error boundary: what fails while rendering still reaches Sentry through the global handler.
+ * is no error boundary: what fails while rendering reaches the route's error boundary, which
+ * reports it (`reportingErrorBoundary` below).
  */
 export const wrapRoot = Sentry.wrap;
+
+/**
+ * A route's error screen that also reports what it caught: React hands an error a boundary
+ * catches to the boundary, not to the global handler, so it would not be reported otherwise.
+ */
+export const reportingErrorBoundary = (
+  boundary: ComponentType<ErrorBoundaryProps>,
+): ComponentType<ErrorBoundaryProps> => Sentry.wrapExpoRouterErrorBoundary(boundary);

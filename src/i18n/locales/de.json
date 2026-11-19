@@ -2717,5 +2717,21 @@
         "never": "Trainings bleiben auf diesem iPhone, das dir das Ende einer Pause meldet. Du kannst Benchbite trotzdem auf der Uhr öffnen und einsteigen."
       }
     }
+  },
+  "errorScreen": {
+    "app": {
+      "title": "Etwas ist schiefgelaufen",
+      "body": "Benchbite ist auf ein unerwartetes Problem gestoßen. Was du eingetragen hast, ist sicher."
+    },
+    "section": {
+      "title": "Dieser Teil hat nicht geladen",
+      "body": "Auf diesem Bildschirm ist etwas schiefgelaufen. Der Rest von Benchbite funktioniert."
+    },
+    "still": {
+      "title": "Es klappt immer noch nicht",
+      "body": "Schließ Benchbite und öffne es wieder."
+    },
+    "reported": "Wenn es wieder passiert, behebt es bald ein Update: Wir wissen davon.",
+    "goToday": "Zu Heute"
   }
 }

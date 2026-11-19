@@ -1,8 +1,12 @@
 import { Redirect, router } from 'expo-router';
 
 import { LogInScreen } from '@/account/log-in-screen';
+import { SectionErrorBoundary } from '@/components/error-screen';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useIsAccount } from '@/providers/session-provider';
+
+// In place of the screen when it fails as it draws, with the way to Today (ADR 0150).
+export const ErrorBoundary = SectionErrorBoundary;
 
 export default function LogInRoute() {
   // Only a guest logs in, also when a link opens this screen; an account logs out first. One who

@@ -19,6 +19,7 @@ import { useClaimDevice } from '@/account/device-owner';
 import { NewPasswordScreen } from '@/account/new-password-screen';
 import { SessionEnded } from '@/account/session-ended';
 import { AnimatedSplash } from '@/brand/animated-splash';
+import { AppErrorBoundary } from '@/components/error-screen';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { wrapRoot } from '@/lib/reporting';
@@ -35,6 +36,9 @@ import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
 import { applyStoredPreferences } from '@/settings/preferences';
 import { fonts, useTheme } from '@/theme';
 import { WatchSync } from '@/watch/watch-sync';
+
+// In place of the app when it fails as it draws (#550).
+export const ErrorBoundary = AppErrorBoundary;
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
