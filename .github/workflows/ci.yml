@@ -50,6 +50,7 @@ jobs:
         run: pnpm format:check
 
       - name: Tests
+        id: tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm test --ci --coverage
 
@@ -68,8 +69,55 @@ jobs:
 
       # Type-checks, lints and unit-tests the Edge Functions with Deno.
       - name: Edge Functions
+        id: functions
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm functions:check
+
+      # Writes the coverage of the app and of the Edge Functions to the run's summary, and fails
+      # when the Edge Functions fall under their thresholds; Jest checks the app's with its tests.
+      - name: Coverage
+        id: coverage
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' && steps.functions.outcome == 'success' }}
+        run: pnpm coverage:report
+
+      # Main's coverage is what the README's badges show; the next job publishes it.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.coverage.outcome == 'success' }}
+        with:
+          name: coverage-badges
+          path: coverage/badges
+          if-no-files-found: error
+          retention-days: 1
+
+  badges:
+    name: Coverage badges
+    # Only for main, and only when every check passed.
+    if: ${{ github.event_name == 'push' }}
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # One at a time, so that two merges in a row do not push over each other.
+    concurrency:
+      group: coverage-badges
+      cancel-in-progress: false
+    # Writes the `badges` branch, which holds only the badges' data; `main` stays protected.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-badges
+          path: coverage/badges
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-badges.sh coverage/badges
 
   website:
     name: Website
