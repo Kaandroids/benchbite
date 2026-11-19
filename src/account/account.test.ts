@@ -1,15 +1,23 @@
-import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
+import { AuthApiError, AuthRetryableFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 
+import { isExpected } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import { act, renderHook } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
-import { accountError, useCreateAccount, useSignIn, useSignOut } from './account';
+import {
+  accountError,
+  useCreateAccount,
+  useSendDeletionCode,
+  useSignIn,
+  useSignOut,
+} from './account';
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: { updateUser: jest.fn(), signUp: jest.fn(), signInWithPassword: jest.fn() },
+    functions: { invoke: jest.fn() },
   },
 }));
 jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
@@ -134,5 +142,37 @@ describe('useSignOut', () => {
     const { result } = await renderHook(useSignOut);
     await act(() => result.current.mutateAsync());
     expect(signOut).toHaveBeenCalled();
+  });
+});
+
+describe('a refusal of the account’s functions', () => {
+  /** The error the hook fails with when the function answers `status` with this body. */
+  async function refusal(status: number, body: object) {
+    jest.mocked(supabase.functions.invoke).mockResolvedValue({
+      data: null,
+      error: new FunctionsHttpError(new Response(JSON.stringify(body), { status })),
+    } as never);
+    const { result } = await renderHook(() => useSendDeletionCode());
+    let caught: unknown;
+    await act(async () => {
+      caught = await result.current.mutateAsync().catch((error: unknown) => error);
+    });
+    return caught;
+  }
+
+  it.each([
+    [403, { error: 'wrong_code' }],
+    [429, { error: 'too_soon' }],
+    [401, {}],
+  ])('is expected when the screens explain it: %d %o', async (status, body) => {
+    expect(isExpected(await refusal(status, body))).toBe(true);
+  });
+
+  it.each([
+    [400, { error: 'proof_required' }],
+    [400, {}],
+    [503, { error: 'unavailable' }],
+  ])('is reported when the app asked wrongly or the server failed: %d %o', async (status, body) => {
+    expect(isExpected(await refusal(status, body))).toBe(false);
   });
 });

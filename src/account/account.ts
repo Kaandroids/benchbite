@@ -105,7 +105,11 @@ class WrongPassword extends Error {
 
 /** An Edge Function's answer that it did not do what was asked, with its reason. */
 class FunctionRefusal extends Error {
-  /** A refusal the screen explains, which reportError() leaves out; a server error is none. */
+  /**
+   * A refusal the screen explains, which reportError() leaves out: a reason the screens have their
+   * own words for, or a session that ended (401). A server error is none, nor a reason the screens
+   * only call unknown, which means the app asked wrongly.
+   */
   readonly expected: boolean;
 
   constructor(
@@ -113,7 +117,9 @@ class FunctionRefusal extends Error {
     readonly status: number,
   ) {
     super(`The function refused: ${reason}`);
-    this.expected = status < 500;
+    const known = FUNCTION_ERRORS[reason as AccountRefusal];
+    const explained = known !== undefined && known !== 'unknown' && known !== 'serverError';
+    this.expected = status === 401 || (status < 500 && explained);
   }
 }
 
