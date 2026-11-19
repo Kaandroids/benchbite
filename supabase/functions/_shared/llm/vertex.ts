@@ -119,8 +119,15 @@ const TOOL_CHARACTERS_PER_TOKEN = 4;
  * request that forbids tool calls is not billed for them at all.
  */
 function toolTokens(request: Record<string, unknown>): number {
-  if (!request.tools || request.toolConfig) return 0;
+  if (!request.tools || forbidsToolCalls(request)) return 0;
   return Math.ceil(JSON.stringify(request.tools).length / TOOL_CHARACTERS_PER_TOKEN);
+}
+
+/** Whether a request says no tool may be called; any other tool config still sends them for use. */
+function forbidsToolCalls(request: Record<string, unknown>): boolean {
+  const config = request.toolConfig;
+  const calling = isObject(config) ? config.functionCallingConfig : undefined;
+  return isObject(calling) && calling.mode === 'NONE';
 }
 
 /** A token for the account, asked of Google with a claim its key signs. Nothing was billed. */

@@ -151,6 +151,22 @@ Deno.test('counts nothing for the tools of a request that forbids their calls', 
   assertEquals(Array.isArray(called.tools), true);
 });
 
+Deno.test('counts the tools of a request whose tool config forbids nothing', () => {
+  forgetTokens();
+  const { uncounted } = vertexAi(ACCOUNT);
+  const tools = [{ functionDeclarations: [{ name: 'logMeal' }] }];
+  const bySize = Math.ceil(JSON.stringify(tools).length / 4);
+
+  assertEquals(uncounted?.({ tools }), bySize);
+  // Only a config that forbids the calls leaves them out, not one that forces or allows them.
+  for (const mode of ['ANY', 'AUTO']) {
+    assertEquals(uncounted?.({ tools, toolConfig: { functionCallingConfig: { mode } } }), bySize);
+  }
+  assertEquals(uncounted?.({ tools, toolConfig: {} }), bySize);
+  assertEquals(uncounted?.({ tools, toolConfig: { functionCallingConfig: { mode: 'NONE' } } }), 0);
+  assertEquals(uncounted?.({}), 0);
+});
+
 Deno.test('keeps a token until shortly before it ends, also for a model set up anew', async () => {
   let count = 0;
   const { endpoint, clock, claims } = vertex(() =>
