@@ -97,9 +97,10 @@ export function vertexAi(account: ServiceAccount, options: VertexOptions = {}): 
   return {
     url: (model, method) => `${models}/${model}:${method}`,
     headers: async () => ({ authorization: `Bearer ${await token()}` }),
-    // Vertex AI counts the request itself, where the Developer API takes it wrapped. It counts
-    // less for the tools than the call then uses, so the count is a low estimate there.
-    countBody: (_model, request) => request,
+    // Vertex AI counts the request itself, where the Developer API takes it wrapped, and refuses
+    // one that says whether tools may be called, which adds nothing to count. It counts less for
+    // the tools than the call then uses, so the count is a low estimate there.
+    countBody: (_model, { toolConfig: _, ...counted }) => counted,
   };
 }
 

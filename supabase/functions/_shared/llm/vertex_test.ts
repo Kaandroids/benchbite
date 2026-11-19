@@ -116,6 +116,27 @@ Deno.test('counts the request as it is, not wrapped as for the Developer API', a
   });
 });
 
+Deno.test(
+  'counts a request that forbids tool calls without saying so, which Vertex AI refuses',
+  async () => {
+    const { model, calls } = vertex(granted('token-1'));
+
+    await model.countTokens({
+      ...HI,
+      tools: [{ name: 'logMeal', description: 'Logs a meal.', parameters: { type: 'object' } }],
+      toolChoice: 'none',
+    });
+    await model.generate({ ...HI, toolChoice: 'none' });
+
+    const counted = calls[0].body as Record<string, unknown>;
+    assertEquals(Object.keys(counted).sort(), ['contents', 'generationConfig', 'tools']);
+    // The call itself still says so.
+    assertEquals((calls[1].body as Record<string, unknown>).toolConfig, {
+      functionCallingConfig: { mode: 'NONE' },
+    });
+  },
+);
+
 Deno.test('keeps a token until shortly before it ends, also for a model set up anew', async () => {
   let count = 0;
   const { endpoint, clock, claims } = vertex(() =>
