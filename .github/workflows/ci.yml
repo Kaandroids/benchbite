@@ -91,7 +91,7 @@ jobs:
 
   badges:
     name: Coverage badges
-    # Only for main, and only when every check passed.
+    # Only for main, and only when the Checks job passed, which the coverage comes from.
     if: ${{ github.event_name == 'push' }}
     needs: checks
     runs-on: ubuntu-latest
