@@ -2157,7 +2157,7 @@
     },
     "refusals": {
       "limit_reached": {
-        "title": "You've used Bite for this month",
+        "title": "You've used up Bite for now",
         "message": "I'm back on {{date}}. Your plan, meals and workouts keep working as usual."
       },
       "plan_required": {

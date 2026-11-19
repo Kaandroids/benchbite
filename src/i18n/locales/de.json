@@ -2157,7 +2157,7 @@
     },
     "refusals": {
       "limit_reached": {
-        "title": "Du hast Bite diesen Monat aufgebraucht",
+        "title": "Du hast Bite fürs Erste aufgebraucht",
         "message": "Ich bin am {{date}} zurück. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
       },
       "plan_required": {

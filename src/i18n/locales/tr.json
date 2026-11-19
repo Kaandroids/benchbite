@@ -2157,7 +2157,7 @@
     },
     "refusals": {
       "limit_reached": {
-        "title": "Bu ayki Bite kullanımın doldu",
+        "title": "Bite kullanımın şimdilik doldu",
         "message": "{{date}} tarihinde geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       },
       "plan_required": {
