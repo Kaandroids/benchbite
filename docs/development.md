@@ -369,10 +369,15 @@ A new native version needs `pnpm native:dev` and a new development build.
 
 When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
 with the lines no test runs. The Edge Functions' is in `coverage/functions/html/index.html` after
-`pnpm functions:check`. `pnpm coverage:report`, run after both, prints the two by folder, as the
-summary of a CI run shows them, and fails when the Edge Functions fall under their thresholds
-(`scripts/coverage-report.ts`); the app's thresholds are Jest's (`jest.config.js`). On `main`, CI
-also writes the two numbers to the `badges` branch, which the README's badges read.
+`pnpm functions:check`.
+
+`pnpm coverage:report`, run after a plain `pnpm test --coverage` and `pnpm functions:check`, prints
+the two by folder, as the summary of a CI run shows them, and fails when the Edge Functions fall
+under their thresholds (`scripts/coverage-report.ts`); the app's thresholds are Jest's
+(`jest.config.js`). It reads the summary Jest writes with its own reporters, which
+`--coverageReporters=text` replaces. On `main`, CI also writes the two numbers to the `badges`
+branch, which the README's badges read
+([ADR 0152](adr/0152-check-the-edge-functions-coverage-and-show-both.md)).
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.

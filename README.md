@@ -160,8 +160,8 @@ flowchart LR
   translations and the Edge Functions' checks, and on a local Supabase stack the database tests,
   the generated types and every plan the plan builder can make. The tests must keep running most
   of the code: a pull request that lets the coverage of the app or of the Edge Functions fall under
-  its thresholds fails, and the badges above show where `main` stands. A change to the Apple Watch app is
-  type-checked and tested, and its protocol with the phone checked, on a Mac.
+  its thresholds fails, and the badges above show where `main` stands. A change to the Apple Watch
+  app is type-checked and tested, and its protocol with the phone checked, on a Mac.
 - **Watched in production.** A daily workflow checks the hosted project's scheduled jobs and the
   month's AI spend, and Dependabot keeps dependencies current.
 - **Security first.** Row level security on every table, schema changes only through migrations,
