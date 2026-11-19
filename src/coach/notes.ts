@@ -85,6 +85,7 @@ export function useAskedNoteStates(ids: number[]) {
 export function useAnswerNote(note: NoteCard) {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not answer the note' },
     mutationFn: async (answer: 'save' | 'decline') => {
       const { error } =
         answer === 'save'

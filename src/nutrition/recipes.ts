@@ -134,6 +134,7 @@ export function useRecipes({ enabled = true }: { enabled?: boolean } = {}) {
 export function useSaveRecipe() {
   const reload = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not save the recipe', expects: ['uniqueViolation'] },
     mutationFn: async ({ id, values }: { id?: number; values: RecipeValues }): Promise<number> => {
       const { data, error } = await supabase.rpc('save_recipe', {
         // The generated types do not know that the function takes null for a new recipe.
@@ -161,6 +162,7 @@ export function useSaveRecipe() {
 export function useDeleteRecipe() {
   const reload = useReloadFoods();
   return useMutation({
+    meta: { where: 'Could not delete the recipe' },
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('recipes')

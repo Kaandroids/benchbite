@@ -23,6 +23,12 @@ describe('maskText', () => {
       ),
     ).toBe('BB063: [email] logged [n] kg for [id] with [token]');
   });
+
+  it('masks an address typed without its ending, as Auth quotes it', () => {
+    expect(maskText('Email address "anna.schmidt@gmail" is invalid')).toBe(
+      'Email address "[email]" is invalid',
+    );
+  });
 });
 
 describe('scrubBreadcrumb', () => {
@@ -221,5 +227,129 @@ describe('reportingErrorBoundary', () => {
     jest.mocked(Sentry.wrapExpoRouterErrorBoundary).mockReturnValueOnce(Reporting);
     expect(reportingErrorBoundary(Boundary)).toBe(Reporting);
     expect(Sentry.wrapExpoRouterErrorBoundary).toHaveBeenCalledWith(Boundary);
+  });
+});
+
+describe('reportError', () => {
+  const DSN = 'https://key@o1.ingest.de.sentry.io/1';
+
+  /** A fresh module, with reporting started or not, and the Sentry stand-in it uses. */
+  function load(started: boolean) {
+    const saved = {
+      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+      inDev: process.env.EXPO_PUBLIC_SENTRY_IN_DEV,
+    };
+    process.env.EXPO_PUBLIC_SENTRY_DSN = DSN;
+    process.env.EXPO_PUBLIC_SENTRY_IN_DEV = '1';
+    let loaded!: { reporting: typeof import('./reporting'); sentry: typeof Sentry };
+    jest.isolateModules(() => {
+      loaded = {
+        reporting: jest.requireActual<typeof import('./reporting')>('./reporting'),
+        sentry: jest.requireMock<typeof Sentry>('@sentry/react-native'),
+      };
+    });
+    if (started) loaded.reporting.startReporting();
+    for (const [name, value] of [
+      ['EXPO_PUBLIC_SENTRY_DSN', saved.dsn],
+      ['EXPO_PUBLIC_SENTRY_IN_DEV', saved.inDev],
+    ] as const) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+    return loaded;
+  }
+
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.mocked(console.warn).mockRestore();
+  });
+
+  it('writes to the console in development, as before', () => {
+    const { reporting } = load(false);
+    const error = new Error('down');
+    reporting.reportError('Could not save the workout', error);
+    expect(console.warn).toHaveBeenCalledWith('Could not save the workout', error);
+  });
+
+  it('sends nothing before reporting starts', () => {
+    const { reporting, sentry } = load(false);
+    reporting.reportError('Could not save the workout', new Error('down'));
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it('sends an unexpected error, with what failed as a tag', () => {
+    const { reporting, sentry } = load(true);
+    const error = new Error('Cannot read property of undefined');
+    reporting.reportError('Could not save the workout', error);
+    expect(sentry.captureException).toHaveBeenCalledWith(error, {
+      tags: { where: 'Could not save the workout' },
+    });
+  });
+
+  it('masks what failed too, which can name a key holding the user’s id', () => {
+    const { reporting, sentry } = load(true);
+    reporting.reportError(
+      'Could not read onboarding.00000000-0000-0000-0000-00000000000a.draft',
+      new Error('disk'),
+    );
+    expect(sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
+      tags: { where: 'Could not read onboarding.[id].draft' },
+    });
+  });
+
+  it('sends a Supabase error as an Error with its message and code', () => {
+    const { reporting, sentry } = load(true);
+    reporting.reportError('Could not save the workout', {
+      code: '23503',
+      message: 'insert or update violates a foreign key',
+      details: 'Key (workout_id)=(42) is not present',
+    });
+    const sent = jest.mocked(sentry.captureException).mock.calls[0]![0] as Error;
+    expect(sent).toBeInstanceOf(Error);
+    expect(sent.name).toBe('23503');
+    expect(sent.message).toBe('insert or update violates a foreign key');
+  });
+
+  it('sends a server’s failure, which is no refusal', () => {
+    const { reporting, sentry } = load(true);
+    for (const error of [
+      Object.assign(new Error('Bad gateway'), { name: 'AuthRetryableFetchError', status: 502 }),
+      Object.assign(new Error('Unexpected failure'), { name: 'AuthApiError', status: 500 }),
+      Object.assign(new Error('The function refused: unknown'), { expected: false }),
+    ]) {
+      reporting.reportError('Could not log in', error);
+    }
+    expect(sentry.captureException).toHaveBeenCalledTimes(3);
+  });
+
+  it('sends an error once, also when it is caught in two places', () => {
+    const { reporting, sentry } = load(true);
+    const error = new Error('boom');
+    reporting.reportError('Could not save the workout', error);
+    reporting.reportError('Could not save a change', error);
+    expect(sentry.captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing the app expects: no network, a request given up, a session that ended, or its own refusals', () => {
+    const { reporting, sentry } = load(true);
+    for (const error of [
+      new TypeError('Network request failed'),
+      Object.assign(new Error('Aborted'), { name: 'AbortError' }),
+      Object.assign(new Error('Failed to send a request'), { name: 'FunctionsFetchError' }),
+      { code: 'BB009', message: 'Workout limit reached' },
+      { code: 'PGRST301', message: 'JWT cryptographic operation failed' },
+      { code: 'PGRST303', message: 'JWT expired' },
+      Object.assign(new Error('Auth session missing!'), { name: 'AuthSessionMissingError' }),
+      Object.assign(new Error('No answer'), { name: 'AuthRetryableFetchError', status: 0 }),
+      Object.assign(new Error('Invalid login credentials'), { name: 'AuthApiError', status: 400 }),
+      Object.assign(new Error('Too short'), { name: 'AuthWeakPasswordError', status: 422 }),
+      Object.assign(new Error('The function refused: wrong_code'), { expected: true }),
+    ]) {
+      reporting.reportError('Could not save the workout', error);
+    }
+    expect(sentry.captureException).not.toHaveBeenCalled();
   });
 });

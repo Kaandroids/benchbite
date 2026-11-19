@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ACCESS_KEY } from '@/ai/access';
 import { discardPhotos } from '@/lib/photos';
+import { reportError } from '@/lib/reporting';
 
 import { EstimateFailure, estimateMeal, type Correction, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
@@ -53,7 +54,7 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
           // A refusal is the user's state, not a failure; anything else would go unseen, as
           // preparing the photos on the device or a request the function turns down.
           if (!(error instanceof EstimateFailure && error.refusal)) {
-            console.warn('Could not estimate the meal', error);
+            reportError('Could not estimate the meal', error);
           }
           setState({
             kind: 'failed',

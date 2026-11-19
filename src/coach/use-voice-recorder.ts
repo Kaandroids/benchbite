@@ -20,6 +20,8 @@ import {
   type VoiceProblem,
 } from './chat-voice';
 
+import { reportError } from '@/lib/reporting';
+
 /** How often the recording's length and loudness are read, in ms. */
 const UPDATE_MS = 100;
 
@@ -91,7 +93,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       recorder.record();
       return true;
     } catch (error) {
-      console.warn('Could not start recording a voice message', error);
+      reportError('Could not start recording a voice message', error);
       void setAudioModeAsync(PLAYBACK_MODE);
       onEnd({ problem: { reason: 'voice_not_recorded' } });
       return false;
@@ -127,7 +129,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       if (uri) listRecording(uri);
       return uri;
     } catch (error) {
-      console.warn('Could not stop recording a voice message', error);
+      reportError('Could not stop recording a voice message', error);
       return null;
     } finally {
       void setAudioModeAsync(PLAYBACK_MODE);
@@ -160,7 +162,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
         // As the file gives it, which coach-chat keeps too.
         onEnd({ sent: { data, durationMs: fileLength(data) ?? durationMs, uri } });
       } catch (error) {
-        console.warn('Could not read a voice message recorded', error);
+        reportError('Could not read a voice message recorded', error);
         discardVoices([uri]);
         onEnd({ problem: { reason: 'voice_not_recorded' } });
       }

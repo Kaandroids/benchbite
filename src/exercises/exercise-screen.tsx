@@ -79,7 +79,6 @@ export function ExerciseScreen({
         }
       },
       (error: unknown) => {
-        console.warn('Could not archive the exercise', error);
         Alert.alert(t('customExercise.archiveErrorTitle'), t('customExercise.archiveError'));
       },
     );

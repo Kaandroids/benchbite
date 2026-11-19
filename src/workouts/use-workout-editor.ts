@@ -85,7 +85,6 @@ export function useWorkoutEditor(id: number | undefined) {
       });
       router.back();
     } catch (error) {
-      console.warn('Could not save the workout', error);
       // The limits can change after they were loaded, or another device can add a workout.
       Alert.alert(
         t('common.notSaved'),

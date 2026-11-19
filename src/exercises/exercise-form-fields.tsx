@@ -16,6 +16,7 @@ import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import type { Database } from '@/lib/database.types';
+import { reportError } from '@/lib/reporting';
 import { useTheme } from '@/theme';
 
 import { LOG_KINDS, type CustomExerciseForm, type KindLock, type LogKind } from './custom';
@@ -238,7 +239,7 @@ export function PhotosField({
     const take = (source: 'camera' | 'library') => () =>
       void pickPhoto(source).then(
         (uri) => uri && onChange(index, uri),
-        (error: unknown) => console.warn('Could not pick a photo', error),
+        (error: unknown) => reportError('Could not pick a photo', error),
       );
     Alert.alert(index === 0 ? t('exercise.start') : t('exercise.end'), undefined, [
       { text: t('customExercise.takePhoto'), onPress: take('camera') },

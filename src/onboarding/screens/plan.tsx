@@ -13,6 +13,7 @@ import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
+import { reportError } from '@/lib/reporting';
 import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
@@ -64,7 +65,7 @@ export function PlanStep() {
       await saveOnboarding(answers, plan);
       next();
     } catch (error) {
-      console.warn('Could not save the onboarding', error);
+      reportError('Could not save the onboarding', error);
       setFailure(refusedAnswer(error) ?? 'connection');
     } finally {
       setSaving(false);

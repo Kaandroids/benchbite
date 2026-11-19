@@ -37,6 +37,7 @@ export function useSetDisplayName() {
   const queryClient = useQueryClient();
   const session = useSession();
   return useMutation({
+    meta: { where: 'Could not save the name' },
     mutationFn: async (name: string | null) => {
       if (session.status !== 'ready') {
         throw new Error('Not signed in');

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { forgetHealthOnDevice } from '@/health/connection';
 import { readItem, writeItem } from '@/lib/device-storage';
+import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
 import { saveReminderMinutes } from '@/reminders/settings';
@@ -40,7 +41,7 @@ export function forgetUserOnDevice() {
   forgetEndedSessions();
   saveReminderMinutes(null);
   void cancelReminders().catch((error: unknown) =>
-    console.warn('Could not cancel the reminders', error),
+    reportError('Could not cancel the reminders', error),
   );
   // The access the phone's store allowed stays: it is the phone owner's, and nothing is read
   // before the user connects again with their own consent (ADR 0108).

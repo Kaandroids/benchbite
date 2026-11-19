@@ -9,6 +9,8 @@ import {
   requestCameraPermissionsAsync,
 } from 'expo-image-picker';
 
+import { reportError } from './reporting';
+
 /**
  * The longest side of a photo as it is sent, and its JPEG quality: about 100 to 200 KB, far below
  * the 1.5 MB a function takes per photo, and enough to tell foods and portions apart.
@@ -79,6 +81,6 @@ export function discardPhotos(uris: string[]) {
       if (file.exists) file.delete();
     }
   } catch (error) {
-    console.warn('Could not delete the photos', error);
+    reportError('Could not delete the photos', error);
   }
 }

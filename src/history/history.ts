@@ -378,6 +378,7 @@ export function useHeartRateSamples(logId: number, enabled = true) {
 export function useDeleteLog() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not delete the workout log' },
     mutationFn: async (id: number) => {
       const { error } = await supabase.from('workout_logs').delete().eq('id', id);
       if (error) {
@@ -408,6 +409,7 @@ export function useDeleteLog() {
 export function useEditLog() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save the workout log' },
     mutationFn: async ({
       id,
       exercises,

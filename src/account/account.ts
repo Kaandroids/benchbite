@@ -92,18 +92,34 @@ const FUNCTION_ERRORS: Record<AccountRefusal, AccountError> = {
 };
 
 /** The current password given to change it was not the account's. */
-class WrongCurrentPassword extends Error {}
+class WrongCurrentPassword extends Error {
+  /** A refusal the screen explains, which reportError() leaves out. */
+  readonly expected = true;
+}
 
 /** The password given to confirm deleting the account was not its own. */
-class WrongPassword extends Error {}
+class WrongPassword extends Error {
+  /** A refusal the screen explains, which reportError() leaves out. */
+  readonly expected = true;
+}
 
 /** An Edge Function's answer that it did not do what was asked, with its reason. */
 class FunctionRefusal extends Error {
+  /**
+   * A refusal the screen explains, which reportError() leaves out: a reason the screens have their
+   * own words for, or a session that ended (401). A server error is none, nor a reason the screens
+   * only call unknown, which means the app asked wrongly.
+   */
+  readonly expected: boolean;
+
   constructor(
     readonly reason: string,
     readonly status: number,
   ) {
     super(`The function refused: ${reason}`);
+    const known = FUNCTION_ERRORS[reason as AccountRefusal];
+    const explained = known !== undefined && known !== 'unknown' && known !== 'serverError';
+    this.expected = status === 401 || (status < 500 && explained);
   }
 }
 
@@ -250,6 +266,7 @@ export function useCreateAccount() {
   const session = useSession();
   const user = session.status === 'ready' ? session.session.user : null;
   return useMutation({
+    meta: { where: 'Could not create the account' },
     mutationFn: async (credentials: Credentials): Promise<NewAccountKind> => {
       if (user && !user.is_anonymous) {
         throw new Error('Signed in to an account already');
@@ -278,6 +295,7 @@ type ConfirmAccount = Credentials & { token: string; kind: NewAccountKind };
 export function useConfirmAccount() {
   const [accepted, setAccepted] = useState(false);
   const mutation = useMutation({
+    meta: { where: 'Could not confirm the account' },
     mutationFn: async ({ token, kind, ...credentials }: ConfirmAccount) => {
       const { email, password } = normalized(credentials);
       if (!accepted) {
@@ -303,6 +321,7 @@ export function useConfirmAccount() {
  */
 export function useResendCode() {
   return useMutation({
+    meta: { where: 'Could not resend the code' },
     mutationFn: async ({ kind, ...address }: { email: string; kind: NewAccountKind }) => {
       const email = address.email.trim();
       const { error } =
@@ -322,6 +341,7 @@ export function useResendCode() {
  */
 export function useSendResetCode() {
   return useMutation({
+    meta: { where: 'Could not send the code to reset the password' },
     mutationFn: async ({ email }: { email: string }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
       if (error) {
@@ -337,6 +357,7 @@ export function useSendResetCode() {
  */
 export function useConfirmReset() {
   return useMutation({
+    meta: { where: 'Could not confirm the code to reset the password' },
     mutationFn: async ({ email, token }: { email: string; token: string }) => {
       const { error } = await supabase.auth.verifyOtp({
         email: email.trim(),
@@ -354,6 +375,7 @@ export function useConfirmReset() {
 export function useSaveNewPassword() {
   const { passwordChosen } = useSession();
   return useMutation({
+    meta: { where: 'Could not save the new password' },
     mutationFn: async (password: string) => {
       await savePassword(password);
     },
@@ -367,6 +389,7 @@ export function useSaveNewPassword() {
  */
 export function useChangePassword() {
   return useMutation({
+    meta: { where: 'Could not change the password' },
     mutationFn: async ({ current, password }: { current: string; password: string }) => {
       if (!(await isAccountPassword(current))) {
         throw new WrongCurrentPassword();
@@ -382,6 +405,7 @@ export function useChangePassword() {
  */
 export function useSignIn() {
   return useMutation({
+    meta: { where: 'Could not log in' },
     mutationFn: async (credentials: Credentials) => {
       const { error } = await supabase.auth.signInWithPassword(normalized(credentials));
       if (error) {
@@ -394,7 +418,10 @@ export function useSignIn() {
 /** Signs the account out on this device; the app starts over as a new guest. */
 export function useSignOut() {
   const { signOut } = useSession();
-  return useMutation({ mutationFn: signOut });
+  return useMutation({
+    meta: { where: 'Could not log out' },
+    mutationFn: signOut,
+  });
 }
 
 /** What proves the owner of an account asks to delete it (ADR 0095); a guest needs nothing. */
@@ -404,6 +431,7 @@ export type DeletionProof = { code: string } | { password: string };
 export function useSendDeletionCode() {
   const { i18n } = useTranslation();
   return useMutation({
+    meta: { where: 'Could not send the code to delete the account' },
     mutationFn: () => callFunction('send-deletion-code', { locale: i18n.language }),
   });
 }
@@ -417,6 +445,7 @@ export function useSendDeletionCode() {
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
   return useMutation({
+    meta: { where: 'Could not delete the account' },
     mutationFn: async (proof?: DeletionProof) => {
       if (proof && 'password' in proof) {
         if (!(await isAccountPassword(proof.password))) {

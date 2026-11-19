@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { LOGS_KEY } from '@/history/history';
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { reloadMoves } from '@/workouts/moves';
@@ -21,7 +22,7 @@ export function lastSetsQuery(exerciseIds: string[]) {
 /** The latest sets of the exercises, or none when they cannot be read: they only fill in values. */
 export function fetchLastSetsOrNone(queryClient: QueryClient, exerciseIds: string[]) {
   return queryClient.fetchQuery(lastSetsQuery(exerciseIds)).catch((error: unknown): LastSets => {
-    console.warn('Could not load the last sets', error);
+    reportError('Could not load the last sets', error);
     return {};
   });
 }
@@ -87,6 +88,7 @@ export async function fetchBests(exerciseIds: string[]): Promise<ExerciseBests> 
 export function useLogWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not log the workout' },
     mutationFn: async (log: ReturnType<typeof toLog>) => {
       const { data, error } = await supabase.rpc('log_workout', { log });
       if (error) {

@@ -70,7 +70,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
   );
 
   const failed = (error: unknown) => {
-    console.warn('Could not save the exercise', error);
     Alert.alert(t('customExercise.saveErrorTitle'), t('customExercise.saveError'));
   };
   const save = () =>

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
 import { LOGS_KEY, recentLogs } from '@/history/history';
+import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 
 import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
@@ -34,7 +35,7 @@ export async function afterWorkoutLogged(
         await queryClient.invalidateQueries({ queryKey: LOGS_KEY });
       }
     } catch (error) {
-      console.warn('Could not keep the watch’s data', error);
+      reportError('Could not keep the watch’s data', error);
     }
   }
   // A workout the watch followed it saves itself, which reaches this store only after the watch
@@ -44,7 +45,7 @@ export async function afterWorkoutLogged(
   try {
     await saveRecentWorkouts(queryClient);
   } catch (error) {
-    console.warn('Could not save the workout to the store', error);
+    reportError('Could not save the workout to the store', error);
   }
 }
 
@@ -58,7 +59,7 @@ export async function catchUpWorkoutHealth(queryClient: QueryClient): Promise<bo
       if (stats) changed = (await keepWorkoutHealth(log.id, stats)) || changed;
     } catch (error) {
       // A log deleted meanwhile, or a failed call: the others go on.
-      console.warn('Could not keep the watch’s data of a workout', error);
+      reportError('Could not keep the watch’s data of a workout', error);
     }
   }
   if (changed) await queryClient.invalidateQueries({ queryKey: LOGS_KEY });
@@ -85,17 +86,17 @@ export function HealthCatchUp() {
         done: Promise.all([
           catchUpWorkoutHealth(queryClient)
             .catch((error: unknown) =>
-              console.warn('Could not catch up on the workouts’ health data', error),
+              reportError('Could not catch up on the workouts’ health data', error),
             )
             .then(() => saveRecentWorkouts(queryClient))
             .catch((error: unknown) =>
-              console.warn('Could not save the workouts to the health store', error),
+              reportError('Could not save the workouts to the health store', error),
             ),
           ...HEALTH_READS.map((kind) =>
             READ_KINDS[kind]
               .bringIn(queryClient)
               .catch((error: unknown) =>
-                console.warn(`Could not take the ${kind} from the health store`, error),
+                reportError(`Could not take the ${kind} from the health store`, error),
               ),
           ),
         ]).finally(() => {

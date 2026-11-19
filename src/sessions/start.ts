@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
 import { toIsoDate } from '@/i18n/dates';
+import { reportError } from '@/lib/reporting';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
 import { openOnWatch } from '@/watch/open-on-watch';
@@ -55,7 +56,7 @@ export function useStartWorkout() {
       return;
     }
     const held = await fetchWorkoutHeld(workout.id).catch((error: unknown) => {
-      console.warn('Could not check whether the workout waits for premium', error);
+      reportError('Could not check whether the workout waits for premium', error);
       return false;
     });
     if (held) {
@@ -89,13 +90,13 @@ export function useStartWorkout() {
           staleTime: 0,
         })
         .catch((error: unknown): ExerciseBests => {
-          console.warn('Could not load the records', error);
+          reportError('Could not load the records', error);
           return {};
         }),
       // Without them, as without a connection, the user's own targets the workout holds still
       // count; the other sets start from last time.
       fetchSetTargets(workout.id).catch((error: unknown): SetTargets => {
-        console.warn('Could not load the set targets', error);
+        reportError('Could not load the set targets', error);
         return ownSetTargets(workout);
       }),
     ]);
@@ -119,6 +120,6 @@ export function useStartWorkout() {
       allow: t('session.restAlarm.allow'),
       notNow: t('session.restAlarm.notNow'),
       channelName: t('session.restOver.channel'),
-    }).catch((error: unknown) => console.warn('Could not offer the rest alarm', error));
+    }).catch((error: unknown) => reportError('Could not offer the rest alarm', error));
   };
 }

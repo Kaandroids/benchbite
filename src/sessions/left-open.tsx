@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -48,7 +49,7 @@ export function LeftOpenSaver() {
           setSaved({ logId, name: workoutName(session), endedAt });
         }
       })
-      .catch((error: unknown) => console.warn('Could not save the workout left open', error))
+      .catch((error: unknown) => reportError('Could not save the workout left open', error))
       .finally(() => {
         saving.current = false;
       });

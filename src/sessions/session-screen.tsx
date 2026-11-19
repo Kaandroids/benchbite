@@ -10,6 +10,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { reportError } from '@/lib/reporting';
 import { minutesAndSeconds } from '@/lib/time';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
@@ -163,7 +164,7 @@ export function SessionScreen() {
                     offMessage: t('session.restAlerts.offMessage'),
                     openSettings: t('session.restAlerts.openSettings'),
                     notNow: t('session.restAlarm.notNow'),
-                  }).catch((error: unknown) => console.warn('Could not turn on rest alerts', error))
+                  }).catch((error: unknown) => reportError('Could not turn on rest alerts', error))
               : undefined
           }
         />

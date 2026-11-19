@@ -37,6 +37,7 @@ export function useConsents() {
 export function useWithdrawAiConsent() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not withdraw the AI consent' },
     mutationFn: async () => {
       const { error } = await supabase.rpc('withdraw_ai_consent');
       // Withdrawn already, as on another phone: it is gone either way.
@@ -53,6 +54,7 @@ export function useWithdrawAiConsent() {
 export function useWithdrawHealthConsent() {
   const { restart } = useOnboarding();
   return useMutation({
+    meta: { where: 'Could not withdraw the health data consent' },
     mutationFn: async () => {
       const { error } = await supabase.rpc('withdraw_health_consent');
       // Withdrawn already, as on another phone: it is gone either way.

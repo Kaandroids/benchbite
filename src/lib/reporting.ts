@@ -12,7 +12,8 @@ let started = false;
 /** Whether errors are reported, as in a release build with a DSN. */
 export const isReporting = () => started;
 
-const EMAIL = /[^\s@"'<>()]+@[^\s@"'<>()]+\.[^\s@"'<>()]+/g;
+/** An address, also one typed without its ending, as Auth quotes it when it refuses it. */
+const EMAIL = /[^\s@"'<>()]+@[^\s@"'<>()]+/g;
 const JWT = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 /**
@@ -153,3 +154,87 @@ export const wrapRoot = Sentry.wrap;
 export const reportingErrorBoundary = (
   boundary: ComponentType<ErrorBoundaryProps>,
 ): ComponentType<ErrorBoundaryProps> => Sentry.wrapExpoRouterErrorBoundary(boundary);
+
+/** What a failed request's error says when the phone could not reach the server, or gave up. */
+const UNREACHABLE = /network request failed|failed to fetch|network error|timed out|offline/i;
+
+/**
+ * Whether an error is one the app expects and handles, and Sentry need not hear of:
+ * - no network, or a request given up;
+ * - a session that ended, which the app asks to log in again for;
+ * - a refusal the screen explains to the person: the database's with one of the app's own codes
+ *   (BB…), Auth's of what was typed (4xx), and an error that says so itself with `expected`, as
+ *   the account's wrong password.
+ * A server's failure (5xx) is none of these.
+ */
+export function isExpected(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  const { name, message, code, status, expected } = error as Record<string, unknown>;
+  const refusedByAuth =
+    (name === 'AuthApiError' || name === 'AuthWeakPasswordError') &&
+    typeof status === 'number' &&
+    status < 500;
+  return (
+    expected === true ||
+    refusedByAuth ||
+    name === 'AbortError' ||
+    name === 'FunctionsFetchError' ||
+    // Auth reports a server error (502 to 504) under this name too; only no answer is expected.
+    (name === 'AuthRetryableFetchError' && status === 0) ||
+    name === 'AuthSessionMissingError' ||
+    // PostgREST's for a token it cannot read, and for one that ran out.
+    code === 'PGRST301' ||
+    code === 'PGRST303' ||
+    (typeof code === 'string' && code.startsWith('BB')) ||
+    (typeof message === 'string' && UNREACHABLE.test(message))
+  );
+}
+
+/**
+ * An Error for what was thrown or returned: Supabase answers with plain objects, which Sentry
+ * would send as a list of their keys rather than as an error with a message and a code.
+ */
+function toError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+  const { message, code } = (error ?? {}) as { message?: unknown; code?: unknown };
+  const made = new Error(typeof message === 'string' ? message : String(error));
+  if (typeof code === 'string') {
+    made.name = code;
+  }
+  return made;
+}
+
+/** The errors reported, so that one caught where it happened and by the query client goes once. */
+const reported = new WeakSet<object>();
+
+function alreadyReported(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  if (reported.has(error)) {
+    return true;
+  }
+  reported.add(error);
+  return false;
+}
+
+/**
+ * Reports an error the app caught and went on from (#550): in development to the console, as
+ * before, and to Sentry when reporting is on, unless it is one the app expects. `where` names what
+ * failed in the app's words, such as "Could not save the workout", and groups the reports; it is
+ * masked as messages are.
+ */
+export function reportError(where: string, error: unknown) {
+  if (__DEV__) {
+    console.warn(where, error);
+  }
+  if (!started || isExpected(error) || alreadyReported(error)) {
+    return;
+  }
+  // Masked as well, as it can name a stored key, some of which hold the user's id.
+  Sentry.captureException(toError(error), { tags: { where: maskText(where) } });
+}

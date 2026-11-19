@@ -28,7 +28,6 @@ export function useConfirmDeleteWorkout() {
           remove.mutateAsync(id).then(
             () => onDeleted?.(),
             (error: unknown) => {
-              console.warn('Could not delete the workout', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
             },
           );

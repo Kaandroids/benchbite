@@ -131,6 +131,7 @@ export function showSampleStreak(streak: Streak | null) {
 export function useAnswerBreak() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not answer the streak break' },
     mutationFn: async ({ today, useFreezes }: { today: Date; useFreezes: boolean }) => {
       const { error } = await supabase.rpc('answer_streak_break', {
         today: toIsoDate(today),

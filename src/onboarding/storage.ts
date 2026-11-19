@@ -7,6 +7,7 @@
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { readItem, writeItem } from '@/lib/device-storage';
+import { reportError } from '@/lib/reporting';
 
 import { isStep, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
@@ -65,6 +66,6 @@ export function forgetOtherUsers(userId: string) {
       }
     }
   } catch (error) {
-    console.warn('Could not remove the onboarding data of other users', error);
+    reportError('Could not remove the onboarding data of other users', error);
   }
 }

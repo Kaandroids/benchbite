@@ -121,7 +121,6 @@ export function LogScreen({ id }: { id: number }) {
               router.back();
             },
             (error: unknown) => {
-              console.warn('Could not delete the workout log', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
             },
           ),

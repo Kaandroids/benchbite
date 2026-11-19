@@ -58,6 +58,7 @@ export function useWeekMoves(week: Date) {
 export function useMoveWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not move the workout' },
     // One move at a time, so that on a slow connection an earlier move cannot land last.
     scope: { id: 'workout-moves' },
     mutationFn: async ({ workoutId, fromOn, toOn }: Omit<WorkoutMove, 'settled'>) => {
@@ -80,6 +81,7 @@ export function useMoveWorkout() {
 export function useUndoMove() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not undo the move' },
     scope: { id: 'workout-moves' },
     mutationFn: async ({ workoutId, fromOn }: Pick<WorkoutMove, 'workoutId' | 'fromOn'>) => {
       const { error } = await supabase

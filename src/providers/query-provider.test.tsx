@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
+import { reportError } from '@/lib/reporting';
 import { cleanup, render, screen } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
-import { QueryProvider } from './query-provider';
+import { createQueryClient, QueryProvider } from './query-provider';
 import { useSession } from './session-provider';
 
 jest.mock('./session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('@/lib/reporting', () => ({ reportError: jest.fn() }));
 
 function signIn(userId: string) {
   jest.mocked(useSession).mockReturnValue(sessionValue(userId));
@@ -48,5 +50,62 @@ describe('QueryProvider', () => {
     );
     expect(await screen.findByText('Data of guest-2')).toBeOnTheScreen();
     expect(screen.queryByText('Data of guest-1')).not.toBeOnTheScreen();
+  });
+});
+
+describe('createQueryClient', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('reports a query that fails, named by its key', async () => {
+    const client = createQueryClient();
+    const error = new Error('down');
+    await client
+      .fetchQuery({
+        queryKey: ['workouts', 42],
+        queryFn: () => Promise.reject(error),
+        retry: false,
+      })
+      .catch(() => {});
+    expect(reportError).toHaveBeenCalledWith('Could not load workouts', error);
+    client.clear();
+  });
+
+  /** Runs a change that fails with `error`, as a hook's mutation with this `meta` would. */
+  async function fail(
+    error: unknown,
+    meta?: { where: string; expects?: readonly ['uniqueViolation'] },
+  ) {
+    const client = createQueryClient();
+    await client
+      .getMutationCache()
+      .build(client, { meta, mutationFn: () => Promise.reject(error) })
+      .execute(undefined)
+      .catch(() => {});
+    client.clear();
+  }
+
+  it('reports a change that fails under the name it gives', async () => {
+    const error = new Error('down');
+    await fail(error, { where: 'Could not save the workout' });
+    expect(reportError).toHaveBeenCalledWith('Could not save the workout', error);
+  });
+
+  it('reports a change without a name as a change', async () => {
+    const error = new Error('down');
+    await fail(error);
+    expect(reportError).toHaveBeenCalledWith('Could not save a change', error);
+  });
+
+  it('reports no refusal the change expects, and any other', async () => {
+    const meta = { where: 'Could not save the food', expects: ['uniqueViolation'] } as const;
+    await fail({ code: '23505', message: 'duplicate key' }, meta);
+    expect(reportError).not.toHaveBeenCalled();
+    const other = { code: '23503', message: 'foreign key' };
+    await fail(other, meta);
+    expect(reportError).toHaveBeenCalledWith('Could not save the food', other);
   });
 });

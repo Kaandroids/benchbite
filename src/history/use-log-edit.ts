@@ -101,7 +101,6 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
       });
       leaveWithoutAsking(() => router.back());
     } catch (error) {
-      console.warn('Could not save the workout log', error);
       Alert.alert(
         t('common.notSaved'),
         isDbError(error, 'logNotFound')

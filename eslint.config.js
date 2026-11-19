@@ -19,6 +19,21 @@ module.exports = defineConfig([
       '@typescript-eslint/no-explicit-any': 'error',
       // Only the app's own modules: following every package's imports takes minutes.
       'import/no-cycle': ['error', { ignoreExternal: true }],
+      // A mutation that fails is reported under its name (ADR 0151); without one, every failure
+      // would read "Could not save a change".
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.name='useMutation'] > ObjectExpression:not(:has(> Property[key.name='meta']))",
+          message: "Give the mutation a meta: { where: 'Could not …' }, which names it in reports.",
+        },
+        {
+          selector:
+            "CallExpression[callee.name='useMutation'][arguments.0.type!='ObjectExpression']",
+          message: 'Pass useMutation its options as an object, so that its meta can be checked.',
+        },
+      ],
     },
   },
   prettierConfig,

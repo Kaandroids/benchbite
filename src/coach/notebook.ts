@@ -101,6 +101,7 @@ export function groupNotes(notes: Note[]): {
 export function useSaveNote() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not save the note' },
     mutationFn: async ({
       id,
       category,
@@ -135,6 +136,7 @@ export function useSaveNote() {
 export function useDeleteNote() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not delete the note' },
     onMutate: async (id: number) => {
       await queryClient.cancelQueries({ queryKey: NOTES_KEY });
       queryClient.setQueryData<Note[]>(NOTES_KEY, (notes) => notes?.filter((n) => n.id !== id));
@@ -151,6 +153,7 @@ export function useDeleteNote() {
 export function useRestoreNote() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not restore the note' },
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('coach_notes')
@@ -185,6 +188,7 @@ export function useSetSavesNotes() {
   const queryClient = useQueryClient();
   const session = useSession();
   return useMutation({
+    meta: { where: 'Could not set whether Bite saves notes' },
     mutationKey: SAVES_MUTATION_KEY,
     mutationFn: async (saves: boolean) => {
       if (session.status !== 'ready') throw new Error('Not signed in');

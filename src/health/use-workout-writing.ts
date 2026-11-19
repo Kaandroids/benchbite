@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { setWriteSince, useWritingWorkouts } from './connection';
 import { requestHealthWriteAccess } from './health';
 
+import { reportError } from '@/lib/reporting';
+
 /** Why turning on saving workouts did not work. */
 export type WritingProblem = 'denied' | 'failed';
 
@@ -32,7 +34,7 @@ export function useWorkoutWriting() {
       if (allowed) setWriteSince(new Date());
       setProblem(allowed ? null : 'denied');
     } catch (error) {
-      console.warn('Could not ask to write workouts to the health store', error);
+      reportError('Could not ask to write workouts to the health store', error);
       setProblem('failed');
     } finally {
       setBusy(false);

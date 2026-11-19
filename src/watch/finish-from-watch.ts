@@ -3,6 +3,7 @@
 // on before it was saved is saved once the app runs again, rather than lost to the watch.
 import { useEffect, useEffectEvent } from 'react';
 
+import { reportError } from '@/lib/reporting';
 import { useCloseSessionScreens } from '@/sessions/close-screens';
 import type { MetricsOf } from '@/sessions/records';
 import { useSaveWorkout } from '@/sessions/save-workout';
@@ -45,7 +46,7 @@ export function useFinishFromWatch(session: Session | null, metricsOf: MetricsOf
       // None without a set to save, which the watch does not offer either.
       logId = await save(current, endOfWatchFinish(current, kept.at), { metricsOf });
     } catch (error) {
-      console.warn('Could not save the workout finished on the watch', error);
+      reportError('Could not save the workout finished on the watch', error);
     }
     if (logId === null) {
       updateSession(giveUpFinish);

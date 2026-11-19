@@ -37,7 +37,7 @@ const DB_ERRORS = {
   uniqueViolation: '23505',
 } as const;
 
-type DbError = keyof typeof DB_ERRORS;
+export type DbError = keyof typeof DB_ERRORS;
 
 /** Whether a failed request was refused by the database with the given error. */
 export function isDbError(error: unknown, name: DbError): boolean {

@@ -119,6 +119,7 @@ export function reloadAfterWeight(queryClient: QueryClient) {
 export function useLogWeight() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not log the weight' },
     // One save at a time, so that on a slow connection an earlier weight cannot land last.
     scope: { id: 'log-weight' },
     // The calculated targets follow the weight, and today with them, in the same call.

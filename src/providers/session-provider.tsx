@@ -11,6 +11,7 @@ import {
 import { AppState } from 'react-native';
 
 import { readItem, writeItem } from '@/lib/device-storage';
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 
 export type SessionState =
@@ -193,7 +194,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       throw error;
     }
     // The session on the device is gone; only revoking it on the server failed.
-    console.warn('Could not revoke the session', error);
+    reportError('Could not revoke the session', error);
   }, []);
 
   const passwordChosen = useCallback(() => setRecovering(false), []);

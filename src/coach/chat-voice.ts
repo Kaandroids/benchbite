@@ -9,6 +9,7 @@ import { File, Paths } from 'expo-file-system';
 
 import type { Json } from '@/lib/database.types';
 import { readItem, writeItem } from '@/lib/device-storage';
+import { reportError } from '@/lib/reporting';
 import { minutesAndSeconds } from '@/lib/time';
 
 /** A voice message recorded, ready to send: its base64 data, its length, and its file. */
@@ -113,7 +114,7 @@ export function discardVoices(uris: string[]) {
       if (file.exists) file.delete();
     }
   } catch (error) {
-    console.warn('Could not delete a voice message recorded', error);
+    reportError('Could not delete a voice message recorded', error);
   }
   const left = recordedVoices().filter((uri) => !uris.includes(uri));
   writeItem(RECORDED_KEY, left.length ? JSON.stringify(left) : null);

@@ -317,6 +317,7 @@ export function isRecent(thread: ThreadSummary, now: Date): boolean {
 export function useRenameThread() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not rename the chat' },
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
       const { error } = await supabase
         .from('coach_threads')
@@ -334,6 +335,7 @@ export function useRenameThread() {
 export function useDeleteThread() {
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { where: 'Could not delete the chat' },
     onMutate: async (id: number) => {
       await queryClient.cancelQueries({ queryKey: [...THREADS_KEY, 'list'] });
       queryClient.setQueriesData<InfiniteData<{ id: number }[]>>(
