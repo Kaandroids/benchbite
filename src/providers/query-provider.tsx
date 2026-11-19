@@ -1,6 +1,14 @@
-import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  focusManager,
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { useState, type PropsWithChildren } from 'react';
 import { AppState, Platform } from 'react-native';
+
+import { reportError } from '@/lib/reporting';
 
 import { useSession } from './session-provider';
 
@@ -17,6 +25,19 @@ focusManager.setEventListener((setFocused) => {
 
 export function createQueryClient() {
   return new QueryClient({
+    // Every request that fails is reported (#550), as screens show their own message and go on;
+    // reportError leaves out those the app expects, as no network. A query is named by the first
+    // part of its key, which names what it loads.
+    queryCache: new QueryCache({
+      onError: (error, query) => reportError(`Could not load ${String(query.queryKey[0])}`, error),
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) =>
+        reportError(
+          `Could not save ${String(mutation.options.mutationKey?.[0] ?? 'a change')}`,
+          error,
+        ),
+    }),
     defaultOptions: {
       queries: {
         // The user's data only changes through the app, so it stays fresh for a while instead of

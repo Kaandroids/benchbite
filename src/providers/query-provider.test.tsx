@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
+import { reportError } from '@/lib/reporting';
 import { render, screen } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
-import { QueryProvider } from './query-provider';
+import { createQueryClient, QueryProvider } from './query-provider';
 import { useSession } from './session-provider';
 
 jest.mock('./session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('@/lib/reporting', () => ({ reportError: jest.fn() }));
 
 function signIn(userId: string) {
   jest.mocked(useSession).mockReturnValue(sessionValue(userId));
@@ -44,5 +46,39 @@ describe('QueryProvider', () => {
     );
     expect(await screen.findByText('Data of guest-2')).toBeOnTheScreen();
     expect(screen.queryByText('Data of guest-1')).not.toBeOnTheScreen();
+  });
+});
+
+describe('createQueryClient', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('reports a query that fails, named by its key', async () => {
+    const client = createQueryClient();
+    const error = new Error('down');
+    await client
+      .fetchQuery({
+        queryKey: ['workouts', 42],
+        queryFn: () => Promise.reject(error),
+        retry: false,
+      })
+      .catch(() => {});
+    expect(reportError).toHaveBeenCalledWith('Could not load workouts', error);
+    client.clear();
+  });
+
+  it('reports a change that fails, named by its key or as a change', async () => {
+    const client = createQueryClient();
+    const error = new Error('down');
+    for (const mutationKey of [['weight'], undefined]) {
+      await client
+        .getMutationCache()
+        .build(client, { mutationKey, mutationFn: () => Promise.reject(error) })
+        .execute(undefined)
+        .catch(() => {});
+    }
+    expect(reportError).toHaveBeenCalledWith('Could not save weight', error);
+    expect(reportError).toHaveBeenCalledWith('Could not save a change', error);
+    client.clear();
   });
 });
