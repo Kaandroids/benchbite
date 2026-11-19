@@ -307,13 +307,23 @@ describe('reportError', () => {
     expect(sent.message).toBe('insert or update violates a foreign key');
   });
 
-  it('sends nothing the app expects: no network, a request given up, or its own refusals', () => {
+  it('sends an error once, also when it is caught in two places', () => {
+    const { reporting, sentry } = load(true);
+    const error = new Error('boom');
+    reporting.reportError('Could not save the workout', error);
+    reporting.reportError('Could not save a change', error);
+    expect(sentry.captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing the app expects: no network, a request given up, a session that ended, or its own refusals', () => {
     const { reporting, sentry } = load(true);
     for (const error of [
       new TypeError('Network request failed'),
       Object.assign(new Error('Aborted'), { name: 'AbortError' }),
       Object.assign(new Error('Failed to send a request'), { name: 'FunctionsFetchError' }),
       { code: 'BB009', message: 'Workout limit reached' },
+      { code: 'PGRST301', message: 'JWT expired' },
+      Object.assign(new Error('Auth session missing!'), { name: 'AuthSessionMissingError' }),
     ]) {
       reporting.reportError('Could not save the workout', error);
     }

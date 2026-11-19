@@ -171,6 +171,9 @@ export function isExpected(error: unknown): boolean {
     name === 'AbortError' ||
     name === 'FunctionsFetchError' ||
     name === 'AuthRetryableFetchError' ||
+    // A session that ended, as on another phone: the app asks to log in again.
+    name === 'AuthSessionMissingError' ||
+    code === 'PGRST301' ||
     (typeof code === 'string' && code.startsWith('BB')) ||
     (typeof message === 'string' && UNREACHABLE.test(message))
   );
@@ -192,6 +195,20 @@ function toError(error: unknown): Error {
   return made;
 }
 
+/** The errors reported, so that one caught where it happened and by the query client goes once. */
+const reported = new WeakSet<object>();
+
+function alreadyReported(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  if (reported.has(error)) {
+    return true;
+  }
+  reported.add(error);
+  return false;
+}
+
 /**
  * Reports an error the app caught and went on from (#550): in development to the console, as
  * before, and to Sentry when reporting is on, unless it is one the app expects. `where` names what
@@ -202,7 +219,7 @@ export function reportError(where: string, error: unknown) {
   if (__DEV__) {
     console.warn(where, error);
   }
-  if (!started || isExpected(error)) {
+  if (!started || isExpected(error) || alreadyReported(error)) {
     return;
   }
   // Masked as well, as it can name a stored key, some of which hold the user's id.
