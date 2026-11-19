@@ -195,8 +195,8 @@ function toError(error: unknown): Error {
 /**
  * Reports an error the app caught and went on from (#550): in development to the console, as
  * before, and to Sentry when reporting is on, unless it is one the app expects. `where` names what
- * failed in the app's words, such as "Could not save the workout": it groups the reports, and must
- * hold nothing of the person.
+ * failed in the app's words, such as "Could not save the workout", and groups the reports; it is
+ * masked as messages are.
  */
 export function reportError(where: string, error: unknown) {
   if (__DEV__) {
@@ -205,5 +205,6 @@ export function reportError(where: string, error: unknown) {
   if (!started || isExpected(error)) {
     return;
   }
-  Sentry.captureException(toError(error), { tags: { where } });
+  // Masked as well, as it can name a stored key, some of which hold the user's id.
+  Sentry.captureException(toError(error), { tags: { where: maskText(where) } });
 }

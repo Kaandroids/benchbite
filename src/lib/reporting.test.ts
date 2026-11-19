@@ -283,6 +283,17 @@ describe('reportError', () => {
     });
   });
 
+  it('masks what failed too, which can name a key holding the user’s id', () => {
+    const { reporting, sentry } = load(true);
+    reporting.reportError(
+      'Could not read onboarding.00000000-0000-0000-0000-00000000000a.draft',
+      new Error('disk'),
+    );
+    expect(sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
+      tags: { where: 'Could not read onboarding.[id].draft' },
+    });
+  });
+
   it('sends a Supabase error as an Error with its message and code', () => {
     const { reporting, sentry } = load(true);
     reporting.reportError('Could not save the workout', {
