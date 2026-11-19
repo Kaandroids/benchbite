@@ -116,26 +116,56 @@ Deno.test('counts the request as it is, not wrapped as for the Developer API', a
   });
 });
 
-Deno.test(
-  'counts a request that forbids tool calls without saying so, which Vertex AI refuses',
-  async () => {
-    const { model, calls } = vertex(granted('token-1'));
+const LOG_MEAL = { name: 'logMeal', description: 'Logs a meal.', parameters: { type: 'object' } };
 
-    await model.countTokens({
-      ...HI,
-      tools: [{ name: 'logMeal', description: 'Logs a meal.', parameters: { type: 'object' } }],
-      toolChoice: 'none',
-    });
-    await model.generate({ ...HI, toolChoice: 'none' });
+Deno.test('counts a request without its tools, and adds them by their size', async () => {
+  const { model, calls } = vertex(granted('token-1'));
 
-    const counted = calls[0].body as Record<string, unknown>;
-    assertEquals(Object.keys(counted).sort(), ['contents', 'generationConfig', 'tools']);
-    // The call itself still says so.
-    assertEquals((calls[1].body as Record<string, unknown>).toolConfig, {
-      functionCallingConfig: { mode: 'NONE' },
-    });
-  },
-);
+  const counted = await model.countTokens({ ...HI, tools: [LOG_MEAL] });
+
+  // Vertex AI counts the tools at a fraction of what it bills for them.
+  assertEquals(Object.keys(calls[0].body as object).sort(), ['contents', 'generationConfig']);
+  // The stand-in's 7 for the rest, and a token for each four characters of the tools as sent.
+  const sent = JSON.stringify([
+    {
+      functionDeclarations: [
+        { name: 'logMeal', description: 'Logs a meal.', parametersJsonSchema: { type: 'object' } },
+      ],
+    },
+  ]);
+  assertEquals(counted, 7 + Math.ceil(sent.length / 4));
+});
+
+Deno.test('counts nothing for the tools of a request that forbids their calls', async () => {
+  const { model, calls } = vertex(granted('token-1'));
+
+  const counted = await model.countTokens({ ...HI, tools: [LOG_MEAL], toolChoice: 'none' });
+  await model.generate({ ...HI, tools: [LOG_MEAL], toolChoice: 'none' });
+
+  // Vertex AI bills no tools then, and refuses a count that says whether they may be called.
+  assertEquals(counted, 7);
+  assertEquals(Object.keys(calls[0].body as object).sort(), ['contents', 'generationConfig']);
+  // The call itself still sends both.
+  const called = calls[1].body as Record<string, unknown>;
+  assertEquals(called.toolConfig, { functionCallingConfig: { mode: 'NONE' } });
+  assertEquals(Array.isArray(called.tools), true);
+});
+
+Deno.test('counts the tools of a request whose tool config forbids nothing', () => {
+  forgetTokens();
+  const { uncounted } = vertexAi(ACCOUNT);
+  const tools = [{ functionDeclarations: [{ name: 'logMeal' }] }];
+  const bySize = Math.ceil(JSON.stringify(tools).length / 4);
+
+  assertEquals(uncounted?.({ tools }), bySize);
+  // Only a config that forbids the calls leaves them out, not one that forces or allows them.
+  for (const mode of ['ANY', 'AUTO']) {
+    assertEquals(uncounted?.({ tools, toolConfig: { functionCallingConfig: { mode } } }), bySize);
+  }
+  assertEquals(uncounted?.({ tools, toolConfig: {} }), bySize);
+  assertEquals(uncounted?.({ tools, toolConfig: { functionCallingConfig: { mode: 'NONE' } } }), 0);
+  assertEquals(uncounted?.({}), 0);
+});
 
 Deno.test('keeps a token until shortly before it ends, also for a model set up anew', async () => {
   let count = 0;

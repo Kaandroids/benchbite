@@ -101,10 +101,33 @@ export function vertexAi(account: ServiceAccount, options: VertexOptions = {}): 
     url: (model, method) => `${models}/${model}:${method}`,
     headers: async () => ({ authorization: `Bearer ${await token()}` }),
     // Vertex AI counts the request itself, where the Developer API takes it wrapped, and refuses
-    // one that says whether tools may be called, which adds nothing to count. It counts less for
-    // the tools than the call then uses, so the count is a low estimate there.
-    countBody: (_model, { toolConfig: _, ...counted }) => counted,
+    // one that says whether tools may be called. The tools are left out, and counted below.
+    countBody: (_model, { tools: _tools, toolConfig: _toolConfig, ...counted }) => counted,
+    uncounted: toolTokens,
   };
+}
+
+/**
+ * How many characters of a tool's declaration, as JSON, make a token, at the least. Measured with
+ * the chat's tools (ADR 0154): the calls were billed a token for each 4.2 to 4.7 characters.
+ */
+const TOOL_CHARACTERS_PER_TOKEN = 4;
+
+/**
+ * What a request's tools add to its input, at the most. Vertex AI's own count gives about a third
+ * of what the call is then billed for them, so they are counted here by their size instead; a
+ * request that forbids tool calls is not billed for them at all.
+ */
+function toolTokens(request: Record<string, unknown>): number {
+  if (!request.tools || forbidsToolCalls(request)) return 0;
+  return Math.ceil(JSON.stringify(request.tools).length / TOOL_CHARACTERS_PER_TOKEN);
+}
+
+/** Whether a request says no tool may be called; any other tool config still sends them for use. */
+function forbidsToolCalls(request: Record<string, unknown>): boolean {
+  const config = request.toolConfig;
+  const calling = isObject(config) ? config.functionCallingConfig : undefined;
+  return isObject(calling) && calling.mode === 'NONE';
 }
 
 /** A token for the account, asked of Google with a claim its key signs. Nothing was billed. */

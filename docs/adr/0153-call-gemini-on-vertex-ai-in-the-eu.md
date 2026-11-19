@@ -1,6 +1,6 @@
 # 0153. Call Gemini on Vertex AI in the EU
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0154
 - **Date:** 2026-11-19
 
 ## Context

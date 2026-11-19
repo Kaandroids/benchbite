@@ -27,6 +27,8 @@ export type GeminiEndpoint = {
   headers(): Promise<Record<string, string>>;
   /** The body of `countTokens` for what a request would send. */
   countBody(model: string, request: Record<string, unknown>): unknown;
+  /** The tokens of a request that `countTokens` leaves out there, to add to its count. */
+  uncounted?(request: Record<string, unknown>): number;
 };
 
 /** The Gemini Developer API with an API key, for development with test data only (ADR 0049). */
@@ -88,10 +90,12 @@ export class GeminiModel implements LanguageModel {
 
   async countTokens(request: ModelRequest): Promise<number> {
     const config = this.#options.models(request.task);
+    const { endpoint } = this.#options;
+    const sent = toGeminiRequest(request, config);
     const response = await this.#post(
       config.model,
       'countTokens',
-      this.#options.endpoint.countBody(config.model, toGeminiRequest(request, config)),
+      endpoint.countBody(config.model, sent),
     );
     const body = (await response.json()) as { totalTokens?: number };
     if (typeof body.totalTokens !== 'number') {
@@ -101,7 +105,7 @@ export class GeminiModel implements LanguageModel {
         billed: false,
       });
     }
-    return body.totalTokens;
+    return body.totalTokens + (endpoint.uncounted?.(sent) ?? 0);
   }
 
   async generate(request: ModelRequest): Promise<ModelResponse> {
