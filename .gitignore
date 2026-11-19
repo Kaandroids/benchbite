@@ -21,6 +21,9 @@ targets/watch-tests/.build/
 targets/*/Assets.xcassets/
 *.orig.*
 
+# Test coverage, written by `pnpm test --coverage` and `pnpm functions:check`
+coverage/
+
 # Metro
 .metro-health-check*
 

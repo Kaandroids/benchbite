@@ -27,7 +27,8 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/lib/database.types.ts',
   ],
-  coverageReporters: ['text-summary'],
+  // The summary in JSON is what `pnpm coverage:report` reads.
+  coverageReporters: ['text-summary', 'json-summary'],
   coverageThreshold: {
     global: { statements: 90, branches: 85, functions: 87, lines: 91 },
   },
