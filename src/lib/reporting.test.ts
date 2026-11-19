@@ -23,6 +23,12 @@ describe('maskText', () => {
       ),
     ).toBe('BB063: [email] logged [n] kg for [id] with [token]');
   });
+
+  it('masks an address typed without its ending, as Auth quotes it', () => {
+    expect(maskText('Email address "anna.schmidt@gmail" is invalid')).toBe(
+      'Email address "[email]" is invalid',
+    );
+  });
 });
 
 describe('scrubBreadcrumb', () => {

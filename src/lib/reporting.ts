@@ -12,7 +12,8 @@ let started = false;
 /** Whether errors are reported, as in a release build with a DSN. */
 export const isReporting = () => started;
 
-const EMAIL = /[^\s@"'<>()]+@[^\s@"'<>()]+\.[^\s@"'<>()]+/g;
+/** An address, also one typed without its ending, as Auth quotes it when it refuses it. */
+const EMAIL = /[^\s@"'<>()]+@[^\s@"'<>()]+/g;
 const JWT = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 /**
