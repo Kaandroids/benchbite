@@ -1,12 +1,13 @@
 // Prints a sample for the Apple Watch app to show without a phone, for the README's screenshots
 // (docs/media/README.md): a workout like the demo account's Upper body, at a set, in a rest, or
-// saved. Its values are kept by hand; `pnpm check:watch` checks that the watch reads them.
+// saved. Its values are kept by hand; `pnpm check:watch` checks that the watch reads its states.
 // A debug build of the watch app takes it at launch (targets/watch/Sample.swift):
 //
 //   SIMCTL_CHILD_BENCHBITE_SAMPLE="$(node scripts/watch-sample.ts set)" \
 //     xcrun simctl launch <watch simulator id> <the watch app's bundle id>
 //
 // Its times are counted from now, so that the workout's clock and the rest run as they would.
+// Also listed in scripts/check-watch-protocol.ts: change them together.
 const SCENES = ['set', 'rest', 'summary'] as const;
 type Scene = (typeof SCENES)[number];
 
