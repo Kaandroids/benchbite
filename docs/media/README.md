@@ -16,6 +16,9 @@ The screenshots and GIFs in the README. They are taken on the iOS Simulator
 | `workout-active.png`   | A workout in progress, with last time's sets and the rest timer |
 | `workout-finished.png` | A finished workout, with the watch's heart rate and its sets    |
 | `today-dark.png`       | Today in dark mode                                              |
+| `watch-set.png`        | The Apple Watch app at the set to do next                       |
+| `watch-rest.png`       | The Apple Watch app counting a rest down                        |
+| `watch-summary.png`    | The Apple Watch app's summary of a saved workout                |
 
 ## The demo account
 
@@ -48,6 +51,27 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    workout?", and keep the plan as it is. For `workout-finished.png`, open the last workout in the
    history. For `workout-active.png`, start Upper body and tick the first set; discard the workout
    afterwards.
+
+## Taking the watch's screenshots
+
+The simulators pass the phone's states to the watch but not the watch's commands to the phone, so
+a watch there never follows a workout. A debug build of the watch app shows a sample instead,
+given at launch (`targets/watch/Sample.swift`): `scripts/watch-sample.ts` prints the demo account's
+Upper body workout at a set (`set`), in a rest (`rest`) or saved (`summary`).
+
+1. Build with `pnpm ios` and install the watch app on an Apple Watch simulator (46 mm), as
+   [Development](../development.md#the-apple-watch-app) says.
+2. Launch it with a sample, `<scene>` being `set`, `rest` or `summary`; the locale gives the
+   numbers a decimal point:
+
+   ```bash
+   SIMCTL_CHILD_BENCHBITE_SAMPLE="$(node scripts/watch-sample.ts <scene>)" \
+     xcrun simctl launch <watch simulator id> com.benchbite.app.dev.watchkitapp -AppleLocale en_US
+   ```
+
+3. Take it with `xcrun simctl io <watch simulator id> screenshot docs/media/watch-<scene>.png`.
+   Before the next scene, end the app:
+   `xcrun simctl terminate <watch simulator id> com.benchbite.app.dev.watchkitapp`.
 
 ## Recording the GIFs
 
