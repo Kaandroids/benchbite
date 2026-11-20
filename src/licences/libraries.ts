@@ -3,8 +3,6 @@
 import data from './libraries.json';
 import type { Licence } from './types';
 
-export type { Library, Licence } from './types';
-
 /** The licences, the one with the most libraries first. */
 export const LICENCES: readonly Licence[] = data.licences;
 

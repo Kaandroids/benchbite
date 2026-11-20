@@ -75,24 +75,21 @@ const isCopyright = (line: string) =>
 const isTitle = (line: string) =>
   /^[\s#]*(the\s+)?(mit|isc|bsd)\b.*licen[sc]e.*$/i.test(line) && line.trim().length < 60;
 
-/**
- * A licence file's text without its copyright lines, as one licence reads for all its libraries;
- * without its title too, which stands at its head, unless `titled`.
- */
-function withoutNotice(text: string, titled: boolean): string {
-  let inHead = true;
+/** A licence file's text without its copyright lines, as one licence reads for all its libraries. */
+function withoutNotice(text: string): string {
   return text
     .split('\n')
-    .filter((line) => {
-      if (isCopyright(line) || /^all rights reserved\.?$/i.test(line.trim())) return false;
-      if (line.trim() === '') return true;
-      const title = inHead && isTitle(line);
-      inHead &&= title;
-      return titled || !title;
-    })
+    .filter((line) => !isCopyright(line) && !/^all rights reserved\.?$/i.test(line.trim()))
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+/** A text without the title at its head, which only names the licence the text is filed under. */
+function withoutTitle(text: string): string {
+  const lines = text.split('\n');
+  const body = lines.findIndex((line) => line.trim() !== '' && !isTitle(line));
+  return lines.slice(Math.max(body, 0)).join('\n').trim();
 }
 
 /** What two texts of one licence have in common, however they are wrapped and quoted. */
@@ -133,10 +130,13 @@ for (const [name, dir] of [...packages].sort(([a], [b]) => a.localeCompare(b))) 
     .filter(isCopyright)
     .map((line) => line.trim());
   // Several files keep their titles, which say where one licence ends and the next begins.
+  const [only, ...more] = files.map(withoutNotice);
   const body =
-    files.length > 0
-      ? files.map((file) => withoutNotice(file, files.length > 1)).join('\n\n')
-      : undefined;
+    only === undefined
+      ? undefined
+      : more.length > 0
+        ? [only, ...more].join('\n\n')
+        : withoutTitle(only);
   byLicence.set(license, [...(byLicence.get(license) ?? []), { name, version, copyright, body }]);
 }
 
