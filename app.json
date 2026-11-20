@@ -211,6 +211,9 @@
         {
           "android": {
             "minSdkVersion": 26
+          },
+          "ios": {
+            "privacyManifestAggregationEnabled": false
           }
         }
       ],
