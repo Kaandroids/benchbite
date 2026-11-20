@@ -117,7 +117,10 @@ function useAgreement(
   answer: (answers: Partial<OnboardingAnswers>) => void,
 ) {
   const saved = answers[key];
-  const [checked, setChecked] = useState(saved === version);
+  // The version the box was ticked for: a tick given for another version does not count, as when
+  // the server says a newer one while the step shows.
+  const [checkedFor, setCheckedFor] = useState(saved === version ? version : null);
+  const checked = checkedFor === version;
 
   // An answer to an older version no longer counts; the box shows it unticked, so clear it too.
   useEffect(() => {
@@ -129,7 +132,7 @@ function useAgreement(
   const toggle = () => {
     // Unticking withdraws an answer given earlier in this onboarding.
     if (checked) answer({ [key]: undefined });
-    setChecked(!checked);
+    setCheckedFor(checked ? null : version);
   };
   return { checked, toggle };
 }
