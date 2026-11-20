@@ -43,6 +43,27 @@ select vault.create_secret('<default secret key>', 'secret_key');
 After rotating the key, update it with
 `select vault.update_secret(id, '<new key>') from vault.secrets where name = 'secret_key';`.
 
+## Supported versions and the texts' versions
+
+The app asks the server when it opens which versions of it are still supported and which version
+of the terms and of each consent is current
+([ADR 0156](adr/0156-keep-what-a-build-holds-to-on-the-server.md)). Both change in the dashboard's
+SQL editor, without a deploy or a release:
+
+```sql
+-- Builds below 1.4.0 are no longer supported on iOS.
+update public.supported_app_versions set lowest_version = '1.4.0' where platform = 'ios';
+
+-- New terms, announced now and applying in 30 days, with what changed in each language.
+insert into public.agreement_versions (agreement, version, applies_at, summary)
+values ('terms', '2027-02-01', now() + interval '30 days',
+  '{"en": "…", "de": "…", "tr": "…"}');
+```
+
+The agreements are `terms`, `health_consent` and `ai_consent`. Publish the new text on the website
+before its row: the app links to it. Raise the lowest supported version only once the newer build
+is in the stores.
+
 ## What the app declares to Apple
 
 `app.json` says that the app uses no encryption beyond what is exempt

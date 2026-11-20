@@ -1,14 +1,18 @@
 import { Linking } from 'react-native';
 
 import { PRIVACY_POLICY_URL, TERMS_URL } from '@/lib/links';
-import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/onboarding/consent';
 import { createStep } from '@/test/step-mock';
-import { fireEvent, render, screen } from '@/test/render';
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/requirements/built-with';
+import { REQUIREMENTS_KEY } from '@/requirements/requirements';
+import { act, createTestQueryClient, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ConsentStep } from './consent';
 
 let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
+// The step reads the texts' current versions, which the app asked the server for at its start.
+jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/device-storage', () => ({ readItem: () => null, writeItem: jest.fn() }));
 
 const AGREE = 'I agree that Benchbite processes my health data for these purposes.';
 
@@ -44,6 +48,53 @@ describe('ConsentStep', () => {
     expect(termsBox()).toBeChecked();
     await fireEvent.press(continueButton());
     expect(mockStep.next).toHaveBeenCalledWith(BOTH);
+  });
+
+  it('records the versions the server says are current, not those the build was made with', async () => {
+    const queryClient = createTestQueryClient();
+    const text = (version: string) => ({ version, appliesAt: '2027-03-03T00:00:00Z', summary: {} });
+    queryClient.setQueryData(REQUIREMENTS_KEY, {
+      supported: true,
+      lowestVersion: '0.0.0',
+      agreements: {
+        terms: text('2027-02-01'),
+        health_consent: text('2027-01-15'),
+        ai_consent: text('2026-11-18'),
+      },
+    });
+    await render(<ConsentStep />, { queryClient });
+    await fireEvent.press(agreeBox());
+    await fireEvent.press(termsBox());
+    await fireEvent.press(continueButton());
+    expect(mockStep.next).toHaveBeenCalledWith({
+      consentedPolicyVersion: '2027-01-15',
+      acceptedTermsVersion: '2027-02-01',
+    });
+  });
+
+  it('unticks the boxes when the server says newer versions while the step shows', async () => {
+    const queryClient = createTestQueryClient();
+    await render(<ConsentStep />, { queryClient });
+    await fireEvent.press(agreeBox());
+    await fireEvent.press(termsBox());
+    expect(continueButton()).toBeEnabled();
+
+    // As when the app comes back from reading a text and asks the server again.
+    const text = (version: string) => ({ version, appliesAt: '2027-03-03T00:00:00Z', summary: {} });
+    await act(() =>
+      queryClient.setQueryData(REQUIREMENTS_KEY, {
+        supported: true,
+        lowestVersion: '0.0.0',
+        agreements: {
+          terms: text('2027-02-01'),
+          health_consent: text('2027-01-15'),
+          ai_consent: text('2026-11-18'),
+        },
+      }),
+    );
+    await waitFor(() => expect(agreeBox()).not.toBeChecked());
+    expect(termsBox()).not.toBeChecked();
+    expect(continueButton()).toBeDisabled();
   });
 
   it('cannot continue with only one of the boxes ticked', async () => {

@@ -1,6 +1,6 @@
 # 0142. Ask for the AI consent at first use
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0156
 - **Date:** 2026-11-18
 
 ## Context
