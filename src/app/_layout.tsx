@@ -28,6 +28,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { ReminderSync } from '@/reminders/reminder-sync';
 import { useRequirements } from '@/requirements/requirements';
+import { useConsentAsk } from '@/requirements/consent-update';
 import { useTermsAsk } from '@/requirements/terms-update';
 import { UpdateRequired } from '@/requirements/update-required';
 import { showRemindersInForeground } from '@/reminders/reminders';
@@ -83,7 +84,10 @@ function RootNavigator() {
   const unsupported = status === 'ready' && requirements?.supported === false;
   // What works alongside the screens runs only in a build that may run.
   const running = status === 'ready' && !unsupported;
+  // One question at a time: the terms first, then the health data consent.
   const askingTerms = useTermsAsk() !== null;
+  const askingConsent = useConsentAsk() !== null && !askingTerms;
+  const asking = askingTerms || askingConsent;
   const { t } = useTranslation();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
@@ -145,15 +149,18 @@ function RootNavigator() {
           <Stack.Protected guard={!completed}>
             <Stack.Screen name="onboarding" />
           </Stack.Protected>
-          {/* New terms to accept take the app's place (ADR 0158); deleting the account stays in
-              reach from them. */}
+          {/* New terms to accept, or a consent to give again, take the app's place (ADR 0158,
+              ADR 0159); deleting the account stays in reach from the terms. */}
           <Stack.Protected guard={completed && askingTerms}>
             <Stack.Screen name="terms" options={{ gestureEnabled: false }} />
+          </Stack.Protected>
+          <Stack.Protected guard={completed && askingConsent}>
+            <Stack.Screen name="consent" options={{ gestureEnabled: false }} />
           </Stack.Protected>
           <Stack.Protected guard={completed}>
             <Stack.Screen name="account/delete" />
           </Stack.Protected>
-          <Stack.Protected guard={completed && !askingTerms}>
+          <Stack.Protected guard={completed && !asking}>
             <Stack.Screen name="(app)" />
             {/* The workout in progress covers the tabs, so nothing but the workout is in reach. */}
             <Stack.Screen name="session/index" />
