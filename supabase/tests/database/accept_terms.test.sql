@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -14,8 +14,11 @@ delete from public.agreement_versions where agreement = 'terms';
 insert into public.agreement_versions (agreement, version, applies_at) values
   ('terms', '2026-11-18', '2026-11-18'),
   ('terms', '2027-02-01', now() + interval '30 days');
+-- B accepted the new terms already, which says nothing of A.
 insert into public.terms_acceptances (user_id, terms_version, accepted_at) values
-  ('00000000-0000-0000-0000-00000000000a', '2026-11-18', '2026-11-18');
+  ('00000000-0000-0000-0000-00000000000a', '2026-11-18', '2026-11-18'),
+  ('00000000-0000-0000-0000-00000000000b', '2026-11-18', '2026-11-18'),
+  ('00000000-0000-0000-0000-00000000000b', '2027-02-01', now() - interval '1 hour');
 
 set local role anon;
 select throws_ok(
@@ -52,6 +55,20 @@ select throws_ok(
   $$ insert into public.terms_acceptances (user_id, terms_version)
      values ('00000000-0000-0000-0000-00000000000a', '2099-01-01') $$,
   '42501', null, 'Nobody writes an acceptance directly'
+);
+
+-- As the owner, who sees every user's rows.
+reset role;
+select is(
+  (select array_agg(terms_version order by accepted_at) from public.terms_acceptances
+   where user_id = '00000000-0000-0000-0000-00000000000a'),
+  array['2026-11-18', '2027-02-01'],
+  'The acceptance is the caller''s own, once, whatever others accepted'
+);
+select is(
+  (select count(*) from public.terms_acceptances
+   where user_id = '00000000-0000-0000-0000-00000000000b'),
+  2::bigint, 'and nobody else''s history changes'
 );
 
 select * from finish();
