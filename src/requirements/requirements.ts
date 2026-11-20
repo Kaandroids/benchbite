@@ -139,7 +139,14 @@ export function useRequirements(): Requirements | undefined {
   // asked (ADR 0157): asking again puts the update screen in the app's place.
   useEffect(
     () =>
-      onVersionRefused(() => void queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY })),
+      // A screen's requests are refused together: one question answers them all.
+      onVersionRefused(
+        () =>
+          void queryClient.invalidateQueries(
+            { queryKey: REQUIREMENTS_KEY },
+            { cancelRefetch: false },
+          ),
+      ),
     [queryClient],
   );
   return useKnownRequirements(status === 'ready');
