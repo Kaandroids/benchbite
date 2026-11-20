@@ -79,7 +79,7 @@ export function ErrorScreen({
         expression="sad"
         size={scope === 'app' ? 112 : 96}
         title={t(`errorScreen.${text}.title`)}
-        body={
+        message={
           again && isReporting()
             ? `${t('errorScreen.still.body')} ${t('errorScreen.reported')}`
             : t(`errorScreen.${text}.body`)

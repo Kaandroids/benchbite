@@ -10,14 +10,15 @@ type BiteMessageProps = {
   /** Bite's size: larger where the message stands for the whole app. */
   size?: number;
   title: string;
-  body: string;
+  message: string;
 };
 
 /**
  * Bite with a message, in the middle of a screen that stands in for a part of the app: what
- * happened as a heading, and what it means under it. The screen adds its own buttons.
+ * happened as a heading, and what it means under it. The screen adds its own buttons. MessageView
+ * is its counterpart with an icon in place of Bite.
  */
-export function BiteMessage({ expression, size = 112, title, body }: BiteMessageProps) {
+export function BiteMessage({ expression, size = 112, title, message }: BiteMessageProps) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.content, { gap: spacing.lg, padding: spacing.xl }]}>
@@ -27,7 +28,7 @@ export function BiteMessage({ expression, size = 112, title, body }: BiteMessage
           {title}
         </Text>
         <Text color="textMuted" align="center">
-          {body}
+          {message}
         </Text>
       </View>
     </View>

@@ -65,7 +65,7 @@ export function UpdateRequired() {
       <BiteMessage
         expression="neutral"
         title={t('updateRequired.title')}
-        body={t('updateRequired.body')}
+        message={t('updateRequired.body')}
       />
     </Screen>
   );
