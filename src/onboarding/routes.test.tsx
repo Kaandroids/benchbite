@@ -30,6 +30,7 @@ import OnboardingIndex from '@/app/onboarding/index';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useRequirements, type Requirements } from '@/requirements/requirements';
+import { useTermsAsk, type TermsAsk } from '@/requirements/terms-update';
 import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
 import { stepHref, type Step } from './steps';
@@ -135,6 +136,7 @@ jest.mock('@/sessions/rest-alarm', () => ({
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 // What the server says this build holds to: nothing, unless a test says otherwise.
 jest.mock('@/requirements/requirements', () => ({ useRequirements: jest.fn() }));
+jest.mock('@/requirements/terms-update', () => ({ useTermsAsk: jest.fn() }));
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
@@ -206,6 +208,8 @@ const APP_ROUTES = {
   '(app)/nutrition/index': NutritionTab,
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
+  terms: () => <Text>New terms</Text>,
+  'account/delete': () => <Text>Delete account</Text>,
   'bite/index': BiteRoute,
   'bite/chats': ChatsRoute,
   'session/index': () => <Text>Workout in progress</Text>,
@@ -226,6 +230,8 @@ beforeEach(() => {
   jest.mocked(useIsAccount).mockReturnValue(false);
   // Nothing known of this build, unless a test says otherwise.
   jest.mocked(useRequirements).mockReturnValue(undefined);
+  // No newer terms to accept, unless a test says otherwise.
+  jest.mocked(useTermsAsk).mockReturnValue(null);
 });
 
 describe('onboarding routes', () => {
@@ -310,6 +316,55 @@ describe('root layout', () => {
     await act(() => setOnboarding('welcome', {}, true));
     expect(app.getPathname()).toBe('/');
     expect(screen.getByText(TODAY)).toBeOnTheScreen();
+  });
+
+  describe('with newer terms to accept', () => {
+    const ask: TermsAsk = { version: '2027-02-01', appliesAt: new Date('2027-03-03'), due: true };
+
+    it('shows them in place of the app, and the app again once they are accepted', async () => {
+      setOnboarding('welcome', {}, true);
+      jest.mocked(useTermsAsk).mockReturnValue(ask);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/terms');
+      expect(screen.getByText('New terms')).toBeOnTheScreen();
+      expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+
+      jest.mocked(useTermsAsk).mockReturnValue(null);
+      await act(() => setOnboarding('welcome', {}, true));
+      expect(app.getPathname()).toBe('/');
+      expect(screen.getByText(TODAY)).toBeOnTheScreen();
+    });
+
+    it('takes the app’s place when they come while it is in use', async () => {
+      setOnboarding('welcome', {}, true);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/settings' });
+      expect(app.getPathname()).toBe('/settings');
+
+      jest.mocked(useTermsAsk).mockReturnValue(ask);
+      await act(() => setOnboarding('welcome', {}, true));
+      expect(app.getPathname()).toBe('/terms');
+    });
+
+    it('leaves deleting the account in reach, and nothing else of the app', async () => {
+      setOnboarding('welcome', {}, true);
+      jest.mocked(useTermsAsk).mockReturnValue(ask);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+
+      await act(() => router.push('/settings'));
+      expect(app.getPathname()).toBe('/terms');
+
+      await act(() => router.push('/account/delete'));
+      expect(screen.getByText('Delete account')).toBeOnTheScreen();
+      await act(() => router.back());
+      expect(app.getPathname()).toBe('/terms');
+    });
+
+    it('leaves the onboarding alone, which asks for the terms itself', async () => {
+      setOnboarding('welcome');
+      jest.mocked(useTermsAsk).mockReturnValue(ask);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/onboarding/welcome');
+    });
   });
 
   it('shows the update screen in place of the app once this version is not supported', async () => {
