@@ -10,8 +10,13 @@ import {
 } from './meal-estimate';
 
 jest.mock('@/lib/supabase', () => ({
-  functionUrl: (name: string) => `https://example.test/functions/v1/${name}`,
-  functionHeaders: () => Promise.resolve({ apikey: 'key', authorization: 'Bearer token' }),
+  postFunction: (name: string, body: unknown, signal?: AbortSignal) =>
+    fetch(`https://example.test/functions/v1/${name}`, {
+      method: 'POST',
+      headers: { apikey: 'key', authorization: 'Bearer token' },
+      body: JSON.stringify(body),
+      signal,
+    }),
 }));
 jest.mock('expo-file-system', () => {
   const deleteFile = jest.fn();

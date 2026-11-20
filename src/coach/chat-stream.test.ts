@@ -9,8 +9,13 @@ jest.mock('@/lib/supabase', () => {
   const rpc = jest.fn();
   return {
     supabase: { auth: { getSession: () => Promise.resolve({ data: {} }) }, rpc },
-    functionUrl: (name: string) => `https://example.test/functions/v1/${name}`,
-    functionHeaders: () => Promise.resolve({ 'content-type': 'application/json', apikey: 'key' }),
+    postFunction: (name: string, body: unknown, signal?: AbortSignal) =>
+      fetch(`https://example.test/functions/v1/${name}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', apikey: 'key' },
+        body: JSON.stringify(body),
+        signal,
+      }),
   };
 });
 

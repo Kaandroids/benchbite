@@ -100,6 +100,10 @@ branch names, documentation, SQL, log and error messages. No exceptions.
 - **Row Level Security is enabled on every table.** No exceptions.
 - **Schema changes are made only through migrations.** Never change the schema from the dashboard.
 - **Database types are generated** with `supabase gen types typescript`, never written by hand.
+- **Backend changes stay compatible with every supported version of the app** (ADR 0157). The app
+  is updated through the stores alone, so old builds stay in use: a migration or an Edge Function
+  keeps what they call, and adds beside it. Compatibility ends only by raising the lowest
+  supported version.
 
 ## Security
 

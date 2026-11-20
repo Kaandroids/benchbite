@@ -2,9 +2,11 @@
 import 'expo-sqlite/localStorage/install';
 
 import { createClient } from '@supabase/supabase-js';
-import { AppState } from 'react-native';
+import { nativeApplicationVersion } from 'expo-application';
+import { AppState, Platform } from 'react-native';
 
 import type { Database } from './database.types';
+import { noteResponse } from './version-refusal';
 
 // Expo inlines EXPO_PUBLIC_ variables at build time, so they must be read with dot notation.
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -17,15 +19,28 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-/** The address of an Edge Function, for a call that reads its answer as it streams. */
-export function functionUrl(name: string): string {
+/** The address of an Edge Function. */
+function functionUrl(name: string): string {
   return `${supabaseUrl}/functions/v1/${name}`;
 }
 
 /** The project's publishable key, which every request to it carries. */
 export const publishableKey: string = supabasePublishableKey;
 
+/**
+ * The build a request comes from, which every request names: the backend refuses a version of
+ * the app that is no longer supported (ADR 0157). A request without them is not judged.
+ */
+export const appVersionHeaders: Record<string, string> = nativeApplicationVersion
+  ? { 'x-app-platform': Platform.OS, 'x-app-version': nativeApplicationVersion }
+  : {};
+
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
+  global: {
+    headers: appVersionHeaders,
+    // Every answer is looked at for the backend's refusal of this build.
+    fetch: (...args) => fetch(...args).then(noteResponse),
+  },
   auth: {
     storage: localStorage,
     persistSession: true,
@@ -45,15 +60,35 @@ AppState.addEventListener('change', (state) => {
 });
 
 /**
- * The headers of a JSON request to an Edge Function: the publishable key, and the signed-in
- * user's token, which the function checks.
+ * The headers of a JSON request to an Edge Function: the publishable key, the signed-in user's
+ * token, which the function checks, and the build the request comes from.
  */
-export async function functionHeaders(): Promise<Record<string, string>> {
+async function functionHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return {
     'content-type': 'application/json',
     apikey: publishableKey,
+    ...appVersionHeaders,
     ...(token && { authorization: `Bearer ${token}` }),
   };
+}
+
+/**
+ * Posts JSON to an Edge Function and gives its response as it comes, for a call that reads its
+ * answer as it streams or tells the function's refusals apart. As every request of the client, it
+ * names the build and is looked at for the backend's refusal of it.
+ */
+export async function postFunction(
+  name: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const response = await fetch(functionUrl(name), {
+    method: 'POST',
+    headers: await functionHeaders(),
+    body: JSON.stringify(body),
+    signal,
+  });
+  return noteResponse(response);
 }

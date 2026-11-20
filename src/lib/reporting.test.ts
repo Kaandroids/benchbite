@@ -347,6 +347,12 @@ describe('reportError', () => {
       Object.assign(new Error('Invalid login credentials'), { name: 'AuthApiError', status: 400 }),
       Object.assign(new Error('Too short'), { name: 'AuthWeakPasswordError', status: 422 }),
       Object.assign(new Error('The function refused: wrong_code'), { expected: true }),
+      // The backend's refusal of a build that is no longer supported, as each caller holds it.
+      Object.assign(new Error('estimate-meal failed'), { status: 426 }),
+      Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+        name: 'FunctionsHttpError',
+        context: { status: 426 },
+      }),
     ]) {
       reporting.reportError('Could not save the workout', error);
     }

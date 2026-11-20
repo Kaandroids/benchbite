@@ -4,14 +4,15 @@
 // answer is kept on the device for when the server cannot be reached. Nothing here stops the app:
 // without an answer it goes on with the texts' versions it last knew, or those it was built with,
 // and counts as supported unless this same version was told otherwise.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { nativeApplicationVersion } from 'expo-application';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 
 import { Constants, type Database } from '@/lib/database.types';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
+import { onVersionRefused } from '@/lib/version-refusal';
 import { useSession } from '@/providers/session-provider';
 
 import { AI_CONSENT_VERSION, PRIVACY_POLICY_VERSION, TERMS_VERSION } from './built-with';
@@ -133,6 +134,21 @@ function useKnownRequirements(asking: boolean): Requirements | undefined {
  */
 export function useRequirements(): Requirements | undefined {
   const { status } = useSession();
+  const queryClient = useQueryClient();
+  // A request the backend refused says this build is no longer supported, whenever it was last
+  // asked (ADR 0157): asking again puts the update screen in the app's place.
+  useEffect(
+    () =>
+      // A screen's requests are refused together: one question answers them all.
+      onVersionRefused(
+        () =>
+          void queryClient.invalidateQueries(
+            { queryKey: REQUIREMENTS_KEY },
+            { cancelRefetch: false },
+          ),
+      ),
+    [queryClient],
+  );
   return useKnownRequirements(status === 'ready');
 }
 

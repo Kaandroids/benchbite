@@ -3,7 +3,8 @@ import { Platform } from 'react-native';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
-import { createTestQueryClient, renderHook, waitFor } from '@/test/render';
+import { noteResponse } from '@/lib/version-refusal';
+import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { parseRequirements, useAgreementVersion, useRequirements } from './requirements';
 
@@ -53,6 +54,18 @@ it('asks the server with the platform and this build’s version, and keeps the 
     'requirements',
     JSON.stringify({ appVersion: '1.4.0', requirements: ANSWER }),
   );
+});
+
+it('asks again when the backend refuses a request of this build', async () => {
+  server(ANSWER);
+  const { result } = await renderHook(() => useRequirements());
+  await waitFor(() => expect(result.current).toEqual(ANSWER));
+
+  server({ ...ANSWER, supported: false });
+  await act(() => {
+    noteResponse({ status: 426 } as Response);
+  });
+  await waitFor(() => expect(result.current?.supported).toBe(false));
 });
 
 it('goes on with the answer kept on the device while the server cannot be reached', async () => {
