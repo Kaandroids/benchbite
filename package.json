@@ -76,6 +76,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:locales": "node scripts/check-locales.ts",
+    "licences": "node scripts/write-licences.ts && prettier --write src/licences/libraries.json",
     "watch:strings": "node scripts/generate-watch-strings.ts",
     "rules:sql": "node scripts/generate-rule-cases.ts",
     "check:rules": "node scripts/check-rule-cases.ts",
