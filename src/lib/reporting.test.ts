@@ -313,6 +313,18 @@ describe('reportError', () => {
     expect(sent.message).toBe('insert or update violates a foreign key');
   });
 
+  it('sends any other failure of the health store', () => {
+    const { reporting, sentry } = load(true);
+    // Not allowed, and a code that only starts like the locked phone's.
+    for (const message of [
+      'Error Domain=com.apple.healthkit Code=5 "Authorization not determined"',
+      'Error Domain=com.apple.healthkit Code=60 "Something else"',
+    ]) {
+      reporting.reportError('Could not take the weight from the health store', new Error(message));
+    }
+    expect(sentry.captureException).toHaveBeenCalledTimes(2);
+  });
+
   it('sends a server’s failure, which is no refusal', () => {
     const { reporting, sentry } = load(true);
     for (const error of [
@@ -337,6 +349,13 @@ describe('reportError', () => {
     const { reporting, sentry } = load(true);
     for (const error of [
       new TypeError('Network request failed'),
+      // Apple's health store while the phone is locked, in English and in German.
+      new Error(
+        'Error Domain=com.apple.healthkit Code=6 "Protected health data is inaccessible" UserInfo={NSLocalizedDescription=Protected health data is inaccessible}',
+      ),
+      new Error(
+        'Error Domain=com.apple.healthkit Code=6 "Auf geschützte Gesundheitsdaten kann nicht zugegriffen werden"',
+      ),
       Object.assign(new Error('Aborted'), { name: 'AbortError' }),
       Object.assign(new Error('Failed to send a request'), { name: 'FunctionsFetchError' }),
       { code: 'BB009', message: 'Workout limit reached' },
