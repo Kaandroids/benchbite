@@ -224,6 +224,8 @@ beforeEach(() => {
     .mockImplementation(() => useSyncExternalStore(subscribe, () => onboarding));
   jest.mocked(useSession).mockReturnValue(sessionValue('user-1'));
   jest.mocked(useIsAccount).mockReturnValue(false);
+  // Nothing known of this build, unless a test says otherwise.
+  jest.mocked(useRequirements).mockReturnValue(undefined);
 });
 
 describe('onboarding routes', () => {
@@ -328,6 +330,27 @@ describe('root layout', () => {
     await act(() => setOnboarding('welcome', {}, true));
     expect(app.getPathname()).toBe('/');
     expect(screen.getByText(TODAY)).toBeOnTheScreen();
+  });
+
+  // Kept on the device from before; without a session nothing can ask the server again.
+  it('leaves Try again in reach when the sign-in failed, whatever was last said of this version', async () => {
+    jest.mocked(useRequirements).mockReturnValue(requirements(false));
+    jest
+      .mocked(useSession)
+      .mockReturnValue(sessionValue({ status: 'error', error: new Error('offline') }));
+    setOnboarding('welcome');
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeOnTheScreen();
+    expect(screen.queryByText('Update Benchbite')).not.toBeOnTheScreen();
+  });
+
+  it('leaves Start again in reach when the session ended, whatever was last said', async () => {
+    jest.mocked(useRequirements).mockReturnValue(requirements(false));
+    jest.mocked(useSession).mockReturnValue(sessionValue({ status: 'ended', reason: 'guest' }));
+    setOnboarding('welcome');
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.getByRole('button', { name: 'Start again' })).toBeOnTheScreen();
+    expect(screen.queryByText('Update Benchbite')).not.toBeOnTheScreen();
   });
 
   it('shows the connection error when the sign-in failed', async () => {

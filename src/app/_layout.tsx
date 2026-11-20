@@ -77,7 +77,9 @@ function RootNavigator() {
   // Asked when the app opens and each time it comes back, so that what it holds to is current.
   const requirements = useRequirements();
   // Only once the server said so of this version: without an answer the app opens (ADR 0156).
-  const unsupported = requirements?.supported === false;
+  // And only with a session, which is what asks the server: without one, an answer kept on the
+  // device could never be put right, and the screen would cover the ways back to a session.
+  const unsupported = status === 'ready' && requirements?.supported === false;
   // What works alongside the screens runs only in a build that may run.
   const running = status === 'ready' && !unsupported;
   const { t } = useTranslation();
