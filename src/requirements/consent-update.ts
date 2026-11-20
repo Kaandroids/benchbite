@@ -73,10 +73,13 @@ export function useGiveHealthConsent() {
     },
     onError: (error) => {
       // Withdrawn meanwhile, as on another phone: nothing is left to renew, and the onboarding
-      // asks from the start, as after a withdrawal here.
+      // asks from the start, as after a withdrawal here, in this screen's place.
       if (isDbError(error, 'noHealthConsent')) return restart();
-      // Refused as no longer the current text: the server names the one to show.
-      return queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY });
+      // Refused as no longer the current text: the server names the one to show. Any other
+      // failure shows at once.
+      if (isDbError(error, 'notCurrentConsent')) {
+        return queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY });
+      }
     },
   });
 }

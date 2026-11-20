@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { toIsoDate } from '@/i18n/dates';
+import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useSession, useUserId } from '@/providers/session-provider';
@@ -102,8 +103,12 @@ export function useAcceptTerms() {
       return version;
     },
     onSuccess: (version) => setLastAgreed(queryClient, 'terms', userId, version),
-    // Refused as no longer the current terms: the server names the ones to show.
-    onError: () => queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY }),
+    // Refused as no longer the current terms: the server names the ones to show. Any other
+    // failure shows at once.
+    onError: (error) =>
+      isDbError(error, 'notCurrentTerms')
+        ? queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY })
+        : undefined,
   });
 }
 

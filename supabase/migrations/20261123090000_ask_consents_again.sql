@@ -65,9 +65,10 @@ as $$
   );
 $$;
 
--- A consent to the AI features is given to the current text only (BB066), as the other two are:
--- an app that last heard of an older version would record a consent that opens nothing, and ask
--- again at once. Without a current version on the server any is taken.
+-- A consent to the AI features is given to the current text only (BB066): an app that last heard
+-- of an older version would record a consent that opens nothing, and ask again at once. Unlike
+-- the terms and the health data consent, any version is taken while the server names none, as
+-- ai_consent_is_current() counts it: the rule must not close Bite by mistake.
 create function public.refuse_stale_ai_consent()
 returns trigger
 language plpgsql

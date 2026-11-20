@@ -2,6 +2,7 @@
 // Google, so ai_access() refuses them as consent_required until the user gives it.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { CONSENTS_KEY } from '@/privacy/consents';
 import { REQUIREMENTS_KEY, useAgreementVersion } from '@/requirements/requirements';
@@ -27,7 +28,10 @@ export function useGiveAiConsent() {
         queryClient.invalidateQueries({ queryKey: CONSENTS_KEY }),
       ]),
     // Refused as no longer the current text: the server names the one to consent to, and the
-    // next try records that.
-    onError: () => queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY }),
+    // next try records that. Any other failure shows at once.
+    onError: (error) =>
+      isDbError(error, 'notCurrentConsent')
+        ? queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY })
+        : undefined,
   });
 }

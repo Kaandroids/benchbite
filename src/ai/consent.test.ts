@@ -51,3 +51,12 @@ it('asks the server which text is current when this one was refused as not', asy
   expect(stale(['requirements'])).toBe(true);
   expect(stale(['ai', 'access'])).toBe(false);
 });
+
+it('does not ask the server after any other failure, which shows at once', async () => {
+  insert.mockResolvedValue({ error: { message: 'Network request failed' } });
+  const { queryClient, stale } = clientWith(['requirements']);
+  const { result } = await renderHook(() => useGiveAiConsent(), { queryClient });
+
+  await act(() => result.current.mutateAsync().catch(() => {}));
+  expect(stale(['requirements'])).toBe(false);
+});

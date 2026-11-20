@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 -- A and B consented to the health data text and, as premium users, to the AI features. C
 -- withdrew the health data consent.
@@ -134,6 +134,10 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is(
   (select allowed from public.ai_access('coach_chat')), true,
   'Without a current version on the server a consent counts as current'
+);
+select lives_ok(
+  $$ insert into public.ai_consents (consent_version) values ('2099-01-01') $$,
+  'and any can be given'
 );
 
 select * from finish();
