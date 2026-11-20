@@ -21,7 +21,8 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000c', null, true),
   ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false);
 -- They have consented to the AI features (#290), which ai_consents.test.sql tests.
-insert into public.ai_consents (user_id, consent_version) select id, 'test' from auth.users
+insert into public.ai_consents (user_id, consent_version)
+select id, (select version from public.current_agreement('ai_consent')) from auth.users
   where id::text like '00000000-0000-0000-0000-%';
 
 -- A and B are premium, with $4 a period; B has used all but two cents of it, in an earlier week
