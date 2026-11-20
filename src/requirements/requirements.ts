@@ -152,6 +152,14 @@ export function useRequirements(): Requirements | undefined {
   return useKnownRequirements(status === 'ready');
 }
 
+/**
+ * What the server last said of a text, also when kept on the device from before: its current
+ * version, the day it applies and what changed. Nothing while the server never answered.
+ */
+export function useAgreement(agreement: Agreement): AgreementVersion | undefined {
+  return useKnownRequirements(false)?.agreements[agreement];
+}
+
 /** The current version of a text: the server's, else the one this build was made with. */
 export function useAgreementVersion(agreement: Agreement): string {
   return useKnownRequirements(false)?.agreements[agreement].version ?? BUILT_WITH[agreement];

@@ -34,6 +34,22 @@
     },
     "version": "Version {{version}}"
   },
+  "termsUpdate": {
+    "announced": {
+      "title": "We’ve updated our terms",
+      "body": "The new terms of use apply from {{date}}. Have a look, and accept them to keep using Benchbite after that day."
+    },
+    "due": {
+      "title": "Our new terms apply now",
+      "body": "To keep using Benchbite, accept the new terms of use. Your data stays as it is until you decide."
+    },
+    "changed": "What changed",
+    "accept": "Accept and continue",
+    "later": "Later",
+    "export": "Export my data",
+    "delete": "Delete my account",
+    "failed": "That couldn’t be saved. Try again."
+  },
   "sessionEnded": {
     "guest": {
       "title": "Your guest session ended",

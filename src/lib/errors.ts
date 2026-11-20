@@ -1,4 +1,4 @@
-// The codes the database raises for requests it refuses (BB001 to BB064 in the migrations, and
+// The codes the database raises for requests it refuses (BB001 to BB065 in the migrations, and
 // some of Postgres's own), named by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',
@@ -33,6 +33,8 @@ const DB_ERRORS = {
   noChoiceToMake: 'BB055',
   // Raised before any request of a build that is no longer supported (ADR 0157).
   unsupportedVersion: 'BB064',
+  // The terms the user accepts are no longer the current ones (ADR 0158).
+  notCurrentTerms: 'BB065',
   // Postgres's own, for a row that is not there, such as an alternative deleted elsewhere.
   notFound: 'P0002',
   // Postgres's own, for a row that would repeat a unique value, such as a food's name.

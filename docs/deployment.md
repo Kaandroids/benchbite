@@ -61,7 +61,11 @@ values ('terms', '2027-02-01', now() + interval '30 days',
 ```
 
 The agreements are `terms`, `health_consent` and `ai_consent`. Publish the new text on the website
-before its row: the app links to it. Raise the lowest supported version only once the newer build
+before its row: the app links to it. New terms are then asked of every user who finished the
+onboarding ([ADR 0158](adr/0158-ask-again-when-the-terms-or-a-consent-change.md)): until the day
+they apply with "Later", which brings the question back the next day, and from that day until they
+accept. Write the summary in every language of the app; it is what the screen shows as "What
+changed". Raise the lowest supported version only once the newer build
 is in the stores.
 
 A build below the lowest supported version shows "Update Benchbite" in place of the app, with a

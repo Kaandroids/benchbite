@@ -34,6 +34,22 @@
     },
     "version": "Sürüm {{version}}"
   },
+  "termsUpdate": {
+    "announced": {
+      "title": "Koşullarımızı güncelledik",
+      "body": "Yeni kullanım koşulları {{date}} tarihinden itibaren geçerli. Göz at ve o günden sonra Benchbite’ı kullanmaya devam etmek için kabul et."
+    },
+    "due": {
+      "title": "Yeni koşullarımız artık geçerli",
+      "body": "Benchbite’ı kullanmaya devam etmek için yeni kullanım koşullarını kabul et. Sen karar verene kadar verilerin olduğu gibi kalır."
+    },
+    "changed": "Neler değişti",
+    "accept": "Kabul et ve devam et",
+    "later": "Sonra",
+    "export": "Verilerimi dışa aktar",
+    "delete": "Hesabımı sil",
+    "failed": "Kaydedilemedi. Tekrar dene."
+  },
   "sessionEnded": {
     "guest": {
       "title": "Misafir oturumun sona erdi",
