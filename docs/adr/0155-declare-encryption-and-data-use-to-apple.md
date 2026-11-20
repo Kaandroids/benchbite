@@ -28,10 +28,12 @@ linked pod, so what the app's own says has to cover them. The watch app had none
     picks from outside the app (3B52.1), showing free space to the user (85F4.1), and the reason
     meant for SDKs only (0A2A.1).
   - **Collected data,** each for the app's own working only and none for tracking: health and
-    fitness, name, email address, user id, photos, audio and other content the user writes, linked
-    to the account; crash data and other diagnostic data, not linked: JavaScript errors are
-    scrubbed on the phone, and native crashes by Sentry's rules as they arrive, before they are
-    stored (ADR 0149). The declaration depends on those rules staying in place.
+    fitness, name, email address, user id, photos, audio, other content the user writes, and
+    other usage data, linked to the account. Sex and birth year count under health, as the
+    calorie targets come from them; other usage data is what each request to the AI used, kept
+    per user for the allowance. Then crash data and other diagnostic data, not linked: JavaScript
+    errors are scrubbed on the phone, and native crashes by Sentry's rules as they arrive, before
+    they are stored (ADR 0149). The declaration depends on those rules staying in place.
   - **No tracking,** and no tracking domains.
 - **The watch app has a manifest of its own** (`targets/watch/PrivacyInfo.xcprivacy`), which the
   target takes with its other files: its own defaults, and health and fitness data.
