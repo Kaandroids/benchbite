@@ -87,7 +87,10 @@ opens the App Store's front on iOS.
 (`ios.config.usesNonExemptEncryption`) and holds its privacy manifest (`ios.privacyManifests`): the
 reasons it uses certain system APIs, the data it collects, and that it does not track
 ([ADR 0155](adr/0155-declare-encryption-and-data-use-to-apple.md)). The watch app's manifest is
-`targets/watch/PrivacyInfo.xcprivacy`. To see what a build carries, run
+`targets/watch/PrivacyInfo.xcprivacy`. React Native's merging of the libraries' manifests into the
+app's is off (`privacyManifestAggregationEnabled` in `app.json`): it would add reasons the app
+left out on purpose, and it links the app's manifest into the watch app beside the watch's own,
+which fails the build. To see what a build carries, run
 `APP_VARIANT=production pnpm expo prebuild --platform ios --no-install` and read
 `ios/Benchbite/PrivacyInfo.xcprivacy`; the libraries' own manifests are under `ios/Pods` after
 `pod install`. Keep the manifest, the privacy policy and the stores' privacy details in step.
