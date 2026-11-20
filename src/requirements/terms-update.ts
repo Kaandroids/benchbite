@@ -9,7 +9,7 @@ import { toIsoDate } from '@/i18n/dates';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 import { useOnboarding } from '@/providers/onboarding-provider';
-import { useSession } from '@/providers/session-provider';
+import { useSession, useUserId } from '@/providers/session-provider';
 
 import { REQUIREMENTS_KEY, useAgreement } from './requirements';
 
@@ -46,12 +46,16 @@ function useAcceptedTerms(enabled: boolean): string | null | undefined {
   return data;
 }
 
-/** The day "Later" was last chosen, with the version it was chosen for. */
-function readPutOff(): { version: string; day: string } | null {
+/** The day "Later" was last chosen on this device, by whom and for which version. */
+type PutOff = { userId: string; version: string; day: string };
+
+function readPutOff(): PutOff | null {
   try {
     const kept: unknown = JSON.parse(readItem(PUT_OFF_STORED) ?? 'null');
-    const { version, day } = (kept ?? {}) as { version?: unknown; day?: unknown };
-    return typeof version === 'string' && typeof day === 'string' ? { version, day } : null;
+    const { userId, version, day } = (kept ?? {}) as Record<keyof PutOff, unknown>;
+    return typeof userId === 'string' && typeof version === 'string' && typeof day === 'string'
+      ? { userId, version, day }
+      : null;
   } catch {
     return null;
   }
@@ -61,11 +65,11 @@ function readPutOff(): { version: string; day: string } | null {
 type Moment = { at: number; putOff: boolean };
 
 /**
- * The time, and whether the user put the question for this version off today. Read again each
- * time the app comes back, so that the question returns the next day and the day the terms apply
- * is noticed.
+ * The time, and whether this user put the question for this version off today: another user of
+ * the phone did not. Read again each time the app comes back, so that the question returns the
+ * next day and the day the terms apply is noticed; not read while there is nothing to ask about.
  */
-function useMoment(version: string | undefined): Moment | undefined {
+function useMoment(userId: string | undefined, version: string | undefined): Moment | undefined {
   const { data } = useQuery({
     queryKey: [...MOMENT_KEY, version],
     queryFn: (): Moment => {
@@ -73,9 +77,14 @@ function useMoment(version: string | undefined): Moment | undefined {
       const kept = readPutOff();
       return {
         at: now.getTime(),
-        putOff: kept !== null && kept.version === version && kept.day === toIsoDate(now),
+        putOff:
+          kept !== null &&
+          kept.userId === userId &&
+          kept.version === version &&
+          kept.day === toIsoDate(now),
       };
     },
+    enabled: userId !== undefined && version !== undefined,
     staleTime: 0,
   });
   return data;
@@ -93,7 +102,7 @@ export function useTermsAsk(): TermsAsk | null {
   const current = useAgreement('terms');
   const asked = status === 'ready' && completed;
   const accepted = useAcceptedTerms(asked);
-  const moment = useMoment(current?.version);
+  const moment = useMoment(useUserId(), current?.version);
 
   if (!asked || !current || !moment) return null;
   if (accepted === undefined || accepted === current.version) return null;
@@ -101,9 +110,9 @@ export function useTermsAsk(): TermsAsk | null {
   // A day that cannot be read counts as come: the terms are the current ones either way.
   const due = !(appliesAt.getTime() > moment.at);
   if (!due && moment.putOff) return null;
-  const [language] = i18n.language.split('-');
-  const summary = current.summary[language ?? ''] ?? current.summary.en;
-  return { version: current.version, appliesAt, due, summary: summary?.trim() || undefined };
+  // An empty text in the user's language is none.
+  const summary = current.summary[i18n.language]?.trim() || current.summary.en?.trim();
+  return { version: current.version, appliesAt, due, summary: summary || undefined };
 }
 
 /** Records that the user accepts the terms in this version, which ends the question. */
@@ -125,9 +134,12 @@ export function useAcceptTerms() {
 /** Puts the question for this version off until tomorrow, as "Later" does. */
 export function usePutOffTerms() {
   const queryClient = useQueryClient();
+  const userId = useUserId();
   return (version: string) => {
+    if (userId === undefined) return;
     const now = new Date();
-    writeItem(PUT_OFF_STORED, JSON.stringify({ version, day: toIsoDate(now) }));
+    const putOff: PutOff = { userId, version, day: toIsoDate(now) };
+    writeItem(PUT_OFF_STORED, JSON.stringify(putOff));
     queryClient.setQueryData<Moment>([...MOMENT_KEY, version], { at: now.getTime(), putOff: true });
   };
 }

@@ -1,7 +1,8 @@
+import i18n from '@/i18n';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 import { useOnboarding } from '@/providers/onboarding-provider';
-import { useSession } from '@/providers/session-provider';
+import { useSession, useUserId } from '@/providers/session-provider';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { useAgreement } from './requirements';
@@ -9,7 +10,7 @@ import { useAcceptTerms, usePutOffTerms, useTermsAsk } from './terms-update';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 jest.mock('@/lib/device-storage', () => ({ readItem: jest.fn(), writeItem: jest.fn() }));
-jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn(), useUserId: jest.fn() }));
 jest.mock('@/providers/onboarding-provider', () => ({ useOnboarding: jest.fn() }));
 jest.mock('./requirements', () => ({
   REQUIREMENTS_KEY: ['requirements'],
@@ -32,8 +33,9 @@ function accepted(version: string | null, error: unknown = null) {
   const sorted = { order: () => sorted, limit };
   jest.mocked(supabase.from).mockReturnValue({ select: () => sorted } as never);
 }
-const signedIn = (status = 'ready', completed = true) => {
+const signedIn = (status = 'ready', completed = true, userId = 'user-1') => {
   jest.mocked(useSession).mockReturnValue({ status } as never);
+  jest.mocked(useUserId).mockReturnValue(status === 'ready' ? userId : undefined);
   jest.mocked(useOnboarding).mockReturnValue({ completed } as never);
 };
 
@@ -105,6 +107,13 @@ it('falls back to English for what changed, and says nothing without a summary',
   const { result } = await renderHook(() => useTermsAsk());
   await waitFor(() => expect(result.current).not.toBeNull());
   expect(result.current?.summary).toBeUndefined();
+
+  // An empty text in the user's language is none: English stands in.
+  await i18n.changeLanguage('de');
+  jest.mocked(useAgreement).mockReturnValue({ ...TERMS, summary: { en: 'By the year', de: ' ' } });
+  const german = await renderHook(() => useTermsAsk());
+  await waitFor(() => expect(german.result.current?.summary).toBe('By the year'));
+  await i18n.changeLanguage('en');
 });
 
 describe('Later', () => {
@@ -119,14 +128,16 @@ describe('Later', () => {
     await waitFor(() => expect(result.current.ask).toBeNull());
     expect(writeItem).toHaveBeenCalledWith(
       'terms-put-off',
-      JSON.stringify({ version: '2027-02-01', day: '2027-02-10' }),
+      JSON.stringify({ userId: 'user-1', version: '2027-02-01', day: '2027-02-10' }),
     );
   });
 
   it('stays put off the same day, and asks again the next', async () => {
     jest
       .mocked(readItem)
-      .mockReturnValue(JSON.stringify({ version: '2027-02-01', day: '2027-02-10' }));
+      .mockReturnValue(
+        JSON.stringify({ userId: 'user-1', version: '2027-02-01', day: '2027-02-10' }),
+      );
     const today = await renderHook(() => useTermsAsk());
     await waitFor(() => expect(supabase.from).toHaveBeenCalled());
     expect(today.result.current).toBeNull();
@@ -136,16 +147,30 @@ describe('Later', () => {
     await waitFor(() => expect(tomorrow.result.current).not.toBeNull());
   });
 
+  it('does not count for another user of the phone', async () => {
+    jest
+      .mocked(readItem)
+      .mockReturnValue(
+        JSON.stringify({ userId: 'guest-1', version: '2027-02-01', day: '2027-02-10' }),
+      );
+    const { result } = await renderHook(() => useTermsAsk());
+    await waitFor(() => expect(result.current).not.toBeNull());
+  });
+
   it('does not count for a later version, nor once the terms apply', async () => {
     jest
       .mocked(readItem)
-      .mockReturnValue(JSON.stringify({ version: '2026-12-01', day: '2027-02-10' }));
+      .mockReturnValue(
+        JSON.stringify({ userId: 'user-1', version: '2026-12-01', day: '2027-02-10' }),
+      );
     const other = await renderHook(() => useTermsAsk());
     await waitFor(() => expect(other.result.current).not.toBeNull());
 
     jest
       .mocked(readItem)
-      .mockReturnValue(JSON.stringify({ version: '2027-02-01', day: '2027-02-10' }));
+      .mockReturnValue(
+        JSON.stringify({ userId: 'user-1', version: '2027-02-01', day: '2027-02-10' }),
+      );
     jest.mocked(useAgreement).mockReturnValue({ ...TERMS, appliesAt: '2027-02-10T00:00:00+00:00' });
     const due = await renderHook(() => useTermsAsk());
     await waitFor(() => expect(due.result.current?.due).toBe(true));
