@@ -28,6 +28,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { ReminderSync } from '@/reminders/reminder-sync';
 import { useRequirements } from '@/requirements/requirements';
+import { UpdateRequired } from '@/requirements/update-required';
 import { showRemindersInForeground } from '@/reminders/reminders';
 import { HealthCatchUp } from '@/health/health-catch-up';
 import { LeftOpenSaver } from '@/sessions/left-open';
@@ -74,7 +75,13 @@ function RootNavigator() {
   const { completed, checking } = useOnboarding();
   useClaimDevice();
   // Asked when the app opens and each time it comes back, so that what it holds to is current.
-  useRequirements();
+  const requirements = useRequirements();
+  // Only once the server said so of this version: without an answer the app opens (ADR 0156).
+  // And only with a session, which is what asks the server: without one, an answer kept on the
+  // device could never be put right, and the screen would cover the ways back to a session.
+  const unsupported = status === 'ready' && requirements?.supported === false;
+  // What works alongside the screens runs only in a build that may run.
+  const running = status === 'ready' && !unsupported;
   const { t } = useTranslation();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
@@ -106,13 +113,15 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style="auto" />
-      {status === 'ready' ? (
+      {running ? (
         <>
           <RestAlarm />
           <WatchSync />
         </>
       ) : null}
-      {status === 'error' ? (
+      {unsupported ? (
+        <UpdateRequired />
+      ) : status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
         <SessionEnded reason={session.reason} onStartAgain={startAgain} />
@@ -166,11 +175,11 @@ function RootNavigator() {
         </Stack>
       )}
       {/* Over every screen, as the app may open on any of them. */}
-      {status === 'ready' ? <LeftOpenSaver /> : null}
-      {status === 'ready' ? <StartMoveSheet /> : null}
-      {status === 'ready' ? <StartOnWatchSheet /> : null}
-      {status === 'ready' && completed ? <ReminderSync /> : null}
-      {status === 'ready' && completed ? <HealthCatchUp /> : null}
+      {running ? <LeftOpenSaver /> : null}
+      {running ? <StartMoveSheet /> : null}
+      {running ? <StartOnWatchSheet /> : null}
+      {running && completed ? <ReminderSync /> : null}
+      {running && completed ? <HealthCatchUp /> : null}
       {/* Drawn in the same frame the native splash screen hides, over the first screen. */}
       {splashDone ? null : <AnimatedSplash scheme={launchScheme} onDone={endSplash} />}
     </>

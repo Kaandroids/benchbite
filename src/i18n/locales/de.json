@@ -25,6 +25,15 @@
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
   },
+  "updateRequired": {
+    "title": "Aktualisiere Benchbite",
+    "body": "Diese Version wird nicht mehr unterstützt. Aktualisiere die App, um weiterzumachen. Deine Daten bleiben erhalten.",
+    "update": {
+      "ios": "Im App Store aktualisieren",
+      "android": "Bei Google Play aktualisieren"
+    },
+    "version": "Version {{version}}"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Deine Gast-Sitzung ist abgelaufen",
