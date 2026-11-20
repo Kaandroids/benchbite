@@ -17,7 +17,10 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "appleTeamId": "66LF92GSEG"
+      "appleTeamId": "66LF92GSEG",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.benchbite.app",
