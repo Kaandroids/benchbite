@@ -5,6 +5,7 @@ import { readItem, writeItem } from '@/lib/device-storage';
 import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
+import { forgetTermsOnDevice } from '@/requirements/kept-terms';
 import { saveReminderMinutes } from '@/reminders/settings';
 import { endSession, forgetEndedSessions } from '@/sessions/session';
 
@@ -32,7 +33,7 @@ export function claimDevice(userId: string) {
 
 /**
  * Forgets what the device keeps for its user: the workout in progress, how workouts ended, the
- * reminders and the connection to the health store. For another user who signs in, and for a user
+ * reminders, the connection to the health store and the terms they accepted. For another user who signs in, and for a user
  * who starts again after withdrawing the health data consent (ADR 0145).
  */
 export function forgetUserOnDevice() {
@@ -46,6 +47,8 @@ export function forgetUserOnDevice() {
   // The access the phone's store allowed stays: it is the phone owner's, and nothing is read
   // before the user connects again with their own consent (ADR 0108).
   forgetHealthOnDevice();
+  // What the device kept of the terms the user accepted, which a new onboarding records anew.
+  forgetTermsOnDevice();
 }
 
 /** Claims the device for each user that signs in. */
