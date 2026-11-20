@@ -28,11 +28,16 @@ release, and an old build would keep its old values for good (#688).
   supported, the lowest version that is, and each text's current version.
 - **The current version of a text is its latest, also before it applies.** A new user accepts
   what is announced, so that they are not asked again weeks later.
-- **The check fails open.** Without an answer the app goes on with the last one, kept on the
-  device, or with the versions it was built with; a version the server cannot read counts as
-  supported. Locking users out by mistake is worse than an old build running a little longer.
+- **The check fails open.** Without an answer the app goes on with the texts' versions of the
+  last one, kept on the device, or with those it was built with; a version the server cannot read
+  counts as supported, and so does a build until this same version was told otherwise, as an
+  answer kept from before an update says nothing of the new build. Locking users out by mistake
+  is worse than an old build running a little longer.
 - **Only a client with a session asks.** The function runs with its owner's rights, and such a
   function is never open to a signed-out client (ADR 0126); a guest has a session too.
+- **The app's constants only stand in.** ADR 0141 and ADR 0142 named the versions of the terms
+  and of the AI consent by constants in the app; the server names them now, and the constants,
+  kept together in `src/requirements/built-with.ts`, hold only until it has answered.
 - **Nothing is shown by this.** The screen that stops an unsupported build (#687) and the ones
   that ask again for the terms and the consents (#689, #690) build on it. The onboarding and the
   AI consent already record the server's current versions.

@@ -2,7 +2,8 @@
 // current version of each text a user agrees to. The app ships without updates over the air, so
 // the server says these when the app opens and when it comes back to the foreground; the last
 // answer is kept on the device for when the server cannot be reached. Nothing here stops the app:
-// without an answer it goes on with what it last knew, or with the versions it was built with.
+// without an answer it goes on with the texts' versions it last knew, or those it was built with,
+// and counts as supported unless this same version was told otherwise.
 import { useQuery } from '@tanstack/react-query';
 import { nativeApplicationVersion } from 'expo-application';
 import { useMemo } from 'react';
@@ -58,7 +59,7 @@ function parseAgreement(value: unknown): AgreementVersion | null {
   return { version: value.version, appliesAt: value.appliesAt, summary };
 }
 
-/** The server's answer, or one kept on the device, if it has the shape this build reads. */
+/** An answer, the server's or the one kept on the device, if it has the shape this build reads. */
 export function parseRequirements(value: unknown): Requirements | null {
   if (!isRecord(value) || typeof value.supported !== 'boolean') return null;
   if (typeof value.lowestVersion !== 'string' || !isRecord(value.agreements)) return null;
