@@ -2,14 +2,13 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import { router, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BiteAvatar } from '@/coach/bite-avatar';
+import { BiteMessage } from '@/components/bite-message';
 import { Button } from '@/components/ui/button';
 import { useTabBarSpace } from '@/components/tab-space';
 import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { isReporting, reportingErrorBoundary } from '@/lib/reporting';
 import { useTheme } from '@/theme';
@@ -76,19 +75,16 @@ export function ErrorScreen({
       }
       scrolls={false}
     >
-      <View style={[styles.content, { gap: spacing.lg, padding: spacing.xl }]}>
-        <BiteAvatar size={scope === 'app' ? 112 : 96} expression="sad" />
-        <View style={{ gap: spacing.md }}>
-          <Text variant="title" align="center" accessibilityRole="header">
-            {t(`errorScreen.${text}.title`)}
-          </Text>
-          <Text color="textMuted" align="center">
-            {again && isReporting()
-              ? `${t('errorScreen.still.body')} ${t('errorScreen.reported')}`
-              : t(`errorScreen.${text}.body`)}
-          </Text>
-        </View>
-      </View>
+      <BiteMessage
+        expression="sad"
+        size={scope === 'app' ? 112 : 96}
+        title={t(`errorScreen.${text}.title`)}
+        body={
+          again && isReporting()
+            ? `${t('errorScreen.still.body')} ${t('errorScreen.reported')}`
+            : t(`errorScreen.${text}.body`)
+        }
+      />
     </Screen>
   );
 }
@@ -119,11 +115,3 @@ export const TodayErrorBoundary = reportingErrorBoundary((props) => (
 export const SectionErrorBoundary = reportingErrorBoundary((props) => (
   <ErrorScreen {...props} scope="section" />
 ));
-
-const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
