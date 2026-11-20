@@ -81,7 +81,10 @@ export function TermsUpdateScreen() {
     >
       <StepHeading
         title={t(`termsUpdate.${state}.title`)}
-        intro={t(`termsUpdate.${state}.body`, { date: formatDate(ask.appliesAt) })}
+        // Only the announcement names the day; one that cannot be read counts as come.
+        intro={t(`termsUpdate.${state}.body`, {
+          date: due ? undefined : formatDate(ask.appliesAt),
+        })}
       />
       <View style={{ gap: spacing.lg }}>
         {ask.summary ? (

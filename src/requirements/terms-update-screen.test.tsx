@@ -103,6 +103,12 @@ describe('from the day the terms apply', () => {
     expect(screen.queryByRole('button', { name: 'Later' })).not.toBeOnTheScreen();
   });
 
+  it('shows also with a day that cannot be read, which counts as come', async () => {
+    jest.mocked(useTermsAsk).mockReturnValue({ ...DUE, appliesAt: new Date('nonsense') });
+    await render(<TermsUpdateScreen />);
+    expect(screen.getByRole('header', { name: 'Our new terms apply now' })).toBeOnTheScreen();
+  });
+
   it('offers the export of the data', async () => {
     await render(<TermsUpdateScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Export my data' }));
