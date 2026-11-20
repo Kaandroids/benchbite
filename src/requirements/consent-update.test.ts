@@ -32,10 +32,11 @@ function given(version: string | null, error: unknown = null) {
   const sorted = { order: () => sorted, limit };
   jest.mocked(supabase.from).mockReturnValue({ select: () => sorted } as never);
 }
+const restart = jest.fn();
 const signedIn = (status = 'ready', completed = true) => {
   jest.mocked(useSession).mockReturnValue({ status } as never);
   jest.mocked(useUserId).mockReturnValue(status === 'ready' ? 'user-1' : undefined);
-  jest.mocked(useOnboarding).mockReturnValue({ completed } as never);
+  jest.mocked(useOnboarding).mockReturnValue({ completed, restart } as never);
 };
 
 beforeEach(() => {
@@ -95,7 +96,7 @@ it('asks nothing while it does not know: no answer of the server, or no history'
 });
 
 it('asks nothing of a user without a consent, whom the onboarding asks', async () => {
-  // Withdrawn elsewhere, say, before the app learned of it.
+  // A state no flow leaves behind, as a withdrawal keeps the history; the onboarding's to ask.
   given(null);
   const { result } = await renderHook(() => useConsentAsk());
   await waitFor(() => expect(supabase.from).toHaveBeenCalled());
@@ -144,5 +145,15 @@ describe('agreeing', () => {
 
     await act(() => result.current.mutateAsync('2027-02-01').catch(() => {}));
     expect(queryClient.getQueryState(['requirements'])?.isInvalidated).toBe(true);
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it('starts the onboarding again when the consent was withdrawn meanwhile, as elsewhere', async () => {
+    const refusal = { code: 'BB062', message: 'There is no health data consent to renew' };
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: refusal } as never);
+    const { result } = await renderHook(() => useGiveHealthConsent());
+
+    await act(() => result.current.mutateAsync('2027-02-01').catch(() => {}));
+    expect(restart).toHaveBeenCalledTimes(1);
   });
 });

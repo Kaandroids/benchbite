@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { CONSENTS_KEY } from '@/privacy/consents';
 import { useOnboarding } from '@/providers/onboarding-provider';
@@ -54,6 +55,7 @@ export function useConsentAsk(): ConsentAsk | null {
 export function useGiveHealthConsent() {
   const queryClient = useQueryClient();
   const userId = useUserId();
+  const { restart } = useOnboarding();
   return useMutation({
     meta: {
       where: 'Could not save the health data consent',
@@ -69,7 +71,12 @@ export function useGiveHealthConsent() {
       // When it was given shows in the settings.
       await queryClient.invalidateQueries({ queryKey: CONSENTS_KEY });
     },
-    // Refused as no longer the current text: the server names the one to show.
-    onError: () => queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY }),
+    onError: (error) => {
+      // Withdrawn meanwhile, as on another phone: nothing is left to renew, and the onboarding
+      // asks from the start, as after a withdrawal here.
+      if (isDbError(error, 'noHealthConsent')) return restart();
+      // Refused as no longer the current text: the server names the one to show.
+      return queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY });
+    },
   });
 }
