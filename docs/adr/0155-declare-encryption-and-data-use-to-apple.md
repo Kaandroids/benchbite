@@ -25,11 +25,13 @@ linked pod, so what the app's own says has to cover them. The watch app had none
     files in its container (C617.1), the boot time for measuring time between events (35F9.1) and
     free disk space before writing (E174.1), which `expo-file-system` declares and the defaults
     left out. Reasons a library lists for uses the app does not make are left out: files the user
-    picks from outside the app, and showing free space to the user.
+    picks from outside the app (3B52.1), showing free space to the user (85F4.1), and the reason
+    meant for SDKs only (0A2A.1).
   - **Collected data,** each for the app's own working only and none for tracking: health and
     fitness, name, email address, user id, photos, audio and other content the user writes, linked
-    to the account; crash data and other diagnostic data, not linked, as the error reports carry
-    no user (ADR 0149).
+    to the account; crash data and other diagnostic data, not linked: JavaScript errors are
+    scrubbed on the phone, and native crashes by Sentry's rules as they arrive, before they are
+    stored (ADR 0149). The declaration depends on those rules staying in place.
   - **No tracking,** and no tracking domains.
 - **The watch app has a manifest of its own** (`targets/watch/PrivacyInfo.xcprivacy`), which the
   target takes with its other files: its own defaults, and health and fitness data.
