@@ -37,6 +37,11 @@ linked pod, so what the app's own says has to cover them. The watch app had none
   - **No tracking,** and no tracking domains.
 - **The watch app has a manifest of its own** (`targets/watch/PrivacyInfo.xcprivacy`), which the
   target takes with its other files: its own defaults, and health and fitness data.
+- **React Native's merging of the libraries' manifests is off**
+  (`ios.privacyManifestAggregationEnabled` of `expo-build-properties`), so that the phone app's
+  manifest is exactly what `app.json` declares. The merging also links the app's manifest into
+  every app of the project, the watch app among them, where it meets the watch's own under one
+  name and fails the build.
 - **Three texts say the same:** the manifest, the privacy policy, and the stores' privacy
   details (#552). A change to what the app collects changes all three.
 
@@ -51,8 +56,9 @@ linked pod, so what the app's own says has to cover them. The watch app had none
 
 ## Consequences
 
-- A new library with native code may need a reason added here: look for its
-  `PrivacyInfo.xcprivacy` after `pnpm expo prebuild`.
+- Nothing adds a library's reasons, or React Native's own, by itself: a new library with native
+  code is checked by hand, by its `PrivacyInfo.xcprivacy` after `pnpm expo prebuild`, and a
+  reason it needs is added to `app.json`.
 - Purchases will add purchase history to the collected data (#434).
 - Whether Apple accepts the manifest shows only with an upload to App Store Connect, which has
   not been made yet.
