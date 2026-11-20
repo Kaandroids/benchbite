@@ -2365,6 +2365,7 @@ export type Database = {
         };
         Returns: Database['public']['Enums']['ai_access_reason'];
       };
+      ai_consent_is_current: { Args: { user_id: string }; Returns: boolean };
       ai_cost: {
         Args: {
           cached_input_tokens: number;
@@ -2782,6 +2783,7 @@ export type Database = {
           times: number;
         }[];
       };
+      give_health_consent: { Args: { policy_version: string }; Returns: undefined };
       give_plan: {
         Args: {
           billing?: Database['public']['Enums']['billing_period'];
