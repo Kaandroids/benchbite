@@ -2592,6 +2592,21 @@ export type Database = {
         Returns: boolean;
       };
       create_exercise: { Args: { exercise: Json }; Returns: string };
+      current_agreement: {
+        Args: { agreement: Database['public']['Enums']['agreement'] };
+        Returns: {
+          agreement: Database['public']['Enums']['agreement'];
+          applies_at: string;
+          summary: NonNullable<Json>;
+          version: string;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'agreement_versions';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       custom_exercise_fields: {
         Args: { exercise: Json };
         Returns: {
