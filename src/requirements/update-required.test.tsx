@@ -1,6 +1,6 @@
 import { Linking, Platform } from 'react-native';
 
-import { fireEvent, render, screen } from '@/test/render';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { storeUrl, UpdateRequired } from './update-required';
 
@@ -20,6 +20,7 @@ jest.mock('expo-constants', () => ({
 }));
 
 beforeEach(() => {
+  jest.restoreAllMocks();
   mockConfig = {};
   Platform.OS = 'ios';
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
@@ -48,6 +49,17 @@ it('opens the app’s page on Google Play on Android', async () => {
   await render(<UpdateRequired />);
   await fireEvent.press(screen.getByRole('button', { name: 'Update on Google Play' }));
   expect(Linking.openURL).toHaveBeenCalledWith('market://details?id=com.benchbite.app');
+});
+
+it('opens Google Play on the web on a device without the Play Store', async () => {
+  Platform.OS = 'android';
+  jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error('No Activity found'));
+  await render(<UpdateRequired />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Update on Google Play' }));
+  await waitFor(() => expect(Linking.openURL).toHaveBeenCalledTimes(2));
+  expect(Linking.openURL).toHaveBeenLastCalledWith(
+    'https://play.google.com/store/apps/details?id=com.benchbite.app',
+  );
 });
 
 it('takes each store’s address from the app’s config where it names one', () => {

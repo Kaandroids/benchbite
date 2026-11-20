@@ -1,9 +1,9 @@
 import { applicationId, nativeApplicationVersion } from 'expo-application';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
-import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { Linking, Platform, View } from 'react-native';
 
-import { BiteAvatar } from '@/coach/bite-avatar';
+import { BiteMessage } from '@/components/bite-message';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -22,6 +22,9 @@ export function storeUrl(): string {
   return config?.ios?.appStoreUrl ?? 'https://apps.apple.com/';
 }
 
+/** Google Play's page of the app on the web, for a device without the Play Store app. */
+const playWebUrl = () => `https://play.google.com/store/apps/details?id=${applicationId ?? ''}`;
+
 /**
  * In place of the whole app when its version is no longer supported (#687, ADR 0156): what to
  * do, and the way to the store. There is no way past it; the app checks again each time it comes
@@ -34,9 +37,15 @@ export function UpdateRequired() {
   const store = Platform.OS === 'android' ? 'android' : 'ios';
 
   const openStore = () => {
-    Linking.openURL(storeUrl()).catch((error: unknown) =>
-      reportError('Could not open the store', error),
-    );
+    const url = storeUrl();
+    Linking.openURL(url)
+      // Nothing takes a market: address on a device without the Play Store; its page on the web
+      // still opens there.
+      .catch((error: unknown) => {
+        if (!url.startsWith('market:')) throw error;
+        return Linking.openURL(playWebUrl());
+      })
+      .catch((error: unknown) => reportError('Could not open the store', error));
   };
 
   return (
@@ -53,25 +62,11 @@ export function UpdateRequired() {
       }
       scrolls={false}
     >
-      <View style={[styles.content, { gap: spacing.lg, padding: spacing.xl }]}>
-        <BiteAvatar size={112} expression="neutral" />
-        <View style={{ gap: spacing.md }}>
-          <Text variant="title" align="center" accessibilityRole="header">
-            {t('updateRequired.title')}
-          </Text>
-          <Text color="textMuted" align="center">
-            {t('updateRequired.body')}
-          </Text>
-        </View>
-      </View>
+      <BiteMessage
+        expression="neutral"
+        title={t('updateRequired.title')}
+        body={t('updateRequired.body')}
+      />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
