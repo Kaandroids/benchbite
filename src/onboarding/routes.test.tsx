@@ -29,6 +29,7 @@ import OnboardingLayout from '@/app/onboarding/_layout';
 import OnboardingIndex from '@/app/onboarding/index';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useIsAccount, useSession } from '@/providers/session-provider';
+import { useRequirements, type Requirements } from '@/requirements/requirements';
 import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
 import { stepHref, type Step } from './steps';
@@ -132,6 +133,8 @@ jest.mock('@/sessions/rest-alarm', () => ({
   RestAlarm: () => null,
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+// What the server says this build holds to: nothing, unless a test says otherwise.
+jest.mock('@/requirements/requirements', () => ({ useRequirements: jest.fn() }));
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
@@ -176,6 +179,16 @@ const ONBOARDING_ROUTES = {
 };
 
 const TODAY = 'Today screen';
+
+/** The server's answer for a build that is supported, or not. */
+function requirements(supported: boolean): Requirements {
+  const text = { version: '2026-11-18', appliesAt: '2026-11-18T00:00:00Z', summary: {} };
+  return {
+    supported,
+    lowestVersion: '1.0.0',
+    agreements: { terms: text, health_consent: text, ai_consent: text },
+  };
+}
 
 const APP_ROUTES = {
   _layout: RootLayout,
@@ -292,6 +305,26 @@ describe('root layout', () => {
     const app = await renderRouter(APP_ROUTES, { initialUrl: '/onboarding' });
     expect(app.getPathname()).toBe('/onboarding/summary');
 
+    await act(() => setOnboarding('welcome', {}, true));
+    expect(app.getPathname()).toBe('/');
+    expect(screen.getByText(TODAY)).toBeOnTheScreen();
+  });
+
+  it('shows the update screen in place of the app once this version is not supported', async () => {
+    setOnboarding('welcome', {}, true);
+    jest.mocked(useRequirements).mockReturnValue(requirements(false));
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.getByText('Update Benchbite')).toBeOnTheScreen();
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+  });
+
+  it('opens the app again once the server says this version is supported', async () => {
+    setOnboarding('welcome', {}, true);
+    jest.mocked(useRequirements).mockReturnValue(requirements(false));
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+
+    jest.mocked(useRequirements).mockReturnValue(requirements(true));
     await act(() => setOnboarding('welcome', {}, true));
     expect(app.getPathname()).toBe('/');
     expect(screen.getByText(TODAY)).toBeOnTheScreen();
