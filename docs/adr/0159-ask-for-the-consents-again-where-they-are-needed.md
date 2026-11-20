@@ -32,7 +32,9 @@ for. A build shows the wording it was made with.
 - **The AI consent is asked again at the next use.** `ai_access()` answers `consent_required`
   when the user's latest consent was given to another version than the current one, so Bite and
   meals from photos show the consent screen of the first use (ADR 0142) before anything is sent.
-  What rests on the consent stays, and it can still be withdrawn in the settings.
+  What rests on the consent stays, and it can still be withdrawn in the settings. A consent is
+  recorded only for the current version (`BB066`), so that an app which last heard of an older
+  one asks the server instead of recording a consent that opens nothing.
 - **When both the terms and the health data consent changed, the terms are asked first.**
 - **The device keeps the version a user agreed to last,** of the terms and of the health data
   consent, per user and as the server last said it, so that the question shows in the first

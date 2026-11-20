@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 -- A and B consented to the health data text and, as premium users, to the AI features. C
 -- withdrew the health data consent.
@@ -108,6 +108,13 @@ select results_eq(
 select is(
   (select ai_given_at is not null from public.my_consents()), true,
   'The consent still holds for what rests on it, and can be withdrawn'
+);
+select throws_ok(
+  $$ insert into public.ai_consents (consent_version) values ('2026-11-18') $$, 'BB066', null,
+  'A consent to the older text is refused, which would open nothing'
+);
+select is(
+  (select count(*) from public.ai_consents), 1::bigint, 'and adds no row'
 );
 insert into public.ai_consents (consent_version) values ('2027-02-01');
 select is(

@@ -19,6 +19,9 @@ begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
+  -- Not while the user's consent is being withdrawn, as on another phone: a renewal that slipped
+  -- in would hold again over what the withdrawal deleted.
+  perform public.lock_health_consent(caller_id);
   if not public.has_health_consent(caller_id) then
     raise exception 'There is no health data consent to renew' using errcode = 'BB062';
   end if;
@@ -61,6 +64,30 @@ as $$
     true
   );
 $$;
+
+-- A consent to the AI features is given to the current text only (BB066), as the other two are:
+-- an app that last heard of an older version would record a consent that opens nothing, and ask
+-- again at once. Without a current version on the server any is taken.
+create function public.refuse_stale_ai_consent()
+returns trigger
+language plpgsql
+-- Reads the texts' versions, which are closed to clients.
+security definer
+set search_path = ''
+as $$
+begin
+  if new.consent_version is distinct from coalesce(
+    (select a.version from public.current_agreement('ai_consent') a), new.consent_version
+  ) then
+    raise exception 'This is not the current text of the consent' using errcode = 'BB066';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger ai_consents_name_the_current_text
+  before insert on public.ai_consents
+  for each row execute function public.refuse_stale_ai_consent();
 
 -- ai_access() as before (ADR 0142), and consent_required too when the consent was given to an
 -- older text: Bite and meals from photos then ask for it again at their next use, with the screen
@@ -150,3 +177,4 @@ $$;
 revoke all on function public.give_health_consent(text) from public, anon, authenticated;
 grant execute on function public.give_health_consent(text) to authenticated;
 revoke all on function public.ai_consent_is_current(uuid) from public, anon, authenticated;
+revoke all on function public.refuse_stale_ai_consent() from public, anon, authenticated;
