@@ -171,3 +171,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0153](0153-call-gemini-on-vertex-ai-in-the-eu.md)                        | Call Gemini on Vertex AI in the EU                                                      | Accepted, amended by ADR-0154                        |
 | [0154](0154-count-a-requests-tools-by-their-size-on-vertex-ai.md)         | Count a request's tools by their size on Vertex AI                                      | Accepted                                             |
 | [0155](0155-declare-encryption-and-data-use-to-apple.md)                  | Declare encryption and data use to Apple in the app config                              | Accepted                                             |
+| [0156](0156-keep-what-a-build-holds-to-on-the-server.md)                  | Keep what a build holds to on the server                                                | Accepted                                             |
