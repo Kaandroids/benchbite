@@ -26,6 +26,10 @@ const ANSWER = {
   },
 };
 
+/** An answer as it is kept on the device, by the build of `appVersion`. */
+const kept = (requirements: object, appVersion = '1.4.0') =>
+  JSON.stringify({ appVersion, requirements });
+
 const session = (status: string) => jest.mocked(useSession).mockReturnValue({ status } as never);
 const server = (data: unknown, error: unknown = null) =>
   jest.mocked(supabase.rpc).mockResolvedValue({ data, error } as never);
@@ -45,15 +49,39 @@ it('asks the server with the platform and this build’s version, and keeps the 
     platform: 'ios',
     app_version: '1.4.0',
   });
-  expect(writeItem).toHaveBeenCalledWith('requirements', JSON.stringify(ANSWER));
+  expect(writeItem).toHaveBeenCalledWith(
+    'requirements',
+    JSON.stringify({ appVersion: '1.4.0', requirements: ANSWER }),
+  );
 });
 
 it('goes on with the answer kept on the device while the server cannot be reached', async () => {
-  jest.mocked(readItem).mockReturnValue(JSON.stringify({ ...ANSWER, lowestVersion: '1.0.0' }));
+  jest.mocked(readItem).mockReturnValue(kept({ ...ANSWER, lowestVersion: '1.0.0' }));
   server(null, { message: 'Network request failed' });
   const { result } = await renderHook(() => useRequirements());
   await waitFor(() => expect(supabase.rpc).toHaveBeenCalled());
   expect(result.current?.lowestVersion).toBe('1.0.0');
+});
+
+it('counts as supported after an update, whatever the build before it was told', async () => {
+  // Kept by 1.3.0, which was no longer supported; this build is 1.4.0 and cannot ask.
+  jest
+    .mocked(readItem)
+    .mockReturnValue(kept({ ...ANSWER, supported: false, lowestVersion: '1.4.0' }, '1.3.0'));
+  server(null, { message: 'Network request failed' });
+  const { result } = await renderHook(() => useRequirements());
+  await waitFor(() => expect(supabase.rpc).toHaveBeenCalled());
+  expect(result.current?.supported).toBe(true);
+  // The texts' versions hold for any build.
+  expect(result.current?.agreements.terms.version).toBe('2027-02-01');
+});
+
+it('stays unsupported offline when this same build was told so', async () => {
+  jest.mocked(readItem).mockReturnValue(kept({ ...ANSWER, supported: false }));
+  server(null, { message: 'Network request failed' });
+  const { result } = await renderHook(() => useRequirements());
+  await waitFor(() => expect(supabase.rpc).toHaveBeenCalled());
+  expect(result.current?.supported).toBe(false);
 });
 
 it('knows nothing, rather than stopping, with no answer and none kept', async () => {
@@ -65,7 +93,7 @@ it('knows nothing, rather than stopping, with no answer and none kept', async ()
 
 it('does not ask before there is a session', async () => {
   session('loading');
-  jest.mocked(readItem).mockReturnValue(JSON.stringify(ANSWER));
+  jest.mocked(readItem).mockReturnValue(kept(ANSWER));
   const { result } = await renderHook(() => useRequirements());
   expect(supabase.rpc).not.toHaveBeenCalled();
   // What it last knew still holds.

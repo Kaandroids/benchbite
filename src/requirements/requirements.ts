@@ -8,18 +8,19 @@ import { nativeApplicationVersion } from 'expo-application';
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
 
-import { AI_CONSENT_VERSION } from '@/ai/consent-version';
+import { Constants, type Database } from '@/lib/database.types';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
-import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/onboarding/consent';
 import { useSession } from '@/providers/session-provider';
+
+import { AI_CONSENT_VERSION, PRIVACY_POLICY_VERSION, TERMS_VERSION } from './built-with';
 
 export const REQUIREMENTS_KEY = ['requirements'];
 const STORED_KEY = 'requirements';
 
 /** The texts a user agrees to, as the server names them. */
-export type Agreement = 'terms' | 'health_consent' | 'ai_consent';
-const AGREEMENTS: Agreement[] = ['terms', 'health_consent', 'ai_consent'];
+export type Agreement = Database['public']['Enums']['agreement'];
+const AGREEMENTS: readonly Agreement[] = Constants.public.Enums.agreement;
 
 /** A text's current version, the day it applies, and what changed, by language. */
 export type AgreementVersion = {
@@ -70,12 +71,22 @@ export function parseRequirements(value: unknown): Requirements | null {
   return { supported: value.supported, lowestVersion: value.lowestVersion, agreements };
 }
 
-/** The answer kept on the device, if any. */
+/**
+ * The answer kept on the device, if any. Whether a build is supported was said of the version
+ * that asked: kept by another version, as before an update, it says nothing of this one, which
+ * then counts as supported until the server answers. The texts' versions hold for any build.
+ */
 function storedRequirements(): Requirements | null {
   const stored = readItem(STORED_KEY);
   if (!stored) return null;
   try {
-    return parseRequirements(JSON.parse(stored));
+    const kept: unknown = JSON.parse(stored);
+    if (!isRecord(kept)) return null;
+    const requirements = parseRequirements(kept.requirements);
+    if (!requirements) return null;
+    return kept.appVersion === nativeApplicationVersion
+      ? requirements
+      : { ...requirements, supported: true };
   } catch {
     return null;
   }
@@ -95,7 +106,7 @@ async function fetchRequirements(): Promise<Requirements> {
   if (error) throw error;
   const requirements = parseRequirements(data);
   if (!requirements) throw new Error('The requirements have a shape this build cannot read');
-  writeItem(STORED_KEY, JSON.stringify(requirements));
+  writeItem(STORED_KEY, JSON.stringify({ appVersion: nativeApplicationVersion, requirements }));
   return requirements;
 }
 
