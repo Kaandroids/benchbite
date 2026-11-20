@@ -9,6 +9,7 @@ export const PRIVACY_POLICY_VERSION = '2026-10-21';
 // acceptance (ADR 0141).
 export const TERMS_VERSION = '2026-11-18';
 
-// The version of the AI consent's text, recorded with each consent. Raising a version asks no one
-// again by itself: the server must then require it (ADR 0142).
+// The version of the AI consent's text, recorded with each consent. Raising it here asks no one
+// again: the server's row for a new version does, at the next use of the AI features (ADR 0156,
+// ADR 0159).
 export const AI_CONSENT_VERSION = '2026-11-18';

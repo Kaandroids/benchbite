@@ -14,7 +14,9 @@
     "minutes": "{{minutes}} min",
     "hours": "{{hours}} h {{minutes}} min",
     "read": "Read",
-    "readPolicy": "Read the privacy policy"
+    "readPolicy": "Read the privacy policy",
+    "whatChanged": "What changed",
+    "saveFailed": "That couldn’t be saved. Try again."
   },
   "photoSheet": {
     "take": "Take a photo",
@@ -43,12 +45,10 @@
       "title": "Our new terms apply now",
       "body": "To keep using Benchbite, accept the new terms of use. Your data stays as it is until you decide."
     },
-    "changed": "What changed",
     "accept": "Accept and continue",
     "later": "Later",
     "export": "Export my data",
-    "delete": "Delete my account",
-    "failed": "That couldn’t be saved. Try again."
+    "delete": "Delete my account"
   },
   "consentUpdate": {
     "title": "We need your OK again",

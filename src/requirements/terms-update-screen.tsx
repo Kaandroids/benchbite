@@ -46,7 +46,7 @@ export function TermsUpdateScreen() {
         <View style={{ gap: spacing.md }}>
           {accept.isError ? (
             <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
-              {t('termsUpdate.failed')}
+              {t('common.saveFailed')}
             </Text>
           ) : null}
           <Button
@@ -89,7 +89,7 @@ export function TermsUpdateScreen() {
       <View style={{ gap: spacing.lg }}>
         {ask.summary ? (
           <Card style={{ gap: spacing.xs }}>
-            <Text variant="label">{t('termsUpdate.changed')}</Text>
+            <Text variant="label">{t('common.whatChanged')}</Text>
             <Text color="textMuted">{ask.summary}</Text>
           </Card>
         ) : null}

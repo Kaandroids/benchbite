@@ -50,7 +50,7 @@ export function ConsentUpdateScreen() {
         <View style={{ gap: spacing.md }}>
           {give.isError ? (
             <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
-              {t('termsUpdate.failed')}
+              {t('common.saveFailed')}
             </Text>
           ) : null}
           <Button
@@ -85,7 +85,7 @@ export function ConsentUpdateScreen() {
           ))}
           {ask.summary ? (
             <View style={{ gap: spacing.xs }}>
-              <Text variant="label">{t('termsUpdate.changed')}</Text>
+              <Text variant="label">{t('common.whatChanged')}</Text>
               <Text color="textMuted">{ask.summary}</Text>
             </View>
           ) : null}
