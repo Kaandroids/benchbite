@@ -22,7 +22,7 @@ export function LicencesRow() {
         ]}
       >
         <View style={styles.flex}>
-          <Text variant="label">{t('settings.licences.row')}</Text>
+          <Text variant="label">{t('licences.title')}</Text>
           <Text variant="caption" color="textMuted">
             {t('settings.licences.rowBody')}
           </Text>
