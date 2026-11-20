@@ -161,8 +161,18 @@ export const reportingErrorBoundary = (
 const UNREACHABLE = /network request failed|failed to fetch|network error|timed out|offline/i;
 
 /**
+ * What Apple's health store says while the phone is locked: its data is encrypted then, and can
+ * be neither read nor written (HKError.errorDatabaseInaccessible). The text beside the code is in
+ * the phone's language, so the code is gone by.
+ */
+const HEALTH_STORE_LOCKED = /com\.apple\.healthkit Code=6\b/;
+
+/**
  * Whether an error is one the app expects and handles, and Sentry need not hear of:
  * - no network, or a request given up;
+ * - the health store of a locked phone, which nothing can do anything about until it is
+ *   unlocked: what the app reads it reads again when it next comes to the front, and a workout
+ *   it could not save there it saves on a return within a day;
  * - a session that ended, which the app asks to log in again for;
  * - a refusal the screen explains to the person: the database's with one of the app's own codes
  *   (BB…), Auth's of what was typed (4xx), and an error that says so itself with `expected`, as
@@ -194,7 +204,8 @@ export function isExpected(error: unknown): boolean {
     // whose error holds the response.
     status === UPGRADE_REQUIRED ||
     (context as { status?: unknown } | null | undefined)?.status === UPGRADE_REQUIRED ||
-    (typeof message === 'string' && UNREACHABLE.test(message))
+    (typeof message === 'string' &&
+      (UNREACHABLE.test(message) || HEALTH_STORE_LOCKED.test(message)))
   );
 }
 
