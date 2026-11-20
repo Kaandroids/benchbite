@@ -25,6 +25,15 @@
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
   },
+  "updateRequired": {
+    "title": "Benchbite’ı güncelle",
+    "body": "Bu sürüm artık desteklenmiyor. Devam etmek için uygulamayı güncelle. Verilerin yerinde duruyor.",
+    "update": {
+      "ios": "App Store’da güncelle",
+      "android": "Google Play’de güncelle"
+    },
+    "version": "Sürüm {{version}}"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Misafir oturumun sona erdi",

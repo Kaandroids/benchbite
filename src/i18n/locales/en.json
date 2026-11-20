@@ -25,6 +25,15 @@
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
   },
+  "updateRequired": {
+    "title": "Update Benchbite",
+    "body": "This version is no longer supported. Update the app to carry on. Your data stays as it is.",
+    "update": {
+      "ios": "Update in the App Store",
+      "android": "Update on Google Play"
+    },
+    "version": "Version {{version}}"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Your guest session ended",
