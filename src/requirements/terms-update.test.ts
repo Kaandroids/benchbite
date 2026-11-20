@@ -119,6 +119,48 @@ it('falls back to English for what changed, and says nothing without a summary',
   await waitFor(() => expect(german.result.current?.summary).toBe('By the year'));
 });
 
+describe('at the start of the app', () => {
+  /** What the device kept: the version this user accepted last, as the server said it. */
+  const kept = (userId: string, version: string | null) =>
+    jest
+      .mocked(readItem)
+      .mockImplementation((key) =>
+        key === 'terms-accepted' ? JSON.stringify({ userId, version }) : null,
+      );
+
+  it('asks at once, from the version the device kept for this user', async () => {
+    kept('user-1', '2026-11-18');
+    const { result } = await renderHook(() => useTermsAsk());
+    // Before the server answered.
+    expect(result.current?.version).toBe('2027-02-01');
+  });
+
+  it('keeps what the server says for the next start', async () => {
+    const { result } = await renderHook(() => useTermsAsk());
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(writeItem).toHaveBeenCalledWith(
+      'terms-accepted',
+      JSON.stringify({ userId: 'user-1', version: '2026-11-18' }),
+    );
+  });
+
+  it('takes the server’s answer over the kept one, as after accepting on another phone', async () => {
+    kept('user-1', '2026-11-18');
+    accepted('2027-02-01');
+    const { result } = await renderHook(() => useTermsAsk());
+    await waitFor(() => expect(result.current).toBeNull());
+  });
+
+  it('does not go by what was kept for another user of the phone', async () => {
+    kept('guest-1', '2026-11-18');
+    accepted('2027-02-01');
+    const { result } = await renderHook(() => useTermsAsk());
+    expect(result.current).toBeNull();
+    await waitFor(() => expect(supabase.from).toHaveBeenCalled());
+    expect(result.current).toBeNull();
+  });
+});
+
 describe('Later', () => {
   it('puts the question off for the day, for this version', async () => {
     const queryClient = createTestQueryClient();
@@ -192,6 +234,10 @@ describe('accepting', () => {
     await act(() => result.current.accept.mutateAsync('2027-02-01'));
     expect(supabase.rpc).toHaveBeenCalledWith('accept_terms', { terms_version: '2027-02-01' });
     await waitFor(() => expect(result.current.ask).toBeNull());
+    expect(writeItem).toHaveBeenCalledWith(
+      'terms-accepted',
+      JSON.stringify({ userId: 'user-1', version: '2027-02-01' }),
+    );
   });
 
   it('asks the server which terms are current when these were refused as not', async () => {

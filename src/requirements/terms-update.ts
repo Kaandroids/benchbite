@@ -16,6 +16,7 @@ import { REQUIREMENTS_KEY, useAgreement } from './requirements';
 const ACCEPTED_KEY = ['terms', 'accepted'];
 const MOMENT_KEY = ['terms', 'moment'];
 const PUT_OFF_STORED = 'terms-put-off';
+const ACCEPTED_STORED = 'terms-accepted';
 
 /** The newer terms a user is asked to accept. */
 export type TermsAsk = {
@@ -27,8 +28,32 @@ export type TermsAsk = {
   summary?: string;
 };
 
-/** The version the user accepted last, or null for none; nothing while it is not known. */
-function useAcceptedTerms(enabled: boolean): string | null | undefined {
+/** The version a user accepted last, as the server last said it, kept for the next start. */
+type KeptAccepted = { userId: string; version: string | null };
+
+function readAccepted(userId: string | undefined): string | null | undefined {
+  try {
+    const kept: unknown = JSON.parse(readItem(ACCEPTED_STORED) ?? 'null');
+    const { userId: keptFor, version } = (kept ?? {}) as Record<keyof KeptAccepted, unknown>;
+    if (userId === undefined || keptFor !== userId) return undefined;
+    return typeof version === 'string' || version === null ? version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function keepAccepted(userId: string | undefined, version: string | null) {
+  if (userId === undefined) return;
+  const kept: KeptAccepted = { userId, version };
+  writeItem(ACCEPTED_STORED, JSON.stringify(kept));
+}
+
+/**
+ * The version the user accepted last, or null for none; nothing while it is not known. It starts
+ * from what the device kept for this user, so that new terms show before the app does and not a
+ * moment after it; the server is asked all the same, and its answer counts.
+ */
+function useAcceptedTerms(userId: string | undefined, enabled: boolean): string | null | undefined {
   const { data } = useQuery({
     queryKey: ACCEPTED_KEY,
     queryFn: async () => {
@@ -39,9 +64,14 @@ function useAcceptedTerms(enabled: boolean): string | null | undefined {
         .order('id', { ascending: false })
         .limit(1);
       if (error) throw error;
-      return rows[0]?.terms_version ?? null;
+      const version = rows[0]?.terms_version ?? null;
+      keepAccepted(userId, version);
+      return version;
     },
     enabled,
+    initialData: () => readAccepted(userId),
+    // Kept from an earlier start: old enough to ask the server at once.
+    initialDataUpdatedAt: 0,
   });
   return data;
 }
@@ -70,21 +100,24 @@ type Moment = { at: number; putOff: boolean };
  * next day and the day the terms apply is noticed; not read while there is nothing to ask about.
  */
 function useMoment(userId: string | undefined, version: string | undefined): Moment | undefined {
+  const weigh = (): Moment => {
+    const now = new Date();
+    const kept = readPutOff();
+    return {
+      at: now.getTime(),
+      putOff:
+        kept !== null &&
+        kept.userId === userId &&
+        kept.version === version &&
+        kept.day === toIsoDate(now),
+    };
+  };
   const { data } = useQuery({
     queryKey: [...MOMENT_KEY, userId, version],
-    queryFn: (): Moment => {
-      const now = new Date();
-      const kept = readPutOff();
-      return {
-        at: now.getTime(),
-        putOff:
-          kept !== null &&
-          kept.userId === userId &&
-          kept.version === version &&
-          kept.day === toIsoDate(now),
-      };
-    },
+    queryFn: weigh,
     enabled: userId !== undefined && version !== undefined,
+    // Known at once, so that the question does not wait a frame for it.
+    initialData: weigh,
     staleTime: 0,
   });
   return data;
@@ -101,8 +134,9 @@ export function useTermsAsk(): TermsAsk | null {
   const { i18n } = useTranslation();
   const current = useAgreement('terms');
   const asked = status === 'ready' && completed;
-  const accepted = useAcceptedTerms(asked);
-  const moment = useMoment(useUserId(), current?.version);
+  const userId = useUserId();
+  const accepted = useAcceptedTerms(userId, asked);
+  const moment = useMoment(userId, current?.version);
 
   if (!asked || !current || !moment) return null;
   if (accepted === undefined || accepted === current.version) return null;
@@ -118,6 +152,7 @@ export function useTermsAsk(): TermsAsk | null {
 /** Records that the user accepts the terms in this version, which ends the question. */
 export function useAcceptTerms() {
   const queryClient = useQueryClient();
+  const userId = useUserId();
   return useMutation({
     meta: { where: 'Could not save the acceptance of the terms', expects: ['notCurrentTerms'] },
     mutationFn: async (version: string) => {
@@ -125,7 +160,10 @@ export function useAcceptTerms() {
       if (error) throw error;
       return version;
     },
-    onSuccess: (version) => queryClient.setQueryData(ACCEPTED_KEY, version),
+    onSuccess: (version) => {
+      keepAccepted(userId, version);
+      queryClient.setQueryData(ACCEPTED_KEY, version);
+    },
     // Refused as no longer the current terms: the server names the ones to show.
     onError: () => queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY }),
   });
