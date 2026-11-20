@@ -200,6 +200,10 @@ Max Rubner-Institut, Karlsruhe, released under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The names in Turkish, some shortened
 names and the portion sizes are our own.
 
+The app shows these credits and the licences of the open source libraries it is made of in its
+settings, under Licences and credits. After a dependency changes, `pnpm licences` writes that list
+again ([ADR 0160](docs/adr/0160-show-the-licences-of-what-ships-in-the-app.md)).
+
 ## License
 
 [MIT](LICENSE)
