@@ -160,6 +160,17 @@ describe('at the start of the app', () => {
     await waitFor(() => expect(result.current).toBeNull());
   });
 
+  it('opens it at the first failed try, without waiting for the others', async () => {
+    kept('user-1', '2026-11-18');
+    accepted(null, { code: '57014', message: 'timeout' });
+    const queryClient = createTestQueryClient();
+    queryClient.setDefaultOptions({ queries: { retry: 3, retryDelay: 60_000 } });
+    const { result } = await renderHook(() => useTermsAsk(), { queryClient });
+    await waitFor(() => expect(supabase.from).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current).toBeNull());
+    expect(supabase.from).toHaveBeenCalledTimes(1);
+  });
+
   it('does not go by what was kept for another user of the phone', async () => {
     kept('guest-1', '2026-11-18');
     accepted('2027-02-01');

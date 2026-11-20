@@ -21,9 +21,12 @@ function readKept(key: string): Record<string, unknown> | null {
   }
 }
 
-export function readAccepted(): KeptAccepted | null {
+/** What was kept for this user: what was kept for another says nothing of them. */
+export function readAccepted(forUser: string | undefined): KeptAccepted | null {
   const { userId, version } = readKept(ACCEPTED_STORED) ?? {};
-  return typeof userId === 'string' && (typeof version === 'string' || version === null)
+  return typeof userId === 'string' &&
+    userId === forUser &&
+    (typeof version === 'string' || version === null)
     ? { userId, version }
     : null;
 }
@@ -32,9 +35,13 @@ export function keepAccepted(accepted: KeptAccepted) {
   writeItem(ACCEPTED_STORED, JSON.stringify(accepted));
 }
 
-export function readPutOff(): PutOff | null {
+/** What this user chose: another user of the phone put nothing off for them. */
+export function readPutOff(forUser: string | undefined): PutOff | null {
   const { userId, version, day } = readKept(PUT_OFF_STORED) ?? {};
-  return typeof userId === 'string' && typeof version === 'string' && typeof day === 'string'
+  return typeof userId === 'string' &&
+    userId === forUser &&
+    typeof version === 'string' &&
+    typeof day === 'string'
     ? { userId, version, day }
     : null;
 }

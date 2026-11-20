@@ -14,6 +14,11 @@ import { keepAccepted, keepPutOff, readAccepted, readPutOff } from './kept-terms
 import { REQUIREMENTS_KEY, useAgreement } from './requirements';
 
 const ACCEPTED_KEY = ['terms', 'accepted'];
+/**
+ * When data that came from the device counts as loaded: old enough for the server to be asked at
+ * once, and the mark by which it is told from the server's answer.
+ */
+const KEPT_AT = 0;
 const MOMENT_KEY = ['terms', 'moment'];
 
 /** The newer terms a user is asked to accept. */
@@ -33,7 +38,7 @@ export type TermsAsk = {
  * asked, nothing is known, and the app opens as without the kept version.
  */
 function useAcceptedTerms(userId: string | undefined, enabled: boolean): string | null | undefined {
-  const { data, isError, dataUpdatedAt } = useQuery({
+  const { data, isError, failureCount, dataUpdatedAt } = useQuery({
     queryKey: ACCEPTED_KEY,
     queryFn: async ({ signal }) => {
       const { data: rows, error } = await supabase
@@ -49,15 +54,13 @@ function useAcceptedTerms(userId: string | undefined, enabled: boolean): string 
       return version;
     },
     enabled,
-    initialData: () => {
-      const kept = readAccepted();
-      return kept !== null && kept.userId === userId ? kept.version : undefined;
-    },
-    // Kept from an earlier start: old enough to ask the server at once.
-    initialDataUpdatedAt: 0,
+    initialData: () => readAccepted(userId)?.version,
+    initialDataUpdatedAt: KEPT_AT,
   });
-  // Only the kept version, and the server could not be asked: not enough to hold the user on.
-  return isError && dataUpdatedAt === 0 ? undefined : data;
+  // Only the kept version, and the server could not be asked, be it at the first try: not enough
+  // to hold the user on. The question returns if a later try gets an answer.
+  const onlyKept = dataUpdatedAt === KEPT_AT;
+  return onlyKept && (isError || failureCount > 0) ? undefined : data;
 }
 
 /** The moment the question was last weighed, and whether it was put off for that day. */
@@ -71,14 +74,10 @@ type Moment = { at: number; putOff: boolean };
 function useMoment(userId: string | undefined, version: string | undefined): Moment {
   const weigh = (): Moment => {
     const now = new Date();
-    const kept = readPutOff();
+    const kept = readPutOff(userId);
     return {
       at: now.getTime(),
-      putOff:
-        kept !== null &&
-        kept.userId === userId &&
-        kept.version === version &&
-        kept.day === toIsoDate(now),
+      putOff: kept !== null && kept.version === version && kept.day === toIsoDate(now),
     };
   };
   const { data } = useQuery({

@@ -5,11 +5,14 @@ import { readItem, writeItem } from '@/lib/device-storage';
 import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
-import { forgetTermsOnDevice } from '@/requirements/kept-terms';
 import { saveReminderMinutes } from '@/reminders/settings';
+import { forgetTermsOnDevice } from '@/requirements/kept-terms';
 import { endSession, forgetEndedSessions } from '@/sessions/session';
 
-/** The user whose workout in progress, reminders and health connection the device keeps. */
+/**
+ * The user whose workout in progress, reminders, health connection and accepted terms the device
+ * keeps.
+ */
 const OWNER_KEY = 'device.owner';
 
 /**
@@ -33,8 +36,9 @@ export function claimDevice(userId: string) {
 
 /**
  * Forgets what the device keeps for its user: the workout in progress, how workouts ended, the
- * reminders, the connection to the health store and the terms they accepted. For another user who signs in, and for a user
- * who starts again after withdrawing the health data consent (ADR 0145).
+ * reminders, the connection to the health store and the terms they accepted. For another user
+ * who signs in, and for a user who starts again after withdrawing the health data consent
+ * (ADR 0145).
  */
 export function forgetUserOnDevice() {
   endSession({ saved: false });
