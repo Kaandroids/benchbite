@@ -1,6 +1,6 @@
 # 0141. Accept the terms of use beside the health data consent
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0156
 - **Date:** 2026-11-18
 
 ## Context
