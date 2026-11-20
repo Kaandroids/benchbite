@@ -60,14 +60,14 @@ values ('terms', '2027-02-01', now() + interval '30 days',
   '{"en": "…", "de": "…", "tr": "…"}');
 ```
 
+The agreements are `terms`, `health_consent` and `ai_consent`. Publish the new text on the website
+before its row: the app links to it. Raise the lowest supported version only once the newer build
+is in the stores.
+
 A build below the lowest supported version shows "Update Benchbite" in place of the app, with a
 button to its store (#687). The button needs the app's page: set `ios.appStoreUrl` and
 `android.playStoreUrl` in `app.json` once the app has one, before the first release; until then it
 opens the App Store's front on iOS.
-
-The agreements are `terms`, `health_consent` and `ai_consent`. Publish the new text on the website
-before its row: the app links to it. Raise the lowest supported version only once the newer build
-is in the stores.
 
 ## What the app declares to Apple
 
