@@ -57,6 +57,29 @@
     "decline": "Onaylamıyorum",
     "note": "Onayın olmadan Benchbite sağlık verilerini tutamaz. Bir şey silinmeden önce neyin silineceğini görürsün."
   },
+  "licences": {
+    "title": "Lisanslar ve teşekkürler",
+    "credits": "Veri ve yazı tipi",
+    "food": {
+      "title": "Besin değerleri",
+      "body": "Bundeslebensmittelschlüssel (BLS) 4.0, Max Rubner-Institut, Karlsruhe. CC BY 4.0. Türkçe adlar, bazı kısaltılmış adlar ve porsiyon ölçüleri bize aittir."
+    },
+    "exercises": {
+      "title": "Egzersizler ve görselleri",
+      "body": "Clint Plummer ve katkıda bulunanların free-exercise-db’si. Kamu malı (Unlicense)."
+    },
+    "typeface": {
+      "title": "Yazı tipi",
+      "body": "Vernon Adams ve katkıda bulunanların Nunito’su. SIL Open Font License 1.1."
+    },
+    "libraries": "Açık kaynak kütüphaneler",
+    "count_one": "{{count}} kütüphane",
+    "count_other": "{{count}} kütüphane",
+    "note": "Bu uygulamanın parçası olan kütüphaneler, lisanslarına göre. Onları yazan herkese teşekkürler.",
+    "text": "Lisans",
+    "under_one": "Bu lisansla {{count}} kütüphane",
+    "under_other": "Bu lisansla {{count}} kütüphane"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Misafir oturumun sona erdi",
@@ -254,6 +277,10 @@
         "failed": "Dosya oluşturulamadı. Tekrar dene.",
         "first": "Önce verilerini dışa aktar"
       }
+    },
+    "licences": {
+      "row": "Lisanslar ve teşekkürler",
+      "rowBody": "Benchbite’ın yapımında kullanılan açık kaynak kütüphaneler ve veriler."
     }
   },
   "loadError": {

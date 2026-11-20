@@ -57,6 +57,29 @@
     "decline": "I don’t agree",
     "note": "Without it Benchbite can’t keep your health data. You’ll see what is deleted before anything is."
   },
+  "licences": {
+    "title": "Licences and credits",
+    "credits": "Data and typeface",
+    "food": {
+      "title": "Food values",
+      "body": "Bundeslebensmittelschlüssel (BLS) 4.0, Max Rubner-Institut, Karlsruhe. CC BY 4.0. The Turkish names, some shortened names and the portion sizes are our own."
+    },
+    "exercises": {
+      "title": "Exercises and their pictures",
+      "body": "free-exercise-db by Clint Plummer and contributors. Public domain (Unlicense)."
+    },
+    "typeface": {
+      "title": "Typeface",
+      "body": "Nunito by Vernon Adams and contributors. SIL Open Font License 1.1."
+    },
+    "libraries": "Open source libraries",
+    "count_one": "{{count}} library",
+    "count_other": "{{count}} libraries",
+    "note": "The libraries that are part of this app, by their licence. Thank you to everyone who wrote them.",
+    "text": "The licence",
+    "under_one": "{{count}} library under it",
+    "under_other": "{{count}} libraries under it"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Your guest session ended",
@@ -254,6 +277,10 @@
         "failed": "Couldn’t make the file. Try again.",
         "first": "Export your data first"
       }
+    },
+    "licences": {
+      "row": "Licences and credits",
+      "rowBody": "The open source libraries and the data Benchbite is built with."
     }
   },
   "loadError": {
