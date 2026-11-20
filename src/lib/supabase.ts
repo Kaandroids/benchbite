@@ -2,7 +2,8 @@
 import 'expo-sqlite/localStorage/install';
 
 import { createClient } from '@supabase/supabase-js';
-import { AppState } from 'react-native';
+import { nativeApplicationVersion } from 'expo-application';
+import { AppState, Platform } from 'react-native';
 
 import type { Database } from './database.types';
 
@@ -25,7 +26,16 @@ export function functionUrl(name: string): string {
 /** The project's publishable key, which every request to it carries. */
 export const publishableKey: string = supabasePublishableKey;
 
+/**
+ * The build a request comes from, which every request names: the backend refuses a version of
+ * the app that is no longer supported (ADR 0157). A request without them is not judged.
+ */
+export const appVersionHeaders: Record<string, string> = nativeApplicationVersion
+  ? { 'x-app-platform': Platform.OS, 'x-app-version': nativeApplicationVersion }
+  : {};
+
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
+  global: { headers: appVersionHeaders },
   auth: {
     storage: localStorage,
     persistSession: true,
@@ -45,8 +55,8 @@ AppState.addEventListener('change', (state) => {
 });
 
 /**
- * The headers of a JSON request to an Edge Function: the publishable key, and the signed-in
- * user's token, which the function checks.
+ * The headers of a JSON request to an Edge Function: the publishable key, the signed-in user's
+ * token, which the function checks, and the build the request comes from.
  */
 export async function functionHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
@@ -54,6 +64,7 @@ export async function functionHeaders(): Promise<Record<string, string>> {
   return {
     'content-type': 'application/json',
     apikey: publishableKey,
+    ...appVersionHeaders,
     ...(token && { authorization: `Bearer ${token}` }),
   };
 }
