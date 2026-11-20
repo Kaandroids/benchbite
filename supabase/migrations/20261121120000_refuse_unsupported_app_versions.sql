@@ -27,8 +27,9 @@ as $$
   );
 $$;
 
--- Runs before each request to the Data API, as the request's role. Raises BB064 for a build that
--- is no longer supported; the app then asks app_requirements() again and shows the update screen.
+-- Runs before each request to the Data API, as the request's role. Refuses a build that is no
+-- longer supported with 426 Upgrade Required and the code BB064; the app then asks
+-- app_requirements() again and shows the update screen.
 create function public.check_app_version()
 returns void
 language plpgsql
@@ -59,9 +60,52 @@ begin
   end;
 
   if supported is false then
-    raise exception 'This version of the app is no longer supported' using errcode = 'BB064';
+    -- The form the Data API takes a status from; the Edge Functions answer 426 too.
+    raise sqlstate 'PGRST' using
+      message = json_build_object(
+        'code', 'BB064',
+        'message', 'This version of the app is no longer supported',
+        'details', null,
+        'hint', null
+      )::text,
+      detail = json_build_object(
+        'status', 426, 'status_text', 'Upgrade Required', 'headers', json_build_object()
+      )::text;
   end if;
 end;
+$$;
+
+-- What the update screen goes by and what the check refuses by are one rule: app_requirements()
+-- as before (ADR 0156), with `supported` from app_version_supported().
+create or replace function public.app_requirements(platform public.app_platform, app_version text)
+returns jsonb
+language sql
+stable
+-- Reads the two tables, which are closed to clients.
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'supported', public.app_version_supported(s.platform::text, app_version),
+    'lowestVersion', s.lowest_version,
+    'agreements', (
+      select jsonb_object_agg(
+        latest.agreement,
+        jsonb_build_object(
+          'version', latest.version,
+          'appliesAt', latest.applies_at,
+          'summary', latest.summary
+        )
+      )
+      from (
+        select distinct on (a.agreement) a.agreement, a.version, a.applies_at, a.summary
+        from public.agreement_versions a
+        order by a.agreement, a.applies_at desc, a.version desc
+      ) latest
+    )
+  )
+  from public.supported_app_versions s
+  where s.platform = app_requirements.platform;
 $$;
 
 -- New functions are closed to clients (ADR 0126). Every role a request runs as must be able to

@@ -1,10 +1,11 @@
 -- The Data API runs check_app_version() before every request: it refuses a signed-in build of the
 -- app whose version is no longer supported, and lets everything else pass, as a fault in a check
--- that every request goes through would stop the whole app.
+-- that every request goes through would stop the whole app. The refusal has the form the Data API
+-- answers 426 Upgrade Required from, with the app's code BB064 in its message.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 -- The values of the migration, whatever a developer set since.
 update public.supported_app_versions set lowest_version = '1.4.0' where platform = 'ios';
@@ -38,12 +39,20 @@ select ok(
 set local role authenticated;
 select pg_temp.request('{"x-app-platform": "ios", "x-app-version": "1.3.9"}');
 select throws_ok(
-  $$ select public.check_app_version() $$, 'BB064', null,
+  $$ select public.check_app_version() $$, 'PGRST', null,
   'A build below the lowest supported version is refused'
+);
+select throws_like(
+  $$ select public.check_app_version() $$, '%"code" : "BB064"%',
+  'with the code the app knows it by'
+);
+select is(
+  (public.app_requirements('ios', '1.3.9') ->> 'supported')::boolean, false,
+  'and told to update by the same rule'
 );
 select pg_temp.request('{"x-app-platform": "ios", "x-app-version": "1.3.9"}', '/rpc/ai_access');
 select throws_ok(
-  $$ select public.check_app_version() $$, 'BB064', null, 'when it calls a function too'
+  $$ select public.check_app_version() $$, 'PGRST', null, 'when it calls a function too'
 );
 select pg_temp.request(
   '{"x-app-platform": "ios", "x-app-version": "1.3.9"}', '/rpc/app_requirements'
