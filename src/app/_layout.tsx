@@ -168,6 +168,9 @@ function RootNavigator() {
             <Stack.Screen name="session/exercise/[id]" />
             <Stack.Screen name="session/exercise/history" />
             <Stack.Screen name="settings" />
+            {/* The licences and credits, opened from the settings. */}
+            <Stack.Screen name="licences/index" />
+            <Stack.Screen name="licences/[licence]" />
             <Stack.Screen name="account/password" />
             {/* What premium adds, opened wherever the plan stops the user. */}
             <Stack.Screen name="premium" />
