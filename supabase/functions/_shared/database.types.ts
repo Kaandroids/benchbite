@@ -2295,6 +2295,7 @@ export type Database = {
       };
     };
     Functions: {
+      accept_terms: { Args: { terms_version: string }; Returns: undefined };
       account_deletion_tries_since: {
         Args: { p_kind: string; p_since: string; p_user: string };
         Returns: number;
