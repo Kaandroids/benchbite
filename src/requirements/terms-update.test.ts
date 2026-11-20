@@ -151,6 +151,15 @@ describe('at the start of the app', () => {
     await waitFor(() => expect(result.current).toBeNull());
   });
 
+  it('opens the app when the server cannot be asked, whatever the device kept', async () => {
+    kept('user-1', '2026-11-18');
+    accepted(null, { code: '57014', message: 'timeout' });
+    const { result } = await renderHook(() => useTermsAsk());
+    // Shown from the kept version while the server is asked.
+    expect(result.current).not.toBeNull();
+    await waitFor(() => expect(result.current).toBeNull());
+  });
+
   it('does not go by what was kept for another user of the phone', async () => {
     kept('guest-1', '2026-11-18');
     accepted('2027-02-01');
@@ -238,6 +247,37 @@ describe('accepting', () => {
       'terms-accepted',
       JSON.stringify({ userId: 'user-1', version: '2027-02-01' }),
     );
+  });
+
+  it('is not undone by a read that was under way, answered before it', async () => {
+    // The read of the start, which answers only after the user accepted.
+    let answer: (value: unknown) => void = () => {};
+    const sorted = {
+      order: () => sorted,
+      limit: () => new Promise((resolve) => (answer = resolve)),
+    };
+    jest.mocked(supabase.from).mockReturnValue({ select: () => sorted } as never);
+    jest
+      .mocked(readItem)
+      .mockImplementation((key) =>
+        key === 'terms-accepted'
+          ? JSON.stringify({ userId: 'user-1', version: '2026-11-18' })
+          : null,
+      );
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
+    const queryClient = createTestQueryClient();
+    const { result } = await renderHook(() => ({ ask: useTermsAsk(), accept: useAcceptTerms() }), {
+      queryClient,
+    });
+    expect(result.current.ask).not.toBeNull();
+
+    await act(() => result.current.accept.mutateAsync('2027-02-01'));
+    await act(() => answer({ data: [{ terms_version: '2026-11-18' }], error: null }));
+    await waitFor(() => expect(result.current.ask).toBeNull());
+    expect(jest.mocked(writeItem).mock.calls.at(-1)).toEqual([
+      'terms-accepted',
+      JSON.stringify({ userId: 'user-1', version: '2027-02-01' }),
+    ]);
   });
 
   it('asks the server which terms are current when these were refused as not', async () => {

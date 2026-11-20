@@ -6,17 +6,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { toIsoDate } from '@/i18n/dates';
-import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useSession, useUserId } from '@/providers/session-provider';
 
+import { keepAccepted, keepPutOff, readAccepted, readPutOff } from './kept-terms';
 import { REQUIREMENTS_KEY, useAgreement } from './requirements';
 
 const ACCEPTED_KEY = ['terms', 'accepted'];
 const MOMENT_KEY = ['terms', 'moment'];
-const PUT_OFF_STORED = 'terms-put-off';
-const ACCEPTED_STORED = 'terms-accepted';
 
 /** The newer terms a user is asked to accept. */
 export type TermsAsk = {
@@ -28,35 +26,16 @@ export type TermsAsk = {
   summary?: string;
 };
 
-/** The version a user accepted last, as the server last said it, kept for the next start. */
-type KeptAccepted = { userId: string; version: string | null };
-
-function readAccepted(userId: string | undefined): string | null | undefined {
-  try {
-    const kept: unknown = JSON.parse(readItem(ACCEPTED_STORED) ?? 'null');
-    const { userId: keptFor, version } = (kept ?? {}) as Record<keyof KeptAccepted, unknown>;
-    if (userId === undefined || keptFor !== userId) return undefined;
-    return typeof version === 'string' || version === null ? version : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function keepAccepted(userId: string | undefined, version: string | null) {
-  if (userId === undefined) return;
-  const kept: KeptAccepted = { userId, version };
-  writeItem(ACCEPTED_STORED, JSON.stringify(kept));
-}
-
 /**
  * The version the user accepted last, or null for none; nothing while it is not known. It starts
  * from what the device kept for this user, so that new terms show before the app does and not a
- * moment after it; the server is asked all the same, and its answer counts.
+ * moment after it. The server is asked all the same and its answer counts; when it cannot be
+ * asked, nothing is known, and the app opens as without the kept version.
  */
 function useAcceptedTerms(userId: string | undefined, enabled: boolean): string | null | undefined {
-  const { data } = useQuery({
+  const { data, isError, dataUpdatedAt } = useQuery({
     queryKey: ACCEPTED_KEY,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: rows, error } = await supabase
         .from('terms_acceptances')
         .select('terms_version')
@@ -65,30 +44,20 @@ function useAcceptedTerms(userId: string | undefined, enabled: boolean): string 
         .limit(1);
       if (error) throw error;
       const version = rows[0]?.terms_version ?? null;
-      keepAccepted(userId, version);
+      // An answer from before the user accepted meanwhile is dropped, and not kept either.
+      if (userId !== undefined && !signal.aborted) keepAccepted({ userId, version });
       return version;
     },
     enabled,
-    initialData: () => readAccepted(userId),
+    initialData: () => {
+      const kept = readAccepted();
+      return kept !== null && kept.userId === userId ? kept.version : undefined;
+    },
     // Kept from an earlier start: old enough to ask the server at once.
     initialDataUpdatedAt: 0,
   });
-  return data;
-}
-
-/** The day "Later" was last chosen on this device, by whom and for which version. */
-type PutOff = { userId: string; version: string; day: string };
-
-function readPutOff(): PutOff | null {
-  try {
-    const kept: unknown = JSON.parse(readItem(PUT_OFF_STORED) ?? 'null');
-    const { userId, version, day } = (kept ?? {}) as Record<keyof PutOff, unknown>;
-    return typeof userId === 'string' && typeof version === 'string' && typeof day === 'string'
-      ? { userId, version, day }
-      : null;
-  } catch {
-    return null;
-  }
+  // Only the kept version, and the server could not be asked: not enough to hold the user on.
+  return isError && dataUpdatedAt === 0 ? undefined : data;
 }
 
 /** The moment the question was last weighed, and whether it was put off for that day. */
@@ -96,10 +65,10 @@ type Moment = { at: number; putOff: boolean };
 
 /**
  * The time, and whether this user put the question for this version off today: another user of
- * the phone did not. Read again each time the app comes back, so that the question returns the
- * next day and the day the terms apply is noticed; not read while there is nothing to ask about.
+ * the phone did not. Weighed at once, and again each time the app comes back, so that the
+ * question returns the next day and the day the terms apply is noticed.
  */
-function useMoment(userId: string | undefined, version: string | undefined): Moment | undefined {
+function useMoment(userId: string | undefined, version: string | undefined): Moment {
   const weigh = (): Moment => {
     const now = new Date();
     const kept = readPutOff();
@@ -138,7 +107,7 @@ export function useTermsAsk(): TermsAsk | null {
   const accepted = useAcceptedTerms(userId, asked);
   const moment = useMoment(userId, current?.version);
 
-  if (!asked || !current || !moment) return null;
+  if (!asked || !current) return null;
   if (accepted === undefined || accepted === current.version) return null;
   const appliesAt = new Date(current.appliesAt);
   // A day that cannot be read counts as come: the terms are the current ones either way.
@@ -160,8 +129,10 @@ export function useAcceptTerms() {
       if (error) throw error;
       return version;
     },
-    onSuccess: (version) => {
-      keepAccepted(userId, version);
+    onSuccess: async (version) => {
+      // A read under way was answered before the acceptance, and would undo it.
+      await queryClient.cancelQueries({ queryKey: ACCEPTED_KEY });
+      if (userId !== undefined) keepAccepted({ userId, version });
       queryClient.setQueryData(ACCEPTED_KEY, version);
     },
     // Refused as no longer the current terms: the server names the ones to show.
@@ -176,8 +147,7 @@ export function usePutOffTerms() {
   return (version: string) => {
     if (userId === undefined) return;
     const now = new Date();
-    const putOff: PutOff = { userId, version, day: toIsoDate(now) };
-    writeItem(PUT_OFF_STORED, JSON.stringify(putOff));
+    keepPutOff({ userId, version, day: toIsoDate(now) });
     queryClient.setQueryData<Moment>([...MOMENT_KEY, userId, version], {
       at: now.getTime(),
       putOff: true,
