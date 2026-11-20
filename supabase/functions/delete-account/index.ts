@@ -11,6 +11,7 @@ export default {
   // Only signed-in users, anonymous ones included, can call it, and it deletes only the user the
   // token belongs to, a guest or an account as stored, whatever the token says (#528). Deleting a
   // user takes the service role. CORS is off, because only the native app calls the function.
+  // Not refused for a build that is no longer supported (ADR 0157): deleting stays possible.
   fetch: withSupabase<Database>({ auth: 'user', cors: 'disabled' }, (req, ctx) =>
     handleDeleteRequest(req, {
       admin: ctx.supabaseAdmin,

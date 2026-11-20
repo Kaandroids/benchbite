@@ -19,8 +19,8 @@ keep working for it. Nothing said so yet.
 - **The app names its build in every request,** in two headers: `x-app-platform` and
   `x-app-version`.
 - **The Data API checks them before each request.** `check_app_version()` is set as PostgREST's
-  pre-request function. It raises `BB064` for a signed-in request whose version is below the
-  lowest supported one on its platform.
+  pre-request function. It refuses a signed-in request whose version is below the lowest
+  supported one on its platform, with `426 Upgrade Required` and the code `BB064`.
 - **The check refuses only what it is sure of.** It runs before every request, so a fault in it
   would stop the whole app. A request without the headers, with a platform or version it cannot
   read, from the service role or without a session passes, and so does any error within the
@@ -28,9 +28,13 @@ keep working for it. Nothing said so yet.
 - **`app_requirements()` is exempt,** so that a refused build still learns that it has to update.
 - **The Edge Functions that work for the app check too:** `coach-chat`, `estimate-meal` and
   `generate-plan` answer `426` with `unsupported_version`, by the same rule and as open to
-  failure. Deleting an account stays possible from any build.
+  failure. Every function the app calls as a signed-in user wraps its handler in `supportedOnly`,
+  except those for deleting the account, which stays possible from any build.
 - **The app answers a refusal by asking what it has to hold to again,** whose answer puts the
-  update screen in its place; the refusal is not reported as an error.
+  update screen in its place. Every response of its requests is looked at for the status 426 in
+  one place, whichever request met it; the refusal is not reported as an error.
+- **One rule says what is supported:** `app_requirements()` takes its answer from the function
+  the check refuses by.
 - **Backend changes stay compatible with every supported version.** A migration or an Edge
   Function may not break a build at or above the lowest supported version: columns and functions
   an old build uses stay, with their meaning, and new ones are added beside them. Compatibility
@@ -58,5 +62,6 @@ keep working for it. Nothing said so yet.
   check that the setting names a function every request role can run.
 - A build that names no version is never refused; the first store release has to carry the
   headers, as it has to carry the question of ADR 0156.
-- A refused request to an Edge Function shows that feature's own error until the app next asks
-  what it has to hold to, at the latest when it returns to the foreground.
+- The request that meets the refusal still fails with its own error for a moment, until the
+  answer to the app's question puts the update screen in its place.
+- The Edge Functions' check is one more request to the database before their work starts.

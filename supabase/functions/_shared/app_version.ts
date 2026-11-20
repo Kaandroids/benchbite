@@ -4,7 +4,11 @@
 // the check must not stop the app by mistake.
 import { type Client, logError } from './supabase.ts';
 
-/** What the app answers by asking what it has to hold to, which shows it the update screen. */
+/**
+ * The refusal's reason, sent with 426 Upgrade Required, the status the Data API refuses such a
+ * build with too: the app takes that status of any request as its cue to ask what it has to hold
+ * to, which shows it the update screen.
+ */
 export const UNSUPPORTED_VERSION = 'unsupported_version';
 
 /** The refusal for a request from an unsupported build, or null for one that may go on. */
