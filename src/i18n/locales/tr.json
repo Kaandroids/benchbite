@@ -279,7 +279,8 @@
       }
     },
     "licences": {
-      "rowBody": "Benchbite’ın yapımında kullanılan açık kaynak kütüphaneler ve veriler."
+      "body": "Benchbite’ın yapımında kullanılan açık kaynak kütüphaneler ve veriler.",
+      "hint": "Lisansları ve teşekkürleri açar"
     }
   },
   "loadError": {

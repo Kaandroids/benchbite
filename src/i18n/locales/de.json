@@ -279,7 +279,8 @@
       }
     },
     "licences": {
-      "rowBody": "Die Open-Source-Bibliotheken und die Daten, mit denen Benchbite gebaut ist."
+      "body": "Die Open-Source-Bibliotheken und die Daten, mit denen Benchbite gebaut ist.",
+      "hint": "Öffnet die Lizenzen und Danksagungen"
     }
   },
   "loadError": {

@@ -279,7 +279,8 @@
       }
     },
     "licences": {
-      "rowBody": "The open source libraries and the data Benchbite is built with."
+      "body": "The open source libraries and the data Benchbite is built with.",
+      "hint": "Opens the licences and credits"
     }
   },
   "loadError": {
