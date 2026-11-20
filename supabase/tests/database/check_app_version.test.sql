@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 -- The values of the migration, whatever a developer set since.
 update public.supported_app_versions set lowest_version = '1.4.0' where platform = 'ios';
@@ -45,6 +45,26 @@ select throws_ok(
 select throws_like(
   $$ select public.check_app_version() $$, '%"code" : "BB064"%',
   'with the code the app knows it by'
+);
+-- The detail of the refusal, which the Data API takes its answer's status from.
+create function pg_temp.refusal_detail()
+returns json
+language plpgsql
+as $$
+declare
+  detail text;
+begin
+  perform public.check_app_version();
+  return null;
+exception when sqlstate 'PGRST' then
+  get stacked diagnostics detail = pg_exception_detail;
+  return detail::json;
+end;
+$$;
+select ok(
+  (pg_temp.refusal_detail() ->> 'status')::integer = 426
+    and pg_temp.refusal_detail() -> 'headers' is not null,
+  'as 426 Upgrade Required, the status the app asks again for'
 );
 select is(
   (public.app_requirements('ios', '1.3.9') ->> 'supported')::boolean, false,
