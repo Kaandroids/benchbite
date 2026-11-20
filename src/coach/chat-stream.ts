@@ -3,6 +3,7 @@ import { randomUUID } from 'expo-crypto';
 
 import { functionRefusal } from '@/lib/errors';
 import { functionHeaders, functionUrl, supabase } from '@/lib/supabase';
+import { noteResponse } from '@/lib/version-refusal';
 
 import type { AnswerExpression } from './bite-expressions';
 
@@ -88,7 +89,7 @@ export async function streamChat(
       body: JSON.stringify({ ...request, requestId }),
       signal,
     });
-    if (!response.ok) throw await requestError(response);
+    if (!noteResponse(response).ok) throw await requestError(response);
     if (!response.body) throw new ChatRequestError(response.status);
 
     const reader = response.body.getReader();

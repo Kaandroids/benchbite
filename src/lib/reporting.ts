@@ -6,6 +6,8 @@ import type { Breadcrumb, ErrorEvent, Exception } from '@sentry/react-native';
 import type { ErrorBoundaryProps } from 'expo-router';
 import type { ComponentType } from 'react';
 
+import { UPGRADE_REQUIRED } from './version-refusal';
+
 /** Whether reporting started, so that the app says it was told only when it was. */
 let started = false;
 
@@ -171,7 +173,7 @@ export function isExpected(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) {
     return false;
   }
-  const { name, message, code, status, expected } = error as Record<string, unknown>;
+  const { name, message, code, status, expected, context } = error as Record<string, unknown>;
   const refusedByAuth =
     (name === 'AuthApiError' || name === 'AuthWeakPasswordError') &&
     typeof status === 'number' &&
@@ -188,6 +190,10 @@ export function isExpected(error: unknown): boolean {
     code === 'PGRST301' ||
     code === 'PGRST303' ||
     (typeof code === 'string' && code.startsWith('BB')) ||
+    // The backend's refusal of a build that is no longer supported, also by an Edge Function,
+    // whose error holds the response.
+    status === UPGRADE_REQUIRED ||
+    (context as { status?: unknown } | null | undefined)?.status === UPGRADE_REQUIRED ||
     (typeof message === 'string' && UNREACHABLE.test(message))
   );
 }

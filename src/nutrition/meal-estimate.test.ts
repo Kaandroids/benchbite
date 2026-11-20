@@ -1,3 +1,4 @@
+import { onVersionRefused } from '@/lib/version-refusal';
 import { File } from 'expo-file-system';
 import { ImageManipulator } from 'expo-image-manipulator';
 
@@ -118,6 +119,19 @@ describe('estimateMeal', () => {
     );
     expect(failure).toBeInstanceOf(EstimateFailure);
     expect((failure as EstimateFailure).refusal).toBe('limit_reached');
+  });
+
+  it('tells the app when the function refuses this build as no longer supported', async () => {
+    const refused = jest.fn();
+    const stop = onVersionRefused(refused);
+    respond(426, { error: 'unsupported_version' });
+    await expect(
+      estimateMeal({ photos: ['a'], language: 'en', meal: 'lunch' }),
+    ).rejects.toMatchObject({
+      status: 426,
+    });
+    expect(refused).toHaveBeenCalledTimes(1);
+    stop();
   });
 
   it('fails as unavailable for an answer it cannot read', async () => {

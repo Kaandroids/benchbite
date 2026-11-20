@@ -6,6 +6,7 @@ import { nativeApplicationVersion } from 'expo-application';
 import { AppState, Platform } from 'react-native';
 
 import type { Database } from './database.types';
+import { noteResponse } from './version-refusal';
 
 // Expo inlines EXPO_PUBLIC_ variables at build time, so they must be read with dot notation.
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -35,7 +36,11 @@ export const appVersionHeaders: Record<string, string> = nativeApplicationVersio
   : {};
 
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
-  global: { headers: appVersionHeaders },
+  global: {
+    headers: appVersionHeaders,
+    // Every answer is looked at for the backend's refusal of this build.
+    fetch: (...args) => fetch(...args).then(noteResponse),
+  },
   auth: {
     storage: localStorage,
     persistSession: true,

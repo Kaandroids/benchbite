@@ -74,6 +74,14 @@ describe('createQueryClient', () => {
     client.clear();
   });
 
+  it('does not ask again what the backend refuses of a build that is no longer supported', async () => {
+    const client = createQueryClient();
+    const load = jest.fn(() => Promise.reject({ code: 'BB064', message: 'no longer supported' }));
+    await client.fetchQuery({ queryKey: ['workouts'], queryFn: load }).catch(() => {});
+    expect(load).toHaveBeenCalledTimes(1);
+    client.clear();
+  });
+
   /** Runs a change that fails with `error`, as a hook's mutation with this `meta` would. */
   async function fail(
     error: unknown,

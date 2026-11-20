@@ -15,6 +15,7 @@ import { functionRefusal } from '@/lib/errors';
 import { oneOf } from '@/lib/one-of';
 import { preparePhoto } from '@/lib/photos';
 import { functionHeaders, functionUrl } from '@/lib/supabase';
+import { noteResponse } from '@/lib/version-refusal';
 
 import type { Totals } from './totals';
 
@@ -69,7 +70,9 @@ export async function estimateMeal(
     body: JSON.stringify({ photos: prepared, language, meal, ...correction }),
     signal,
   });
-  const body: unknown = await response.json().catch(() => null);
+  const body: unknown = await noteResponse(response)
+    .json()
+    .catch(() => null);
   if (!response.ok || typeof body !== 'object' || body === null || !('isFood' in body)) {
     throw new EstimateFailure(
       (functionRefusal(body) as EstimateReason | undefined) ?? 'unavailable',

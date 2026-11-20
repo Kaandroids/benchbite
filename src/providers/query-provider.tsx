@@ -57,6 +57,9 @@ export function createQueryClient() {
         // The user's data only changes through the app, so it stays fresh for a while instead of
         // being loaded again on every screen.
         staleTime: 60_000,
+        // As by default, but asking again changes nothing for a build the backend refuses as no
+        // longer supported (ADR 0157).
+        retry: (failures, error) => failures < 3 && !isDbError(error, 'unsupportedVersion'),
       },
     },
   });
