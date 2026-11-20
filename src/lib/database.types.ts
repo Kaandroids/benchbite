@@ -111,6 +111,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      agreement_versions: {
+        Row: {
+          agreement: Database['public']['Enums']['agreement'];
+          applies_at: string;
+          summary: NonNullable<Json>;
+          version: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          agreement: Database['public']['Enums']['agreement'];
+          applies_at: string;
+          summary?: NonNullable<Json>;
+          version: string;
+        };
+        Update: {
+          agreement?: Database['public']['Enums']['agreement'];
+          applies_at?: string;
+          summary?: NonNullable<Json>;
+          version?: string;
+        };
+        Relationships: [];
+      };
       ai_calls_in_flight: {
         Row: {
           call_id: string;
@@ -1807,6 +1829,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      supported_app_versions: {
+        Row: {
+          lowest_version: string;
+          platform: Database['public']['Enums']['app_platform'];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          lowest_version: string;
+          platform: Database['public']['Enums']['app_platform'];
+          updated_at?: string;
+        };
+        Update: {
+          lowest_version?: string;
+          platform?: Database['public']['Enums']['app_platform'];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       terms_acceptances: {
         Row: {
           accepted_at: string;
@@ -2379,6 +2420,10 @@ export type Database = {
       alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      app_requirements: {
+        Args: { app_version: string; platform: Database['public']['Enums']['app_platform'] };
+        Returns: Json;
+      };
       apply_alternative_limits: {
         Args: {
           limits: Omit<
@@ -3489,6 +3534,7 @@ export type Database = {
         Args: { alternative_id: number; today: string };
         Returns: undefined;
       };
+      version_number: { Args: { version: string }; Returns: number[] };
       week_of: { Args: { at: string; period: unknown }; Returns: unknown };
       week_room: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
@@ -3544,6 +3590,7 @@ export type Database = {
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
+      agreement: 'terms' | 'health_consent' | 'ai_consent';
       ai_access_reason:
         | 'account_required'
         | 'plan_required'
@@ -3554,6 +3601,7 @@ export type Database = {
         | 'service_paused'
         | 'consent_required';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
+      app_platform: 'ios' | 'android';
       billing_period: 'monthly' | 'yearly';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
@@ -3847,6 +3895,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
+      agreement: ['terms', 'health_consent', 'ai_consent'],
       ai_access_reason: [
         'account_required',
         'plan_required',
@@ -3858,6 +3907,7 @@ export const Constants = {
         'consent_required',
       ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
+      app_platform: ['ios', 'android'],
       billing_period: ['monthly', 'yearly'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
