@@ -43,6 +43,17 @@ select vault.create_secret('<default secret key>', 'secret_key');
 After rotating the key, update it with
 `select vault.update_secret(id, '<new key>') from vault.secrets where name = 'secret_key';`.
 
+## What the app declares to Apple
+
+`app.json` says that the app uses no encryption beyond what is exempt
+(`ios.config.usesNonExemptEncryption`) and holds its privacy manifest (`ios.privacyManifests`): the
+reasons it uses certain system APIs, the data it collects, and that it does not track
+([ADR 0155](adr/0155-declare-encryption-and-data-use-to-apple.md)). The watch app's manifest is
+`targets/watch/PrivacyInfo.xcprivacy`. To see what a build carries, run
+`APP_VARIANT=production pnpm expo prebuild --platform ios --no-install` and read
+`ios/Benchbite/PrivacyInfo.xcprivacy`; the libraries' own manifests are under `ios/Pods` after
+`pod install`. Keep the manifest, the privacy policy and the stores' privacy details in step.
+
 ## Deploy the website
 
 The website is deployed to Netlify by the **Deploy website** workflow in GitHub Actions

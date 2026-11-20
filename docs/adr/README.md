@@ -170,3 +170,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0152](0152-check-the-edge-functions-coverage-and-show-both.md)           | Check the Edge Functions' coverage and show both coverages                              | Accepted                                             |
 | [0153](0153-call-gemini-on-vertex-ai-in-the-eu.md)                        | Call Gemini on Vertex AI in the EU                                                      | Accepted, amended by ADR-0154                        |
 | [0154](0154-count-a-requests-tools-by-their-size-on-vertex-ai.md)         | Count a request's tools by their size on Vertex AI                                      | Accepted                                             |
+| [0155](0155-declare-encryption-and-data-use-to-apple.md)                  | Declare encryption and data use to Apple in the app config                              | Accepted                                             |
