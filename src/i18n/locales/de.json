@@ -14,7 +14,9 @@
     "minutes": "{{minutes}} Min.",
     "hours": "{{hours}} Std. {{minutes}} Min.",
     "read": "Lesen",
-    "readPolicy": "Datenschutzerklärung lesen"
+    "readPolicy": "Datenschutzerklärung lesen",
+    "whatChanged": "Was sich geändert hat",
+    "saveFailed": "Das konnte nicht gespeichert werden. Versuch es noch einmal."
   },
   "photoSheet": {
     "take": "Foto aufnehmen",
@@ -43,12 +45,17 @@
       "title": "Unsere neuen Bedingungen gelten jetzt",
       "body": "Um Benchbite weiter zu nutzen, stimme den neuen Nutzungsbedingungen zu. Deine Daten bleiben, wie sie sind, bis du dich entscheidest."
     },
-    "changed": "Was sich geändert hat",
     "accept": "Zustimmen und weiter",
     "later": "Später",
     "export": "Meine Daten exportieren",
-    "delete": "Mein Konto löschen",
-    "failed": "Das konnte nicht gespeichert werden. Versuch es noch einmal."
+    "delete": "Mein Konto löschen"
+  },
+  "consentUpdate": {
+    "title": "Wir brauchen dein OK noch einmal",
+    "body": "Wir haben geändert, wie wir beschreiben, was Benchbite mit deinen Gesundheitsdaten macht. Bitte lies es und stimme erneut zu.",
+    "agree": "Zustimmen und weiter",
+    "decline": "Ich stimme nicht zu",
+    "note": "Ohne dein OK kann Benchbite deine Gesundheitsdaten nicht behalten. Du siehst, was gelöscht wird, bevor etwas gelöscht wird."
   },
   "sessionEnded": {
     "guest": {

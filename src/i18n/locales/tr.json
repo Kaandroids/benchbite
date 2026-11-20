@@ -14,7 +14,9 @@
     "minutes": "{{minutes}} dk",
     "hours": "{{hours}} sa {{minutes}} dk",
     "read": "Oku",
-    "readPolicy": "Gizlilik politikasını oku"
+    "readPolicy": "Gizlilik politikasını oku",
+    "whatChanged": "Neler değişti",
+    "saveFailed": "Kaydedilemedi. Tekrar dene."
   },
   "photoSheet": {
     "take": "Fotoğraf çek",
@@ -43,12 +45,17 @@
       "title": "Yeni koşullarımız artık geçerli",
       "body": "Benchbite’ı kullanmaya devam etmek için yeni kullanım koşullarını kabul et. Sen karar verene kadar verilerin olduğu gibi kalır."
     },
-    "changed": "Neler değişti",
     "accept": "Kabul et ve devam et",
     "later": "Sonra",
     "export": "Verilerimi dışa aktar",
-    "delete": "Hesabımı sil",
-    "failed": "Kaydedilemedi. Tekrar dene."
+    "delete": "Hesabımı sil"
+  },
+  "consentUpdate": {
+    "title": "Onayına yeniden ihtiyacımız var",
+    "body": "Benchbite’ın sağlık verilerinle ne yaptığını anlatma şeklimizi değiştirdik. Lütfen oku ve yeniden onayla.",
+    "agree": "Onayla ve devam et",
+    "decline": "Onaylamıyorum",
+    "note": "Onayın olmadan Benchbite sağlık verilerini tutamaz. Bir şey silinmeden önce neyin silineceğini görürsün."
   },
   "sessionEnded": {
     "guest": {

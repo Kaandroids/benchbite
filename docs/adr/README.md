@@ -174,3 +174,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0156](0156-keep-what-a-build-holds-to-on-the-server.md)                  | Keep what a build holds to on the server                                                | Accepted                                             |
 | [0157](0157-refuse-unsupported-builds-on-the-backend.md)                  | Refuse unsupported builds on the backend                                                | Accepted                                             |
 | [0158](0158-ask-again-when-the-terms-or-a-consent-change.md)              | Ask again when the terms or a consent change                                            | Accepted                                             |
+| [0159](0159-ask-for-the-consents-again-where-they-are-needed.md)          | Ask for the consents again where they are needed                                        | Accepted                                             |

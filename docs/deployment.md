@@ -65,12 +65,19 @@ before its row: the app links to it. New terms are then asked of every user who 
 onboarding ([ADR 0158](adr/0158-ask-again-when-the-terms-or-a-consent-change.md)): until the day
 they apply with "Later", which brings the question back the next day, and from that day until they
 accept. Write the summary in every language of the app; it is what the screen shows as "What
-changed". Raise the lowest supported version only once the newer build
-is in the stores.
+changed".
 
-A build below the lowest supported version shows "Update Benchbite" in place of the app, with a
-button to its store (#687), and the backend refuses its requests (ADR 0157). Until a version is
-declared unsupported this way, every backend change has to keep working for it. The button needs the app's page: set `ios.appStoreUrl` and
+A new version of `health_consent` stops every user at their next start until they agree again or
+withdraw, and one of `ai_consent` closes Bite and meal photos for each user until they consent
+again at their next use
+([ADR 0159](adr/0159-ask-for-the-consents-again-where-they-are-needed.md)). A consent's wording is
+shown by the app itself: add the row only once the build with the new wording is in the stores,
+and raise the lowest supported version to that build.
+
+Raise the lowest supported version only once the newer build is in the stores. A build below it
+shows "Update Benchbite" in place of the app, with a button to its store (#687), and the backend
+refuses its requests (ADR 0157). Until a version is declared unsupported this way, every backend
+change has to keep working for it. The button needs the app's page: set `ios.appStoreUrl` and
 `android.playStoreUrl` in `app.json` once the app has one, before the first release; until then it
 opens the App Store's front on iOS.
 

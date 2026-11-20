@@ -6,7 +6,7 @@ import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
 import { saveReminderMinutes } from '@/reminders/settings';
-import { forgetTermsOnDevice } from '@/requirements/kept-terms';
+import { forgetAgreementsOnDevice } from '@/requirements/kept-agreements';
 import { endSession, forgetEndedSessions } from '@/sessions/session';
 
 /**
@@ -51,8 +51,9 @@ export function forgetUserOnDevice() {
   // The access the phone's store allowed stays: it is the phone owner's, and nothing is read
   // before the user connects again with their own consent (ADR 0108).
   forgetHealthOnDevice();
-  // What the device kept of the terms the user accepted, which a new onboarding records anew.
-  forgetTermsOnDevice();
+  // What the device kept of the terms and the consent the user agreed to, which a new
+  // onboarding records anew.
+  forgetAgreementsOnDevice();
 }
 
 /** Claims the device for each user that signs in. */

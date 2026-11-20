@@ -10,7 +10,8 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com');
 -- They have consented to the AI features, which a chat needs (ADR 0143).
 insert into public.ai_consents (user_id, consent_version)
-select id, 'test' from auth.users where id not in (select user_id from public.ai_consents);
+select id, (select version from public.current_agreement('ai_consent')) from auth.users
+where id not in (select user_id from public.ai_consents);
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),

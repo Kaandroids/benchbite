@@ -6,19 +6,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { toIsoDate } from '@/i18n/dates';
+import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useSession, useUserId } from '@/providers/session-provider';
 
-import { keepAccepted, keepPutOff, readAccepted, readPutOff } from './kept-terms';
+import { keepPutOff, readPutOff } from './kept-agreements';
+import { setLastAgreed, summaryOf, useLastAgreed } from './last-agreed';
 import { REQUIREMENTS_KEY, useAgreement } from './requirements';
 
-const ACCEPTED_KEY = ['terms', 'accepted'];
-/**
- * When data that came from the device counts as loaded: old enough for the server to be asked at
- * once, and the mark by which it is told from the server's answer.
- */
-const KEPT_AT = 0;
 const MOMENT_KEY = ['terms', 'moment'];
 
 /** The newer terms a user is asked to accept. */
@@ -31,36 +27,16 @@ export type TermsAsk = {
   summary?: string;
 };
 
-/**
- * The version the user accepted last, or null for none; nothing while it is not known. It starts
- * from what the device kept for this user, so that new terms show before the app does and not a
- * moment after it. The server is asked all the same and its answer counts; when it cannot be
- * asked, nothing is known, and the app opens as without the kept version.
- */
-function useAcceptedTerms(userId: string | undefined, enabled: boolean): string | null | undefined {
-  const { data, isError, failureCount, dataUpdatedAt } = useQuery({
-    queryKey: ACCEPTED_KEY,
-    queryFn: async ({ signal }) => {
-      const { data: rows, error } = await supabase
-        .from('terms_acceptances')
-        .select('terms_version')
-        .order('accepted_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(1);
-      if (error) throw error;
-      const version = rows[0]?.terms_version ?? null;
-      // An answer from before the user accepted meanwhile is dropped, and not kept either.
-      if (userId !== undefined && !signal.aborted) keepAccepted({ userId, version });
-      return version;
-    },
-    enabled,
-    initialData: () => readAccepted(userId)?.version,
-    initialDataUpdatedAt: KEPT_AT,
-  });
-  // Only the kept version, and the server could not be asked, be it at the first try: not enough
-  // to hold the user on. The question returns if a later try gets an answer.
-  const onlyKept = dataUpdatedAt === KEPT_AT;
-  return onlyKept && (isError || failureCount > 0) ? undefined : data;
+/** The version of the user's latest acceptance, or null for none, as the server holds it. */
+async function readAcceptedTerms(): Promise<string | null> {
+  const { data: rows, error } = await supabase
+    .from('terms_acceptances')
+    .select('terms_version')
+    .order('accepted_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return rows[0]?.terms_version ?? null;
 }
 
 /** The moment the question was last weighed, and whether it was put off for that day. */
@@ -103,7 +79,7 @@ export function useTermsAsk(): TermsAsk | null {
   const current = useAgreement('terms');
   const asked = status === 'ready' && completed;
   const userId = useUserId();
-  const accepted = useAcceptedTerms(userId, asked);
+  const accepted = useLastAgreed('terms', asked, readAcceptedTerms);
   const moment = useMoment(userId, current?.version);
 
   if (!asked || !current) return null;
@@ -112,9 +88,7 @@ export function useTermsAsk(): TermsAsk | null {
   // A day that cannot be read counts as come: the terms are the current ones either way.
   const due = !(appliesAt.getTime() > moment.at);
   if (!due && moment.putOff) return null;
-  // An empty text in the user's language is none.
-  const summary = current.summary[i18n.language]?.trim() || current.summary.en?.trim();
-  return { version: current.version, appliesAt, due, summary: summary || undefined };
+  return { version: current.version, appliesAt, due, summary: summaryOf(current, i18n.language) };
 }
 
 /** Records that the user accepts the terms in this version, which ends the question. */
@@ -128,14 +102,13 @@ export function useAcceptTerms() {
       if (error) throw error;
       return version;
     },
-    onSuccess: async (version) => {
-      // A read under way was answered before the acceptance, and would undo it.
-      await queryClient.cancelQueries({ queryKey: ACCEPTED_KEY });
-      if (userId !== undefined) keepAccepted({ userId, version });
-      queryClient.setQueryData(ACCEPTED_KEY, version);
-    },
-    // Refused as no longer the current terms: the server names the ones to show.
-    onError: () => queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY }),
+    onSuccess: (version) => setLastAgreed(queryClient, 'terms', userId, version),
+    // Refused as no longer the current terms: the server names the ones to show. Any other
+    // failure shows at once.
+    onError: (error) =>
+      isDbError(error, 'notCurrentTerms')
+        ? queryClient.invalidateQueries({ queryKey: REQUIREMENTS_KEY })
+        : undefined,
   });
 }
 

@@ -30,6 +30,7 @@ import OnboardingIndex from '@/app/onboarding/index';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useRequirements, type Requirements } from '@/requirements/requirements';
+import { useConsentAsk } from '@/requirements/consent-update';
 import { useTermsAsk, type TermsAsk } from '@/requirements/terms-update';
 import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
@@ -137,6 +138,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 // What the server says this build holds to: nothing, unless a test says otherwise.
 jest.mock('@/requirements/requirements', () => ({ useRequirements: jest.fn() }));
 jest.mock('@/requirements/terms-update', () => ({ useTermsAsk: jest.fn() }));
+jest.mock('@/requirements/consent-update', () => ({ useConsentAsk: jest.fn() }));
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
@@ -209,6 +211,7 @@ const APP_ROUTES = {
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
   terms: () => <Text>New terms</Text>,
+  consent: () => <Text>Consent again</Text>,
   'account/delete': () => <Text>Delete account</Text>,
   'bite/index': BiteRoute,
   'bite/chats': ChatsRoute,
@@ -230,8 +233,9 @@ beforeEach(() => {
   jest.mocked(useIsAccount).mockReturnValue(false);
   // Nothing known of this build, unless a test says otherwise.
   jest.mocked(useRequirements).mockReturnValue(undefined);
-  // No newer terms to accept, unless a test says otherwise.
+  // No newer terms to accept nor a consent to give again, unless a test says otherwise.
   jest.mocked(useTermsAsk).mockReturnValue(null);
+  jest.mocked(useConsentAsk).mockReturnValue(null);
 });
 
 describe('onboarding routes', () => {
@@ -363,6 +367,52 @@ describe('root layout', () => {
       setOnboarding('welcome');
       jest.mocked(useTermsAsk).mockReturnValue(ask);
       const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/onboarding/welcome');
+    });
+  });
+
+  describe('with the health data consent to give again', () => {
+    const ask = { version: '2027-02-01' };
+
+    it('asks in place of the app, and shows the app again once it is given', async () => {
+      setOnboarding('welcome', {}, true);
+      jest.mocked(useConsentAsk).mockReturnValue(ask);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/consent');
+      expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+
+      await act(() => router.push('/settings'));
+      expect(app.getPathname()).toBe('/consent');
+
+      jest.mocked(useConsentAsk).mockReturnValue(null);
+      await act(() => setOnboarding('welcome', {}, true));
+      expect(app.getPathname()).toBe('/');
+      expect(screen.getByText(TODAY)).toBeOnTheScreen();
+    });
+
+    it('asks for the terms first when both changed, then for the consent', async () => {
+      setOnboarding('welcome', {}, true);
+      jest.mocked(useConsentAsk).mockReturnValue(ask);
+      jest.mocked(useTermsAsk).mockReturnValue({
+        version: '2027-02-01',
+        appliesAt: new Date('2027-03-03'),
+        due: true,
+      });
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/terms');
+
+      jest.mocked(useTermsAsk).mockReturnValue(null);
+      await act(() => setOnboarding('welcome', {}, true));
+      expect(app.getPathname()).toBe('/consent');
+    });
+
+    it('gives way to the onboarding once the consent is withdrawn', async () => {
+      setOnboarding('welcome', {}, true);
+      jest.mocked(useConsentAsk).mockReturnValue(ask);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+      expect(app.getPathname()).toBe('/consent');
+
+      await act(() => setOnboarding('welcome'));
       expect(app.getPathname()).toBe('/onboarding/welcome');
     });
   });

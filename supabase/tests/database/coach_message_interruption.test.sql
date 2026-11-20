@@ -7,7 +7,8 @@ select plan(2);
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
 -- They have consented to the AI features, which a chat needs (ADR 0143).
 insert into public.ai_consents (user_id, consent_version)
-select id, 'test' from auth.users where id not in (select user_id from public.ai_consents);
+select id, (select version from public.current_agreement('ai_consent')) from auth.users
+where id not in (select user_id from public.ai_consents);
 insert into public.coach_threads (id, user_id) overriding system value
   values (1, '00000000-0000-0000-0000-00000000000a');
 
