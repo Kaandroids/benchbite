@@ -2424,6 +2424,7 @@ export type Database = {
         Args: { app_version: string; platform: Database['public']['Enums']['app_platform'] };
         Returns: Json;
       };
+      app_version_supported: { Args: { app_version: string; platform: string }; Returns: boolean };
       apply_alternative_limits: {
         Args: {
           limits: Omit<
@@ -2520,6 +2521,7 @@ export type Database = {
         Args: { p_code_hash: string; p_user: string };
         Returns: string;
       };
+      check_app_version: { Args: Record<PropertyKey, never>; Returns: undefined };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_set_targets: { Args: { items: Json }; Returns: undefined };
