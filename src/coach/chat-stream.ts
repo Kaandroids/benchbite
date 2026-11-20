@@ -2,8 +2,7 @@ import type { ChatRefusal, ChatRequest, ChatEvent as SharedChatEvent } from '@sh
 import { randomUUID } from 'expo-crypto';
 
 import { functionRefusal } from '@/lib/errors';
-import { functionHeaders, functionUrl, supabase } from '@/lib/supabase';
-import { noteResponse } from '@/lib/version-refusal';
+import { postFunction, supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 
@@ -83,13 +82,8 @@ export async function streamChat(
   };
   signal?.addEventListener('abort', stop, { once: true });
   try {
-    const response = await fetch(functionUrl('coach-chat'), {
-      method: 'POST',
-      headers: await functionHeaders(),
-      body: JSON.stringify({ ...request, requestId }),
-      signal,
-    });
-    if (!noteResponse(response).ok) throw await requestError(response);
+    const response = await postFunction('coach-chat', { ...request, requestId }, signal);
+    if (!response.ok) throw await requestError(response);
     if (!response.body) throw new ChatRequestError(response.status);
 
     const reader = response.body.getReader();

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-import { functionHeaders } from './supabase';
+import { postFunction } from './supabase';
 import { onVersionRefused } from './version-refusal';
 
 // In place of the storage the app installs, which needs the native database.
@@ -38,6 +38,21 @@ it('looks at every answer for the backend’s refusal of this build', async () =
   stop();
 });
 
-it('names the build in a request to an Edge Function, beside the key and the token', async () => {
-  expect(await functionHeaders()).toMatchObject({ ...BUILD, authorization: 'Bearer token' });
+it('posts to an Edge Function with the key, the token and the build, and looks at its answer', async () => {
+  const refused = jest.fn();
+  const stop = onVersionRefused(refused);
+  const answer = { status: 426 };
+  globalThis.fetch = jest.fn().mockResolvedValue(answer);
+
+  expect(await postFunction('coach-chat', { message: 'Hi' })).toBe(answer);
+
+  const [url, init] = jest.mocked(globalThis.fetch).mock.calls[0] ?? [];
+  expect(String(url)).toMatch(/\/functions\/v1\/coach-chat$/);
+  expect(init).toMatchObject({
+    method: 'POST',
+    headers: { ...BUILD, authorization: 'Bearer token', 'content-type': 'application/json' },
+    body: '{"message":"Hi"}',
+  });
+  expect(refused).toHaveBeenCalledTimes(1);
+  stop();
 });

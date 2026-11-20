@@ -1,4 +1,3 @@
-import { onVersionRefused } from '@/lib/version-refusal';
 import { supabase } from '@/lib/supabase';
 
 import { readEvents, streamChat } from './chat-stream';
@@ -10,8 +9,13 @@ jest.mock('@/lib/supabase', () => {
   const rpc = jest.fn();
   return {
     supabase: { auth: { getSession: () => Promise.resolve({ data: {} }) }, rpc },
-    functionUrl: (name: string) => `https://example.test/functions/v1/${name}`,
-    functionHeaders: () => Promise.resolve({ 'content-type': 'application/json', apikey: 'key' }),
+    postFunction: (name: string, body: unknown, signal?: AbortSignal) =>
+      fetch(`https://example.test/functions/v1/${name}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', apikey: 'key' },
+        body: JSON.stringify(body),
+        signal,
+      }),
   };
 });
 
@@ -77,22 +81,6 @@ describe('streamChat', () => {
     expect(supabase.rpc).toHaveBeenCalledWith('stop_coach_request', { request_id: REQUEST_ID });
     // The query is run, not only built.
     expect(then).toHaveBeenCalled();
-  });
-
-  it('tells the app when coach-chat refuses this build as no longer supported', async () => {
-    const refused = jest.fn();
-    const stop = onVersionRefused(refused);
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 426,
-      json: () => Promise.resolve({ error: 'unsupported_version' }),
-    });
-
-    const sent = streamChat({ message: 'Hi', language: 'en', today: '2026-10-30' }, () => {});
-
-    await expect(sent).rejects.toMatchObject({ status: 426 });
-    expect(refused).toHaveBeenCalledTimes(1);
-    stop();
   });
 
   it('says why coach-chat refused a message, and which photo', async () => {

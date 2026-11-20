@@ -31,8 +31,9 @@ keep working for it. Nothing said so yet.
   failure. Every function the app calls as a signed-in user wraps its handler in `supportedOnly`,
   except those for deleting the account, which stays possible from any build.
 - **The app answers a refusal by asking what it has to hold to again,** whose answer puts the
-  update screen in its place. Every response of its requests is looked at for the status 426 in
-  one place, whichever request met it; the refusal is not reported as an error.
+  update screen in its place. Every response of its requests is looked at for the status 426,
+  whichever request met it: those of the client, and those to an Edge Function through
+  `postFunction`, which a new call of a function uses. The refusal is not reported as an error.
 - **One rule says what is supported:** `app_requirements()` takes its answer from the function
   the check refuses by.
 - **Backend changes stay compatible with every supported version.** A migration or an Edge

@@ -14,8 +14,7 @@ import { REFUSALS, type Refusal } from '@/ai/access';
 import { functionRefusal } from '@/lib/errors';
 import { oneOf } from '@/lib/one-of';
 import { preparePhoto } from '@/lib/photos';
-import { functionHeaders, functionUrl } from '@/lib/supabase';
-import { noteResponse } from '@/lib/version-refusal';
+import { postFunction } from '@/lib/supabase';
 
 import type { Totals } from './totals';
 
@@ -64,15 +63,12 @@ export async function estimateMeal(
 ): Promise<EstimateResponse> {
   const prepared = await Promise.all(photos.map(preparePhoto));
   signal?.throwIfAborted();
-  const response = await fetch(functionUrl('estimate-meal'), {
-    method: 'POST',
-    headers: await functionHeaders(),
-    body: JSON.stringify({ photos: prepared, language, meal, ...correction }),
+  const response = await postFunction(
+    'estimate-meal',
+    { photos: prepared, language, meal, ...correction },
     signal,
-  });
-  const body: unknown = await noteResponse(response)
-    .json()
-    .catch(() => null);
+  );
+  const body: unknown = await response.json().catch(() => null);
   if (!response.ok || typeof body !== 'object' || body === null || !('isFood' in body)) {
     throw new EstimateFailure(
       (functionRefusal(body) as EstimateReason | undefined) ?? 'unavailable',

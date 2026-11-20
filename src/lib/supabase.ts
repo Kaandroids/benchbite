@@ -19,8 +19,8 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-/** The address of an Edge Function, for a call that reads its answer as it streams. */
-export function functionUrl(name: string): string {
+/** The address of an Edge Function. */
+function functionUrl(name: string): string {
   return `${supabaseUrl}/functions/v1/${name}`;
 }
 
@@ -63,7 +63,7 @@ AppState.addEventListener('change', (state) => {
  * The headers of a JSON request to an Edge Function: the publishable key, the signed-in user's
  * token, which the function checks, and the build the request comes from.
  */
-export async function functionHeaders(): Promise<Record<string, string>> {
+async function functionHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return {
@@ -72,4 +72,23 @@ export async function functionHeaders(): Promise<Record<string, string>> {
     ...appVersionHeaders,
     ...(token && { authorization: `Bearer ${token}` }),
   };
+}
+
+/**
+ * Posts JSON to an Edge Function and gives its response as it comes, for a call that reads its
+ * answer as it streams or tells the function's refusals apart. As every request of the client, it
+ * names the build and is looked at for the backend's refusal of it.
+ */
+export async function postFunction(
+  name: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const response = await fetch(functionUrl(name), {
+    method: 'POST',
+    headers: await functionHeaders(),
+    body: JSON.stringify(body),
+    signal,
+  });
+  return noteResponse(response);
 }
