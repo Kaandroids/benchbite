@@ -38,3 +38,12 @@ it('holds the typeface’s own licence beside that of the package it comes in', 
   expect(nunito?.id).toBe('MIT AND OFL-1.1');
   expect(nunito?.text).toContain('SIL OPEN FONT LICENSE');
 });
+
+it('shows a long licence whole, and says where each of a package’s two licences begins', () => {
+  const symbols = LICENCES.find((licence) => licence.id === 'MIT AND Apache-2.0');
+  expect(symbols?.text).toMatch(/^MIT License\s+Permission is hereby granted/);
+  expect(symbols?.text).toMatch(/Apache License\s+Version 2\.0, January 2004/);
+  expect(LICENCES.find((licence) => licence.id === 'MIT AND OFL-1.1')?.text).toMatch(
+    /^MIT License\s+Permission is hereby granted/,
+  );
+});
