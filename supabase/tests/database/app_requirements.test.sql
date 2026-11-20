@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(21);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
 
@@ -34,6 +34,14 @@ set local role anon;
 select throws_ok(
   $$ select public.app_requirements('ios', '1.4.0') $$, '42501', null,
   'A client without a session cannot ask'
+);
+select throws_ok(
+  $$ select 1 from public.supported_app_versions $$, '42501', null,
+  'nor read the supported versions'
+);
+select throws_ok(
+  $$ select 1 from public.agreement_versions $$, '42501', null,
+  'nor the texts'' versions'
 );
 
 select set_config('role', 'authenticated', true),
@@ -82,6 +90,14 @@ select is(
 select throws_ok(
   $$ select 1 from public.supported_app_versions $$, '42501', null,
   'Nobody reads the supported versions directly'
+);
+select throws_ok(
+  $$ select 1 from public.agreement_versions $$, '42501', null,
+  'nor the texts'' versions'
+);
+select throws_ok(
+  $$ update public.supported_app_versions set lowest_version = '99.0.0' $$, '42501', null,
+  'nor declares builds unsupported'
 );
 select throws_ok(
   $$ select public.version_number('1.0.0') $$, '42501', null,

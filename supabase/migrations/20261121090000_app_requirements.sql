@@ -5,11 +5,29 @@
 
 create type public.app_platform as enum ('ios', 'android');
 
+-- A version such as "1.4" or "1.4.2" as three numbers, which compare in order; null for anything
+-- else.
+create function public.version_number(version text)
+returns integer[]
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when version ~ '^[0-9]{1,5}(\.[0-9]{1,5}){0,2}$' then (
+      select array[
+        coalesce(parts[1], 0), coalesce(parts[2], 0), coalesce(parts[3], 0)
+      ]
+      from (select string_to_array(version, '.')::integer[] as parts) split
+    )
+  end;
+$$;
+
 -- The lowest supported version of the app on each platform. A build below it is told to update
 -- (#687). "0.0.0" supports every build.
 create table public.supported_app_versions (
   platform public.app_platform primary key,
-  lowest_version text not null check (lowest_version ~ '^[0-9]{1,5}(\.[0-9]{1,5}){0,2}$'),
+  lowest_version text not null check (public.version_number(lowest_version) is not null),
   updated_at timestamptz not null default now()
 );
 
@@ -46,24 +64,6 @@ values
 alter table public.supported_app_versions enable row level security;
 alter table public.agreement_versions enable row level security;
 revoke all on public.supported_app_versions, public.agreement_versions from anon, authenticated;
-
--- A version such as "1.4" or "1.4.2" as three numbers, which compare in order; null for anything
--- else.
-create function public.version_number(version text)
-returns integer[]
-language sql
-immutable
-set search_path = ''
-as $$
-  select case
-    when version ~ '^[0-9]{1,5}(\.[0-9]{1,5}){0,2}$' then (
-      select array[
-        coalesce(parts[1], 0), coalesce(parts[2], 0), coalesce(parts[3], 0)
-      ]
-      from (select string_to_array(version, '.')::integer[] as parts) split
-    )
-  end;
-$$;
 
 -- What a build has to hold to: whether its version is still supported on its platform, the lowest
 -- that is, and the current version of each text with the day it applies and what changed. A
