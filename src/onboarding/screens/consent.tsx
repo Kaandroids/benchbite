@@ -11,9 +11,9 @@ import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { PRIVACY_POLICY_URL, TERMS_URL } from '@/lib/links';
+import { useAgreementVersion } from '@/requirements/requirements';
 import { TONES, useTheme, type Tone } from '@/theme';
 
-import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../consent';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
@@ -36,8 +36,11 @@ export function ConsentStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { answers, answer, next, bar } = useStep('consent');
-  const consent = useAgreement('consentedPolicyVersion', PRIVACY_POLICY_VERSION, answers, answer);
-  const terms = useAgreement('acceptedTermsVersion', TERMS_VERSION, answers, answer);
+  // The current versions, as the server says them.
+  const policyVersion = useAgreementVersion('health_consent');
+  const termsVersion = useAgreementVersion('terms');
+  const consent = useAgreement('consentedPolicyVersion', policyVersion, answers, answer);
+  const terms = useAgreement('acceptedTermsVersion', termsVersion, answers, answer);
 
   return (
     <Screen
@@ -48,8 +51,8 @@ export function ConsentStep() {
           disabled={!consent.checked || !terms.checked}
           onPress={() =>
             next({
-              consentedPolicyVersion: PRIVACY_POLICY_VERSION,
-              acceptedTermsVersion: TERMS_VERSION,
+              consentedPolicyVersion: policyVersion,
+              acceptedTermsVersion: termsVersion,
             })
           }
         />

@@ -27,6 +27,7 @@ import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provid
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { ReminderSync } from '@/reminders/reminder-sync';
+import { useRequirements } from '@/requirements/requirements';
 import { showRemindersInForeground } from '@/reminders/reminders';
 import { HealthCatchUp } from '@/health/health-catch-up';
 import { LeftOpenSaver } from '@/sessions/left-open';
@@ -72,6 +73,8 @@ function RootNavigator() {
   const { status, retry, startAgain, recovering } = session;
   const { completed, checking } = useOnboarding();
   useClaimDevice();
+  // Asked when the app opens and each time it comes back, so that what it holds to is current.
+  useRequirements();
   const { t } = useTranslation();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
