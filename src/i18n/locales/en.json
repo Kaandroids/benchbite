@@ -50,6 +50,13 @@
     "delete": "Delete my account",
     "failed": "That couldn’t be saved. Try again."
   },
+  "consentUpdate": {
+    "title": "We need your OK again",
+    "body": "We’ve changed how we describe what Benchbite does with your health data. Please read it and agree again.",
+    "agree": "Agree and continue",
+    "decline": "I don’t agree",
+    "note": "Without it Benchbite can’t keep your health data. You’ll see what is deleted before anything is."
+  },
   "sessionEnded": {
     "guest": {
       "title": "Your guest session ended",

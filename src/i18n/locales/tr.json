@@ -50,6 +50,13 @@
     "delete": "Hesabımı sil",
     "failed": "Kaydedilemedi. Tekrar dene."
   },
+  "consentUpdate": {
+    "title": "Onayına yeniden ihtiyacımız var",
+    "body": "Benchbite’ın sağlık verilerinle ne yaptığını anlatma şeklimizi değiştirdik. Lütfen oku ve yeniden onayla.",
+    "agree": "Onayla ve devam et",
+    "decline": "Onaylamıyorum",
+    "note": "Onayın olmadan Benchbite sağlık verilerini tutamaz. Bir şey silinmeden önce neyin silineceğini görürsün."
+  },
   "sessionEnded": {
     "guest": {
       "title": "Misafir oturumun sona erdi",
