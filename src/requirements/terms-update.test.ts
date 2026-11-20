@@ -47,7 +47,11 @@ beforeEach(() => {
   signedIn();
   accepted('2026-11-18');
 });
-afterEach(() => jest.useRealTimers());
+afterEach(async () => {
+  jest.useRealTimers();
+  // Back from the language a test chose.
+  await i18n.changeLanguage('en');
+});
 
 it('asks for terms newer than the ones accepted, saying when they apply and what changed', async () => {
   const { result } = await renderHook(() => useTermsAsk());
@@ -113,7 +117,6 @@ it('falls back to English for what changed, and says nothing without a summary',
   jest.mocked(useAgreement).mockReturnValue({ ...TERMS, summary: { en: 'By the year', de: ' ' } });
   const german = await renderHook(() => useTermsAsk());
   await waitFor(() => expect(german.result.current?.summary).toBe('By the year'));
-  await i18n.changeLanguage('en');
 });
 
 describe('Later', () => {

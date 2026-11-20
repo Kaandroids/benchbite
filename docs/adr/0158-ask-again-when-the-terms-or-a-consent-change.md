@@ -24,7 +24,7 @@ server's rows, without a release.
   summary in the user's language or else in English; a box to tick, beside a button that opens the
   terms and never ticks it; and the button that records the answer.
 - **Before the day the terms apply, "Later" puts the question off until the next day,** kept on
-  the device for that version. New terms are announced ahead by a row with a day in the future.
+  the device for that user and that version. New terms are announced ahead by a row with a day in the future.
 - **From that day there is no way past it.** The data stays as it is; the screen leads to the
   export of the data and to deleting the account, and to nothing else.
 - **The answer is recorded by `accept_terms(version)`,** in `terms_acceptances`, the history the
@@ -56,7 +56,7 @@ server's rows, without a release.
 - New terms take a row and their text on the website, nothing else: publish the text first, as
   the screen links to it.
 - A user who does not accept from the day the terms apply cannot use the app, on any device,
-  until they do; "Later" is per device.
+  until they do; "Later" holds for the user who chose it, on that device.
 - The question comes when the app opens or returns to the foreground, also in the middle of
   something; a workout in progress is kept and goes on after the answer.
 - A build older than this screen never asks. It has to be in the first store release, or such

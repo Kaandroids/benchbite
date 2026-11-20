@@ -71,7 +71,7 @@ type Moment = { at: number; putOff: boolean };
  */
 function useMoment(userId: string | undefined, version: string | undefined): Moment | undefined {
   const { data } = useQuery({
-    queryKey: [...MOMENT_KEY, version],
+    queryKey: [...MOMENT_KEY, userId, version],
     queryFn: (): Moment => {
       const now = new Date();
       const kept = readPutOff();
@@ -140,6 +140,9 @@ export function usePutOffTerms() {
     const now = new Date();
     const putOff: PutOff = { userId, version, day: toIsoDate(now) };
     writeItem(PUT_OFF_STORED, JSON.stringify(putOff));
-    queryClient.setQueryData<Moment>([...MOMENT_KEY, version], { at: now.getTime(), putOff: true });
+    queryClient.setQueryData<Moment>([...MOMENT_KEY, userId, version], {
+      at: now.getTime(),
+      putOff: true,
+    });
   };
 }
