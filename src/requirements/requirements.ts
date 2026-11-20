@@ -15,8 +15,10 @@ import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
 import { AI_CONSENT_VERSION, PRIVACY_POLICY_VERSION, TERMS_VERSION } from './built-with';
+import { REQUIREMENTS_KEY } from './key';
 
-export const REQUIREMENTS_KEY = ['requirements'];
+export { REQUIREMENTS_KEY };
+
 const STORED_KEY = 'requirements';
 
 /** The texts a user agrees to, as the server names them. */

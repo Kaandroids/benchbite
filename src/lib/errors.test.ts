@@ -5,6 +5,7 @@ describe('isDbError', () => {
     expect(isDbError({ code: 'BB019' }, 'moveDoesNotFit')).toBe(true);
     expect(isDbError({ code: 'BB009' }, 'moveDoesNotFit')).toBe(false);
     expect(isDbError(new Error('offline'), 'workoutLimit')).toBe(false);
+    expect(isDbError({ code: 'BB064' }, 'unsupportedVersion')).toBe(true);
     expect(isDbError(null, 'workoutLimit')).toBe(false);
   });
 });

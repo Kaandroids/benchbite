@@ -108,4 +108,56 @@ describe('createQueryClient', () => {
     await fail(other, meta);
     expect(reportError).toHaveBeenCalledWith('Could not save the food', other);
   });
+
+  describe('when the backend refuses this build as no longer supported', () => {
+    const refusal = { code: 'BB064', message: 'This version of the app is no longer supported' };
+
+    /** A client whose last answer was that this build is supported. */
+    function supportedClient() {
+      const client = createQueryClient();
+      client.setQueryData(['requirements'], { supported: true });
+      return { client };
+    }
+    const stale = (client: ReturnType<typeof createQueryClient>) =>
+      client.getQueryState(['requirements'])?.isInvalidated;
+
+    it('asks what the build has to hold to again after a query, once, without a report', async () => {
+      const { client } = supportedClient();
+      const load = jest.fn(() => Promise.reject(refusal));
+      await client.fetchQuery({ queryKey: ['workouts'], queryFn: load }).catch(() => {});
+      // Asking the same again changes nothing for a refused build.
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(stale(client)).toBe(true);
+      expect(reportError).not.toHaveBeenCalled();
+      client.clear();
+    });
+
+    it('does so after a change too', async () => {
+      const { client } = supportedClient();
+      await client
+        .getMutationCache()
+        .build(client, {
+          meta: { where: 'Could not save the workout' },
+          mutationFn: () => Promise.reject(refusal),
+        })
+        .execute(undefined)
+        .catch(() => {});
+      expect(stale(client)).toBe(true);
+      expect(reportError).not.toHaveBeenCalled();
+      client.clear();
+    });
+
+    it('leaves the answer alone for any other failure', async () => {
+      const { client } = supportedClient();
+      await client
+        .fetchQuery({
+          queryKey: ['workouts'],
+          queryFn: () => Promise.reject(new Error('down')),
+          retry: false,
+        })
+        .catch(() => {});
+      expect(stale(client)).toBe(false);
+      client.clear();
+    });
+  });
 });

@@ -10,6 +10,7 @@ import { AppState, Platform } from 'react-native';
 
 import { isDbError, type DbError } from '@/lib/errors';
 import { reportError } from '@/lib/reporting';
+import { REQUIREMENTS_KEY } from '@/requirements/key';
 
 import { useSession } from './session-provider';
 
@@ -36,16 +37,30 @@ focusManager.setEventListener((setFocused) => {
 });
 
 export function createQueryClient() {
-  return new QueryClient({
+  /**
+   * Whether the backend refused the request because this build is no longer supported (ADR 0157).
+   * The app then asks what it has to hold to, whose answer puts the update screen in its place;
+   * there is nothing to report.
+   */
+  const refusedVersion = (error: unknown) => {
+    if (!isDbError(error, 'unsupportedVersion')) return false;
+    void client.invalidateQueries({ queryKey: REQUIREMENTS_KEY });
+    return true;
+  };
+  const client: QueryClient = new QueryClient({
     // Every request that fails is reported (#550, ADR 0151), as screens show their own message and
     // go on; reportError leaves out what the app expects, as no network. A query is named by the
     // first part of its key, which names what it loads; a mutation by its `meta.where`, which a
     // lint rule asks every one for.
     queryCache: new QueryCache({
-      onError: (error, query) => reportError(`Could not load ${String(query.queryKey[0])}`, error),
+      onError: (error, query) => {
+        if (refusedVersion(error)) return;
+        reportError(`Could not load ${String(query.queryKey[0])}`, error);
+      },
     }),
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {
+        if (refusedVersion(error)) return;
         const { where = 'Could not save a change', expects = [] } = mutation.meta ?? {};
         if (!expects.some((name) => isDbError(error, name))) {
           reportError(where, error);
@@ -57,9 +72,12 @@ export function createQueryClient() {
         // The user's data only changes through the app, so it stays fresh for a while instead of
         // being loaded again on every screen.
         staleTime: 60_000,
+        // As by default, but asking again changes nothing for a build that is refused.
+        retry: (failures, error) => failures < 3 && !isDbError(error, 'unsupportedVersion'),
       },
     },
   });
+  return client;
 }
 
 /**
