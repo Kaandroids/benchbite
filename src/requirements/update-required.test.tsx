@@ -20,10 +20,10 @@ jest.mock('expo-constants', () => ({
 }));
 
 beforeEach(() => {
-  jest.restoreAllMocks();
   mockConfig = {};
   Platform.OS = 'ios';
-  jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  // Reset too: the calls of the tests before would count otherwise.
+  jest.spyOn(Linking, 'openURL').mockReset().mockResolvedValue(undefined);
 });
 
 it('says the version is no longer supported, that the data stays, and which version this is', async () => {
