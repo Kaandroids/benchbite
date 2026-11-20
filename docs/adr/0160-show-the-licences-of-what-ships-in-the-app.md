@@ -26,7 +26,8 @@ build the app and never reach a phone.
   both platforms with source maps and takes every package a source map names, about a hundred;
   the tools that only build the app are not among them. Each library's licence is the one its
   `package.json` names, and the text and copyright lines come from its own licence file. A
-  font's package holds a second file for the font's licence, which is taken too.
+  font's package holds a second file for the font's licence, which is taken too. A package
+  without a licence file gets its copyright lines from its repository's licence.
 - **A licence's text is shown once.** The wording most of its libraries share is the licence's
   text, without their copyright lines; a library whose text differs keeps its own beside its
   name.
@@ -52,5 +53,6 @@ build the app and never reach a phone.
   goes out of date until #700 checks it.
 - Native code that a library links from elsewhere, as what React Native builds on, is covered
   only by that library's own entry; its third-party notices are not listed one by one.
-- A library whose package ships without a licence file is listed under its licence's text
-  without a copyright line; the script names these when it runs.
+- A library whose package ships without a licence file is listed under its licence's text, with
+  the copyright lines of its repository's licence, which the script keeps by hand for the few
+  there are. The script stops at a new one until its lines are added.

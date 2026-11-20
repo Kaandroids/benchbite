@@ -31,6 +31,17 @@ it('keeps the copyright lines out of a licence’s text, and with their librarie
   );
 });
 
+it('names who holds the copyright of every library, also of one that ships no licence file', () => {
+  for (const library of libraries) {
+    expect(library.copyright.length).toBeGreaterThan(0);
+  }
+  const mit = LICENCES.find((licence) => licence.id === 'MIT');
+  expect(mit?.libraries.find((library) => library.name === 'expo-router')?.copyright).toEqual([
+    'Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)',
+    'Copyright (c) 2017 React Navigation Contributors',
+  ]);
+});
+
 it('holds the typeface’s own licence beside that of the package it comes in', () => {
   const nunito = LICENCES.find((licence) =>
     licence.libraries.some((library) => library.name === '@expo-google-fonts/nunito'),

@@ -27,7 +27,7 @@
         {
           "name": "@kingstinct/react-native-healthkit",
           "version": "16.2.0",
-          "copyright": []
+          "copyright": ["Copyright (c) 2020 Robert Herber"]
         },
         {
           "name": "@radix-ui/react-compose-refs",
@@ -42,7 +42,7 @@
         {
           "name": "@react-native-healthkit/core",
           "version": "16.2.0",
-          "copyright": []
+          "copyright": ["Copyright (c) 2020 Robert Herber"]
         },
         {
           "name": "@react-native-masked-view/masked-view",
@@ -52,22 +52,22 @@
         {
           "name": "@react-native/asset-utils",
           "version": "0.88.1",
-          "copyright": []
+          "copyright": ["Copyright (c) Meta Platforms, Inc. and affiliates."]
         },
         {
           "name": "@react-native/js-polyfills",
           "version": "0.88.1",
-          "copyright": []
+          "copyright": ["Copyright (c) Meta Platforms, Inc. and affiliates."]
         },
         {
           "name": "@react-native/normalize-colors",
           "version": "0.88.1",
-          "copyright": []
+          "copyright": ["Copyright (c) Meta Platforms, Inc. and affiliates."]
         },
         {
           "name": "@react-native/virtualized-lists",
           "version": "0.88.1",
-          "copyright": []
+          "copyright": ["Copyright (c) Meta Platforms, Inc. and affiliates."]
         },
         {
           "name": "@sentry/browser",
@@ -262,7 +262,10 @@
         {
           "name": "expo-router",
           "version": "58.0.32",
-          "copyright": []
+          "copyright": [
+            "Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)",
+            "Copyright (c) 2017 React Navigation Contributors"
+          ]
         },
         {
           "name": "expo-sharing",
@@ -330,7 +333,7 @@
         {
           "name": "metro-runtime",
           "version": "0.87.1",
-          "copyright": []
+          "copyright": ["Copyright (c) Meta Platforms, Inc. and affiliates."]
         },
         {
           "name": "nanoid",
@@ -443,7 +446,7 @@
         {
           "name": "standard-navigation",
           "version": "0.0.5",
-          "copyright": []
+          "copyright": ["Copyright (c) 2026 React Navigation Contributors"]
         },
         {
           "name": "use-sync-external-store",

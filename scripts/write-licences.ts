@@ -110,11 +110,37 @@ function licenceFiles(dir: string): string[] {
     .map((file) => readFileSync(join(dir, file), 'utf8').replace(/\r\n/g, '\n').trim());
 }
 
+/**
+ * The copyright lines of the libraries whose packages ship without a licence file, as the licence
+ * file of each one's repository holds them (read on 2026-11-21): the licences ask for the notice
+ * with every copy, whether the package brings it or not. expo-router carries a copy of React
+ * Navigation, whose notice it owes too.
+ */
+const META = 'Copyright (c) Meta Platforms, Inc. and affiliates.';
+const COPYRIGHT_WITHOUT_FILE: Record<string, string[]> = {
+  // github.com/kingstinct/react-native-healthkit, LICENSE
+  '@kingstinct/react-native-healthkit': ['Copyright (c) 2020 Robert Herber'],
+  '@react-native-healthkit/core': ['Copyright (c) 2020 Robert Herber'],
+  // github.com/facebook/react-native, LICENSE
+  '@react-native/asset-utils': [META],
+  '@react-native/js-polyfills': [META],
+  '@react-native/normalize-colors': [META],
+  '@react-native/virtualized-lists': [META],
+  // github.com/expo/expo, LICENSE; github.com/react-navigation/react-navigation, packages/*/LICENSE
+  'expo-router': [
+    'Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)',
+    'Copyright (c) 2017 React Navigation Contributors',
+  ],
+  // github.com/facebook/metro, LICENSE
+  'metro-runtime': [META],
+  // github.com/react-navigation/standard-navigation, LICENSE
+  'standard-navigation': ['Copyright (c) 2026 React Navigation Contributors'],
+};
+
 const packages = bundledPackages();
 // A library without a licence file names its licence in its package.json alone: it is listed
-// under that licence's usual text, without copyright lines.
+// under that licence's usual text, with the copyright lines kept for it above.
 const byLicence = new Map<string, (Library & { body?: string })[]>();
-const withoutFile: string[] = [];
 for (const [name, dir] of [...packages].sort(([a], [b]) => a.localeCompare(b))) {
   const { version, license } = JSON.parse(
     readFileSync(join(ROOT, dir, 'package.json'), 'utf8'),
@@ -124,11 +150,22 @@ for (const [name, dir] of [...packages].sort(([a], [b]) => a.localeCompare(b))) 
   };
   if (!license) throw new Error(`${name} names no licence in its package.json`);
   const files = licenceFiles(join(ROOT, dir));
-  if (files.length === 0) withoutFile.push(name);
-  const copyright = files
-    .flatMap((file) => file.split('\n'))
-    .filter(isCopyright)
-    .map((line) => line.trim());
+  const kept = COPYRIGHT_WITHOUT_FILE[name];
+  if (files.length === 0 && !kept) {
+    throw new Error(
+      `${name} ships without a licence file: add the copyright lines of its repository's ` +
+        'licence to COPYRIGHT_WITHOUT_FILE',
+    );
+  }
+  if (files.length > 0 && kept) {
+    throw new Error(`${name} ships a licence file now: take it out of COPYRIGHT_WITHOUT_FILE`);
+  }
+  const copyright =
+    kept ??
+    files
+      .flatMap((file) => file.split('\n'))
+      .filter(isCopyright)
+      .map((line) => line.trim());
   // Several files keep their titles, which say where one licence ends and the next begins.
   const [only, ...more] = files.map(withoutNotice);
   const body =
@@ -165,6 +202,3 @@ const licences: Licence[] = [...byLicence]
 writeFileSync(OUTPUT, `${JSON.stringify({ licences }, null, 2)}\n`);
 const count = licences.reduce((sum, { libraries }) => sum + libraries.length, 0);
 console.log(`Wrote ${count} libraries under ${licences.length} licences to ${OUTPUT}`);
-if (withoutFile.length > 0) {
-  console.log(`Without a licence file of their own: ${withoutFile.join(', ')}`);
-}
