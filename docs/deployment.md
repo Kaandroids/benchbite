@@ -65,7 +65,8 @@ before its row: the app links to it. Raise the lowest supported version only onc
 is in the stores.
 
 A build below the lowest supported version shows "Update Benchbite" in place of the app, with a
-button to its store (#687). The button needs the app's page: set `ios.appStoreUrl` and
+button to its store (#687), and the backend refuses its requests (ADR 0157). Until a version is
+declared unsupported this way, every backend change has to keep working for it. The button needs the app's page: set `ios.appStoreUrl` and
 `android.playStoreUrl` in `app.json` once the app has one, before the first release; until then it
 opens the App Store's front on iOS.
 
