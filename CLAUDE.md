@@ -20,6 +20,8 @@ Expo-specific guidance for AI agents lives in `AGENTS.md`, which is maintained b
 ## Commands
 
 This project uses pnpm. Use `pnpm expo ...` wherever Expo docs or `AGENTS.md` say `npx expo ...`.
+Builds are made on a Mac with scripts of this repository, not with EAS, whatever `AGENTS.md` says
+of it (ADR 0161): no `eas.json`, no EAS Build, no updates over the air.
 
 ```bash
 pnpm install              # install dependencies
@@ -30,6 +32,7 @@ pnpm lint                 # ESLint, fails on warnings
 pnpm format               # format with Prettier (format:check only verifies)
 pnpm test                 # Jest tests of the app
 pnpm e2e                  # Maestro flows on the iOS Simulator, against the local stack
+pnpm build:ios:release    # the release app, built and installed on a connected iPhone
 ```
 
 Run `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm test` before every commit.
