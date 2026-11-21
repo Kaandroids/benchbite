@@ -394,10 +394,13 @@ None of the checks above builds the app with Xcode, so a change that only breaks
 pass them all. The [iOS workflow](../.github/workflows/ios.yml) makes the build on a Mac: it
 generates `ios/` for the release and builds the app for an iPhone, with the Apple Watch app in it.
 It runs when what the native build is made from changes: `app.json`, `app.config.ts`,
-`metro.config.js`, `modules/`, `targets/watch/` and the dependencies. Other pull requests do not
-wait for it, as it takes a Mac and many minutes; once a week it runs on `main` for what those paths
-miss, such as a new Xcode on the runner, and it can be started by hand from the Actions tab. It is
-not a required check: a red run shows on the pull request, and merging is the maintainer's call.
+`metro.config.js`, `modules/`, `targets/watch/`, `assets/`, the permission texts in
+`src/i18n/permissions/` and the dependencies. Other pull requests do not wait for it, as it takes a
+Mac and many minutes: a change to the app's code alone is not built for its pull request. Once a
+week the workflow runs on `main` for what those paths miss, such as a new Xcode on the runner or
+code that only the release's bundle fails on, and it can be started by hand from the Actions tab.
+It is not a required check: a red run shows on the pull request, and merging is the maintainer's
+call.
 
 What it covers is the build: the config plugins, the pods, compiling and linking the app, its own
 modules and the watch app, and bundling the JavaScript. What it does not: signing, as it builds
