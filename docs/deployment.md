@@ -191,8 +191,9 @@ with Xcode and an Apple Developer account added in Xcode's settings.
 
    It builds Benchbite itself, not the development build, which has a name and bundle ID of its
    own ([ADR 0096](adr/0096-develop-with-a-development-build.md)), and stops with what to do when
-   the file of step 1 is missing or names a local address, when no iPhone or more than one is
-   connected, or when the built app does not name the hosted project's server. Unlock the iPhone
+   the file of step 1 is missing, does not name the hosted project over https, or holds a key that
+   is not the publishable one; when no iPhone, more than one, or not the one named with `--device`
+   is connected; or when the built app does not name the hosted project's server. Unlock the iPhone
    before it installs. The `ios/` folder (ignored by Git) is generated for one of the two builds,
    so the command makes it anew for the release; `pnpm native:dev` makes it for development again
    afterwards. Run the command again to install a newer version.

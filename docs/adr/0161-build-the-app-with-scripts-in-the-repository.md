@@ -15,7 +15,8 @@ Expo's own answer is EAS Build with EAS Update. The project decided against upda
 (ADR 0156), and against the build service with them: builds are made on the maintainer's Mac,
 with the membership and the tools already there, and no third party holds the signing keys or
 the source. Three earlier records planned for EAS and are amended by this one: ADR 0001 named
-it for builds and store submission, ADR 0096 left the builds for preview and production to it,
+it for builds and store submission, ADR 0096 left the builds for preview and production to it and named `pnpm native:release`,
+whose work the release command does itself now,
 and ADR 0149 expected Sentry's token to move there.
 
 ## Decision
@@ -24,9 +25,11 @@ and ADR 0149 expected Sentry's token to move there.
   and checks them, started with `pnpm`.
 - **`pnpm build:ios:release`** builds Benchbite itself against the hosted project and installs
   it on a connected iPhone. It:
-  - reads the hosted project from `.env.production.local` and stops at a missing file or a local
-    address;
-  - picks the one real iPhone that is connected, and asks for `--device` when there are more;
+  - reads the hosted project from `.env.production.local`, as Expo reads it, and stops at a
+    missing file, an address that is not a hosted project's over https, or a key that is not the
+    publishable one, so that a secret key cannot be built into the app;
+  - picks the one real iPhone that is connected, asks for `--device` when there are more, and
+    stops before building when the one named is not connected;
   - generates `ios/` anew for the release (`APP_VARIANT=production`), and signs with the team
     `app.json` names;
   - gives Sentry's build step its token from `.env.local`, and that variable alone, as the rest
