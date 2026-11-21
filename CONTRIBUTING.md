@@ -21,7 +21,9 @@ Every pull request runs the [CI workflow](.github/workflows/ci.yml): types, lint
 app's tests and their coverage, translations, the shared rule cases, the Edge Functions and their
 tests' coverage, and on a local Supabase stack the database tests, the generated types and every
 generated plan. A change to the Apple Watch app or its protocol also runs the
-[Watch workflow](.github/workflows/watch.yml) on a Mac. Run the main checks locally before pushing:
+[Watch workflow](.github/workflows/watch.yml) on a Mac, and a change to the native configuration,
+the app's own native code or the dependencies the [iOS workflow](.github/workflows/ios.yml), which
+builds the app with Xcode. Run the main checks locally before pushing:
 
 ```bash
 pnpm typecheck
