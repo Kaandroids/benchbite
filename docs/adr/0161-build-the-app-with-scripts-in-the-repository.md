@@ -51,8 +51,8 @@ and ADR 0149 expected Sentry's token to move there.
 ## Consequences
 
 - A release build needs a Mac with Xcode and the project's Apple developer team.
-- The script is not run by CI, which has no iPhone and no signing; a native build in CI is its
-  own work (#699).
+- The script is not run by CI, which has no iPhone and no signing. CI builds the app natively
+  without signing in a workflow of its own (`.github/workflows/ios.yml`, #699).
 - The script leaves `ios/` generated for the release: `pnpm native:dev` comes before the next
   development build, as before.
 - #561, updates over the air with EAS Update, is closed as not planned.
