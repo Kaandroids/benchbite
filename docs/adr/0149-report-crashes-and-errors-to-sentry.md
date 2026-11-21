@@ -1,6 +1,6 @@
 # 0149. Report crashes and errors to Sentry
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0161
 - **Date:** 2026-11-20
 
 ## Context

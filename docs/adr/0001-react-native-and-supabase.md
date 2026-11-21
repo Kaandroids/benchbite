@@ -1,6 +1,6 @@
 # 0001. Use React Native with Expo and Supabase
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0161
 - **Date:** 2026-10-19
 
 ## Context

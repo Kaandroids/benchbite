@@ -16,7 +16,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 
 | ADR                                                                       | Title                                                                                   | Status                                               |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [0001](0001-react-native-and-supabase.md)                                 | Use React Native with Expo and Supabase                                                 | Accepted                                             |
+| [0001](0001-react-native-and-supabase.md)                                 | Use React Native with Expo and Supabase                                                 | Accepted, amended by ADR-0161                        |
 | [0002](0002-single-expo-project-at-the-root.md)                           | Keep a single Expo project at the repository root                                       | Accepted                                             |
 | [0003](0003-local-first-database-development.md)                          | Develop the database against a local Supabase stack                                     | Accepted                                             |
 | [0004](0004-auth-session-storage.md)                                      | Store the auth session with expo-sqlite's localStorage                                  | Accepted                                             |
@@ -111,7 +111,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0093](0093-change-a-password-with-the-current-one.md)                    | Change a password with the current one                                                  | Accepted, amended by ADR-0128                        |
 | [0094](0094-delete-an-account-from-the-website.md)                        | Delete an account from the website                                                      | Accepted                                             |
 | [0095](0095-confirm-deleting-an-account-by-email.md)                      | Confirm deleting an account by email                                                    | Accepted, amended by ADR-0127                        |
-| [0096](0096-develop-with-a-development-build.md)                          | Develop with a development build                                                        | Accepted                                             |
+| [0096](0096-develop-with-a-development-build.md)                          | Develop with a development build                                                        | Accepted, amended by ADR-0161                        |
 | [0097](0097-read-workouts-from-apple-health-and-health-connect.md)        | Read workouts from Apple Health and Health Connect                                      | Accepted, amended by ADR-0105 and ADR-0108           |
 | [0098](0098-keep-a-summary-of-a-workouts-heart-rate.md)                   | Keep a summary of a workout's heart rate                                                | Accepted, amended by ADR-0099                        |
 | [0099](0099-read-a-workouts-health-again-for-a-day.md)                    | Read a workout's health again for a day                                                 | Accepted                                             |
@@ -164,7 +164,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0146](0146-withdraw-a-consent-from-the-website.md)                       | Withdraw a consent from the website                                                     | Accepted                                             |
 | [0147](0147-export-a-users-data.md)                                       | Export a user's data                                                                    | Accepted                                             |
 | [0148](0148-export-a-users-data-from-the-website.md)                      | Export a user's data from the website                                                   | Accepted                                             |
-| [0149](0149-report-crashes-and-errors-to-sentry.md)                       | Report crashes and errors to Sentry                                                     | Accepted                                             |
+| [0149](0149-report-crashes-and-errors-to-sentry.md)                       | Report crashes and errors to Sentry                                                     | Accepted, amended by ADR-0161                        |
 | [0150](0150-show-an-error-screen-in-place-of-what-fails.md)               | Show an error screen in place of what fails                                             | Accepted                                             |
 | [0151](0151-report-the-errors-the-app-catches.md)                         | Report the errors the app catches                                                       | Accepted                                             |
 | [0152](0152-check-the-edge-functions-coverage-and-show-both.md)           | Check the Edge Functions' coverage and show both coverages                              | Accepted                                             |
@@ -176,3 +176,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0158](0158-ask-again-when-the-terms-or-a-consent-change.md)              | Ask again when the terms or a consent change                                            | Accepted                                             |
 | [0159](0159-ask-for-the-consents-again-where-they-are-needed.md)          | Ask for the consents again where they are needed                                        | Accepted                                             |
 | [0160](0160-show-the-licences-of-what-ships-in-the-app.md)                | Show the licences of what ships in the app                                              | Accepted                                             |
+| [0161](0161-build-the-app-with-scripts-in-the-repository.md)              | Build the app with scripts in the repository                                            | Accepted                                             |

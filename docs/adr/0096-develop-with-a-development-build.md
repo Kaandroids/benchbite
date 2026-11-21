@@ -1,6 +1,6 @@
 # 0096. Develop with a development build
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0161
 - **Date:** 2026-11-08
 
 ## Context

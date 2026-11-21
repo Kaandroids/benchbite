@@ -176,18 +176,24 @@ with Xcode and an Apple Developer account added in Xcode's settings.
 
    For stack traces Sentry can read, put an auth token, from Sentry's settings under Auth Tokens,
    in `.env.local` as `SENTRY_AUTH_TOKEN=...`: the build uploads its source maps and debug symbols
-   with it. It is a secret, and never ends up in the app; without it the build still works.
+   with it. It is a secret, and never ends up in the app; without it the build still works, and
+   Sentry cannot read its stack traces.
 
 2. Connect the iPhone, trust the Mac, and turn on **Developer Mode** (Settings → Privacy & Security).
-3. Find the iPhone's UDID with `xcrun devicectl list devices`, then build and install:
+3. Build and install
+   ([ADR 0161](adr/0161-build-the-app-with-scripts-in-the-repository.md)):
 
    ```bash
-   pnpm native:release
-   APP_VARIANT=production pnpm ios --device <udid> --configuration Release
+   pnpm build:ios:release                  # the one iPhone that is connected
+   pnpm build:ios:release --device <udid>  # that one, when more are: xcrun devicectl list devices
+   pnpm build:ios:release --no-install     # only build
    ```
 
-   `APP_VARIANT=production` makes it Benchbite itself, not the development build, which has a name
-   and bundle ID of its own ([ADR 0096](adr/0096-develop-with-a-development-build.md)). The
-   `ios/` folder (ignored by Git) is generated for one of the two, so `pnpm native:release` makes
-   it anew; `pnpm native:dev` makes it for development again afterwards. Run the second command
-   again to install a newer version.
+   It builds Benchbite itself, not the development build, which has a name and bundle ID of its
+   own ([ADR 0096](adr/0096-develop-with-a-development-build.md)), and stops with what to do when
+   the file of step 1 is missing, does not name the hosted project over https, or holds a key that
+   is not the publishable one; when no iPhone, more than one, or not the one named with `--device`
+   is connected; or when the built app does not name the hosted project's server. Unlock the iPhone
+   before it installs. The `ios/` folder (ignored by Git) is generated for one of the two builds,
+   so the command makes it anew for the release; `pnpm native:dev` makes it for development again
+   afterwards. Run the command again to install a newer version.

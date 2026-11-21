@@ -70,7 +70,7 @@
     "ios": "expo run:ios",
     "e2e": "scripts/e2e.sh",
     "native:dev": "expo prebuild --clean",
-    "native:release": "APP_VARIANT=production expo prebuild --clean --platform ios",
+    "build:ios:release": "scripts/build-ios-release.sh",
     "lint": "expo lint --max-warnings 0 --no-cache",
     "typecheck": "tsc --noEmit && tsc -p scripts",
     "format": "prettier --write .",

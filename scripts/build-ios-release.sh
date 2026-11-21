@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# Builds Benchbite itself, against the hosted project, and installs it on a connected iPhone
+# (docs/deployment.md, "Install on an iPhone"; ADR 0161):
+#
+#   pnpm build:ios:release                  # the one iPhone that is connected
+#   pnpm build:ios:release --device <udid>  # that iPhone, when more than one is
+#   pnpm build:ios:release --no-install     # only build
+#
+# It generates ios/ anew for the release, so run `pnpm native:dev` before the next development
+# build. Each step that went wrong by hand is checked here: the environment file of the hosted
+# project, the signing team, the Sentry token, the iPhone, and which server the built app names.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+ENV_FILE=.env.production.local
+SCHEME=Benchbite
+APP=ios/build/Build/Products/Release-iphoneos/$SCHEME.app
+
+fail() {
+  echo "$1" >&2
+  exit 1
+}
+
+# What is left to say and to clear away however the script ends: once ios/ was generated for the
+# release it stays the release's, also after a build that failed or was stopped.
+devices=""
+log=""
+generated=false
+finish() {
+  [[ -z $devices ]] || rm -f "$devices"
+  # The build's output is kept only where a failed build names it.
+  [[ -z $log ]] || rm -f "$log"
+  if $generated; then
+    echo "ios/ is the release's now: run pnpm native:dev before the next development build."
+  fi
+}
+trap finish EXIT
+
+# The value of a variable in an environment file, read as Expo reads it (quotes, comments and
+# line ends), without reading the rest of the file into the shell: the development file's
+# addresses would take the hosted project's place.
+value_in() {
+  [[ -f $1 ]] || return 0
+  node -e '
+    const { parseEnv } = require("node:util");
+    const value = parseEnv(require("node:fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
+    if (value) console.log(value);
+  ' "$1" "$2"
+}
+
+device=""
+install=true
+while (($#)); do
+  case $1 in
+    --device)
+      device=${2:-}
+      [[ -n $device && $device != -* ]] ||
+        fail "--device needs the iPhone's UDID: xcrun devicectl list devices."
+      shift 2
+      ;;
+    --no-install)
+      install=false
+      shift
+      ;;
+    *) fail "Unknown option $1. Usage: pnpm build:ios:release [--device <udid>] [--no-install]" ;;
+  esac
+done
+$install || [[ -z $device ]] || fail "--device and --no-install do not go together."
+
+# The build takes these two from the shell before the file, where the shell has them: what is
+# checked here is then what is built.
+unset EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+# The hosted project, which the app is built against. It is reached over https, and the local
+# stack never is, wherever it runs: on this Mac, in the network, or under a name of its own.
+url=$(value_in "$ENV_FILE" EXPO_PUBLIC_SUPABASE_URL)
+[[ -n $url ]] ||
+  fail "$ENV_FILE is missing or names no EXPO_PUBLIC_SUPABASE_URL: see docs/deployment.md."
+[[ $url == https://* ]] ||
+  fail "$ENV_FILE names $url, which is not https: a release build goes against the hosted project."
+host=${url#https://}
+host=${host%%[:/]*}
+lower=$(tr '[:upper:]' '[:lower:]' <<<"$host")
+[[ $lower =~ ^[a-z0-9.-]+\.[a-z]{2,}$ && $lower != *.local ]] ||
+  fail "$ENV_FILE names $host, which is no hosted project's address."
+
+# The key in the app is the publishable one. A secret key built into it would be anyone's who
+# has the app, past every access rule.
+key=$(value_in "$ENV_FILE" EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY)
+[[ $key == sb_publishable_* ]] ||
+  fail "$ENV_FILE needs the project's publishable key (sb_publishable_…) as EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY. A secret key never goes in the app."
+
+# The iPhone, before the minutes of building: a real one that can be reached, and only one.
+if $install; then
+  devices=$(mktemp)
+  xcrun devicectl list devices --json-output "$devices" >/dev/null 2>&1 ||
+    fail "Could not list the connected devices: is Xcode installed, and the iPhone trusted?"
+  connected=$(
+    node -e '
+      const { devices } = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).result;
+      for (const { hardwareProperties: hardware, connectionProperties: connection, deviceProperties } of devices) {
+        const reachable = connection?.pairingState === "paired" && connection?.tunnelState !== "unavailable";
+        if (hardware?.deviceType === "iPhone" && hardware?.reality === "physical" && reachable) {
+          console.log(`${hardware.udid}\t${deviceProperties?.name}`);
+        }
+      }
+    ' "$devices" 2>/dev/null
+  ) || fail "Could not read the list of connected devices that Xcode gave."
+  [[ -n $connected ]] ||
+    fail "No iPhone is connected. Connect one, or build without installing: --no-install."
+  if [[ -n $device ]]; then
+    # The whole UDID, not a part of one, which the build and the installation could not use.
+    chosen=$(awk -F'\t' -v udid="$device" '$1 == udid' <<<"$connected")
+    [[ -n $chosen ]] ||
+      fail "No connected iPhone has the UDID $device. Connected:
+$connected"
+  else
+    (($(wc -l <<<"$connected") == 1)) ||
+      fail "More than one iPhone is connected: name one with --device <udid>.
+$connected"
+    chosen=$connected
+    device=${chosen%%$'\t'*}
+  fi
+  echo "Installing on ${chosen#*$'\t'}."
+fi
+
+# The generated project carries the team of app.json. It is passed to the build as well, as the
+# builds by hand did since a time the project carried none; a build without it has not been tried.
+team=$(node -p 'require("./app.json").expo.ios.appleTeamId ?? ""')
+[[ -n $team ]] || fail "app.json names no ios.appleTeamId to sign the app with."
+
+# Sentry's build step uploads source maps and debug symbols, and stops the build without a token.
+SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-$(value_in .env.local SENTRY_AUTH_TOKEN)}
+if [[ -n $SENTRY_AUTH_TOKEN ]]; then
+  export SENTRY_AUTH_TOKEN
+else
+  export SENTRY_DISABLE_AUTO_UPLOAD=true
+  echo "No SENTRY_AUTH_TOKEN in .env.local: Sentry will not be able to read this build's stack traces."
+fi
+
+export APP_VARIANT=production NODE_ENV=production
+
+echo "Generating ios/ for the release…"
+generated=true
+pnpm expo prebuild --clean --platform ios >/dev/null
+
+# With a device, Xcode builds for that iPhone; without one, for any.
+destination=generic/platform=iOS
+[[ -z $device ]] || destination=id=$device
+
+echo "Building, which takes some minutes…"
+log=$(mktemp)
+if ! (
+  cd ios && xcodebuild -workspace "$SCHEME.xcworkspace" -scheme "$SCHEME" -configuration Release \
+    -destination "$destination" -derivedDataPath build -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM="$team" CODE_SIGN_STYLE=Automatic build
+) >"$log" 2>&1; then
+  grep -E "error:|BUILD FAILED" "$log" | head -n 20 >&2 || true
+  kept=$log
+  log=""
+  fail "The build failed; its whole output is in $kept."
+fi
+
+# The app reads its server from the environment at build time: one built from the wrong file
+# would open and say it cannot connect. The bundle is read as it is, not through a pipe: a search
+# that stops at its first match would end the pipe early, which `pipefail` takes for a failure.
+grep -qaF -- "$host" "$APP/main.jsbundle" ||
+  fail "The built app does not name $host: check which environment files the build read."
+
+if $install; then
+  echo "Installing…"
+  xcrun devicectl device install app --device "$device" "$APP" >/dev/null ||
+    fail "Could not install on the iPhone: unlock it and run this again with --device $device."
+  bundle_id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist")
+  xcrun devicectl device process launch --device "$device" "$bundle_id" >/dev/null ||
+    echo "Installed; open Benchbite on the iPhone, which could not be started from here."
+fi
+
+version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist")
+echo "Built Benchbite $version against $host: $APP"
