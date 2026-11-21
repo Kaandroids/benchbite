@@ -14,7 +14,9 @@ no signing team; a build went to the wrong of two phones.
 Expo's own answer is EAS Build with EAS Update. The project decided against updates over the air
 (ADR 0156), and against the build service with them: builds are made on the maintainer's Mac,
 with the membership and the tools already there, and no third party holds the signing keys or
-the source.
+the source. Three earlier records planned for EAS and are amended by this one: ADR 0001 named
+it for builds and store submission, ADR 0096 left the builds for preview and production to it,
+and ADR 0149 expected Sentry's token to move there.
 
 ## Decision
 
