@@ -1,0 +1,100 @@
+name: iOS
+
+# The iPhone app with the Apple Watch app in it, built natively on a Mac (#699), which no other
+# check does: a change that only breaks the Xcode build passes the rest. Only when what the native
+# build is made from changes, as it takes a Mac and many minutes; once a week for everything else,
+# such as a new Xcode on the runner, and by hand.
+on:
+  pull_request:
+    # The same paths as for pushes to main below: change them together.
+    paths:
+      - 'app.json'
+      - 'app.config.ts'
+      - 'metro.config.js'
+      - 'modules/**'
+      - 'targets/watch/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.node-version'
+      - '.github/workflows/ios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app.json'
+      - 'app.config.ts'
+      - 'metro.config.js'
+      - 'modules/**'
+      - 'targets/watch/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.node-version'
+      - '.github/workflows/ios.yml'
+  schedule:
+    - cron: '41 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: iOS build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      # The release's app, as `pnpm build:ios:release` builds it, with nothing uploaded to Sentry.
+      APP_VARIANT: production
+      NODE_ENV: production
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+    steps:
+      # Actions are pinned to commit SHAs because tags can be moved to point at different code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Installs the pnpm version from the packageManager field in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Writes ios/ from app.json, its config plugins and targets/, and installs the pods.
+      - name: Generate the Xcode project
+        run: pnpm expo prebuild --clean --platform ios
+
+      # For any iPhone and without signing, which needs no certificate: the release configuration,
+      # so that the JavaScript is bundled too, and the watch app, which the app's scheme builds.
+      - name: Build
+        working-directory: ios
+        run: |
+          # The build's output runs to tens of thousands of lines: a failed build shows its errors
+          # here and keeps the whole of it with the run.
+          if ! xcodebuild -workspace Benchbite.xcworkspace -scheme Benchbite -configuration Release \
+            -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO build \
+            >"$RUNNER_TEMP/xcodebuild.log" 2>&1; then
+            grep -E "error:|BUILD FAILED" "$RUNNER_TEMP/xcodebuild.log" | head -n 40 || true
+            exit 1
+          fi
+
+      # A build that passed without the watch app would not be the check this is.
+      - name: Check that the watch app was built
+        run: test -d ios/build/Build/Products/Release-iphoneos/Benchbite.app/Watch/BenchbiteWatch.app
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ failure() }}
+        with:
+          name: xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
