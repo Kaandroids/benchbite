@@ -25,9 +25,12 @@ fail() {
 # What is left to say and to clear away however the script ends: once ios/ was generated for the
 # release it stays the release's, also after a build that failed or was stopped.
 devices=""
+log=""
 generated=false
 finish() {
   [[ -z $devices ]] || rm -f "$devices"
+  # The build's output is kept only where a failed build names it.
+  [[ -z $log ]] || rm -f "$log"
   if $generated; then
     echo "ios/ is the release's now: run pnpm native:dev before the next development build."
   fi
@@ -64,6 +67,10 @@ while (($#)); do
   esac
 done
 $install || [[ -z $device ]] || fail "--device and --no-install do not go together."
+
+# The build takes these two from the shell before the file, where the shell has them: what is
+# checked here is then what is built.
+unset EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 # The hosted project, which the app is built against. It is reached over https, and the local
 # stack never is, wherever it runs: on this Mac, in the network, or under a name of its own.
@@ -103,7 +110,8 @@ if $install; then
   [[ -n $connected ]] ||
     fail "No iPhone is connected. Connect one, or build without installing: --no-install."
   if [[ -n $device ]]; then
-    chosen=$(grep -F -- "$device"$'\t' <<<"$connected" || true)
+    # The whole UDID, not a part of one, which the build and the installation could not use.
+    chosen=$(awk -F'\t' -v udid="$device" '$1 == udid' <<<"$connected")
     [[ -n $chosen ]] ||
       fail "No connected iPhone has the UDID $device. Connected:
 $connected"
@@ -149,9 +157,10 @@ if ! (
     DEVELOPMENT_TEAM="$team" CODE_SIGN_STYLE=Automatic build
 ) >"$log" 2>&1; then
   grep -E "error:|BUILD FAILED" "$log" | head -n 20 >&2 || true
-  fail "The build failed; its whole output is in $log."
+  kept=$log
+  log=""
+  fail "The build failed; its whole output is in $kept."
 fi
-rm -f "$log"
 
 # The app reads its server from the environment at build time: one built from the wrong file
 # would open and say it cannot connect. The bundle is read as it is, not through a pipe: a search
