@@ -176,3 +176,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0158](0158-ask-again-when-the-terms-or-a-consent-change.md)              | Ask again when the terms or a consent change                                            | Accepted                                             |
 | [0159](0159-ask-for-the-consents-again-where-they-are-needed.md)          | Ask for the consents again where they are needed                                        | Accepted                                             |
 | [0160](0160-show-the-licences-of-what-ships-in-the-app.md)                | Show the licences of what ships in the app                                              | Accepted                                             |
+| [0161](0161-build-the-app-with-scripts-in-the-repository.md)              | Build the app with scripts in the repository                                            | Accepted                                             |

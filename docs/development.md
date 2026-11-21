@@ -344,33 +344,34 @@ A new native version needs `pnpm native:dev` and a new development build.
 
 ## Scripts
 
-| Command                 | Description                                                |
-| ----------------------- | ---------------------------------------------------------- |
-| `pnpm start`            | Start the Expo dev server                                  |
-| `pnpm typecheck`        | Type-check with TypeScript                                 |
-| `pnpm lint`             | Lint with ESLint (fails on warnings)                       |
-| `pnpm format`           | Format all files with Prettier                             |
-| `pnpm format:check`     | Check formatting without changing it                       |
-| `pnpm test`             | Run the app's tests with Jest                              |
-| `pnpm test --coverage`  | Run them all and check their coverage, as CI does          |
-| `pnpm check:locales`    | Check that translations and permission texts match         |
-| `pnpm licences`         | Write the list of libraries on the licences screen         |
-| `pnpm watch:strings`    | Write the watch app's text to Swift                        |
-| `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
-| `pnpm check:rules`      | Check that the rule cases' pgTAP test is up to date        |
-| `pnpm watch:fixtures`   | Write the watch protocol's state fixtures from the phone   |
-| `pnpm check:watch`      | Check the watch's side of the protocol (Mac with Xcode)    |
-| `pnpm test:watch`       | Test the watch app's logic with XCTest (Mac with Xcode)    |
-| `pnpm db:types`         | Generate TypeScript types from the local database          |
-| `pnpm import:exercises` | Import the exercise library from free-exercise-db          |
-| `pnpm import:foods`     | Import the food library from the BLS 4.0                   |
-| `pnpm icons`            | Draw the app icons, splash image and favicon from the mark |
-| `pnpm functions:check`  | Type-check, lint and test the Edge Functions               |
-| `pnpm coverage:report`  | Report the coverage of the app's and the functions' tests  |
-| `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools        |
-| `pnpm check:plans`      | Check every generated workout plan on the local stack      |
-| `pnpm seed:demo`        | Recreate the demo account of the README screenshots        |
-| `pnpm e2e`              | Run the end-to-end flows on the iOS Simulator              |
+| Command                  | Description                                                |
+| ------------------------ | ---------------------------------------------------------- |
+| `pnpm start`             | Start the Expo dev server                                  |
+| `pnpm typecheck`         | Type-check with TypeScript                                 |
+| `pnpm lint`              | Lint with ESLint (fails on warnings)                       |
+| `pnpm format`            | Format all files with Prettier                             |
+| `pnpm format:check`      | Check formatting without changing it                       |
+| `pnpm test`              | Run the app's tests with Jest                              |
+| `pnpm test --coverage`   | Run them all and check their coverage, as CI does          |
+| `pnpm check:locales`     | Check that translations and permission texts match         |
+| `pnpm licences`          | Write the list of libraries on the licences screen         |
+| `pnpm build:ios:release` | Build the release app and install it on an iPhone          |
+| `pnpm watch:strings`     | Write the watch app's text to Swift                        |
+| `pnpm rules:sql`         | Write the pgTAP test of the shared rule cases              |
+| `pnpm check:rules`       | Check that the rule cases' pgTAP test is up to date        |
+| `pnpm watch:fixtures`    | Write the watch protocol's state fixtures from the phone   |
+| `pnpm check:watch`       | Check the watch's side of the protocol (Mac with Xcode)    |
+| `pnpm test:watch`        | Test the watch app's logic with XCTest (Mac with Xcode)    |
+| `pnpm db:types`          | Generate TypeScript types from the local database          |
+| `pnpm import:exercises`  | Import the exercise library from free-exercise-db          |
+| `pnpm import:foods`      | Import the food library from the BLS 4.0                   |
+| `pnpm icons`             | Draw the app icons, splash image and favicon from the mark |
+| `pnpm functions:check`   | Type-check, lint and test the Edge Functions               |
+| `pnpm coverage:report`   | Report the coverage of the app's and the functions' tests  |
+| `pnpm vault:local`       | Store the local Vault secrets and turn on dev tools        |
+| `pnpm check:plans`       | Check every generated workout plan on the local stack      |
+| `pnpm seed:demo`         | Recreate the demo account of the README screenshots        |
+| `pnpm e2e`               | Run the end-to-end flows on the iOS Simulator              |
 
 When the coverage falls short, `pnpm test --coverage --coverageReporters=text` lists it file by file,
 with the lines no test runs. The Edge Functions' is in `coverage/functions/html/index.html` after
