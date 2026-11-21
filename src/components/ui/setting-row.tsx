@@ -9,6 +9,8 @@ import { Text } from './text';
 
 type SettingRowProps = {
   label: string;
+  /** A line under the label that says what the row leads to, where its name does not. */
+  note?: string;
   /** The current setting, after the label; nothing when there is none. */
   value?: string | null;
   /** A state that reads as good, such as a connection, in its colour with a check. */
@@ -21,7 +23,15 @@ type SettingRowProps = {
 };
 
 /** A setting in a row with its current value, which opens where it is changed. */
-export function SettingRow({ label, value, valueIsGood, icon, hint, onPress }: SettingRowProps) {
+export function SettingRow({
+  label,
+  note,
+  value,
+  valueIsGood,
+  icon,
+  hint,
+  onPress,
+}: SettingRowProps) {
   const { spacing } = useTheme();
   return (
     <Pressable
@@ -34,9 +44,18 @@ export function SettingRow({ label, value, valueIsGood, icon, hint, onPress }: S
         {icon ? (
           <IconTile name={icon.name} size={40} color={icon.color} background={icon.background} />
         ) : null}
-        <Text variant="label" style={styles.label}>
-          {label}
-        </Text>
+        {note ? (
+          <View style={styles.noted}>
+            <Text variant="label">{label}</Text>
+            <Text variant="caption" color="textMuted">
+              {note}
+            </Text>
+          </View>
+        ) : (
+          <Text variant="label" style={styles.label}>
+            {label}
+          </Text>
+        )}
         {value ? (
           <View style={[styles.row, styles.value, { gap: spacing.xs }]}>
             {valueIsGood ? <Icon name="check" size={16} color="success" /> : null}
@@ -65,6 +84,11 @@ const styles = StyleSheet.create({
   label: {
     flexGrow: 1,
     flexShrink: 0,
+  },
+  // A label with a note takes the row's width, and the note wraps within it.
+  noted: {
+    flex: 1,
+    gap: 2,
   },
   value: {
     flexShrink: 1,

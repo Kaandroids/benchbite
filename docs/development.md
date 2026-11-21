@@ -354,6 +354,7 @@ A new native version needs `pnpm native:dev` and a new development build.
 | `pnpm test`             | Run the app's tests with Jest                              |
 | `pnpm test --coverage`  | Run them all and check their coverage, as CI does          |
 | `pnpm check:locales`    | Check that translations and permission texts match         |
+| `pnpm licences`         | Write the list of libraries on the licences screen         |
 | `pnpm watch:strings`    | Write the watch app's text to Swift                        |
 | `pnpm rules:sql`        | Write the pgTAP test of the shared rule cases              |
 | `pnpm check:rules`      | Check that the rule cases' pgTAP test is up to date        |

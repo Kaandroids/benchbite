@@ -16,6 +16,7 @@ import { useWatchStatus } from '@/watch/watch-status';
 
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
+import { LicencesRow } from './licences-row';
 import { PlanSection } from './plan-section';
 import { ProfileSection } from './profile-section';
 import { WaterGoalSection } from './water-goal-section';
@@ -55,6 +56,7 @@ export function SettingsScreen() {
       <Section title={t('settings.privacy.title')}>
         <PrivacySection />
       </Section>
+      <LicencesRow />
       <DeleteAccountButton />
     </Screen>
   );

@@ -57,6 +57,29 @@
     "decline": "Ich stimme nicht zu",
     "note": "Ohne dein OK kann Benchbite deine Gesundheitsdaten nicht behalten. Du siehst, was gelöscht wird, bevor etwas gelöscht wird."
   },
+  "licences": {
+    "title": "Lizenzen und Danksagungen",
+    "credits": "Daten und Schrift",
+    "food": {
+      "title": "Nährwerte",
+      "body": "Bundeslebensmittelschlüssel (BLS) 4.0, Max Rubner-Institut, Karlsruhe. CC BY 4.0. Die türkischen Namen, einige gekürzte Namen und die Portionsgrößen stammen von uns."
+    },
+    "exercises": {
+      "title": "Übungen und ihre Bilder",
+      "body": "free-exercise-db von Clint Plummer und Mitwirkenden. Gemeinfrei (Unlicense)."
+    },
+    "typeface": {
+      "title": "Schrift",
+      "body": "Nunito von Vernon Adams und Mitwirkenden. SIL Open Font License 1.1."
+    },
+    "libraries": "Open-Source-Bibliotheken",
+    "count_one": "{{count}} Bibliothek",
+    "count_other": "{{count}} Bibliotheken",
+    "note": "Die Bibliotheken, die Teil dieser App sind, nach ihrer Lizenz. Danke an alle, die sie geschrieben haben.",
+    "text": "Die Lizenz",
+    "under_one": "{{count}} Bibliothek unter ihr",
+    "under_other": "{{count}} Bibliotheken unter ihr"
+  },
   "sessionEnded": {
     "guest": {
       "title": "Deine Gast-Sitzung ist abgelaufen",
@@ -254,6 +277,10 @@
         "failed": "Die Datei konnte nicht erstellt werden. Versuch es noch einmal.",
         "first": "Erst deine Daten exportieren"
       }
+    },
+    "licences": {
+      "body": "Die Open-Source-Bibliotheken und die Daten, mit denen Benchbite gebaut ist.",
+      "hint": "Öffnet die Lizenzen und Danksagungen"
     }
   },
   "loadError": {

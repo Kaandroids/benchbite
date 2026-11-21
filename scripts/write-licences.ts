@@ -1,0 +1,204 @@
+// Writes the list of open source libraries that are part of the app, with their licences, for the
+// licences screen (#29, ADR 0160): src/licences/libraries.json. Run with `pnpm licences` after a
+// dependency was added, updated or removed.
+//
+// Which libraries are part of the app is read from the app itself: it is bundled for both
+// platforms with source maps, and every package a source map names is in the app. Tools that only
+// build the app are not, and are left out. Each library's licence is its package.json's, and the
+// text and the copyright lines are those of its own licence file.
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import type { Library, Licence } from '../src/licences/types.ts';
+
+const ROOT = join(import.meta.dirname, '..');
+const OUTPUT = join(ROOT, 'src/licences/libraries.json');
+const MODULES = 'node_modules/';
+
+/** The folders, relative to the project, of the packages the app's bundles are made of. */
+function bundledPackages(): Map<string, string> {
+  const dir = mkdtempSync(join(tmpdir(), 'benchbite-licences-'));
+  try {
+    execFileSync(
+      'pnpm',
+      [
+        'expo',
+        'export',
+        '--platform',
+        'ios',
+        '--platform',
+        'android',
+        '--dump-sourcemap',
+        '--output-dir',
+        dir,
+      ],
+      {
+        cwd: ROOT,
+        stdio: ['ignore', 'ignore', 'inherit'],
+        env: { ...process.env, APP_VARIANT: 'production' },
+      },
+    );
+    const packages = new Map<string, string>();
+    for (const file of readdirSync(dir, { recursive: true, encoding: 'utf8' })) {
+      if (!file.endsWith('.map')) continue;
+      const { sources } = JSON.parse(readFileSync(join(dir, file), 'utf8')) as {
+        sources: string[];
+      };
+      for (const source of sources) {
+        const at = source.lastIndexOf(MODULES);
+        if (at < 0) continue;
+        const [scope = '', inScope = ''] = source.slice(at + MODULES.length).split('/');
+        const name = scope.startsWith('@') ? `${scope}/${inScope}` : scope;
+        packages.set(name, source.slice(0, at + MODULES.length).replace(/^\//, '') + name);
+      }
+    }
+    return packages;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * A line that names who holds the copyright: "Copyright (c) …" or "Copyright 2014 …", and neither a
+ * sentence of the licence that starts with the word nor the blank line of a licence's template.
+ */
+const isCopyright = (line: string) =>
+  /^\s*(copyright\s+(\(c\)|©|\d{4})|\(c\)\s*\d{4}|©)/i.test(line) &&
+  !/\[yyyy\]|<year>|\[year\]/i.test(line);
+
+/**
+ * A line that only names one of the short licences, which libraries write in many ways. A long
+ * licence, as Apache's, is shown whole, its heading with it.
+ */
+const isTitle = (line: string) =>
+  /^[\s#]*(the\s+)?(mit|isc|bsd)\b.*licen[sc]e.*$/i.test(line) && line.trim().length < 60;
+
+/** A licence file's text without its copyright lines, as one licence reads for all its libraries. */
+function withoutNotice(text: string): string {
+  return text
+    .split('\n')
+    .filter((line) => !isCopyright(line) && !/^all rights reserved\.?$/i.test(line.trim()))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** A text without the title at its head, which only names the licence the text is filed under. */
+function withoutTitle(text: string): string {
+  const lines = text.split('\n');
+  const body = lines.findIndex((line) => line.trim() !== '' && !isTitle(line));
+  return lines.slice(Math.max(body, 0)).join('\n').trim();
+}
+
+/** What two texts of one licence have in common, however they are wrapped and quoted. */
+const wording = (body: string) =>
+  body
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/**
+ * The texts of a package's licence files; none for a package that ships without one. A font's
+ * package has a second file for the font itself, under a licence of its own.
+ */
+function licenceFiles(dir: string): string[] {
+  return readdirSync(dir)
+    .filter((file) => /^(licen[sc]e|copying)([._]|$)/i.test(file))
+    .sort()
+    .map((file) => readFileSync(join(dir, file), 'utf8').replace(/\r\n/g, '\n').trim());
+}
+
+/**
+ * The copyright lines of the libraries whose packages ship without a licence file, as the licence
+ * file of each one's repository holds them (read on 2026-11-21): the licences ask for the notice
+ * with every copy, whether the package brings it or not. expo-router carries a copy of React
+ * Navigation, whose notice it owes too.
+ */
+const META = 'Copyright (c) Meta Platforms, Inc. and affiliates.';
+const COPYRIGHT_WITHOUT_FILE: Record<string, string[]> = {
+  // github.com/kingstinct/react-native-healthkit, LICENSE
+  '@kingstinct/react-native-healthkit': ['Copyright (c) 2020 Robert Herber'],
+  '@react-native-healthkit/core': ['Copyright (c) 2020 Robert Herber'],
+  // github.com/facebook/react-native, LICENSE
+  '@react-native/asset-utils': [META],
+  '@react-native/js-polyfills': [META],
+  '@react-native/normalize-colors': [META],
+  '@react-native/virtualized-lists': [META],
+  // github.com/expo/expo, LICENSE; github.com/react-navigation/react-navigation, packages/*/LICENSE
+  'expo-router': [
+    'Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)',
+    'Copyright (c) 2017 React Navigation Contributors',
+  ],
+  // github.com/facebook/metro, LICENSE
+  'metro-runtime': [META],
+  // github.com/react-navigation/standard-navigation, LICENSE
+  'standard-navigation': ['Copyright (c) 2026 React Navigation Contributors'],
+};
+
+const packages = bundledPackages();
+// A library without a licence file names its licence in its package.json alone: it is listed
+// under that licence's usual text, with the copyright lines kept for it above.
+const byLicence = new Map<string, (Library & { body?: string })[]>();
+for (const [name, dir] of [...packages].sort(([a], [b]) => a.localeCompare(b))) {
+  const { version, license } = JSON.parse(
+    readFileSync(join(ROOT, dir, 'package.json'), 'utf8'),
+  ) as {
+    version: string;
+    license?: string;
+  };
+  if (!license) throw new Error(`${name} names no licence in its package.json`);
+  const files = licenceFiles(join(ROOT, dir));
+  const kept = COPYRIGHT_WITHOUT_FILE[name];
+  if (files.length === 0 && !kept) {
+    throw new Error(
+      `${name} ships without a licence file: add the copyright lines of its repository's ` +
+        'licence to COPYRIGHT_WITHOUT_FILE',
+    );
+  }
+  if (files.length > 0 && kept) {
+    throw new Error(`${name} ships a licence file now: take it out of COPYRIGHT_WITHOUT_FILE`);
+  }
+  const copyright =
+    kept ??
+    files
+      .flatMap((file) => file.split('\n'))
+      .filter(isCopyright)
+      .map((line) => line.trim());
+  // Several files keep their titles, which say where one licence ends and the next begins.
+  const [only, ...more] = files.map(withoutNotice);
+  const body =
+    only === undefined
+      ? undefined
+      : more.length > 0
+        ? [only, ...more].join('\n\n')
+        : withoutTitle(only);
+  byLicence.set(license, [...(byLicence.get(license) ?? []), { name, version, copyright, body }]);
+}
+
+const licences: Licence[] = [...byLicence]
+  .map(([id, libraries]) => {
+    // The wording most of the licence's libraries share is the licence's text.
+    const counts = new Map<string, number>();
+    for (const { body } of libraries) {
+      if (body !== undefined) counts.set(wording(body), (counts.get(wording(body)) ?? 0) + 1);
+    }
+    const [usual] = [...counts].sort(([, a], [, b]) => b - a)[0] ?? [];
+    const text = libraries.find(({ body }) => body !== undefined && wording(body) === usual)?.body;
+    if (!text) {
+      throw new Error(`No library under ${id} ships its text: add the licence's text by hand`);
+    }
+    return {
+      id,
+      text,
+      libraries: libraries.map(({ body, ...library }) =>
+        body === undefined || wording(body) === usual ? library : { ...library, text: body },
+      ),
+    };
+  })
+  .sort((a, b) => b.libraries.length - a.libraries.length || a.id.localeCompare(b.id));
+
+writeFileSync(OUTPUT, `${JSON.stringify({ licences }, null, 2)}\n`);
+const count = licences.reduce((sum, { libraries }) => sum + libraries.length, 0);
+console.log(`Wrote ${count} libraries under ${licences.length} licences to ${OUTPUT}`);
