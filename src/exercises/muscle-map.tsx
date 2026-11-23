@@ -1,4 +1,3 @@
-import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Body from 'react-native-body-highlighter';
 
@@ -24,7 +23,7 @@ type MuscleMapProps = {
  * colour and the ones that help in a paler one. It is a picture: what it shows is said in words
  * beside it, so screen readers pass over it.
  */
-export const MuscleMap = memo(function MuscleMap({
+export function MuscleMap({
   primary,
   secondary,
   side,
@@ -33,15 +32,11 @@ export const MuscleMap = memo(function MuscleMap({
   height,
 }: MuscleMapProps) {
   const { colors } = useTheme();
-  const parts = useMemo(
-    () =>
-      mapParts(primary, secondary, {
-        primary: colors.primary,
-        secondary: colors.figureSecondary,
-        rest: colors.figure,
-      }),
-    [primary, secondary, colors.primary, colors.figureSecondary, colors.figure],
-  );
+  const parts = mapParts(primary, secondary, {
+    primary: colors.primary,
+    secondary: colors.figureSecondary,
+    rest: colors.figure,
+  });
   const { scale, left, top } = placement(zone, width, height);
   return (
     <View
@@ -56,7 +51,7 @@ export const MuscleMap = memo(function MuscleMap({
       </View>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   frame: {
