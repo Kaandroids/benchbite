@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(19);
 
 select is(
   (select count(*) from public.exercises where owner_id is null)::integer, 876,
@@ -97,10 +97,37 @@ select throws_ok(
   'Signed-in users cannot change the translated steps'
 );
 select throws_ok(
+  $$ insert into public.exercise_instruction_translations (exercise_id, language, instructions)
+     values ('Plank', 'de', '{x}') $$,
+  '42501',
+  null,
+  'Signed-in users cannot add translated steps'
+);
+select throws_ok(
+  $$ delete from public.exercise_instruction_translations where exercise_id = 'Plank' $$,
+  '42501',
+  null,
+  'Signed-in users cannot delete translated steps'
+);
+select throws_ok(
   $$ insert into public.exercise_translations (exercise_id, language, name) values ('Plank', 'de', 'x') $$,
   '42501',
   null,
   'Signed-in users cannot add translations'
+);
+
+select set_config('role', 'anon', true);
+
+select isnt_empty(
+  $$ select * from public.exercise_instruction_translations $$,
+  'Guests can read the translated steps'
+);
+select throws_ok(
+  $$ insert into public.exercise_instruction_translations (exercise_id, language, instructions)
+     values ('Plank', 'de', '{x}') $$,
+  '42501',
+  null,
+  'Guests cannot add translated steps'
 );
 
 select * from finish();
