@@ -8,7 +8,7 @@ import { Icon } from '@/components/ui/icon';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
@@ -58,7 +58,7 @@ export function EditorExercises({
         style={[styles.exercise, { gap: spacing.md }]}
       >
         {superset ? <SupersetLine place={superset} inset={spacing.md} /> : null}
-        <ExerciseThumbnail path={thumbnailOf(info)} size={52} name={info?.name} />
+        <ExerciseThumbnail exercise={info} size={52} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}

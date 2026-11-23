@@ -48,6 +48,7 @@ export const MuscleMap = memo(function MuscleMap({
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
+      testID={`muscle-map-${side}-${zone}`}
       style={[styles.frame, { width, height }]}
     >
       <View style={[styles.figure, { left, top }]}>

@@ -13,7 +13,6 @@ export function testExercise(
     superset: null,
     setTargets: null,
     primaryMuscles: ['quadriceps'],
-    imagePath: `${exerciseId}/0.webp`,
     ...more,
   };
 }

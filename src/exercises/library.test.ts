@@ -66,8 +66,18 @@ describe('fetchLibrary', () => {
       id: 'squat',
       metrics: ['weight', 'reps'],
       primaryMuscles: ['chest'],
-      imagePaths: ['squat/0.webp', 'squat/1.webp'],
+      // The library's own pictures are left out (ADR 0162).
+      imagePaths: [],
     });
+  });
+
+  it("keeps the photos of the user's own exercise", async () => {
+    range.mockResolvedValue({
+      data: [row('mine', 'Hip thrust', { owner_id: 'u', image_paths: [null, 'u/end.jpg'] })],
+      error: null,
+    });
+    const [exercise] = await fetchLibrary('en');
+    expect(exercise).toMatchObject({ custom: true, imagePaths: [null, 'u/end.jpg'] });
   });
 
   it('fails with the error the database returns', async () => {

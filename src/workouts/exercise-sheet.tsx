@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { InfoButton } from '@/exercises/info-button';
-import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
@@ -144,7 +144,7 @@ export function ExerciseSheet({
   return (
     <Sheet onClose={onClose}>
       <View style={[styles.header, { gap: spacing.md }]}>
-        <ExerciseThumbnail path={thumbnailOf(details)} size={64} name={details?.name} />
+        <ExerciseThumbnail exercise={details} size={64} name={details?.name} />
         <View style={styles.title}>
           <Text variant="headline">{details?.name ?? ''}</Text>
           <Text variant="caption" color="textMuted">

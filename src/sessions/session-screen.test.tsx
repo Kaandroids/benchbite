@@ -25,9 +25,6 @@ import {
 import { SessionScreen } from './session-screen';
 import { useStartWorkout } from './start';
 
-jest.mock('@/exercises/images', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
-}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), dismissAll: jest.fn() },
 }));

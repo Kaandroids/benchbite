@@ -18,7 +18,6 @@ const exercise = (primaryMuscles: WorkoutExercise['primaryMuscles']): WorkoutExe
   superset: null,
   setTargets: null,
   primaryMuscles,
-  imagePath: null,
 });
 
 describe('workoutLength', () => {

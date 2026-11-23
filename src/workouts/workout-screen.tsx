@@ -166,7 +166,7 @@ export function WorkoutScreen({ id }: { id: number }) {
     >
       {superset ? <SupersetLine place={superset} inset={0} reach={spacing.md + 1} /> : null}
       <ExerciseThumbnail
-        path={exercise.imagePath}
+        exercise={findExercise(library.data, exercise.exerciseId)}
         size={IMAGE_SIZE}
         name={nameOf(exercise.exerciseId)}
       />

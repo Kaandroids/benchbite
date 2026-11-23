@@ -8,8 +8,9 @@ import { EditExerciseScreen } from './edit-exercise-screen';
 import { ExerciseScreen } from './exercise-screen';
 import { useExerciseDetails, type LibraryExercise } from './library';
 
-jest.mock('@/exercises/images', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+jest.mock('./photos', () => ({
+  usePictureUrls: (paths: string[]) =>
+    Object.fromEntries(paths.map((path) => [path, `https://photos.test/${path}`])),
 }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('./custom', () => ({ useArchiveExercise: jest.fn(), useKindLock: jest.fn() }));
@@ -65,10 +66,10 @@ describe('ExerciseScreen', () => {
     await render(<ExerciseScreen id="row" />);
     expect(screen.getByText('Seated cable row')).toBeTruthy();
     expect(screen.getByLabelText('Start').props.source).toEqual({
-      uri: 'https://images.test/row/0.webp',
+      uri: 'https://photos.test/row/0.webp',
     });
     expect(screen.getByLabelText('End').props.source).toEqual({
-      uri: 'https://images.test/row/1.webp',
+      uri: 'https://photos.test/row/1.webp',
     });
     expect(screen.getByText('Middle back')).toBeTruthy();
     expect(screen.getByText('Biceps')).toBeTruthy();

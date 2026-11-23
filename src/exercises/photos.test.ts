@@ -3,9 +3,6 @@ import { createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { isUserPhoto, uploadPhoto, usePictureUrls } from './photos';
 
-jest.mock('@/exercises/images', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
-}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => '11111111-1111-1111-1111-111111111111' }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-image-manipulator', () => {
@@ -58,7 +55,7 @@ describe('uploadPhoto', () => {
 });
 
 describe('usePictureUrls', () => {
-  it('signs the user photos and keeps the library pictures as they are', async () => {
+  it('signs the user photos, and has no address for a picture of the library', async () => {
     const createSignedUrls = jest.fn().mockResolvedValue({
       data: [{ path: PHOTO, signedUrl: 'https://signed.test/photo' }],
       error: null,
@@ -67,8 +64,8 @@ describe('usePictureUrls', () => {
     const { result } = await renderHook(() => usePictureUrls(['Squat/0.webp', PHOTO]), {
       queryClient: createTestQueryClient(),
     });
-    expect(result.current['Squat/0.webp']).toBe('https://images.test/Squat/0.webp');
     await waitFor(() => expect(result.current[PHOTO]).toBe('https://signed.test/photo'));
+    expect(result.current['Squat/0.webp']).toBeUndefined();
     expect(createSignedUrls).toHaveBeenCalledWith([PHOTO], 3600);
   });
 });

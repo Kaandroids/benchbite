@@ -11,7 +11,6 @@ const session = (name: string, exercises: number, estimatedMinutes: number): Wee
   exercises: Array.from({ length: exercises }, () => ({
     exerciseId: 'bench',
     primaryMuscles: [],
-    imagePath: null,
     sets: 3,
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,

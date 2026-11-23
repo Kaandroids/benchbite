@@ -41,7 +41,6 @@ const session = (workoutId: number, weekday: number, name: string, exercises = 0
   exercises: Array.from({ length: exercises }, () => ({
     exerciseId: 'bench',
     primaryMuscles: [],
-    imagePath: null,
     sets: 3,
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,
