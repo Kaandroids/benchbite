@@ -19,6 +19,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useTrainedMuscles } from '@/exercises/trained-muscles';
 import { isDbError } from '@/lib/errors';
 import { useOpenPremium } from '@/premium/open-premium';
 import { PremiumOfferSheet } from '@/premium/premium-offer-sheet';
@@ -41,6 +42,7 @@ import { HeldAlternativeSheet } from './held-workout-sheet';
 import { SupersetHeader, SupersetLine } from './superset-marks';
 import { supersetPlace, type SupersetPlace } from './supersets';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import { WorkoutMusclesCard } from './workout-muscles-card';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
@@ -73,6 +75,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
+  const musclesOf = useTrainedMuscles();
+  const muscles = musclesOf(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
   const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
@@ -297,6 +301,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       ) : (
         // Dimmed as a whole while it waits, as it cannot be started.
         <View style={{ gap: spacing.lg, opacity: held ? HELD_OPACITY : 1 }}>
+          {muscles.primary.length > 0 ? <WorkoutMusclesCard {...muscles} /> : null}
           {/* One card of even columns over the workout's days, like a finished workout's figures
               over when it started and ended. */}
           <StatColumns
