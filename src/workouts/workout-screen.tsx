@@ -41,7 +41,7 @@ import { EmptyWorkout } from './empty-workout';
 import { HeldAlternativeSheet } from './held-workout-sheet';
 import { SupersetHeader, SupersetLine } from './superset-marks';
 import { supersetPlace, type SupersetPlace } from './supersets';
-import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import { WorkoutMusclesCard } from './workout-muscles-card';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
@@ -233,14 +233,10 @@ export function WorkoutScreen({ id }: { id: number }) {
     <Screen
       onBack={() => router.back()}
       title={name}
+      // The muscles it trains are on the map below the title (ADR 0165), so the subtitle shows only
+      // that the workout is in the archive or has no exercises.
       subtitle={
-        inArchive
-          ? t('workout.archive.inArchive')
-          : empty
-            ? t('workout.noExercises')
-            : mainMuscles(workout)
-                .map((muscle) => t(`workout.muscles.${muscle}`))
-                .join(' · ')
+        inArchive ? t('workout.archive.inArchive') : empty ? t('workout.noExercises') : undefined
       }
       footer={
         inArchive ? (

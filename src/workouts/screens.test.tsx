@@ -532,7 +532,9 @@ describe('WorkoutScreen', () => {
     await render(<WorkoutScreen id={7} />);
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('Wed')).toBeTruthy();
-    expect(screen.getByText('Lats · Middle back · Biceps')).toBeTruthy();
+    // The muscles are on the map, not again under the title.
+    expect(screen.getByText('Mainly: Lats')).toBeTruthy();
+    expect(screen.queryByText('Lats · Middle back · Biceps')).toBeNull();
     // The rope's conditioning counts like any exercise.
     expect(screen.getByText('4')).toBeTruthy();
     expect(screen.getByText('exercises')).toBeTruthy();

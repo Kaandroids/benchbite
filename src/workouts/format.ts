@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
 
-import type { Muscle, WeekSession, Workout, WorkoutTarget } from './workouts';
+import type { WeekSession, Workout, WorkoutTarget } from './workouts';
 
 /**
  * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and
@@ -92,21 +92,4 @@ export function useRestFormat() {
   const { t } = useTranslation();
   return (seconds: number) =>
     seconds === 0 ? t('workout.noRest') : t('workout.rest', { time: minutesAndSeconds(seconds) });
-}
-
-/**
- * The muscles a workout trains most, by how many of its main exercises work them, ties in the
- * order they come up.
- */
-export function mainMuscles(workout: Workout, limit = 3): Muscle[] {
-  const counts = new Map<Muscle, number>();
-  for (const exercise of workout.exercises) {
-    for (const muscle of exercise.primaryMuscles) {
-      counts.set(muscle, (counts.get(muscle) ?? 0) + 1);
-    }
-  }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([muscle]) => muscle);
 }

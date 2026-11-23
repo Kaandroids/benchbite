@@ -1,6 +1,6 @@
 # 0162. Show a muscle map in place of the exercise pictures
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0165
 - **Date:** 2026-11-23
 
 ## Context
