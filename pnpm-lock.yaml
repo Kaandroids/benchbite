@@ -117,6 +117,9 @@ importers:
       react-native:
         specifier: 0.88.1
         version: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
+      react-native-body-highlighter:
+        specifier: ^3.2.0
+        version: 3.2.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-gesture-handler:
         specifier: ~3.3.0
         version: 3.3.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -4866,6 +4869,12 @@ packages:
 
   react-is@19.3.1:
     resolution: {integrity: sha512-RRieF6IyxQBkcK6pP8xOHprLTPW6QjRkbGdImtqNme+/hYVwCZkLQLdlZGOhUqXwkS9IEynaGvPJtv6XB/cz0Q==}
+
+  react-native-body-highlighter@3.2.0:
+    resolution: {integrity: sha512-BxWwcX8PtbKr3X0bW0n4OyPT6b+2R9IUqDyMgq8PP6IhJouSt9ik10a3c7PRYOlA2DdrBjLFiwamqhsMS2BfeQ==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   react-native-drawer-layout@4.2.12:
     resolution: {integrity: sha512-qYmntEctkMSodN7pnC2llV21nswImLFPHJeT3PJXSJqZdU4jzDATR8iVi66sXkrtoOLJ2+EvXxgd7sMMpV4ViA==}
@@ -11337,6 +11346,12 @@ snapshots:
   react-is@18.3.1: {}
 
   react-is@19.3.1: {}
+
+  react-native-body-highlighter@3.2.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+      react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
+      react-native-svg: 15.16.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
 
   react-native-drawer-layout@4.2.12(9bf6b8bd67e1ec5b5b286202d32bd048):
     dependencies:
