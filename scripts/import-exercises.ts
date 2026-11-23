@@ -232,6 +232,12 @@ for (const exercise of exercises) {
         counts.map((count) => count ?? 'none').join(', '),
     );
   }
+  // A step without words would be shown as a number with nothing beside it.
+  for (const language of INSTRUCTION_LANGUAGES) {
+    if (instructions[language][exercise.id]?.some((step) => step.trim() === '')) {
+      throw new Error(`${exercise.id} has an empty step in ${language}`);
+    }
+  }
 }
 
 if (process.argv.includes('--instructions-only')) {

@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 select is(
   (select count(*) from public.exercises where owner_id is null)::integer, 876,
@@ -32,6 +32,19 @@ select is(
   )::integer,
   0,
   'Every exercise has as many steps in German and in Turkish as in English'
+);
+select is(
+  (
+    select count(*)
+    from (
+      select unnest(instructions) as step from public.exercises where owner_id is null
+      union all
+      select unnest(instructions) from public.exercise_instruction_translations
+    ) steps
+    where btrim(step) = ''
+  )::integer,
+  0,
+  'No step of the library is empty, in any language'
 );
 
 select is(
