@@ -192,9 +192,12 @@ supply chain ([Release](https://github.com/Kaandroids/benchbite/milestone/12)).
 
 ## Acknowledgements
 
-The exercise data and images come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
-by Clint Plummer ([@yuhonas](https://github.com/yuhonas)) and contributors, released into the
-public domain under the [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md).
+The exercises, with their names, muscles, equipment and steps, come from
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db) by Clint Plummer
+([@yuhonas](https://github.com/yuhonas)) and contributors, published under the
+[Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md). Its pictures are
+not used: the rights to them are not known
+([ADR 0163](docs/adr/0163-take-the-exercise-pictures-out.md)).
 
 The food data comes from the [Bundeslebensmittelschlüssel (BLS) 4.0](https://blsdb.de) by the
 Max Rubner-Institut, Karlsruhe, released under

@@ -1,6 +1,6 @@
 # 0030. Deploy Supabase from GitHub Actions
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0163
 - **Date:** 2026-10-25
 
 ## Context

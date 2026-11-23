@@ -119,14 +119,6 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-# Uploads the exercise images to the local stack. The bucket itself is created by a migration,
-# so that it exists in every environment.
-[storage.buckets.exercise-images]
-public = true
-file_size_limit = "1MiB"
-allowed_mime_types = ["image/webp"]
-objects_path = "./storage/exercise-images"
-
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true

@@ -93,13 +93,15 @@ skipped after a reset.
 ### Exercise library
 
 The exercise library comes from [free-exercise-db](https://github.com/yuhonas/free-exercise-db).
-Its data is in a migration and its images are in `supabase/storage/exercise-images/`, so
-`pnpm supabase start` and `pnpm supabase db reset` load both without a download. To update the
+Its data is in a migration, so `pnpm supabase start` and `pnpm supabase db reset` load it without
+a download. Its pictures are not used: the app draws the muscles an exercise trains
+([ADR 0162](adr/0162-show-a-muscle-map-in-place-of-the-exercise-pictures.md)). To update the
 library, change the upstream commit in `scripts/import-exercises.ts` and run
-`pnpm import:exercises`, which converts the images to WebP and writes a new migration. After
+`pnpm import:exercises`, which writes a new migration. After
 changing only the translated names in `supabase/data/exercise-names.json`, run
 `pnpm import:exercises --names-only`, which writes a migration with just the names. See
-[ADR 0008](adr/0008-exercise-library.md).
+[ADR 0008](adr/0008-exercise-library.md) and
+[ADR 0163](adr/0163-take-the-exercise-pictures-out.md).
 
 ### Food library
 
