@@ -39,8 +39,9 @@ type WorkoutListItemProps = {
 const TILE = 64;
 
 /**
- * A workout in a list: the muscles it trains (#304), its name, days and size, with a button to start it while it is active and a
- * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
+ * A workout in a list: the muscles it trains (#304), its name, days and size, with a button to
+ * start it while it is active and a switch to turn it back on while it is not. Active workouts are
+ * switched off on their own screen.
  * One that waits for premium is dimmed and locked in its place: an active one opens a sheet that
  * says so, an archived one opens to be looked at.
  */
@@ -93,8 +94,7 @@ export function WorkoutListItem({
             {name}
           </Text>
           <DayChips weekdays={workout.weekdays} muted={muted} today={held ? undefined : today} />
-          {/* One line: the counts go without their words, which the icons and labels give. Only the
-            calories keep a colour, so that the stats stay quiet beside the days (#334). */}
+          {/* One line: the counts go without their words, which the icons and labels give. */}
           {exercises.length === 0 ? (
             <Text variant="caption" color="textMuted">
               {t('workout.noExercises')}
@@ -120,7 +120,8 @@ export function WorkoutListItem({
               />
             </View>
           )}
-          {/* On a line of its own, as the tile of muscles leaves the stats less room. */}
+          {/* On a line of its own, as the tile of muscles leaves the stats less room. Only the
+            calories keep a colour, so that the stats stay quiet beside the days (#334). */}
           {exercises.length > 0 && kcalPerMinute ? (
             <IconStat
               icon="flame"
