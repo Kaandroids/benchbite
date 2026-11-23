@@ -42,7 +42,7 @@ export const en = {
     workout: {
       nav: 'Workout',
       title: 'Last time: 77.5 kg × 11. Beat it.',
-      text: "About 870 exercises with pictures, last time's sets beside each set, a rest timer, and records per exercise.",
+      text: "About 870 exercises that show the muscles they train, last time's sets beside each set, a rest timer, and records per exercise.",
       alt: 'A workout in progress with sets and a rest timer',
     },
     progress: {
