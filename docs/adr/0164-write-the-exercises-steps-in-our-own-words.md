@@ -34,7 +34,8 @@ five exercises had none.
 The texts were written with the help of a language model, batch by batch from one brief, checked
 by script for their structure, and are reviewed by the maintainer as any change is.
 
-This amends ADR 0008, which took the steps from the collection and left them in English.
+This amends ADR 0008, which took the steps from the collection and left them in English, and
+ADR 0163, whose credit still named the collection for the steps.
 
 ## Alternatives considered
 
