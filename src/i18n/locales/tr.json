@@ -1470,11 +1470,11 @@
       "intro": "Birkaç sağlık bilgisini kullanmak için onayın gerekiyor. Onay olmadan planını oluşturamayız.",
       "what": {
         "title": "Ne topluyoruz",
-        "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın."
+        "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın, ayrıca kaydettiğin antrenmanlar, öğünler ve kilon."
       },
       "why": {
         "title": "Ne için",
-        "body": "Sadece kalori hedeflerin ve antrenman planın için."
+        "body": "Hedeflerini belirlemek ve planını oluşturmak, ayrıca antrenmanlarını, öğünlerini ve ilerlemeni kaydetmek için."
       },
       "control": {
         "title": "Kontrol sende",

@@ -1470,11 +1470,11 @@
       "intro": "We need your OK to use a few health details. Without it, we can't build your plan.",
       "what": {
         "title": "What we collect",
-        "body": "Your sex, age, height, weight, activity and training."
+        "body": "Your sex, age, height, weight, activity and training, and the workouts, meals and weight you log."
       },
       "why": {
         "title": "Used for",
-        "body": "Only to set your calorie targets and build your workout plan."
+        "body": "To set your targets and build your plan, and to keep your workouts, meals and progress."
       },
       "control": {
         "title": "Your control",
