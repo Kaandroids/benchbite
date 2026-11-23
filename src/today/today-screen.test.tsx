@@ -44,6 +44,12 @@ jest.mock('@/nutrition/meals', () => ({
   useDayEntries: jest.fn(),
 }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: jest.fn() }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual('@/exercises/library'),
+  useExerciseLibrary: () => ({
+    data: [{ id: 'exercise-0', primaryMuscles: ['lats'], secondaryMuscles: ['biceps'] }],
+  }),
+}));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -311,6 +317,8 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('6 exercises · about 45 min')).toBeTruthy();
     expect(screen.queryByText('Name of exercise-0')).toBeNull();
+    // The muscles of its exercises in place of the icon.
+    expect(screen.getByTestId('muscle-tile', { includeHiddenElements: true })).toBeTruthy();
   });
 
   it("opens today's workout with its round button", async () => {

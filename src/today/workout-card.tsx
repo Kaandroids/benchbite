@@ -5,6 +5,8 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
+import { MuscleTile } from '@/exercises/muscle-tile';
+import { useTrainedMuscles } from '@/exercises/trained-muscles';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useSessionSize, useSessionsSize, useWorkoutName } from '@/workouts/format';
@@ -27,7 +29,7 @@ type WorkoutCardProps = {
 
 type OpenableWorkoutProps = Pick<
   PlanRowProps,
-  'icon' | 'caption' | 'title' | 'actionLabel' | 'children'
+  'icon' | 'figure' | 'caption' | 'title' | 'actionLabel' | 'children'
 > & {
   /** The workout the card and its button open. */
   session: WeekSession;
@@ -68,6 +70,17 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
   const workoutName = useWorkoutName();
   const sessionSize = useSessionSize();
   const sessionsSize = useSessionsSize();
+  const musclesOf = useTrainedMuscles();
+  // The muscles a workout trains (#304), with the dumbbell for one without exercises.
+  const muscles = (session: WeekSession, size: number) => (
+    <MuscleTile
+      {...musclesOf(session.exercises.map((exercise) => exercise.exerciseId))}
+      size={size}
+      fallback={
+        <IconTile name="dumbbell" color="breakfast" background="breakfastBackground" size={size} />
+      }
+    />
+  );
   const day = schedule.days[isoWeekday(today) - 1];
   const todays = day?.workouts.filter((workout) => workout.status !== 'skipped') ?? [];
   const ahead = todays.filter((workout) => workout.status === 'planned');
@@ -106,6 +119,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
         session={session}
         entering={entering}
         icon="dumbbell"
+        figure={muscles(session, FIGURE)}
         caption={t('today.workout.title')}
         title={workoutName(session)}
         actionLabel={t('today.workout.openLabel')}
@@ -141,7 +155,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
                 <Icon name="check" size={18} color="onPrimary" />
               </View>
             ) : (
-              <IconTile name="dumbbell" color="breakfast" background="breakfastBackground" />
+              muscles(session, 44)
             )}
             <View style={styles.text}>
               <Text variant="bodyStrong">{workoutName(session)}</Text>
@@ -170,6 +184,9 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
     </Card>
   );
 }
+
+/** The side of today's workout's tile of muscles, a little larger than an icon's. */
+const FIGURE = 52;
 
 const styles = StyleSheet.create({
   row: {

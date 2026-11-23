@@ -9,6 +9,8 @@ import { fonts, useTheme, type ColorTokens } from '@/theme';
 
 export type PlanRowProps = {
   icon: IconName;
+  /** In place of the icon, such as the muscles of today's workout; the icon is its fallback. */
+  figure?: ReactNode;
   /** The colour of the icons and the caption; the icon and the round button sit on `background`. */
   color: keyof ColorTokens;
   background: keyof ColorTokens;
@@ -30,6 +32,7 @@ export type PlanRowProps = {
  */
 export function PlanRow({
   icon,
+  figure,
   color,
   background,
   caption,
@@ -42,7 +45,7 @@ export function PlanRow({
   const { spacing } = useTheme();
   return (
     <View style={[styles.row, { gap: spacing.md }]}>
-      <IconTile name={icon} color={color} background={background} />
+      {figure ?? <IconTile name={icon} color={color} background={background} />}
       <View style={styles.text}>
         <Text variant="caption" color={color} style={styles.caption}>
           {caption}
