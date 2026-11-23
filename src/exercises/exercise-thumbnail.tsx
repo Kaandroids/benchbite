@@ -31,6 +31,8 @@ export function ExerciseThumbnail({ exercise, size, name }: ExerciseThumbnailPro
   const primary = exercise?.primaryMuscles ?? [];
   const map = !path && primary.length > 0;
   const view = viewOf(primary);
+  // Inside the frame's border.
+  const inner = size - 2 * BORDER;
   return (
     <View
       style={[
@@ -56,9 +58,8 @@ export function ExerciseThumbnail({ exercise, size, name }: ExerciseThumbnailPro
           secondary={exercise?.secondaryMuscles ?? []}
           side={view.side}
           zone={view.zone}
-          // Inside the border.
-          width={size - 2}
-          height={size - 2}
+          width={inner}
+          height={inner}
         />
       ) : name ? (
         <Text
@@ -73,9 +74,11 @@ export function ExerciseThumbnail({ exercise, size, name }: ExerciseThumbnailPro
   );
 }
 
+const BORDER = 1;
+
 const styles = StyleSheet.create({
   frame: {
-    borderWidth: 1,
+    borderWidth: BORDER,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',

@@ -67,9 +67,14 @@ export type MapSide = 'front' | 'back';
 /** The part of the figure a small map shows: the upper body, the thighs and hips, or the calves. */
 export type MapZone = 'whole' | 'upper' | 'legs' | 'lower';
 
+/** The width of one figure in the units of the library's drawing; it is twice as high. */
+const FIGURE_UNITS = 724;
+/** The width in points the library draws a figure at scale 1. */
+const FIGURE_POINTS = 200;
+
 /**
- * Each zone as a box of the drawing, [x, y, width, height]. One figure is 724 wide and 1448 high;
- * the back figure is drawn to the right of the front one, and takes the same boxes.
+ * Each zone as a box of the drawing, [x, y, width, height], in its units. The back figure is
+ * drawn to the right of the front one, and takes the same boxes.
  */
 export const ZONES: Record<MapZone, [number, number, number, number]> = {
   whole: [40, 85, 644, 1270],
@@ -132,8 +137,7 @@ export function placement(zone: MapZone, width: number, height: number) {
   const [x, y, w, h] = ZONES[zone];
   const pointsPerUnit = Math.min(width / w, height / h);
   return {
-    // The library draws a figure 200 points wide at scale 1, over 724 units of its drawing.
-    scale: (724 * pointsPerUnit) / 200,
+    scale: (FIGURE_UNITS * pointsPerUnit) / FIGURE_POINTS,
     left: (width - w * pointsPerUnit) / 2 - x * pointsPerUnit,
     top: (height - h * pointsPerUnit) / 2 - y * pointsPerUnit,
   };

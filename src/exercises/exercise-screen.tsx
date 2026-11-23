@@ -43,6 +43,8 @@ export function ExerciseScreen({
   const archive = useArchiveExercise(id);
   // The width of a map's tile, known once it is laid out; the figure is drawn to fit it.
   const [tileWidth, setTileWidth] = useState(0);
+  // Inside the tile's border, with room around the figure.
+  const mapSize = tileWidth - 2 * BORDER - 2 * spacing.sm;
 
   if (!allLoaded([library, instructions])) {
     return (
@@ -148,9 +150,8 @@ export function ExerciseScreen({
                       primary={exercise.primaryMuscles}
                       secondary={exercise.secondaryMuscles}
                       side={side}
-                      // Inside the border, with room around the figure.
-                      width={tileWidth - 2 - 2 * spacing.sm}
-                      height={tileWidth - 2 - 2 * spacing.sm}
+                      width={mapSize}
+                      height={mapSize}
                     />
                   ) : null}
                 </View>
@@ -253,6 +254,8 @@ export function ExerciseScreen({
   );
 }
 
+const BORDER = 1;
+
 const styles = StyleSheet.create({
   archive: {
     alignItems: 'center',
@@ -274,7 +277,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     aspectRatio: 1,
-    borderWidth: 1,
+    borderWidth: BORDER,
   },
   map: {
     alignItems: 'center',
