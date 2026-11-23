@@ -1121,6 +1121,10 @@
   "exercise": {
     "start": "Start",
     "end": "End",
+    "front": "Front",
+    "back": "Back",
+    "frontMap": "The muscles from the front",
+    "backMap": "The muscles from the back",
     "equipment": "Equipment",
     "level": "Level",
     "howTo": "How to do it",

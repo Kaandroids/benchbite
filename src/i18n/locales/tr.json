@@ -1121,6 +1121,10 @@
   "exercise": {
     "start": "Başlangıç",
     "end": "Bitiş",
+    "front": "Ön",
+    "back": "Arka",
+    "frontMap": "Kaslar önden",
+    "backMap": "Kaslar arkadan",
     "equipment": "Ekipman",
     "level": "Seviye",
     "howTo": "Nasıl yapılır",
