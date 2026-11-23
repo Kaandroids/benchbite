@@ -23,7 +23,10 @@ export type LibraryExercise = {
   equipment: Enums['equipment'] | null;
   level: Enums['exercise_level'];
   category: Enums['exercise_category'];
-  /** The pictures of the start and the end of a rep; a missing start is null (ADR 0027). */
+  /**
+   * The photos of the start and the end of a rep of the user's own exercise; a missing start is
+   * null (ADR 0027). The library's exercises have none: they show their muscles (ADR 0162).
+   */
   imagePaths: (string | null)[];
   /** Created by the user rather than from the library (ADR 0026). */
   custom: boolean;
@@ -31,7 +34,7 @@ export type LibraryExercise = {
   archived: boolean;
 };
 
-/** The picture that stands for an exercise in lists: its start, or else its end. */
+/** The photo that stands for the user's own exercise in lists: its start, or else its end. */
 export function thumbnailOf(exercise: Pick<LibraryExercise, 'imagePaths'> | undefined) {
   return exercise?.imagePaths.find((path) => path !== null) ?? undefined;
 }
@@ -92,7 +95,8 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
         equipment: row.equipment,
         level: row.level,
         category: row.category,
-        imagePaths: row.image_paths,
+        // The library's own pictures are not shown (ADR 0162).
+        imagePaths: row.owner_id ? row.image_paths : [],
         custom: Boolean(row.owner_id),
         archived: Boolean(row.archived_at),
       };

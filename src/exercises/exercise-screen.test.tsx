@@ -8,8 +8,9 @@ import { EditExerciseScreen } from './edit-exercise-screen';
 import { ExerciseScreen } from './exercise-screen';
 import { useExerciseDetails, type LibraryExercise } from './library';
 
-jest.mock('@/exercises/images', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+jest.mock('./photos', () => ({
+  usePictureUrls: (paths: string[]) =>
+    Object.fromEntries(paths.map((path) => [path, `https://photos.test/${path}`])),
 }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('./custom', () => ({ useArchiveExercise: jest.fn(), useKindLock: jest.fn() }));
@@ -29,7 +30,7 @@ const ROW: LibraryExercise = {
   equipment: 'cable',
   level: 'beginner',
   category: 'strength',
-  imagePaths: ['row/0.webp', 'row/1.webp'],
+  imagePaths: [],
   custom: false,
   archived: false,
 };
@@ -60,16 +61,23 @@ beforeEach(() => {
 });
 
 describe('ExerciseScreen', () => {
-  it('shows the start and end pictures, the muscles, equipment and level', async () => {
+  it('shows the muscles on the body from the front and the back, the equipment and level', async () => {
     mockDetails([ROW], ['Sit down.', 'Pull.']);
     await render(<ExerciseScreen id="row" />);
     expect(screen.getByText('Seated cable row')).toBeTruthy();
-    expect(screen.getByLabelText('Start').props.source).toEqual({
-      uri: 'https://images.test/row/0.webp',
+    expect(screen.getByText('Front')).toBeTruthy();
+    expect(screen.getByText('Back')).toBeTruthy();
+    // The figures are drawn once their tiles know their width.
+    await fireEvent(screen.getByLabelText('The muscles from the front'), 'layout', {
+      nativeEvent: { layout: { width: 160, height: 160 } },
     });
-    expect(screen.getByLabelText('End').props.source).toEqual({
-      uri: 'https://images.test/row/1.webp',
-    });
+    expect(
+      screen.getByTestId('muscle-map-front-whole', { includeHiddenElements: true }),
+    ).toHaveStyle({ width: 142, height: 142 });
+    expect(
+      screen.getByTestId('muscle-map-back-whole', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText('Start')).toBeNull();
     expect(screen.getByText('Middle back')).toBeTruthy();
     expect(screen.getByText('Biceps')).toBeTruthy();
     expect(screen.getByText('Cable')).toBeTruthy();
@@ -86,16 +94,29 @@ describe('ExerciseScreen', () => {
     expect(screen.getByText('Pull.')).toBeTruthy();
   });
 
-  it('shows a single picture without captions', async () => {
-    mockDetails([{ ...ROW, imagePaths: ['row/0.webp'] }], []);
+  it("shows the start and end photos of the user's own exercise in place of the body", async () => {
+    mockDetails([{ ...ROW, custom: true, imagePaths: ['u/start.jpg', 'u/end.jpg'] }], []);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.getByLabelText('Start').props.source).toEqual({
+      uri: 'https://photos.test/u/start.jpg',
+    });
+    expect(screen.getByLabelText('End').props.source).toEqual({
+      uri: 'https://photos.test/u/end.jpg',
+    });
+    expect(screen.queryByText('Front')).toBeNull();
+    expect(screen.queryByLabelText('The muscles from the front')).toBeNull();
+  });
+
+  it('shows a single photo without captions', async () => {
+    mockDetails([{ ...ROW, custom: true, imagePaths: ['u/start.jpg'] }], []);
     await render(<ExerciseScreen id="row" />);
     expect(screen.getByLabelText('Start')).toBeTruthy();
     expect(screen.queryByText('End')).toBeNull();
     expect(screen.queryByText('How to do it')).toBeNull();
   });
 
-  it('names a picture of the end alone as the end', async () => {
-    mockDetails([{ ...ROW, imagePaths: [null, 'row/1.webp'] }], []);
+  it('names a photo of the end alone as the end', async () => {
+    mockDetails([{ ...ROW, custom: true, imagePaths: [null, 'u/end.jpg'] }], []);
     await render(<ExerciseScreen id="row" />);
     expect(screen.getByLabelText('End')).toBeTruthy();
     expect(screen.getByText('End')).toBeTruthy();

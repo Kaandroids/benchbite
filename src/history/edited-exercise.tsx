@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import type { SetKind } from '@/sets/fields';
 import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-table';
 import { missingFields } from '@/sets/values';
@@ -37,7 +37,7 @@ export function EditedExerciseCard({
   return (
     <Card style={{ padding: spacing.md, gap: spacing.sm }}>
       <View style={[styles.row, { gap: spacing.md }]}>
-        <ExerciseThumbnail path={thumbnailOf(info)} size={40} name={info?.name} />
+        <ExerciseThumbnail exercise={info} size={40} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="label">{info?.name ?? ''}</Text>
           {exercise.sets.length === 0 ? (

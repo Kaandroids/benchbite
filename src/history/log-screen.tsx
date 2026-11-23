@@ -12,7 +12,7 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
-import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { SavedToHealthLine } from '@/health/saved-to-health';
 import { WaitingCard, WatchCard } from '@/health/watch-card';
 import { useAwaitingWatch } from '@/health/workout-health';
@@ -215,7 +215,7 @@ export function LogScreen({ id }: { id: number }) {
               <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
             </View>
             <View style={[styles.row, { gap: spacing.md, paddingRight: BUTTON_ROOM }]}>
-              <ExerciseThumbnail path={thumbnailOf(info)} size={44} name={info?.name} />
+              <ExerciseThumbnail exercise={info} size={44} name={info?.name} />
               <View style={styles.flex}>
                 <Text variant="label">{info?.name ?? ''}</Text>
                 <Text variant="caption" color="textMuted" style={styles.semibold}>

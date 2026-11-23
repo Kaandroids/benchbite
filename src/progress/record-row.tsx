@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import type { BeatenRecord } from '@/history/record-history';
 import { addsWeight } from '@/sets/fields';
 import { useRecordFormat, useRecordGainFormat, useRecordKindLabel } from '@/sets/records';
@@ -56,7 +56,7 @@ export function RecordRow({ record, exercise, day, divider }: RecordRowProps) {
         },
       ]}
     >
-      <ExerciseThumbnail path={thumbnailOf(exercise)} size={44} name={name} />
+      <ExerciseThumbnail exercise={exercise} size={44} name={name} />
       <View style={styles.flex}>
         <Text variant="label" numberOfLines={1}>
           {name}

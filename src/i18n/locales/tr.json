@@ -65,7 +65,7 @@
       "body": "Bundeslebensmittelschlüssel (BLS) 4.0, Max Rubner-Institut, Karlsruhe. CC BY 4.0. Türkçe adlar, bazı kısaltılmış adlar ve porsiyon ölçüleri bize aittir."
     },
     "exercises": {
-      "title": "Egzersizler ve görselleri",
+      "title": "Egzersizler",
       "body": "Clint Plummer ve katkıda bulunanların free-exercise-db’si. Kamu malı (Unlicense)."
     },
     "typeface": {
@@ -1121,6 +1121,10 @@
   "exercise": {
     "start": "Başlangıç",
     "end": "Bitiş",
+    "front": "Ön",
+    "back": "Arka",
+    "frontMap": "Kaslar önden",
+    "backMap": "Kaslar arkadan",
     "equipment": "Ekipman",
     "level": "Seviye",
     "howTo": "Nasıl yapılır",

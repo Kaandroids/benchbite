@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
-import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import { summarizeSets } from '@/sets/exercise-summary';
 import { setKindOf } from '@/sets/fields';
 import { useDescribeSet } from '@/sets/set-words';
@@ -66,7 +66,7 @@ export function FoldedExercise({ exercise, index, info }: ExerciseProps) {
         },
       ]}
     >
-      <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
+      <ExerciseThumbnail exercise={info} size={48} name={info?.name} />
       <View style={styles.flex}>
         <Text variant="bodyStrong" numberOfLines={1}>
           {info?.name ?? ''}
@@ -127,7 +127,7 @@ export function OpenExercise({
       ]}
     >
       <View style={[styles.row, { gap: spacing.md }]}>
-        <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
+        <ExerciseThumbnail exercise={info} size={48} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="label">{info?.name ?? ''}</Text>
           <Text variant="captionStrong" color="primaryText">

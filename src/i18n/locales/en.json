@@ -65,7 +65,7 @@
       "body": "Bundeslebensmittelschlüssel (BLS) 4.0, Max Rubner-Institut, Karlsruhe. CC BY 4.0. The Turkish names, some shortened names and the portion sizes are our own."
     },
     "exercises": {
-      "title": "Exercises and their pictures",
+      "title": "Exercises",
       "body": "free-exercise-db by Clint Plummer and contributors. Public domain (Unlicense)."
     },
     "typeface": {
@@ -1121,6 +1121,10 @@
   "exercise": {
     "start": "Start",
     "end": "End",
+    "front": "Front",
+    "back": "Back",
+    "frontMap": "The muscles from the front",
+    "backMap": "The muscles from the back",
     "equipment": "Equipment",
     "level": "Level",
     "howTo": "How to do it",

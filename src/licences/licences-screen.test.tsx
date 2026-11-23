@@ -25,7 +25,7 @@ it('names the source of the food values, its licence and what was changed', asyn
 it('credits the exercises and the typeface, and opens where each comes from', async () => {
   await render(<LicencesScreen />);
   await fireEvent.press(screen.getByRole('link', { name: /^Food values/ }));
-  await fireEvent.press(screen.getByRole('link', { name: /^Exercises and their pictures/ }));
+  await fireEvent.press(screen.getByRole('link', { name: /^Exercises/ }));
   await fireEvent.press(screen.getByRole('link', { name: /^Typeface/ }));
   expect(jest.mocked(Linking.openURL).mock.calls.map(([url]) => url)).toEqual([
     'https://blsdb.de',

@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,12 +14,14 @@ import { useTheme } from '@/theme';
 import { useArchiveExercise } from './custom';
 import { ExerciseNotFound } from './exercise-not-found';
 import { useExerciseDetails, findExercise } from './library';
+import { MuscleMap } from './muscle-map';
 import { usePictureUrls } from './photos';
 
 /**
- * How to do an exercise: its start and end pictures, the muscles it works, its equipment and
- * level, and the steps. The user's own exercises are edited and archived from here, but not during
- * a workout, whose screen the editor would leave.
+ * How to do an exercise: the muscles it works on the body from the front and the back, or the
+ * start and end photos of the user's own exercise, its equipment and level, and the steps. The
+ * user's own exercises are edited and archived from here, but not during a workout, whose screen
+ * the editor would leave.
  */
 export function ExerciseScreen({
   id,
@@ -32,12 +35,17 @@ export function ExerciseScreen({
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
   const exercise = findExercise(library.data, id);
-  // Each picture with its place, as the start may be missing before the end.
+  // Each photo with its place, as the start may be missing before the end. Only the user's own
+  // exercises have photos; the others show their muscles on the body (ADR 0162).
   const pictures = (exercise?.imagePaths.slice(0, 2) ?? []).flatMap((path, index) =>
     path ? [{ path, end: index === 1 }] : [],
   );
   const urls = usePictureUrls(pictures.map((picture) => picture.path));
   const archive = useArchiveExercise(id);
+  // The width of a map's tile, known once it is laid out; the figure is drawn to fit it.
+  const [tileWidth, setTileWidth] = useState(0);
+  // Inside the tile's border, with room around the figure.
+  const mapSize = tileWidth - 2 * BORDER - 2 * spacing.sm;
 
   if (!allLoaded([library, instructions])) {
     return (
@@ -120,6 +128,40 @@ export function ExerciseScreen({
       title={<ScreenTitle title={exercise.name} lines={2} />}
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
+        {pictures.length === 0
+          ? (['front', 'back'] as const).map((side) => (
+              <View key={side} style={[styles.picture, { gap: spacing.xs }]}>
+                <View
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel={t(`exercise.${side}Map`)}
+                  onLayout={(event) => setTileWidth(event.nativeEvent.layout.width)}
+                  style={[
+                    styles.image,
+                    styles.map,
+                    {
+                      borderRadius: radii.lg,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
+                >
+                  {tileWidth > 0 ? (
+                    <MuscleMap
+                      primary={exercise.primaryMuscles}
+                      secondary={exercise.secondaryMuscles}
+                      side={side}
+                      width={mapSize}
+                      height={mapSize}
+                    />
+                  ) : null}
+                </View>
+                <Text variant="captionStrong" color="textMuted" align="center">
+                  {t(`exercise.${side}`)}
+                </Text>
+              </View>
+            ))
+          : null}
         {pictures.map(({ path, end }) => (
           <View key={path} style={[styles.picture, { gap: spacing.xs }]}>
             <Image
@@ -213,6 +255,8 @@ export function ExerciseScreen({
   );
 }
 
+const BORDER = 1;
+
 const styles = StyleSheet.create({
   archive: {
     alignItems: 'center',
@@ -234,7 +278,11 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     aspectRatio: 1,
-    borderWidth: 1,
+    borderWidth: BORDER,
+  },
+  map: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chip: {
     paddingHorizontal: 10,

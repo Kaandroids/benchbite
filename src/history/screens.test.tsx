@@ -139,9 +139,30 @@ beforeEach(() => {
   } as never);
   jest.mocked(useExerciseLibrary).mockReturnValue(
     loaded([
-      { id: 'bench', name: 'Bench press', metrics: ['weight', 'reps'], imagePaths: [] },
-      { id: 'plank', name: 'Plank', metrics: ['duration'], imagePaths: [] },
-      { id: 'row', name: 'Cable row', metrics: ['weight', 'reps'], imagePaths: [] },
+      {
+        id: 'bench',
+        name: 'Bench press',
+        metrics: ['weight', 'reps'],
+        primaryMuscles: ['chest'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
+      {
+        id: 'plank',
+        name: 'Plank',
+        metrics: ['duration'],
+        primaryMuscles: ['abdominals'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
+      {
+        id: 'row',
+        name: 'Cable row',
+        metrics: ['weight', 'reps'],
+        primaryMuscles: ['middle back'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
     ]) as never,
   );
   // The workout the logs were done from; its cable row was skipped.

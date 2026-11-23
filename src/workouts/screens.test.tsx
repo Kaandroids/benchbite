@@ -20,9 +20,6 @@ import {
 } from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
-jest.mock('@/exercises/images', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
-}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useScrollToTop: jest.fn(),
@@ -75,6 +72,9 @@ jest.mock('@/exercises/library', () => ({
     data: ['pulldown', 'rope', 'row', 'bench', 'squat'].map((id) => ({
       id,
       name: `Name of ${id}`,
+      primaryMuscles: id === 'squat' ? ['quadriceps'] : id === 'bench' ? ['chest'] : ['lats'],
+      secondaryMuscles: [],
+      imagePaths: [],
     })),
   }),
 }));
@@ -567,14 +567,13 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Rest 0:30')).toBeTruthy();
   });
 
-  it('shows the exercise pictures', async () => {
+  it('shows the part of the body each exercise trains', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
-    const sources = screen.container
-      .queryAll((node) => node.type === 'Image')
-      .map((node) => node.props.source?.uri);
-    expect(sources).toContain('https://images.test/pulldown/0.webp');
-    expect(sources).toContain('https://images.test/rope/0.webp');
+    // The library's three train the lats: the upper body from the back. The curl is not in the
+    // library, and has no map. The maps are pictures, hidden from screen readers.
+    const maps = screen.getAllByTestId('muscle-map-back-upper', { includeHiddenElements: true });
+    expect(maps).toHaveLength(3);
   });
 
   it('opens the editor and each exercise’s details', async () => {

@@ -22,7 +22,6 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import {
   filterExercises,
   MUSCLE_GROUPS,
-  thumbnailOf,
   useExerciseLibrary,
   type ExerciseFilter,
   type LibraryExercise,
@@ -121,7 +120,7 @@ export function PickerScreen() {
           ]}
         >
           <View>
-            <ExerciseThumbnail path={thumbnailOf(item)} size={THUMBNAIL} name={item.name} />
+            <ExerciseThumbnail exercise={item} size={THUMBNAIL} name={item.name} />
             {selected ? (
               <View
                 style={[

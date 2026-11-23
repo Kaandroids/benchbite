@@ -44,7 +44,7 @@ export const tr: Messages = {
     workout: {
       nav: 'Antrenman',
       title: 'Geçen sefer: 77,5 kg × 11. Geç bakalım.',
-      text: 'Görselli yaklaşık 870 egzersiz, her setin yanında geçen seferki setler, dinlenme sayacı ve egzersiz başına rekorlar.',
+      text: 'Çalıştırdığı kasları gösteren yaklaşık 870 egzersiz, her setin yanında geçen seferki setler, dinlenme sayacı ve egzersiz başına rekorlar.',
       alt: 'Setler ve dinlenme sayacıyla devam eden bir antrenman',
     },
     progress: {

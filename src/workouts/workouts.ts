@@ -25,8 +25,6 @@ export type WorkoutExercise = {
   /** The user's own targets for its sets, in order (ADR 0138); none to work them out from last time. */
   setTargets: SetTarget[] | null;
   primaryMuscles: Muscle[];
-  /** The first picture of the exercise, as a path in the exercise-images bucket. */
-  imagePath: string | null;
 };
 
 export type Workout = {
@@ -99,10 +97,7 @@ type ExerciseRow = Pick<
   | 'superset'
   | 'set_targets'
 > & {
-  exercises: Pick<
-    Database['public']['Tables']['exercises']['Row'],
-    'primary_muscles' | 'image_paths'
-  >;
+  exercises: Pick<Database['public']['Tables']['exercises']['Row'], 'primary_muscles'>;
 };
 
 function workoutExercise(row: ExerciseRow): WorkoutExercise {
@@ -118,7 +113,6 @@ function workoutExercise(row: ExerciseRow): WorkoutExercise {
     superset: row.superset,
     setTargets: setTargetsOf(row.set_targets),
     primaryMuscles: row.exercises.primary_muscles,
-    imagePath: row.exercises.image_paths.find((path) => path !== null) ?? null,
   };
 }
 
@@ -131,7 +125,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       workout_exercises (
         position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
         target_meters, rest_seconds, superset, set_targets,
-        exercises (primary_muscles, image_paths)
+        exercises (primary_muscles)
       )`,
     )
     .order('id');

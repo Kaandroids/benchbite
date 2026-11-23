@@ -33,9 +33,10 @@
 - **A plan from a few questions.** The onboarding asks for the goal, body data and training
   preferences, then sets daily calorie and macro targets and builds a weekly workout plan that
   fits the chosen workout length. No account needed: people start as guests and sign up later.
-- **Workouts that remember.** An exercise library with pictures, exercises of one's own, last
-  time's sets beside each set, a rest timer that notifies in the background, records and history
-  per exercise, and alternatives of a workout for days with other gear.
+- **Workouts that remember.** An exercise library that shows the muscles each exercise trains,
+  exercises of one's own, last time's sets beside each set, a rest timer that notifies in the
+  background, records and history per exercise, and alternatives of a workout for days with other
+  gear.
 - **On the wrist.** An Apple Watch app follows the workout started on the phone: tick and edit
   sets, time a hold, feel the rest end, see the heart rate, and keep logging with the iPhone out
   of reach.

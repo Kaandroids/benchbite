@@ -15,8 +15,6 @@ import { EXERCISE_PHOTOS_BUCKET } from '@shared/exercise_photos';
 
 import { supabase } from '@/lib/supabase';
 
-import { exerciseImageUrl } from './images';
-
 /** The query key of the addresses of exercise photos. */
 const PHOTOS_KEY = ['exercise-photos'];
 
@@ -24,7 +22,7 @@ const MAX_WIDTH = 1080;
 /** A signed URL lasts an hour; it is asked for again a little before it runs out. */
 const SIGNED_SECONDS = 3600;
 
-/** Whether a picture is a user's photo rather than one of the library, which starts with its id. */
+/** Whether a picture is a user's photo, in the user's folder, rather than one of the library. */
 export function isUserPhoto(path: string): boolean {
   return /^[0-9a-f-]{36}\//.test(path);
 }
@@ -95,8 +93,8 @@ export async function removePhotos(paths: string[]) {
 }
 
 /**
- * The URLs to show pictures by: library pictures as they are, the user's photos signed. Pictures
- * waiting for their signed URL are missing until it arrives.
+ * The signed URLs to show the user's photos by. A photo waiting for its URL is missing until it
+ * arrives, and a picture of the library has none (ADR 0162).
  */
 export function usePictureUrls(paths: readonly string[]): Record<string, string> {
   const photos = paths.filter(isUserPhoto);
@@ -117,8 +115,8 @@ export function usePictureUrls(paths: readonly string[]): Record<string, string>
     staleTime: (SIGNED_SECONDS - 600) * 1000,
   });
   return Object.fromEntries(
-    paths.flatMap((path) => {
-      const url = isUserPhoto(path) ? signed.data?.[path] : exerciseImageUrl(path);
+    photos.flatMap((path) => {
+      const url = signed.data?.[path];
       return url ? [[path, url]] : [];
     }),
   );

@@ -44,7 +44,7 @@ export const de: Messages = {
     workout: {
       nav: 'Training',
       title: 'Letztes Mal: 77,5 kg × 11. Schlag das.',
-      text: 'Rund 870 Übungen mit Bildern, die Sätze vom letzten Mal neben jedem Satz, ein Pausentimer und Rekorde pro Übung.',
+      text: 'Rund 870 Übungen, die zeigen, welche Muskeln sie trainieren, die Sätze vom letzten Mal neben jedem Satz, ein Pausentimer und Rekorde pro Übung.',
       alt: 'Ein laufendes Training mit Sätzen und Pausentimer',
     },
     progress: {

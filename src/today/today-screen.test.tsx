@@ -115,7 +115,6 @@ const failed = <T,>(): Query<T> => ({
 const exercise = (exerciseId: string) => ({
   exerciseId,
   primaryMuscles: [],
-  imagePath: null,
   sets: 3,
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,
