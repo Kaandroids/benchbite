@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(14);
 
 select is(
   (select count(*) from public.exercises where owner_id is null)::integer, 876,
@@ -12,6 +12,26 @@ select is(
   (select count(*) from public.exercises where owner_id is null and image_paths <> '{}')::integer,
   0,
   'No exercise of the library names a picture'
+);
+select is(
+  (select count(*) from public.exercises where owner_id is null and cardinality(instructions) = 0)::integer,
+  0,
+  'Every exercise of the library has its steps'
+);
+select is(
+  (
+    select count(*)
+    from public.exercises e
+    where e.owner_id is null
+      and (
+        select count(*)
+        from public.exercise_instruction_translations t
+        where t.exercise_id = e.id
+          and cardinality(t.instructions) = cardinality(e.instructions)
+      ) <> 2
+  )::integer,
+  0,
+  'Every exercise has as many steps in German and in Turkish as in English'
 );
 
 select is(
@@ -52,6 +72,16 @@ select throws_ok(
   '42501',
   null,
   'Signed-in users cannot change exercises'
+);
+select isnt_empty(
+  $$ select * from public.exercise_instruction_translations $$,
+  'Signed-in users can read the translated steps'
+);
+select throws_ok(
+  $$ update public.exercise_instruction_translations set instructions = '{x}' where exercise_id = 'Plank' $$,
+  '42501',
+  null,
+  'Signed-in users cannot change the translated steps'
 );
 select throws_ok(
   $$ insert into public.exercise_translations (exercise_id, language, name) values ('Plank', 'de', 'x') $$,
