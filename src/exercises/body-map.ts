@@ -31,32 +31,37 @@ const PARTS: Record<Muscle, Slug[]> = {
   triceps: ['triceps'],
 };
 
-/** Every part the figure draws; those no muscle fills make up the rest of the body. */
-const ALL_PARTS: Slug[] = [
-  'abs',
-  'adductors',
-  'ankles',
-  'biceps',
-  'calves',
-  'chest',
-  'deltoids',
-  'feet',
-  'forearm',
-  'gluteal',
-  'hair',
-  'hamstring',
-  'hands',
-  'head',
-  'knees',
-  'lower-back',
-  'neck',
-  'obliques',
-  'quadriceps',
-  'tibialis',
-  'trapezius',
-  'triceps',
-  'upper-back',
-];
+/**
+ * Every part the figure draws; those no muscle fills make up the rest of the body. Each one is
+ * given its colour: the library's drawing carries a dark grey of its own for every part, which
+ * wins over its `defaultFill`, so a part left out would not follow the theme. A part the library
+ * adds fails the type check here until it is listed.
+ */
+const ALL_PARTS = Object.keys({
+  abs: true,
+  adductors: true,
+  ankles: true,
+  biceps: true,
+  calves: true,
+  chest: true,
+  deltoids: true,
+  feet: true,
+  forearm: true,
+  gluteal: true,
+  hair: true,
+  hamstring: true,
+  hands: true,
+  head: true,
+  knees: true,
+  'lower-back': true,
+  neck: true,
+  obliques: true,
+  quadriceps: true,
+  tibialis: true,
+  trapezius: true,
+  triceps: true,
+  'upper-back': true,
+} satisfies Record<Slug, true>) as Slug[];
 
 export type MapSide = 'front' | 'back';
 /** The part of the figure a small map shows: the upper body, the thighs and hips, or the calves. */
