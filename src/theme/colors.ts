@@ -83,8 +83,12 @@ export type ColorTokens = {
   heat2: string;
   heat3: string;
   heat4: string;
-  /** Behind exercise pictures, which are drawn on white, in both themes. */
+  /** Behind the photos of the user's own exercises, in both themes. */
   imageBackground: string;
+  /** The body of the muscle map: every muscle an exercise does not train, on `surface`. */
+  figure: string;
+  /** The muscles that help in an exercise, paler than `primary`, which marks the ones it trains. */
+  figureSecondary: string;
   /** The thumb of on/off switches. */
   switchThumb: string;
   /** Dims the screen behind a sheet. */
@@ -153,6 +157,8 @@ export const lightColors: ColorTokens = {
   heat3: '#F25A00',
   heat4: '#C24800',
   imageBackground: '#FFFFFF',
+  figure: '#C3C6CE',
+  figureSecondary: '#F7B58B',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(22, 23, 26, 0.45)',
   info: '#4F83E0',
@@ -216,6 +222,9 @@ export const darkColors: ColorTokens = {
   heat3: '#D45A00',
   heat4: '#FF8A3D',
   imageBackground: '#FFFFFF',
+  // Orange mixed into the dark figure rather than a pale orange, which would outshine `primary`.
+  figure: '#4B4E56',
+  figureSecondary: '#A8663F',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(0, 0, 0, 0.6)',
   info: '#86AEE0',
