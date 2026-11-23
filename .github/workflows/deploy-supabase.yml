@@ -4,11 +4,6 @@ name: Deploy Supabase
 # (ADR 0030). It runs only when started by hand for now; it will follow main once trusted.
 on:
   workflow_dispatch:
-    inputs:
-      upload_images:
-        description: Upload the exercise images to storage (the first time, or when they change)
-        type: boolean
-        default: false
 
 # One deploy at a time, and a started deploy is never cancelled halfway.
 concurrency:
@@ -90,14 +85,6 @@ jobs:
       # CLI 3 asks before it deploys, and cannot ask in CI.
       - name: Deploy the Edge Functions
         run: pnpm supabase functions deploy --yes
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-
-      - name: Upload the exercise images
-        if: ${{ inputs.upload_images }}
-        run: pnpm supabase seed buckets --remote --yes
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}

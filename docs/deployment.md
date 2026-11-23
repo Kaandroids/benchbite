@@ -7,8 +7,7 @@ release build on an iPhone. To run everything locally, see [Development](develop
 
 The hosted Supabase project is deployed by the **Deploy Supabase** workflow in GitHub Actions
 ([ADR 0030](adr/0030-deploy-supabase-from-github-actions.md)). It links the project, pushes the
-settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
-the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
+settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
 `SUPABASE_DB_PASSWORD` from the repository's `production` environment, with `SMTP_PASSWORD`, the Lettermint project token that sends the account emails ([ADR 0091](adr/0091-confirm-accounts-with-a-code.md)). The Edge Functions' own
 secrets, such as `GEMINI_BACKEND` and `VERTEX_SERVICE_ACCOUNT` (below) and `LETTERMINT_API_TOKEN` (a Lettermint project token, for the emails Edge Functions send, [ADR 0094](adr/0094-delete-an-account-from-the-website.md)), are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
