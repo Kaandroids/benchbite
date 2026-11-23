@@ -1,6 +1,6 @@
 # 0008. Import free-exercise-db as the exercise library
 
-- **Status:** Accepted
+- **Status:** Accepted; what it decided about images is replaced by ADR-0162
 - **Date:** 2026-10-21
 
 ## Context

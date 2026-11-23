@@ -177,3 +177,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0159](0159-ask-for-the-consents-again-where-they-are-needed.md)          | Ask for the consents again where they are needed                                        | Accepted                                             |
 | [0160](0160-show-the-licences-of-what-ships-in-the-app.md)                | Show the licences of what ships in the app                                              | Accepted                                             |
 | [0161](0161-build-the-app-with-scripts-in-the-repository.md)              | Build the app with scripts in the repository                                            | Accepted                                             |
+| [0162](0162-show-a-muscle-map-in-place-of-the-exercise-pictures.md)       | Show a muscle map in place of the exercise pictures                                     | Accepted                                             |
