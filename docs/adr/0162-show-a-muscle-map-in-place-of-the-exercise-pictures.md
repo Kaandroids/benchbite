@@ -61,3 +61,12 @@ This replaces what ADR 0008 decided about images. Its decisions on the library's
   so only the rows on screen are drawn.
 - The library is a new dependency, credited on the licences screen with the others (ADR 0160).
 - Exercises with the same first muscle look the same in a list; their names tell them apart.
+
+## Note of 2026-11-23: workouts
+
+A workout shows the muscles it trains too (#304): those any of its exercises trains first in the
+brand colour, those that only help in the paler one. Its small tile shows the whole figure from the
+front and the back, at 44 to 64 points, which the alternatives above turned down for exercises. A
+workout trains several parts of the body, often on both sides, and a zone or one side would hide
+some of them; an exercise trains one, and its thumbnail keeps the zoomed zone. A workout's screen
+shows both figures large, with the muscles in words below them, in place of its subtitle's.
