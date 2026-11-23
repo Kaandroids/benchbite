@@ -119,6 +119,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
         session={session}
         entering={entering}
         icon="dumbbell"
+        // The tile shows its own dumbbell without muscles; the icon is never shown here.
         figure={muscles(session, FIGURE)}
         caption={t('today.workout.title')}
         title={workoutName(session)}

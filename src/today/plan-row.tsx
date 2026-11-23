@@ -9,7 +9,7 @@ import { fonts, useTheme, type ColorTokens } from '@/theme';
 
 export type PlanRowProps = {
   icon: IconName;
-  /** In place of the icon, such as the muscles of today's workout; the icon is its fallback. */
+  /** Shown in place of the icon, such as the muscles of today's workout. */
   figure?: ReactNode;
   /** The colour of the icons and the caption; the icon and the round button sit on `background`. */
   color: keyof ColorTokens;
