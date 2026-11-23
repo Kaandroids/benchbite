@@ -165,6 +165,8 @@ describe('WorkoutsScreen', () => {
     expect(screen.getAllByLabelText('3 sets')).toHaveLength(3);
     expect(screen.getAllByText('~45 min')).toHaveLength(3);
     expect(screen.getAllByText('~338 kcal')).toHaveLength(3);
+    // Each shows the muscles its squat trains.
+    expect(screen.getAllByTestId('muscle-tile', { includeHiddenElements: true })).toHaveLength(3);
     // Only the workout on Wednesday is today's, whose day stands out.
     expect(screen.getAllByLabelText('Wed, today')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Pull, today' })).toBeTruthy();

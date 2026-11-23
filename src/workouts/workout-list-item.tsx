@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { IconTile } from '@/components/ui/icon-tile';
+import { MuscleTile } from '@/exercises/muscle-tile';
+import { useTrainedMuscles } from '@/exercises/trained-muscles';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
@@ -32,8 +35,11 @@ type WorkoutListItemProps = {
   onStart?: () => void;
 };
 
+/** The side of a workout's tile of muscles. */
+const TILE = 64;
+
 /**
- * A workout in a list: its name, days and size, with a button to start it while it is active and a
+ * A workout in a list: the muscles it trains (#304), its name, days and size, with a button to start it while it is active and a
  * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
  * One that waits for premium is dimmed and locked in its place: an active one opens a sheet that
  * says so, an archived one opens to be looked at.
@@ -50,6 +56,7 @@ export function WorkoutListItem({
   const name = useWorkoutName()(workout);
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { exercises } = workout;
+  const muscles = useTrainedMuscles()(exercises.map((exercise) => exercise.exerciseId));
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const isToday = today !== undefined && workout.weekdays.includes(today);
   const held = showsAsWaiting(workout, running);
@@ -73,49 +80,57 @@ export function WorkoutListItem({
         onPress={() => (held && !inArchive ? setShowingHeld(true) : openWorkout(workout.id))}
         style={({ pressed }) => [
           styles.body,
-          { gap: spacing.xs, opacity: (held ? HELD_OPACITY : 1) * (pressed ? 0.6 : 1) },
+          { gap: spacing.md, opacity: (held ? HELD_OPACITY : 1) * (pressed ? 0.6 : 1) },
         ]}
       >
-        <Text variant="headline" color={muted ? 'textMuted' : 'text'}>
-          {name}
-        </Text>
-        <DayChips weekdays={workout.weekdays} muted={muted} today={held ? undefined : today} />
-        {/* One line: the counts go without their words, which the icons and labels give. Only the
-            calories keep a colour, so that the stats stay quiet beside the days (#334). */}
-        {exercises.length === 0 ? (
-          <Text variant="caption" color="textMuted">
-            {t('workout.noExercises')}
+        <MuscleTile
+          {...muscles}
+          size={TILE}
+          fallback={<IconTile name="dumbbell" color="textMuted" background="track" size={TILE} />}
+        />
+        <View style={[styles.words, { gap: spacing.xs }]}>
+          <Text variant="headline" color={muted ? 'textMuted' : 'text'}>
+            {name}
           </Text>
-        ) : (
-          <View style={[styles.stats, { gap: spacing.md }]}>
-            <IconStat
-              icon="dumbbell"
-              color="textMuted"
-              text={String(exercises.length)}
-              label={t('workout.size.exercises', { count: exercises.length })}
-            />
-            <IconStat
-              icon="target"
-              color="textMuted"
-              text={String(sets)}
-              label={t('common.sets', { count: sets })}
-            />
-            <IconStat
-              icon="timer"
-              color="textMuted"
-              text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
-            />
-            {kcalPerMinute ? (
+          <DayChips weekdays={workout.weekdays} muted={muted} today={held ? undefined : today} />
+          {/* One line: the counts go without their words, which the icons and labels give. Only the
+            calories keep a colour, so that the stats stay quiet beside the days (#334). */}
+          {exercises.length === 0 ? (
+            <Text variant="caption" color="textMuted">
+              {t('workout.noExercises')}
+            </Text>
+          ) : (
+            <View style={[styles.stats, { gap: spacing.md }]}>
               <IconStat
-                icon="flame"
-                color="primary"
-                text={t('workout.size.kcal', {
-                  kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
-                })}
+                icon="dumbbell"
+                color="textMuted"
+                text={String(exercises.length)}
+                label={t('workout.size.exercises', { count: exercises.length })}
               />
-            ) : null}
-          </View>
-        )}
+              <IconStat
+                icon="target"
+                color="textMuted"
+                text={String(sets)}
+                label={t('common.sets', { count: sets })}
+              />
+              <IconStat
+                icon="timer"
+                color="textMuted"
+                text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
+              />
+            </View>
+          )}
+          {/* On a line of its own, as the tile of muscles leaves the stats less room. */}
+          {exercises.length > 0 && kcalPerMinute ? (
+            <IconStat
+              icon="flame"
+              color="primary"
+              text={t('workout.size.kcal', {
+                kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
+              })}
+            />
+          ) : null}
+        </View>
       </Pressable>
       {held ? (
         // Centred as the start button is, which the tag otherwise tops.
@@ -165,6 +180,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   body: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  words: {
     flex: 1,
   },
   stats: {
