@@ -831,6 +831,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      exercise_instruction_translations: {
+        Row: {
+          exercise_id: string;
+          instructions: string[];
+          language: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          exercise_id: string;
+          instructions: string[];
+          language: string;
+        };
+        Update: {
+          exercise_id?: string;
+          instructions?: string[];
+          language?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'exercise_instruction_translations_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       exercise_translations: {
         Row: {
           exercise_id: string;

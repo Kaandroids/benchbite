@@ -97,7 +97,10 @@ Its data is in a migration, so `pnpm supabase start` and `pnpm supabase db reset
 a download. Its pictures are not used: the app draws the muscles an exercise trains
 ([ADR 0162](adr/0162-show-a-muscle-map-in-place-of-the-exercise-pictures.md)). To update the
 library, change the upstream commit in `scripts/import-exercises.ts` and run
-`pnpm import:exercises`, which writes a new migration. After
+`pnpm import:exercises`, which writes a new migration. The steps of each exercise are the
+project's own, in `supabase/data/exercise-instructions.{en,de,tr}.json`
+([ADR 0164](adr/0164-write-the-exercises-steps-in-our-own-words.md)): after changing them, run
+`pnpm import:exercises --instructions-only`. After
 changing only the translated names in `supabase/data/exercise-names.json`, run
 `pnpm import:exercises --names-only`, which writes a migration with just the names. See
 [ADR 0008](adr/0008-exercise-library.md) and

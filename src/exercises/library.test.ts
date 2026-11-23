@@ -160,11 +160,39 @@ describe('thumbnailOf', () => {
 });
 
 describe('useExerciseDetails', () => {
+  /** What the database answers for the exercise with the given id, in the given language. */
+  const answer = (data: object | null) => {
+    const language = jest.fn(() => ({
+      maybeSingle: () => Promise.resolve({ data, error: null }),
+    }));
+    eq.mockReturnValue({ eq: language });
+    return language;
+  };
+
   it('has no steps for an exercise that is gone, rather than failing', async () => {
-    eq.mockReturnValue({ maybeSingle: () => Promise.resolve({ data: null, error: null }) });
+    answer(null);
     const { result } = await renderHook(() => useExerciseDetails('gone'));
     await waitFor(() => expect(result.current.instructions.isSuccess).toBe(true));
     expect(result.current.instructions.data).toEqual([]);
+  });
+
+  it('reads the steps in the app language', async () => {
+    await act(() => i18n.changeLanguage('de'));
+    const language = answer({
+      instructions: ['Stand up.'],
+      exercise_instruction_translations: [{ instructions: ['Steh auf.'] }],
+    });
+    const { result } = await renderHook(() => useExerciseDetails('squat'));
+    await waitFor(() => expect(result.current.instructions.data).toEqual(['Steh auf.']));
+    expect(eq).toHaveBeenCalledWith('id', 'squat');
+    expect(language).toHaveBeenCalledWith('exercise_instruction_translations.language', 'de');
+  });
+
+  it("falls back to the exercise's own steps: English, or what its user wrote", async () => {
+    await act(() => i18n.changeLanguage('tr'));
+    answer({ instructions: ['Stand up.'], exercise_instruction_translations: [] });
+    const { result } = await renderHook(() => useExerciseDetails('mine'));
+    await waitFor(() => expect(result.current.instructions.data).toEqual(['Stand up.']));
   });
 });
 

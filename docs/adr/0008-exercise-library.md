@@ -1,6 +1,6 @@
 # 0008. Import free-exercise-db as the exercise library
 
-- **Status:** Accepted, amended by ADR-0162 and ADR-0163
+- **Status:** Accepted, amended by ADR-0162, ADR-0163 and ADR-0164
 - **Date:** 2026-10-21
 
 ## Context

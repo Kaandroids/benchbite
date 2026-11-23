@@ -1,6 +1,6 @@
 # 0163. Take the exercise pictures out
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0164
 - **Date:** 2026-11-23
 
 ## Context
