@@ -3,7 +3,7 @@
 
 // The version of the privacy policy that the health data consent refers to (#44), recorded with
 // each consent.
-export const PRIVACY_POLICY_VERSION = '2026-10-21';
+export const PRIVACY_POLICY_VERSION = '2026-11-23';
 
 // The version of the terms of use the user accepts in the onboarding, recorded with each
 // acceptance (ADR 0141).
