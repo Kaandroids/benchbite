@@ -163,22 +163,27 @@ export function filterExercises(
 
 export type ExerciseDetails = LibraryExercise & { instructions: string[] };
 
-/** One exercise with its instructions, which are only in English for now (#76). */
+/**
+ * One exercise with its instructions. Those of the library are in the app language, falling back
+ * to English (ADR 0164); those of the user's own exercise are as the user wrote them.
+ */
 export function useExerciseDetails(id: string) {
+  const { i18n } = useTranslation();
   const library = useExerciseLibrary();
   const instructions = useQuery({
-    queryKey: [...INSTRUCTIONS_KEY, id],
+    queryKey: [...INSTRUCTIONS_KEY, id, i18n.language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exercises')
-        .select('instructions')
+        .select('instructions, exercise_instruction_translations (instructions)')
         .eq('id', id)
+        .eq('exercise_instruction_translations.language', i18n.language)
         .maybeSingle();
       if (error) {
         throw error;
       }
       // An exercise that is gone, or not the user's, is not found rather than failing to load.
-      return data?.instructions ?? [];
+      return data?.exercise_instruction_translations[0]?.instructions ?? data?.instructions ?? [];
     },
     staleTime: Infinity,
   });
