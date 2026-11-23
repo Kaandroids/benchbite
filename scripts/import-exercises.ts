@@ -1,19 +1,15 @@
-// Imports the free-exercise-db exercise library (public domain) at a pinned commit:
-//
-// - converts its images to WebP in supabase/storage/exercise-images/, which local Supabase
-//   uploads to the exercise-images bucket, and
-// - writes a migration that inserts or updates every exercise with its metrics and the
-//   translated names from supabase/data/exercise-names.json.
+// Imports the free-exercise-db exercise library at a pinned commit: it writes a migration that
+// inserts or updates every exercise with its metrics and the translated names from
+// supabase/data/exercise-names.json. The library's pictures are not taken: the rights to them
+// are not known, and the app shows a muscle map in their place (ADR 0162, ADR 0163).
 //
 // Run with `pnpm import:exercises`. To update the library, change UPSTREAM_COMMIT, run the
-// script again and commit the new migration and images.
+// script again and commit the new migration.
 //
 // `pnpm import:exercises --names-only` writes a small migration with only the translated names,
 // for when exercise-names.json changes but the library does not.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-
-import sharp from 'sharp';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import type { Database } from '../src/lib/database.types.ts';
 import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
@@ -21,13 +17,7 @@ import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
 const UPSTREAM_COMMIT = 'f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5';
 const UPSTREAM = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/${UPSTREAM_COMMIT}`;
 
-/** Wide enough for a phone screen; the source images are 850 px wide. */
-const IMAGE_WIDTH = 600;
-const IMAGE_QUALITY = 75;
-const PARALLEL_DOWNLOADS = 8;
-
 const ROOT = join(import.meta.dirname, '..');
-const IMAGES_DIR = join(ROOT, 'supabase', 'storage', 'exercise-images');
 const NAMES_FILE = join(ROOT, 'supabase', 'data', 'exercise-names.json');
 const METRICS_FILE = join(ROOT, 'supabase', 'data', 'exercise-metrics.json');
 
@@ -42,8 +32,6 @@ type UpstreamExercise = {
   primaryMuscles: string[];
   secondaryMuscles: string[];
   instructions: string[];
-  /** Relative to the exercises/ folder, such as 'Barbell_Squat/0.jpg'. */
-  images: string[];
 };
 
 type TranslatedNames = Record<string, { de: string; tr: string }>;
@@ -86,38 +74,6 @@ async function fetchExercises(): Promise<UpstreamExercise[]> {
   return (await response.json()) as UpstreamExercise[];
 }
 
-/** 'Barbell_Squat/0.jpg' becomes 'Barbell_Squat/0.webp'. */
-function webpPath(image: string): string {
-  return image.replace(/\.jpg$/, '.webp');
-}
-
-async function convertImage(image: string): Promise<void> {
-  const target = join(IMAGES_DIR, webpPath(image));
-  // Images are converted from a pinned commit, so existing files are already up to date.
-  if (existsSync(target)) {
-    return;
-  }
-  const response = await fetch(`${UPSTREAM}/exercises/${image}`);
-  if (!response.ok) {
-    throw new Error(`Could not download ${image}: ${response.status}`);
-  }
-  mkdirSync(dirname(target), { recursive: true });
-  await sharp(Buffer.from(await response.arrayBuffer()))
-    .resize({ width: IMAGE_WIDTH, withoutEnlargement: true })
-    .webp({ quality: IMAGE_QUALITY })
-    .toFile(target);
-}
-
-async function convertImages(images: string[]): Promise<void> {
-  const queue = [...images];
-  const worker = async () => {
-    for (let image = queue.shift(); image !== undefined; image = queue.shift()) {
-      await convertImage(image);
-    }
-  };
-  await Promise.all(Array.from({ length: PARALLEL_DOWNLOADS }, worker));
-}
-
 function sqlArray(values: string[], type: string): string {
   return `array[${values.map(sqlString).join(', ')}]::${type}[]`;
 }
@@ -134,7 +90,8 @@ function exerciseRow(exercise: UpstreamExercise, metrics: Metric[]): string {
     sqlArray(exercise.primaryMuscles, 'public.muscle'),
     sqlArray(exercise.secondaryMuscles, 'public.muscle'),
     sqlArray(exercise.instructions, 'text'),
-    sqlArray(exercise.images.map(webpPath), 'text'),
+    // No pictures: the column is for the photos of the users' own exercises.
+    sqlArray([], 'text'),
     sqlArray(metrics, 'public.exercise_metric'),
   ].join(', ')})`;
 }
@@ -208,10 +165,6 @@ if (process.argv.includes('--names-only')) {
   writeFileSync(file, HEADER + translationsSql(names));
   console.log(`Wrote ${Object.keys(names).length} names to ${file}`);
 } else {
-  const images = exercises.flatMap((exercise) => exercise.images);
-  console.log(`Converting ${images.length} images…`);
-  await convertImages(images);
-
   const file = join(MIGRATIONS_DIR, `${timestamp()}_import_exercises.sql`);
   writeFileSync(file, HEADER + exercisesSql(exercises, metricOverrides) + translationsSql(names));
   console.log(
