@@ -13,7 +13,7 @@
 // for when exercise-names.json changes but the library does not, and
 // `pnpm import:exercises --instructions-only` one with only the steps.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import type { Database } from '../src/lib/database.types.ts';
 import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
@@ -181,7 +181,7 @@ where exercise.id = steps.id
 }
 
 function instructionTranslationsSql(instructions: Instructions): string {
-  const rows = (['de', 'tr'] as const).flatMap((language) =>
+  const rows = INSTRUCTION_LANGUAGES.filter((language) => language !== 'en').flatMap((language) =>
     Object.entries(instructions[language]).map(
       ([id, list]) => `  (${sqlString(id)}, ${sqlString(language)}, ${sqlArray(list, 'text')})`,
     ),
@@ -208,10 +208,10 @@ const instructions = Object.fromEntries(
 
 const ids = new Set(exercises.map((exercise) => exercise.id));
 for (const [file, entries] of [
-  ['exercise-names.json', names],
-  ['exercise-metrics.json', metricOverrides],
+  [basename(NAMES_FILE), names],
+  [basename(METRICS_FILE), metricOverrides],
   ...INSTRUCTION_LANGUAGES.map(
-    (language) => [`exercise-instructions.${language}.json`, instructions[language]] as const,
+    (language) => [basename(instructionsFile(language)), instructions[language]] as const,
   ),
 ] as const) {
   const unknown = Object.keys(entries).filter((id) => !ids.has(id));
