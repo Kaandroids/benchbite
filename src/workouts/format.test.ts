@@ -1,14 +1,13 @@
 import { renderHook } from '@/test/render';
 
 import {
-  mainMuscles,
   useRestFormat,
   useSessionSize,
   useTargetFormat,
   useWorkoutName,
   workoutLength,
 } from './format';
-import type { Workout, WorkoutExercise } from './workouts';
+import type { WorkoutExercise } from './workouts';
 
 const exercise = (primaryMuscles: WorkoutExercise['primaryMuscles']): WorkoutExercise => ({
   exerciseId: 'x',
@@ -73,26 +72,5 @@ describe('useWorkoutName', () => {
     const { result } = await renderHook(() => useWorkoutName());
     expect(result.current({ name: 'Arms day', type: 'push' })).toBe('Arms day');
     expect(result.current({ name: null, type: 'push' })).toBe('Push');
-  });
-});
-
-describe('mainMuscles', () => {
-  it('lists the muscles most exercises work, ties in order', () => {
-    const workout: Workout = {
-      id: 1,
-      name: null,
-      type: 'pull',
-      weekdays: [],
-      active: true,
-      held: false,
-      estimatedMinutes: 45,
-      exercises: [
-        exercise(['lats']),
-        exercise(['middle back', 'lats']),
-        exercise(['biceps']),
-        exercise(['traps']),
-      ],
-    };
-    expect(mainMuscles(workout)).toEqual(['lats', 'middle back', 'biceps']);
   });
 });
