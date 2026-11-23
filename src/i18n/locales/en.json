@@ -973,6 +973,10 @@
     },
     "rest": "Rest {{time}}",
     "noRest": "No rest",
+    "muscleMap": {
+      "mainly": "Mainly: {{muscles}}",
+      "also": "Also: {{muscles}}"
+    },
     "muscles": {
       "abdominals": "Abs",
       "abductors": "Abductors",
