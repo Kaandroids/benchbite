@@ -23,6 +23,12 @@ jest.mock('@/nutrition/day-nutrition', () => ({
   ...jest.requireActual('@/nutrition/day-nutrition'),
   useWeekNutrition: jest.fn(),
 }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual('@/exercises/library'),
+  useExerciseLibrary: () => ({
+    data: [{ id: 'bench', primaryMuscles: ['chest'], secondaryMuscles: ['triceps'] }],
+  }),
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
@@ -157,6 +163,18 @@ describe('PastWeek', () => {
       { pathname: '/workout/log/[id]', params: { id: '1' } },
       { withAnchor: true },
     );
+  });
+
+  it('shows the muscles each workout trained, and the icon without its exercises', async () => {
+    mockWeek({
+      logs: loaded([
+        { ...log(1, 'push', new Date(2026, 9, 12, 18, 0)), plannedExerciseIds: ['bench'] },
+        log(2, 'pull', new Date(2026, 9, 15, 18, 0)),
+      ]),
+    });
+    await renderWeek();
+    // The push day's from its bench press; the older log kept no exercises, and shows the icon.
+    expect(screen.getAllByTestId('muscle-tile', { includeHiddenElements: true })).toHaveLength(1);
   });
 
   it("shows each day's calories and macros, a day over its target and one not logged", async () => {

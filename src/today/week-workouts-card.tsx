@@ -5,6 +5,8 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, useDurationFormat, useWeekdayFormat } from '@/i18n/dates';
+import { MuscleTile } from '@/exercises/muscle-tile';
+import { useTrainedMuscles } from '@/exercises/trained-muscles';
 import { durationMinutes, type LogSummary } from '@/history/history';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -19,9 +21,13 @@ type WeekWorkoutsCardProps = {
   schedule: WeekSchedule;
 };
 
+/** The side of a workout's tile of muscles. */
+const TILE = 46;
+
 /**
- * A past week's workouts (ADR 0046): each one finished, with its length, the weight lifted and its
- * day, which opens it, and under them the ones missed.
+ * A past week's workouts (ADR 0046): each one finished, with the muscles it trained (#304), its
+ * length, the weight lifted and its day, which opens it, and under them the ones missed. The
+ * muscles are those of the exercises the workout had when it started.
  */
 export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardProps) {
   const { t } = useTranslation();
@@ -31,6 +37,7 @@ export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardP
   const duration = useDurationFormat();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
+  const musclesOf = useTrainedMuscles();
   const missed = schedule.days.flatMap((day) =>
     day.workouts
       .filter((workout) => workout.status === 'missed')
@@ -71,7 +78,11 @@ export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardP
               },
             ]}
           >
-            <IconTile name="dumbbell" size={34} />
+            <MuscleTile
+              {...musclesOf(log.plannedExerciseIds ?? [])}
+              size={TILE}
+              fallback={<IconTile name="dumbbell" size={TILE} />}
+            />
             <View style={styles.flex}>
               <Text variant="label" numberOfLines={1}>
                 {workoutName(log)}
