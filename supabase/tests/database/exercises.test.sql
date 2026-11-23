@@ -2,11 +2,16 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(10);
 
 select is(
   (select count(*) from public.exercises where owner_id is null)::integer, 876,
   'The whole library is imported'
+);
+select is(
+  (select count(*) from public.exercises where owner_id is null and image_paths <> '{}')::integer,
+  0,
+  'No exercise of the library names a picture'
 );
 
 select is(
