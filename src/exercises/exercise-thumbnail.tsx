@@ -11,9 +11,7 @@ import { usePictureUrls } from './photos';
 
 type ExerciseThumbnailProps = {
   /** The exercise, if it is known: its photo is shown, or else its muscles. */
-  exercise:
-    | Partial<Pick<LibraryExercise, 'imagePaths' | 'primaryMuscles' | 'secondaryMuscles'>>
-    | undefined;
+  exercise: Pick<LibraryExercise, 'imagePaths' | 'primaryMuscles' | 'secondaryMuscles'> | undefined;
   size: number;
   /** Without a photo and without muscles, the first letter of the name stands in. */
   name?: string;
@@ -26,9 +24,9 @@ type ExerciseThumbnailProps = {
 export function ExerciseThumbnail({ exercise, size, name }: ExerciseThumbnailProps) {
   const upperCase = useUpperCase();
   const { colors, radii } = useTheme();
-  const path = exercise?.imagePaths ? thumbnailOf({ imagePaths: exercise.imagePaths }) : undefined;
+  const path = thumbnailOf(exercise);
   const url = usePictureUrls(path ? [path] : [])[path ?? ''];
-  const primary = exercise?.primaryMuscles ?? [];
+  const primary = exercise ? exercise.primaryMuscles : [];
   const map = !path && primary.length > 0;
   const view = viewOf(primary);
   // Inside the frame's border.
@@ -55,7 +53,7 @@ export function ExerciseThumbnail({ exercise, size, name }: ExerciseThumbnailPro
       ) : map ? (
         <MuscleMap
           primary={primary}
-          secondary={exercise?.secondaryMuscles ?? []}
+          secondary={exercise ? exercise.secondaryMuscles : []}
           side={view.side}
           zone={view.zone}
           width={inner}

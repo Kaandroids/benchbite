@@ -55,9 +55,30 @@ beforeEach(() => {
   jest.useFakeTimers({ now: TODAY });
   jest.mocked(useExerciseLibrary).mockReturnValue(
     loaded([
-      { id: 'bench', name: 'Bench press', metrics: ['weight', 'reps'], imagePaths: [] },
-      { id: 'pullup', name: 'Pull-up', metrics: ['reps'], imagePaths: [] },
-      { id: 'squat', name: 'Squat', metrics: ['weight', 'reps'], imagePaths: [] },
+      {
+        id: 'bench',
+        name: 'Bench press',
+        metrics: ['weight', 'reps'],
+        primaryMuscles: ['chest'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
+      {
+        id: 'pullup',
+        name: 'Pull-up',
+        metrics: ['reps'],
+        primaryMuscles: ['lats'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
+      {
+        id: 'squat',
+        name: 'Squat',
+        metrics: ['weight', 'reps'],
+        primaryMuscles: ['quadriceps'],
+        secondaryMuscles: [],
+        imagePaths: [],
+      },
     ]) as never,
   );
   jest.mocked(useRecordHistory).mockReturnValue(loaded(RECORDS) as never);
