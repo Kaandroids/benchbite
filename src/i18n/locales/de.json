@@ -973,6 +973,10 @@
     },
     "rest": "Pause {{time}}",
     "noRest": "Keine Pause",
+    "muscleMap": {
+      "mainly": "Vor allem: {{muscles}}",
+      "also": "Auch: {{muscles}}"
+    },
     "muscles": {
       "abdominals": "Bauch",
       "abductors": "Abduktoren",

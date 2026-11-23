@@ -165,6 +165,8 @@ describe('WorkoutsScreen', () => {
     expect(screen.getAllByLabelText('3 sets')).toHaveLength(3);
     expect(screen.getAllByText('~45 min')).toHaveLength(3);
     expect(screen.getAllByText('~338 kcal')).toHaveLength(3);
+    // Each shows the muscles its squat trains.
+    expect(screen.getAllByTestId('muscle-tile', { includeHiddenElements: true })).toHaveLength(3);
     // Only the workout on Wednesday is today's, whose day stands out.
     expect(screen.getAllByLabelText('Wed, today')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Pull, today' })).toBeTruthy();
@@ -565,6 +567,17 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Superset · Rest 1:00 after each round')).toBeTruthy();
     expect(screen.queryByText('Rest 1:00')).toBeNull();
     expect(screen.getByText('Rest 0:30')).toBeTruthy();
+  });
+
+  it('shows the muscles the whole workout trains, on the body and in words', async () => {
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    // Its exercises in the library train the lats first; the curl is not in it.
+    expect(
+      screen.getAllByTestId('muscle-map-front-whole', { includeHiddenElements: true }),
+    ).toHaveLength(1);
+    expect(screen.getByText('Mainly: Lats')).toBeTruthy();
+    expect(screen.queryByText(/^Also:/)).toBeNull();
   });
 
   it('shows the part of the body each exercise trains', async () => {

@@ -973,6 +973,10 @@
     },
     "rest": "Dinlenme {{time}}",
     "noRest": "Dinlenme yok",
+    "muscleMap": {
+      "mainly": "Ağırlıklı: {{muscles}}",
+      "also": "Ayrıca: {{muscles}}"
+    },
     "muscles": {
       "abdominals": "Karın",
       "abductors": "Abdüktörler",
