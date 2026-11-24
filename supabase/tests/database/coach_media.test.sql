@@ -73,7 +73,11 @@ select throws_ok(
 
 select set_config('role', 'postgres', true);
 select is(
-  (select count(*)::int from storage.objects where bucket_id = 'coach-media'),
+  -- Only this test's users: the local database may hold media of its own.
+  (select count(*)::int from storage.objects
+   where bucket_id = 'coach-media'
+     and (name like '00000000-0000-0000-0000-00000000000a/%'
+       or name like '00000000-0000-0000-0000-00000000000b/%')),
   2,
   'No photo was changed or removed'
 );
