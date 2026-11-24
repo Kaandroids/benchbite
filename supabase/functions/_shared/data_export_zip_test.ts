@@ -1,7 +1,15 @@
-import { assertEquals } from '@std/assert';
+import { assertEquals, assertRejects } from '@std/assert';
 import { strFromU8, unzipSync } from 'fflate';
 
-import { EXPORT_JSON, exportZip, mediaEntry, publicLink } from './data_export_zip.ts';
+import {
+  EXPORT_JSON,
+  exportZip,
+  mediaEntry,
+  publicLink,
+  READ_AHEAD,
+  storeExport,
+} from './data_export_zip.ts';
+import { fakeExportAdmin } from './fake_export_storage.ts';
 import type { Client } from './supabase.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
@@ -102,7 +110,7 @@ Deno.test('names a file in the ZIP by its bucket, without the user’s folder', 
   );
 });
 
-Deno.test('reads a file only once the reader has taken the one before', async () => {
+Deno.test('reads only a few files ahead of what the reader has taken', async () => {
   const files = Object.fromEntries(
     Array.from({ length: 10 }, (_, i) => [`coach-media:${A}/1/${i}.jpg`, 'x'.repeat(1000)]),
   );
@@ -113,7 +121,7 @@ Deno.test('reads a file only once the reader has taken the one before', async ()
   );
   // Nothing read from the stream yet: the event loop settles with at most one file read ahead.
   await new Promise((resolve) => setTimeout(resolve, 20));
-  assertEquals(read.length <= 2, true, `read ${read.length} files ahead`);
+  assertEquals(read.length <= READ_AHEAD, true, `read ${read.length} files ahead`);
   const entries = await unzip(stream);
   assertEquals(Object.keys(entries).length, 11);
 });
@@ -142,3 +150,18 @@ Deno.test('points a link at the address outside Docker, when one is set', () => 
   );
   assertEquals(publicLink(signed, undefined), signed);
 });
+
+Deno.test(
+  'keeps the earlier export when the new one cannot be stored, and replaces it when it can',
+  async () => {
+    const failing = fakeExportAdmin({ uploadFails: true });
+    failing.uploaded[`${A}/1.zip`] = new Uint8Array([1]);
+    await assertRejects(() => storeExport(failing.client, A, exported([]), new Date(2)));
+    assertEquals(Object.keys(failing.uploaded), [`${A}/1.zip`]);
+
+    const working = fakeExportAdmin();
+    working.uploaded[`${A}/1.zip`] = new Uint8Array([1]);
+    await storeExport(working.client, A, exported([]), new Date(2));
+    assertEquals(Object.keys(working.uploaded), [`${A}/2.zip`]);
+  },
+);

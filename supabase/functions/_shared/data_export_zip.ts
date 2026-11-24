@@ -5,11 +5,14 @@
 import { strToU8, Zip, ZipPassThrough } from 'fflate';
 
 import { isObject } from './json.ts';
-import { emptyFolder } from './storage.ts';
+import { PAGE_SIZE } from './storage.ts';
 import { type Client, logError } from './supabase.ts';
 
 /** The ZIP's name, with the day it was made, as the app's and the website's exports name it. */
 export const zipFileName = (made: Date) => `benchbite-data-${made.toISOString().slice(0, 10)}.zip`;
+
+/** How many media are read at once, ahead of the one added to the ZIP. */
+export const READ_AHEAD = 4;
 
 /** The file's own name in the ZIP. */
 export const EXPORT_JSON = 'benchbite-data.json';
@@ -44,6 +47,27 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
   const media = listed.filter(isMedia);
   const placed: Record<string, unknown>[] = [];
   let next = 0;
+  /** The files being read, by their place in the list: null for one that cannot be. */
+  const reads = new Map<number, Promise<Uint8Array | null>>();
+  const read = (index: number) => {
+    const item = media.at(index);
+    if (!item || reads.has(index)) return;
+    reads.set(
+      index,
+      staysInFolder(item.path)
+        ? admin.storage
+            .from(item.bucket)
+            .download(item.path)
+            .then(async ({ data, error }) => {
+              if (error || !data) {
+                logError('Reading a file for an export failed', error);
+                return null;
+              }
+              return new Uint8Array(await data.arrayBuffer());
+            })
+        : Promise.resolve(null),
+    );
+  };
   let zip: Zip;
   const add = (name: string, data: Uint8Array) => {
     const entry = new ZipPassThrough(name);
@@ -63,7 +87,8 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
       // left out adds nothing to the stream, so the call goes on to the next.
       async pull() {
         for (;;) {
-          const item = media.at(next);
+          const index = next;
+          const item = media.at(index);
           next += 1;
           if (!item) {
             const file = isObject(exported) ? { ...exported, media: placed } : exported;
@@ -71,18 +96,17 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
             zip.end();
             return;
           }
-          if (!staysInFolder(item.path)) {
-            placed.push({ ...item, missing: true });
-            continue;
-          }
-          const { data, error } = await admin.storage.from(item.bucket).download(item.path);
-          if (error || !data) {
-            logError('Reading a file for an export failed', error);
+          // This file and the next few are read at once, which shortens the build while holding
+          // only a few files (ADR 0169); they are added in order.
+          for (let ahead = index; ahead < index + READ_AHEAD; ahead += 1) read(ahead);
+          const bytes = await reads.get(index);
+          reads.delete(index);
+          if (!bytes) {
             placed.push({ ...item, missing: true });
             continue;
           }
           const file = mediaEntry(item);
-          add(file, new Uint8Array(await data.arrayBuffer()));
+          add(file, bytes);
           placed.push({ ...item, file });
           return;
         }
@@ -102,6 +126,18 @@ export const EXPORTS_BUCKET = 'data-exports';
 /** How long the link to a stored ZIP works: an hour, for a slow or retried download. */
 export const LINK_SECONDS = 3600;
 
+/** Removes the user's exports but `keep`; a failure is logged, as the purge removes them later. */
+async function removeOtherExports(admin: Client, userId: string, keep: string): Promise<void> {
+  const bucket = admin.storage.from(EXPORTS_BUCKET);
+  const { data: listed, error } = await bucket.list(userId, { limit: PAGE_SIZE });
+  const others = (listed ?? [])
+    .map((entry) => `${userId}/${entry.name}`)
+    .filter((path) => path !== keep);
+  const { error: removeError } = others.length ? await bucket.remove(others) : { error: null };
+  if (error || removeError)
+    logError('Removing a user’s earlier exports failed', error ?? removeError);
+}
+
 /**
  * Writes the ZIP of an export to storage, in place of the user's earlier one, and gives a link
  * that downloads it under its name. Downloading from storage is not bound by the function's time
@@ -115,7 +151,6 @@ export async function storeExport(
   /** STORAGE_PUBLIC_URL, which only the local stack sets (publicLink()). */
   publicUrl?: string,
 ): Promise<string> {
-  await emptyFolder(admin, EXPORTS_BUCKET, userId);
   const bucket = admin.storage.from(EXPORTS_BUCKET);
   const path = `${userId}/${made.getTime()}.zip`;
   const { error } = await bucket.upload(path, exportZip(admin, exported), {
@@ -123,6 +158,8 @@ export async function storeExport(
     duplex: 'half',
   });
   if (error) throw error;
+  // Only once the new one is there: a failed upload leaves the earlier export and its link.
+  await removeOtherExports(admin, userId, path);
   const { data, error: signError } = await bucket.createSignedUrl(path, LINK_SECONDS, {
     download: zipFileName(made),
   });
