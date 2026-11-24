@@ -1470,11 +1470,11 @@
       "intro": "Wir brauchen dein Okay für ein paar Gesundheitsdaten. Ohne das können wir deinen Plan nicht erstellen.",
       "what": {
         "title": "Was wir erfassen",
-        "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
+        "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training, und die Trainings, Mahlzeiten und Gewichtseinträge, die du einträgst."
       },
       "why": {
         "title": "Wofür",
-        "body": "Nur für deine Kalorienziele und deinen Trainingsplan."
+        "body": "Für deine Ziele und deinen Plan, und um deine Trainings, Mahlzeiten und Fortschritte festzuhalten."
       },
       "control": {
         "title": "Deine Kontrolle",

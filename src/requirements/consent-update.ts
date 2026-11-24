@@ -47,7 +47,10 @@ export function useConsentAsk(): ConsentAsk | null {
   const given = useLastAgreed('health_consent', asked, readGivenConsent);
 
   if (!asked || !current || given === undefined || given === null) return null;
-  if (given === current.version) return null;
+  // Versions are the days their texts were written (YYYY-MM-DD), so they sort as strings. A
+  // consent to a newer text than the server says, as a build ahead of the server's row records
+  // when it had no answer yet, already covers the current one.
+  if (given >= current.version) return null;
   return { version: current.version, summary: summaryOf(current, i18n.language) };
 }
 

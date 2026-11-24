@@ -83,6 +83,13 @@ it('asks nothing of a user who consented to the current text', async () => {
   expect(result.current).toBeNull();
 });
 
+it('asks nothing of a user who consented to a newer text than the server says', async () => {
+  given('2027-03-01');
+  const { result } = await renderHook(() => useConsentAsk());
+  await waitFor(() => expect(supabase.from).toHaveBeenCalled());
+  expect(result.current).toBeNull();
+});
+
 it('asks nothing while it does not know: no answer of the server, or no history', async () => {
   jest.mocked(useAgreement).mockReturnValue(undefined);
   const unknown = await renderHook(() => useConsentAsk());
