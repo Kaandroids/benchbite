@@ -87,7 +87,11 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// Takes up the session the system kept running while the app was ended, which it says by
   /// launching the app to recover it; until then nothing starts or ends.
   func recover() {
-    guard HKHealthStore.isHealthDataAvailable(), session == nil else { return }
+    guard HKHealthStore.isHealthDataAvailable(), session == nil else {
+      Log.session.info("Recovery asked with a session already held")
+      return
+    }
+    Log.session.info("Recovering the active session")
     recovering = true
     store.recoverActiveWorkoutSession { [weak self] session, error in
       Task { @MainActor in
@@ -95,8 +99,12 @@ final class WorkoutSession: NSObject, ObservableObject {
         if let error {
           NSLog("[WorkoutSession] Could not recover: %@", error.localizedDescription)
         }
+        let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
+        Log.session.info(
+          "Recovered: \(session != nil, privacy: .public), for \(workoutId ?? "none", privacy: .public)"
+        )
         if let session {
-          self.adopt(session, workoutId: UserDefaults.standard.string(forKey: Self.workoutIdKey))
+          self.adopt(session, workoutId: workoutId)
         }
         self.recovering = false
         self.reconcile()
@@ -114,7 +122,9 @@ final class WorkoutSession: NSObject, ObservableObject {
     guard HKHealthStore.isHealthDataAvailable(),
       store.authorizationStatus(for: HKObjectType.workoutType()) != .notDetermined
     else { return }
+    Log.session.info("The phone opened the app to start a workout")
     guard session == nil, !ending, !recovering else {
+      Log.session.info("Start deferred: a session is held, ends or is recovered")
       phoneStart = .deferred(since: Date())
       return
     }
@@ -131,6 +141,7 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// Ends the session started for the phone if it still waits for its workout.
   private func stopWaiting(_ session: HKWorkoutSession) {
     guard session === self.session, case .waiting = phoneStart, measuring == nil else { return }
+    Log.session.info("No workout came for the phone's start")
     end(session, saved: false, at: Date())
   }
 
@@ -162,17 +173,30 @@ final class WorkoutSession: NSObject, ObservableObject {
       collect(from: Self.date(workout.startedAt))
       return
     }
-    guard let said else { return }
+    guard let said else {
+      if session != nil { Log.session.info("Holding the session until the phone says something") }
+      return
+    }
     if let session {
-      guard let measuring else { return end(session, saved: false, at: Date()) }
+      guard let measuring else {
+        Log.session.info("Ending a session that measures no workout")
+        return end(session, saved: false, at: Date())
+      }
       if let end = said.ended.first(where: { $0.id == measuring }) {
+        Log.session.info("The phone ended \(measuring, privacy: .public), saved \(end.saved, privacy: .public)")
         self.end(session, saved: end.saved, at: end.endedAt.map(Self.date) ?? Date())
       } else if let running = said.workout?.id, running != measuring {
+        Log.session.info(
+          "The phone runs \(running, privacy: .public), not \(measuring, privacy: .public)")
         // The phone runs another workout, and says nothing of how this one ended. Running none,
         // as while it starts or signs in again, it may still run this one.
         self.end(session, saved: false, at: Date())
       } else if let start = builder?.startDate, Date().timeIntervalSince(start) > Self.longest {
+        Log.session.info("Ending \(measuring, privacy: .public): it ran too long")
         self.end(session, saved: false, at: Date())
+      } else if said.workout == nil {
+        Log.session.info(
+          "Keeping \(measuring, privacy: .public): the phone runs none and has not said it ended")
       }
       return
     }
@@ -213,6 +237,9 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// Measures the phone's workout, from when it started there, so that the saved workout covers
   /// the log's time and the phone takes it for the same workout (ADR 0105, ADR 0106).
   private func begin(_ followed: (workoutId: String, startedAt: Double), inBackground: Bool) {
+    Log.session.info(
+      "Starting for \(followed.workoutId, privacy: .public), in the background \(inBackground, privacy: .public)"
+    )
     guard let session = makeSession() else {
       stopped.insert(followed.workoutId)
       return
@@ -263,7 +290,10 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// left out. The workout is closed at once, as the session's own news of its end can wait while
   /// the app is in the background, and the workout closes only once the session has ended.
   private func end(_ session: HKWorkoutSession, saved: Bool, at end: Date) {
-    guard let builder else { return }
+    guard let builder else {
+      Log.session.error("Cannot end a session without its builder")
+      return
+    }
     let workoutId = measuring
     self.session = nil
     self.builder = nil
@@ -304,6 +334,7 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// again once the app is active.
   private func sessionEnded(_ session: HKWorkoutSession) {
     guard session === self.session else { return }
+    Log.session.info("The session ended from outside, for \(self.measuring ?? "none", privacy: .public)")
     if let measuring, measuring != startedInBackground { stopped.insert(measuring) }
     end(session, saved: false, at: Date())
   }

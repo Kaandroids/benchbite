@@ -129,6 +129,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     if command.change.isFinish { unsaved = nil }
     let payload = command.payload
     waiting[command.id] = command
+    Log.link.info(
+      "Command \(command.id, privacy: .public) for \(command.workoutId, privacy: .public), reachable \(WCSession.default.isReachable, privacy: .public)"
+    )
     let session = WCSession.default
     // Without a reply handler, as the phone takes messages without replying. Behind a transfer
     // still on its way, a command goes as a transfer too, as transfers arrive in order and a
@@ -184,8 +187,14 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   /// Shows a state, unless an older one than what is shown; on the main thread.
   private func show(_ state: WatchState) {
-    guard state.seq > lastSeq else { return }
+    guard state.seq > lastSeq else {
+      Log.link.info("Dropped an older state \(state.seq, privacy: .public)")
+      return
+    }
     lastSeq = state.seq
+    Log.link.info(
+      "State \(state.seq, privacy: .public): workout \(state.workout?.id ?? "none", privacy: .public), follows \(state.workout?.follows ?? false, privacy: .public), ended \(state.ended.map(\.id).joined(separator: ","), privacy: .public)"
+    )
     if let language = state.language, language != self.language {
       self.language = language
     }
@@ -219,6 +228,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     _ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState,
     error: Error?
   ) {
+    Log.link.info(
+      "Activated: \(activationState.rawValue, privacy: .public), reachable \(session.isReachable, privacy: .public), error \(error?.localizedDescription ?? "none", privacy: .public)"
+    )
     receive(session.receivedApplicationContext)
     reachabilityChanged(session)
   }
@@ -229,6 +241,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
 
   private func reachabilityChanged(_ session: WCSession) {
     let reachable = session.isReachable
+    Log.link.info("Reachable: \(reachable, privacy: .public)")
     DispatchQueue.main.async { self.reachable = reachable }
   }
 
@@ -245,7 +258,8 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   func session(
     _ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?
   ) {
-    guard error != nil, let json = userInfoTransfer.userInfo["command"] as? String else { return }
+    guard let error, let json = userInfoTransfer.userInfo["command"] as? String else { return }
+    Log.link.error("A command's transfer failed: \(error.localizedDescription, privacy: .public)")
     DispatchQueue.main.async {
       self.waiting = self.waiting.filter { _, command in command.json != json }
     }
