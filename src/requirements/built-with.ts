@@ -3,7 +3,7 @@
 
 // The version of the health data consent's text, recorded with each consent. Raising it here asks
 // no one again: the server's row for a new version does, at the next start (ADR 0156, ADR 0159).
-export const PRIVACY_POLICY_VERSION = '2026-11-23';
+export const HEALTH_CONSENT_VERSION = '2026-11-23';
 
 // The version of the terms of use the user accepts in the onboarding, recorded with each
 // acceptance (ADR 0141).

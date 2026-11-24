@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { onVersionRefused } from '@/lib/version-refusal';
 import { useSession } from '@/providers/session-provider';
 
-import { AI_CONSENT_VERSION, PRIVACY_POLICY_VERSION, TERMS_VERSION } from './built-with';
+import { AI_CONSENT_VERSION, HEALTH_CONSENT_VERSION, TERMS_VERSION } from './built-with';
 
 export const REQUIREMENTS_KEY = ['requirements'];
 const STORED_KEY = 'requirements';
@@ -41,7 +41,7 @@ export type Requirements = {
 /** The versions this build was made with, for when the server has not said any yet. */
 const BUILT_WITH: Record<Agreement, string> = {
   terms: TERMS_VERSION,
-  health_consent: PRIVACY_POLICY_VERSION,
+  health_consent: HEALTH_CONSENT_VERSION,
   ai_consent: AI_CONSENT_VERSION,
 };
 
