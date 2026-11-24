@@ -25,13 +25,17 @@ consent to read the store to what withdrawing the health data consent ends (ADR 
   Its button reads "Agree and continue"; "Not now" asks nothing.
 - Agreeing records the consent on the server (`give_health_app_consent()`) with the store and the
   version of the sheet's text, before the system asks. A consent that was not recorded asks
-  nothing. It rests on the health data consent: without that one it is refused.
+  nothing, and one the system then refuses ends again. It rests on the health data consent:
+  without that one it is refused.
 - Disconnecting, or the system taking the access back, records the end of it
   (`withdraw_health_app_consent()`). Withdrawing the health data consent ends it too. What was
   read is not deleted on disconnecting: it is part of the logs under the health data consent.
 - Like the other consents, entries are only added, never changed, and are part of the data export.
-- A connection made before this consent was asked for is let go when the app starts: the user
-  connects again through the sheet.
+- The consent is the account's, not a phone's: disconnecting on one phone ends it, and the
+  others let go of their connection when the app starts or comes to the front, where the consent
+  is checked. This also lets go of a connection made before the consent was asked for; the user
+  connects again through the sheet. Without an answer, as offline, reading goes on, so that a
+  workout keeps its heart rate.
 
 ## Alternatives considered
 
@@ -48,5 +52,8 @@ consent to read the store to what withdrawing the health data consent ends (ADR 
 - Each connection is provable, with the text's version and the time, and so is its end.
 - Connecting needs a connection to the server; offline it fails with "Try again".
 - Users who connected before this build must connect again once. There are no real users yet.
+- A user who reads on two phones and disconnects one must connect the other again. A consent per
+  phone would avoid that, at the cost of an identity for each phone, for a case that is rare.
+- Each start and return to the front asks the server once more.
 - Ending the consent is recorded as best it can be: reading stops on the device even when the
   record fails, and the next connection records a new consent.
