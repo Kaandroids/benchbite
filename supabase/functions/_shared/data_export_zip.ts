@@ -25,7 +25,10 @@ const isMedia = (value: unknown): value is Media =>
 export const mediaEntry = ({ bucket, path }: Media) =>
   `media/${bucket}/${path.slice(path.indexOf('/') + 1)}`;
 
-/** Whether a path stays in its folder: one with a . or .. part could name another user's file. */
+/**
+ * Whether a path stays in its folder: one with an empty, . or .. part could name another user's
+ * file. The same rule as the list of media in export_user_data() (ADR 0168).
+ */
 const staysInFolder = (path: string) =>
   path.split('/').every((part) => part !== '' && part !== '.' && part !== '..');
 

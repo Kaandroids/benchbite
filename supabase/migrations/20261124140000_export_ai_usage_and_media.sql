@@ -146,9 +146,10 @@ begin
       from storage.objects o
       where o.bucket_id in (select public.export_buckets())
         and o.name like target_id::text || '/%'
-        -- Only names in the user's own folders, as the app writes them: one with a . or .. part
-        -- could name another user's file once read by its path.
-        and o.name !~ '(^|/)\.\.?(/|$)'
+        -- Only names in the user's own folders, as the app writes them: one with an empty, . or ..
+        -- part could name another user's file once read by its path. The same rule as
+        -- staysInFolder() in supabase/functions/_shared/data_export_zip.ts.
+        and o.name !~ '(^|/)(\.\.?)?(/|$)'
     )
   );
 end;
