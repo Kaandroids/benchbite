@@ -36,4 +36,30 @@ final class CrownTests: XCTestCase {
     let dumbbell = CrownRange(min: 2, max: 999.75, step: 2, fine: 0.25)
     XCTAssertEqual(dumbbell.turned(10.1, by: 1, fast: false), 10.35)
   }
+
+  func testCountsWholeDetentsOnly() {
+    XCTAssertEqual(
+      CrownDetents.at(2.4, from: 0, reach: 1000),
+      CrownDetents(turned: 2, detent: 2, recentre: false))
+    XCTAssertEqual(CrownDetents.at(2.3, from: 2, reach: 1000).turned, 0)
+    XCTAssertEqual(CrownDetents.at(-1, from: 2, reach: 1000).turned, -3)
+  }
+
+  func testComesBackToTheMiddleNearAnEnd() {
+    XCTAssertEqual(
+      CrownDetents.at(501, from: 500, reach: 1000),
+      CrownDetents(turned: 1, detent: 0, recentre: true))
+    XCTAssertEqual(CrownDetents.at(-501, from: -500, reach: 1000).recentre, true)
+    XCTAssertEqual(CrownDetents.at(500, from: 499, reach: 1000).recentre, false)
+  }
+
+  func testTakesAJumpForTheCrownStartingOver() {
+    // Not moved back to the middle, the Crown reports where it was: counted from there on.
+    XCTAssertEqual(
+      CrownDetents.at(502, from: 0, reach: 1000),
+      CrownDetents(turned: 0, detent: 502, recentre: false))
+    XCTAssertEqual(
+      CrownDetents.at(80, from: 0, reach: 1000),
+      CrownDetents(turned: 0, detent: 80, recentre: false))
+  }
 }

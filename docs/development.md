@@ -242,6 +242,16 @@ commands it sends, is tested with XCTest in `targets/watch-tests`: a Swift packa
 links to the watch's own files, run with `pnpm test:watch`. A new file of such logic joins it with a
 link in `targets/watch-tests/Sources/WatchLogic`.
 
+The watch app logs what it receives from the phone, what its workout session decides and the
+Crown's focus under the subsystem `com.benchbite.watch`, in the categories `link`, `session` and
+`crown`; the Crown's turns are at debug level. To read them on a real watch, connect it to the Mac:
+turn on Developer Mode on the watch (Settings → Privacy & Security), keep it unlocked on the same
+Wi-Fi as the Mac, and open Device Hub (Xcode → Open Developer Tool), where it shows beside its
+iPhone; if it does not, turn Developer Mode off and on again on the watch. Then open Console, choose
+the watch, and filter by the subsystem. `xcrun devicectl device info files --device <watch id>
+--domain-type systemCrashLogs` lists its crash and memory reports, such as a `JetsamEvent` when the
+system ended the app for its memory (#718).
+
 ## Add a language
 
 The app's text is in `src/i18n/locales/`, one file per language (ADR 0007). iOS takes the sentence
