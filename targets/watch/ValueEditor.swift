@@ -118,7 +118,7 @@ private struct FieldEditor: View {
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.
     // Whole detents only, timed from one to the next, whatever the Crown reports in between.
     .onChange(of: turned) {
-      let next = CrownDetents.at(turned, from: detent, span: Self.span)
+      let next = CrownDetents.at(turned, from: detent, reach: Self.span)
       detent = next.detent
       if next.recentre { turned = 0 }
       guard next.turned != 0 else { return }
