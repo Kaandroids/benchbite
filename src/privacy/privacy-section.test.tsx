@@ -112,7 +112,11 @@ it('exports the data: says what the file holds, makes it, and shares it once the
   await render(<PrivacySection />);
 
   await fireEvent.press(screen.getByRole('button', { name: 'Export your data' }));
-  expect(screen.getByText('Chats with Bite with their photos and voice messages, Bite’s notebook, and what each answer used')).toBeOnTheScreen();
+  expect(
+    screen.getByText(
+      'Chats with Bite with their photos and voice messages, Bite’s notebook, and what each answer used',
+    ),
+  ).toBeOnTheScreen();
   await fireEvent.press(screen.getByRole('button', { name: 'Export' }));
   expect(screen.queryByText('In the file')).toBeNull();
   await waitFor(() => expect(shareExport).toHaveBeenCalledWith(file, 'Export your data'));
