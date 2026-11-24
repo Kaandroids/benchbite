@@ -649,8 +649,9 @@ export type Database = {
           last_message_at: string;
           title: string | null;
           user_id: string;
+          coach_chat_past_its_time: boolean | null;
         };
-        ComputedFields: never;
+        ComputedFields: 'coach_chat_past_its_time';
         Insert: {
           archived_at?: string | null;
           created_at?: string;
@@ -2629,8 +2630,18 @@ export type Database = {
       };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_alternatives_state: { Args: { workout_id: number }; Returns: Json };
+      coach_chat_past_its_time: {
+        Args: {
+          t: Omit<
+            Database['public']['Tables']['coach_threads']['Row'],
+            Database['public']['Tables']['coach_threads']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
+      };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
+      coach_media_part_kept: { Args: { part: Json }; Returns: boolean };
       coach_media_purge_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
       coach_media_purge_status: {
         Args: Record<PropertyKey, never>;

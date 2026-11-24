@@ -40,9 +40,9 @@ insert into public.coach_notes (user_id, category, text, thread_id) values
   ('00000000-0000-0000-0000-00000000000a', 'health', 'Knee hurts on deep squats', 9000001);
 delete from public.coach_media_deletions;
 
--- Other chats of the local database are left to their own time: the count is of these.
-select public.remove_old_coach_chats();
-select ok(true, 'Chats past their time are removed');
+-- A batch of one at a time goes on until none is left; other chats of the local database may go
+-- too, so the count is at least these.
+select cmp_ok(public.remove_old_coach_chats(1), '>=', 2, 'Chats past their time are removed, batch after batch');
 select results_eq(
   $$ select id from public.coach_threads where id > 9000000 order by id $$,
   $$ values (9000002::bigint), (9000004), (9000005) $$,
