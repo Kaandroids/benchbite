@@ -2571,7 +2571,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      call_scheduled_function: { Args: { p_name: string }; Returns: number };
+      call_scheduled_function: {
+        Args: { p_body?: Json; p_name: string; p_timeout_ms?: number };
+        Returns: number;
+      };
       calorie_floor:
         | {
             Args: {
