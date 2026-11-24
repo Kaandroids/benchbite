@@ -67,8 +67,10 @@ set search_path = ''
 as $$
 begin
   if public.has_health_app_consent(end_health_app_consent.user_id) then
-    insert into public.health_app_consent_withdrawals (user_id)
-    values (end_health_app_consent.user_id);
+    -- The time it is recorded, not the transaction's start: a consent given while the withdrawal
+    -- waited for its locks is then ended too.
+    insert into public.health_app_consent_withdrawals (user_id, withdrawn_at)
+    values (end_health_app_consent.user_id, clock_timestamp());
   end if;
 end;
 $$;
