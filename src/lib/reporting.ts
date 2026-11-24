@@ -157,8 +157,15 @@ export const reportingErrorBoundary = (
   boundary: ComponentType<ErrorBoundaryProps>,
 ): ComponentType<ErrorBoundaryProps> => Sentry.wrapExpoRouterErrorBoundary(boundary);
 
-/** What a failed request's error says when the phone could not reach the server, or gave up. */
-const UNREACHABLE = /network request failed|failed to fetch|network error|timed out|offline/i;
+/**
+ * What a failed request's error says when the phone could not reach the server, or gave up. Expo's
+ * fetch puts "fetch failed:" before the system's own words, in the phone's language, for any
+ * request that failed before an answer came: no network or a dropped connection ("The network
+ * connection was lost."), but also a TLS or certificate error, a refused redirect or a cancel,
+ * which all count as expected with it. A server that answers with an error is still reported.
+ */
+const UNREACHABLE =
+  /network request failed|failed to fetch|fetch failed:|network error|timed out|offline/i;
 
 /**
  * What Apple's health store says while the phone is locked: its data is encrypted then, and can
