@@ -23,8 +23,7 @@ jest.mock('@/lib/supabase', () => ({
   supabase: { rpc: jest.fn(), auth: { getSession: jest.fn() } },
 }));
 jest.mock('@/history/history', () => ({ LOGS_KEY: ['workout-logs'], recentLogs: jest.fn() }));
-let mockUserId = 'user-1';
-jest.mock('@/providers/session-provider', () => ({ useUserId: () => mockUserId }));
+jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-1' }));
 
 let consentHolds = true;
 
@@ -102,7 +101,6 @@ it('asks the system nothing when the consent was not recorded', async () => {
 });
 
 it('lets go of a connection made before its consent was asked for, and reads nothing', async () => {
-  mockUserId = 'user-2';
   consentHolds = false;
   setHealthConnected(true);
   await render(<HealthCatchUp />);

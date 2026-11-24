@@ -72,21 +72,14 @@ export async function catchUpWorkoutHealth(queryClient: QueryClient): Promise<bo
   return changed;
 }
 
-/** The user whose consent to read the store was found to hold, checked once while the app runs. */
-let consentHeldFor: string | null = null;
-
 /**
- * Whether reading may go on: a connection made before the consent was asked for (#711) is let go,
- * and the user connects again through the consent sheet (ADR 0166). Without an answer, reading
- * goes on, as connecting now always records the consent first.
+ * Whether reading may go on. The consent is the account's: disconnecting on one phone ends it on
+ * the others too, which let go of their connection here, at each start and return to the front
+ * (ADR 0166). Without an answer, as offline, reading goes on.
  */
-async function checkConsent(userId: string): Promise<boolean> {
-  if (consentHeldFor === userId) return true;
+async function checkConsent(): Promise<boolean> {
   try {
-    if (await hasHealthAppConsent()) {
-      consentHeldFor = userId;
-      return true;
-    }
+    if (await hasHealthAppConsent()) return true;
   } catch (error) {
     reportError('Could not check the health app consent', error);
     return true;
@@ -112,7 +105,7 @@ export function HealthCatchUp() {
       if (running?.userId === userId) return;
       const current = {
         userId,
-        done: checkConsent(userId)
+        done: checkConsent()
           .then((holds) =>
             holds
               ? Promise.all([
