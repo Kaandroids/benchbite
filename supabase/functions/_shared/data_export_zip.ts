@@ -1,9 +1,11 @@
 // The export as a ZIP (#712, ADR 0168): the user's photos and voice messages, which the export's
 // file lists by bucket and path, and the file itself, last, naming where each one is in the ZIP or
-// that it could not be read. The app's and the website's exports are this same ZIP.
+// that it could not be read. The app's and the website's exports are this same ZIP, written to
+// storage and downloaded from there (ADR 0169).
 import { strToU8, Zip, ZipPassThrough } from 'fflate';
 
 import { isObject } from './json.ts';
+import { emptyFolder } from './storage.ts';
 import { type Client, logError } from './supabase.ts';
 
 /** The ZIP's name, with the day it was made, as the app's and the website's exports name it. */
@@ -94,13 +96,34 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
   );
 }
 
-/** The ZIP as a download that no cache keeps, as it holds health data. */
-export const zipResponse = (body: ReadableStream<Uint8Array>, made: Date) =>
-  new Response(body, {
-    headers: {
-      'content-type': 'application/zip',
-      'content-disposition': `attachment; filename="${zipFileName(made)}"`,
-      'cache-control': 'no-store',
-      'x-content-type-options': 'nosniff',
-    },
+/** The bucket of the ZIPs being downloaded, one folder per user (ADR 0169). */
+export const EXPORTS_BUCKET = 'data-exports';
+
+/** How long the link to a stored ZIP works: an hour, for a slow or retried download. */
+export const LINK_SECONDS = 3600;
+
+/**
+ * Writes the ZIP of an export to storage, in place of the user's earlier one, and gives a link
+ * that downloads it under its name. Downloading from storage is not bound by the function's time
+ * limit, however large the ZIP and however slow the reader (ADR 0169). Throws when it cannot.
+ */
+export async function storeExport(
+  admin: Client,
+  userId: string,
+  exported: unknown,
+  made: Date,
+): Promise<string> {
+  await emptyFolder(admin, EXPORTS_BUCKET, userId);
+  const bucket = admin.storage.from(EXPORTS_BUCKET);
+  const path = `${userId}/${made.getTime()}.zip`;
+  const { error } = await bucket.upload(path, exportZip(admin, exported), {
+    contentType: 'application/zip',
+    duplex: 'half',
   });
+  if (error) throw error;
+  const { data, error: signError } = await bucket.createSignedUrl(path, LINK_SECONDS, {
+    download: zipFileName(made),
+  });
+  if (signError) throw signError;
+  return data.signedUrl;
+}
