@@ -4,34 +4,6 @@
 -- chat queues its folder of media for purge-coach-media (ADR 0063); a single file goes through
 -- expire-coach-media, which removes it from storage and then marks it removed in its message.
 
--- Whether a part of a message is a photo or voice message whose file is kept, by its path: one
--- removed keeps its type and loses its path.
-create function public.coach_media_part_kept(part jsonb)
-returns boolean
-language sql
-immutable
-set search_path = ''
-as $$
-  select part ->> 'type' in ('image', 'audio') and part ? 'path';
-$$;
-
--- Whether a chat is past its time: 30 days after its last message, or 7 days after it began when
--- the user never wrote in it.
-create function public.coach_chat_past_its_time(t public.coach_threads)
-returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select t.last_message_at < now() - interval '30 days'
-    or (
-      t.created_at < now() - interval '7 days'
-      and not exists (
-        select 1 from public.coach_messages m where m.thread_id = t.id and m.role = 'user'
-      )
-    );
-$$;
-
 -- Deletes the chats past their time, each with its messages, cards and proposals, a batch of
 -- `p_limit` at a time until none is left; their media go to the purge through the delete's
 -- trigger. A chat being written in is skipped, and its time is checked again as it is deleted,
@@ -48,13 +20,31 @@ begin
   loop
     with old as (
       select t.id from public.coach_threads t
-      where public.coach_chat_past_its_time(t)
+      where (
+        t.last_message_at < now() - interval '30 days'
+        or (
+          t.created_at < now() - interval '7 days'
+          and not exists (
+            select 1 from public.coach_messages m where m.thread_id = t.id and m.role = 'user'
+          )
+        )
+      )
       order by t.last_message_at
       limit p_limit
       for update skip locked
     )
     delete from public.coach_threads t using old
-    where t.id = old.id and public.coach_chat_past_its_time(t);
+    -- The same conditions again, which Postgres checks against a chat written in meanwhile.
+    where t.id = old.id
+      and (
+        t.last_message_at < now() - interval '30 days'
+        or (
+          t.created_at < now() - interval '7 days'
+          and not exists (
+            select 1 from public.coach_messages m where m.thread_id = t.id and m.role = 'user'
+          )
+        )
+      );
     get diagnostics batch = row_count;
     removed := removed + batch;
     exit when batch < p_limit;
@@ -62,10 +52,6 @@ begin
   return removed;
 end;
 $$;
-
-revoke execute on function public.coach_media_part_kept(jsonb) from public, anon, authenticated;
-revoke execute on function public.coach_chat_past_its_time(public.coach_threads)
-  from public, anon, authenticated;
 
 revoke execute on function public.remove_old_coach_chats(integer)
   from public, anon, authenticated, service_role;
@@ -89,13 +75,14 @@ as $$
     select m.id, m.content from public.coach_messages m
     where m.created_at < now() - interval '30 days'
       and exists (
-        select 1 from jsonb_array_elements(m.content) p where public.coach_media_part_kept(p)
+        select 1 from jsonb_array_elements(m.content) p
+        where p ->> 'type' in ('image', 'audio') and p ? 'path'
       )
     order by m.id
     limit p_limit
   ) m,
   jsonb_array_elements(m.content) part
-  where public.coach_media_part_kept(part);
+  where part ->> 'type' in ('image', 'audio') and part ? 'path';
 $$;
 
 revoke execute on function public.expiring_coach_media(integer) from public, anon, authenticated;
@@ -113,7 +100,7 @@ as $$
   set content = (
     select jsonb_agg(
       case
-        when public.coach_media_part_kept(part)
+        when part ->> 'type' in ('image', 'audio') and part ? 'path'
           then (part - 'path') || jsonb_build_object('removed', true)
         else part
       end
