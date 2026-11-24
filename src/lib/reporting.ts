@@ -159,8 +159,10 @@ export const reportingErrorBoundary = (
 
 /**
  * What a failed request's error says when the phone could not reach the server, or gave up. Expo's
- * fetch says "fetch failed:" only for a request that got no answer, followed by the system's own
- * words in the phone's language, such as "The network connection was lost."
+ * fetch puts "fetch failed:" before the system's own words, in the phone's language, for any
+ * request that failed before an answer came: no network or a dropped connection ("The network
+ * connection was lost."), but also a TLS or certificate error, a refused redirect or a cancel,
+ * which all count as expected with it. A server that answers with an error is still reported.
  */
 const UNREACHABLE =
   /network request failed|failed to fetch|fetch failed:|network error|timed out|offline/i;
