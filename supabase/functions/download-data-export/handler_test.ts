@@ -32,19 +32,20 @@ const post = (fields: Record<string, string>) =>
 
 const A = '00000000-0000-0000-0000-00000000000a';
 
-/** The service role's client of a stored export: the link's answer, the limit and storage. */
+/** The service role's client of a stored export: the link's account, the limit and storage. */
 function storingAdmin(exported: unknown, taken = true) {
   const store = fakeExportAdmin({ taken });
   const calls: string[] = [];
   const client = store.client as unknown as { rpc: unknown };
   client.rpc = (fn: string, args: Record<string, string>) => {
-    calls.push(
-      fn === 'export_data_by_link'
-        ? `${fn} ${args.p_token_hash!.includes(TOKEN) ? 'token' : 'hash'}`
-        : `${fn} ${args.p_user}`,
-    );
+    const hashed = args.p_token_hash && !args.p_token_hash.includes(TOKEN) ? 'hash' : 'token';
+    calls.push(fn === 'take_data_export' ? `${fn} ${args.p_user}` : `${fn} ${hashed}`);
     return Promise.resolve(
-      fn === 'export_data_by_link' ? { data: exported, error: null } : { data: taken, error: null },
+      fn === 'data_export_link_user'
+        ? { data: A, error: null }
+        : fn === 'take_data_export'
+          ? { data: taken, error: null }
+          : { data: exported, error: null },
     );
   };
   return { ...store, calls };
@@ -66,7 +67,11 @@ Deno.test(
       response.headers.get('location'),
       `https://storage.test/data-exports/${path}?token=t`,
     );
-    assertEquals(admin.calls, ['export_data_by_link hash', `take_data_export ${A}`]);
+    assertEquals(admin.calls, [
+      'data_export_link_user hash',
+      `take_data_export ${A}`,
+      'export_data_by_link hash',
+    ]);
     assertEquals(admin.signed[0]!.download, 'benchbite-data-2026-11-18.zip');
     const entries = unzipSync(admin.uploaded[path]!);
     assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)).account, { id: A });

@@ -2,7 +2,6 @@
 // token, and the answer sends the browser to the account's export, a ZIP with its photos and voice
 // messages in storage, the same as the app's (ADR 0168, ADR 0169), two an hour.
 import { storeExport } from '../_shared/data_export_zip.ts';
-import { isObject } from '../_shared/json.ts';
 import { sha256Hex } from '../_shared/hash.ts';
 import { readForm } from '../_shared/request.ts';
 import { redirect, siteLocale, sitePage } from '../_shared/site.ts';
@@ -33,21 +32,18 @@ export async function handleExportDownload(
   if (!isLinkToken(token)) {
     return page('export-data/expired');
   }
-  const { data, error } = await admin.rpc('export_data_by_link', {
-    p_token_hash: await sha256Hex(token),
+  const tokenHash = await sha256Hex(token);
+  // The link's account first, to take the limit before the export is built.
+  const { data: account, error: linkError } = await admin.rpc('data_export_link_user', {
+    p_token_hash: tokenHash,
   });
-  if (error) {
-    logError('Exporting an account by link failed', error);
+  if (linkError) {
+    logError('Finding an export link’s account failed', linkError);
     // Back to the page with its token, in the fragment that stays in the browser, to try again.
     return page(`export-data/download#token=${token}&failed`);
   }
-  if (!data) {
+  if (!account) {
     return page('export-data/expired');
-  }
-  const account = isObject(data) && isObject(data.account) ? data.account.id : undefined;
-  if (typeof account !== 'string') {
-    logError('An export by link names no account', null);
-    return page(`export-data/download#token=${token}&failed`);
   }
   // Two an hour, as from the app: each reads every file the account has.
   const { data: taken, error: limitError } = await admin.rpc('take_data_export', {
@@ -59,6 +55,11 @@ export async function handleExportDownload(
   }
   if (!taken) {
     return page(`export-data/download#token=${token}&limit`);
+  }
+  const { data, error } = await admin.rpc('export_data_by_link', { p_token_hash: tokenHash });
+  if (error || !data) {
+    logError('Exporting an account by link failed', error);
+    return page(`export-data/download#token=${token}&failed`);
   }
   try {
     // The browser downloads the ZIP from storage, which no time limit cuts off (ADR 0169).
