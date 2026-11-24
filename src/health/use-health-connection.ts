@@ -66,13 +66,15 @@ export function useHealthConnection() {
 
   /**
    * Records the user's consent, then asks the system and keeps whether reading was allowed. A
-   * consent that was not recorded asks nothing (ADR 0166).
+   * consent that was not recorded asks nothing; one the system refused ends again (ADR 0166).
    */
   const connect = async () => {
     if (busy) return;
     setBusy(true);
+    let given = false;
     try {
       await giveHealthAppConsent(healthStore!);
+      given = true;
       const allowed = await requestHealthAccess();
       // Weight and steps are among what was asked for (ADR 0100, 0103); Android can allow the rest
       // without them, and Progress and Today then ask for each alone. They are set first, as
@@ -83,9 +85,12 @@ export function useHealthConnection() {
       }
       setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');
+      // A consent the system then refused ends with it: nothing is read.
+      if (!allowed) void endConsent();
     } catch (error) {
       reportError('Could not ask for the access to health data', error);
       setProblem('failed');
+      if (given) void endConsent();
     } finally {
       setBusy(false);
       setSheet(null);

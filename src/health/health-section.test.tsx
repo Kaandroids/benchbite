@@ -137,6 +137,7 @@ it('says where to allow it when the system refused', async () => {
     ),
   ).toBeOnTheScreen();
   expect(isHealthConnected()).toBe(false);
+  expect(withdrawHealthAppConsent).toHaveBeenCalledTimes(1);
 });
 
 it('asks the system nothing when the consent could not be recorded', async () => {
@@ -148,6 +149,7 @@ it('asks the system nothing when the consent could not be recorded', async () =>
   expect(await screen.findByText('That didn’t work. Try again in a moment.')).toBeOnTheScreen();
   expect(requestHealthAccess).not.toHaveBeenCalled();
   expect(isHealthConnected()).toBe(false);
+  expect(withdrawHealthAppConsent).not.toHaveBeenCalled();
 });
 
 it('says so when asking fails, and stays unconnected', async () => {
@@ -158,6 +160,7 @@ it('says so when asking fails, and stays unconnected', async () => {
 
   expect(await screen.findByText('That didn’t work. Try again in a moment.')).toBeOnTheScreen();
   expect(isHealthConnected()).toBe(false);
+  expect(withdrawHealthAppConsent).toHaveBeenCalledTimes(1);
 });
 
 it('points to Google Play when Health Connect is missing or old', async () => {
