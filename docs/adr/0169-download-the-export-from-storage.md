@@ -16,9 +16,10 @@ This amends ADR 0168's delivery of the ZIP, and ADR 0148's download on the websi
 
 ## Decision
 
-- **The ZIP is written to storage,** to the private bucket `data-exports`, one folder per user, in
-  place of the user's earlier export. It is streamed from the media to storage inside Supabase's
-  own network, so building it does not depend on the user's connection.
+- **The ZIP is written to storage,** to the private bucket `data-exports`, one folder per user. It
+  is streamed from the media to storage inside Supabase's own network, a few media read at once, so
+  building it does not depend on the user's connection. Once it is stored, the user's earlier
+  export goes; a failed upload leaves the earlier one and its link.
 - **The user downloads it from storage through a signed link** that works for an hour, under its
   file's name. A download from storage has no time limit, and a failed one can be tried again
   while the link works.
@@ -28,7 +29,9 @@ This amends ADR 0168's delivery of the ZIP, and ADR 0148's download on the websi
   (`take_data_export()`), as each reads every file. A third is refused, and the app and the page
   say so.
 - **A ZIP is removed a day after it was made** by `purge-data-exports`, which a pg_cron job calls,
-  as it holds health data. The runs of the limit are left out of the export, as the bucket is.
+  as it holds health data; **with the user,** when the account is deleted; and **when the health
+  data consent is withdrawn,** which asks `purge-data-exports` for the user's folder once the
+  withdrawal commits. The runs of the limit are left out of the export, as the bucket is.
 - **Locally, `STORAGE_PUBLIC_URL`** points the link at the address outside Docker, as the
   functions sign with Docker's own.
 
@@ -45,5 +48,11 @@ This amends ADR 0168's delivery of the ZIP, and ADR 0148's download on the websi
 - On Supabase's free plan an uploaded file may be at most 50 MB, so a larger export fails until the
   project moves to a paid plan (up to 500 GB a file), which is planned before the release.
 - A ZIP stays in storage for up to a day; the link works for an hour.
+- Building the ZIP has to answer within Supabase's request idle timeout of 150 s, on every plan:
+  the app and the browser wait for the link while it is built. Reading a few media at once keeps a
+  large export well within it; a user with thousands of photos and voice messages could still
+  reach it, and the export would then fail.
+- A failed export still uses one of the two of the hour.
+- If the request to remove a withdrawn user's export cannot be sent, the daily purge removes it.
 - The egress of an export counts once per download, as before.
 - Old builds keep calling `export_my_data()` and get the file alone (ADR 0157).
