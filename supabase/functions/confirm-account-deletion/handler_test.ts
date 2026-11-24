@@ -1,5 +1,6 @@
 import { assertEquals } from '@std/assert';
 
+import { EXPORTS_BUCKET } from '../_shared/data_export_zip.ts';
 import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import type { Client } from '../_shared/supabase.ts';
 import { handleDeletionConfirm } from './handler.ts';
@@ -24,7 +25,9 @@ function fakeAdmin({ user = A, rpcError = false, deleteError = null }: Options =
       ),
     storage: {
       from: (bucket: string) => {
-        if (bucket !== EXERCISE_PHOTOS_BUCKET) throw new Error(`Unexpected bucket ${bucket}`);
+        if (bucket !== EXERCISE_PHOTOS_BUCKET && bucket !== EXPORTS_BUCKET) {
+          throw new Error(`Unexpected bucket ${bucket}`);
+        }
         return {
           list: () => Promise.resolve({ data: [], error: null }),
           remove: () => Promise.resolve({ data: [], error: null }),

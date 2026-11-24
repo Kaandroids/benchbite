@@ -1,5 +1,6 @@
 import { assertEquals } from '@std/assert';
 
+import { EXPORTS_BUCKET } from '../_shared/data_export_zip.ts';
 import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import { codeHash } from '../_shared/deletion_code.ts';
 import { PAGE_SIZE } from '../_shared/storage.ts';
@@ -22,6 +23,8 @@ type Options = {
   /** The user as Auth stores them: a guest, or an account with its address. */
   stored?: 'guest' | 'account';
   email?: string;
+  /** The user's export in its bucket (ADR 0169). */
+  exports?: Set<string>;
   /** Auth cannot say who the user is. */
   readError?: boolean;
 };
@@ -42,6 +45,7 @@ function fakeAdmin(
     stored = 'account',
     email = 'kaan@example.com',
     readError,
+    exports = new Set<string>(),
   }: Options = {},
 ) {
   const calls: string[] = [];
@@ -53,13 +57,17 @@ function fakeAdmin(
     },
     storage: {
       from: (bucket: string) => {
-        if (bucket !== EXERCISE_PHOTOS_BUCKET) throw new Error(`Unexpected bucket ${bucket}`);
+        if (bucket !== EXERCISE_PHOTOS_BUCKET && bucket !== EXPORTS_BUCKET) {
+          throw new Error(`Unexpected bucket ${bucket}`);
+        }
+        // The user's export, which their deletion removes too (ADR 0169).
+        const files = bucket === EXERCISE_PHOTOS_BUCKET ? objects : exports;
         return {
           list: (folder: string, { limit }: { limit: number }) => {
             if (storageError || (storageErrorAfter && deleted)) {
               return Promise.resolve({ data: null, error: new Error('down') });
             }
-            const names = [...objects]
+            const names = [...files]
               .filter((path) => path.startsWith(`${folder}/`))
               .slice(0, limit)
               .map((path) => ({ id: path, name: path.slice(folder.length + 1) }));
@@ -67,7 +75,7 @@ function fakeAdmin(
           },
           remove: (paths: string[]) => {
             calls.push('remove');
-            paths.forEach((path) => objects.delete(path));
+            paths.forEach((path) => files.delete(path));
             return Promise.resolve({ data: paths, error: null });
           },
         };
@@ -139,6 +147,17 @@ Deno.test('removes only the user’s photos, a page at a time, and then the user
   assertEquals(await response.json(), { deleted: true });
   assertEquals([...objects], [`${B}/kept.jpg`]);
   assertEquals(calls, ['remove', 'remove', `delete ${A}`]);
+});
+
+Deno.test('removes the user’s export with them, and no other user’s', async () => {
+  const exports = new Set([`${A}/1.zip`, `${B}/2.zip`]);
+  const { admin, calls } = fakeAdmin(new Set(), { stored: 'guest', exports });
+
+  const response = await handleDeleteRequest(post(), noPassword(admin));
+
+  assertEquals(response.status, 200);
+  assertEquals([...exports], [`${B}/2.zip`]);
+  assertEquals(calls, ['remove', `delete ${A}`]);
 });
 
 Deno.test('deletes a user without photos', async () => {
