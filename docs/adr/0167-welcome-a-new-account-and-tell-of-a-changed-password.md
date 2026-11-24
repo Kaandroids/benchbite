@@ -12,7 +12,7 @@ This amends the part of ADR 0093 about Auth's email.
 ## Decision
 
 - **The database tells the first password from a later one.** A trigger on `auth.users` runs when an account with an address saves a password: the account had none before its first one, as ADR 0091 forgets a password given before the address is confirmed.
-- **It asks the Edge Function `send-password-email` to email the owner,** through `pg_net`, with the project URL and secret key from Vault, as the purge of chat media is called (ADR 0063). The request goes once the change is committed. Without the keys, or on any failure, the password is still saved, without its email.
+- **It asks the Edge Function `send-password-email` to email the owner,** through `call_scheduled_function()`, which reads the project URL and secret key from Vault (ADR 0131); it now takes a body and a timeout too. The request goes once the change is committed. Without the keys, or on any failure, the password is still saved, without its email.
 - **A first password welcomes the account:** it is ready, and its plan, workouts, meals and progress are kept with it, also on a new phone. **A later one says the password was changed,** with how to reset it, as ADR 0093's notice did.
 - **Both are sent like the other account emails,** through Lettermint, in the layout of `_shared/account_email.ts`, in the language the account was made in.
 - **Auth's own notice is off.** Its template goes.
