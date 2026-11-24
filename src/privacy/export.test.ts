@@ -1,11 +1,11 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-import { supabase } from '@/lib/supabase';
+import { postFunction } from '@/lib/supabase';
 
 import { exportFileName, shareExport, writeExport } from './export';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ postFunction: jest.fn() }));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn() }));
 jest.mock('expo-file-system', () => {
   class MockFile {
@@ -32,26 +32,27 @@ jest.mock('expo-file-system', () => {
 type MockFile = File & { create: jest.Mock; write: jest.Mock; delete: jest.Mock };
 const Files = File as unknown as { made: MockFile[]; failWrite: boolean };
 
+/** The ZIP the server answers with, as bytes. */
+const ZIP = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+
 beforeEach(() => {
   jest.clearAllMocks();
   Files.made = [];
   Files.failWrite = false;
   jest.mocked(Paths.cache.list).mockReturnValue([]);
-  jest
-    .mocked(supabase.rpc)
-    .mockResolvedValue({ data: { format: 'benchbite-export' }, error: null } as never);
+  jest.mocked(postFunction).mockResolvedValue(new Response(ZIP, { status: 200 }));
 });
 
 it('names the file after the device’s day it was made', () => {
-  expect(exportFileName(new Date(2026, 10, 19, 0, 30))).toBe('benchbite-data-2026-11-19.json');
+  expect(exportFileName(new Date(2026, 10, 19, 0, 30))).toBe('benchbite-data-2026-11-19.zip');
 });
 
 it('writes what the server gathers to a file in the cache', async () => {
   const file = (await writeExport(new Date(2026, 10, 18, 10))) as MockFile;
-  expect(supabase.rpc).toHaveBeenCalledWith('export_my_data');
-  expect(file.uri).toBe('file:///cache/benchbite-data-2026-11-18.json');
+  expect(postFunction).toHaveBeenCalledWith('export-my-data', {});
+  expect(file.uri).toBe('file:///cache/benchbite-data-2026-11-18.zip');
   expect(file.create).toHaveBeenCalledWith({ overwrite: true });
-  expect(JSON.parse(file.write.mock.calls[0][0] as string)).toEqual({ format: 'benchbite-export' });
+  expect(file.write.mock.calls[0][0]).toEqual(ZIP);
 });
 
 it('first deletes the exports an earlier run left, and nothing else', async () => {
@@ -64,8 +65,8 @@ it('first deletes the exports an earlier run left, and nothing else', async () =
 });
 
 it('writes nothing when the server fails', async () => {
-  jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('down') } as never);
-  await expect(writeExport()).rejects.toThrow('down');
+  jest.mocked(postFunction).mockResolvedValue(new Response('down', { status: 503 }));
+  await expect(writeExport()).rejects.toThrow('503');
   expect(Paths.cache.list).not.toHaveBeenCalled();
   expect(Files.made).toHaveLength(0);
 });
@@ -76,12 +77,12 @@ it('deletes a file it could not finish writing', async () => {
   expect(Files.made[0]!.delete).toHaveBeenCalled();
 });
 
-it('shares the file as JSON, and leaves it for the next export to delete', async () => {
+it('shares the file as a ZIP, and leaves it for the next export to delete', async () => {
   const file = (await writeExport(new Date(2026, 10, 18, 10))) as MockFile;
   await shareExport(file, 'Export your data');
-  expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/benchbite-data-2026-11-18.json', {
-    mimeType: 'application/json',
-    UTI: 'public.json',
+  expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/benchbite-data-2026-11-18.zip', {
+    mimeType: 'application/zip',
+    UTI: 'public.zip-archive',
     dialogTitle: 'Export your data',
   });
   expect(file.delete).not.toHaveBeenCalled();

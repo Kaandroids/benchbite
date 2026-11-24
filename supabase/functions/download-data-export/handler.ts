@@ -1,5 +1,7 @@
 // The work of download-data-export (#553, ADR 0148): the page the email's link opened sends its
-// token, and the answer is the account's export as a file, the same as the app's (ADR 0147).
+// token, and the answer is the account's export as a ZIP with its photos and voice messages, the
+// same as the app's (ADR 0168).
+import { exportZip, zipResponse } from '../_shared/data_export_zip.ts';
 import { sha256Hex } from '../_shared/hash.ts';
 import { readForm } from '../_shared/request.ts';
 import { redirect, siteLocale, sitePage } from '../_shared/site.ts';
@@ -7,15 +9,11 @@ import { isLinkToken } from '../_shared/site_link.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 export type DownloadContext = {
-  /** A client with the service role, which alone reads links. */
+  /** A client with the service role, which alone reads links, and reads the account's files. */
   admin: Client;
   siteUrl: string;
   now?: () => Date;
 };
-
-/** The file's name, with the day it was made, as the app names it. */
-export const exportFileName = (now: Date) =>
-  `benchbite-data-${now.toISOString().slice(0, 10)}.json`;
 
 export async function handleExportDownload(
   req: Request,
@@ -43,13 +41,5 @@ export async function handleExportDownload(
   if (!data) {
     return page('export-data/expired');
   }
-  return new Response(JSON.stringify(data, null, 2), {
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-disposition': `attachment; filename="${exportFileName(now())}"`,
-      // Health data: kept by no cache on the way, nor by the browser's.
-      'cache-control': 'no-store',
-      'x-content-type-options': 'nosniff',
-    },
-  });
+  return zipResponse(exportZip(admin, data), now());
 }

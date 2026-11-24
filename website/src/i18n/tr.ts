@@ -322,7 +322,7 @@ export const tr: Messages = {
     linkNote: 'Bağlantı 30 dakika boyunca çalışır.',
     holds: 'Dosyada',
     holdsText:
-      'Profil, hedef ve kilolar; planın, antrenmanların ve rekorların; öğünler, su ve adımlar; kendi besinlerin, tariflerin ve egzersizlerin; Bite ile sohbetler ve onun defteri; onayların. JSON olarak, başka uygulamaların okuduğu bir biçimde. Fotoğraflar ve sesli mesajlar içinde değil; sohbetler nerede olduklarını söyler.',
+      'Profil, hedef ve kilolar; planın, antrenmanların ve rekorların; öğünler, su ve adımlar; kendi besinlerin, tariflerin ve egzersizlerin; Bite ile sohbetler, fotoğrafları ve sesli mesajlarıyla, onun defteri ve her cevabın ne kullandığı; onayların. Bir ZIP dosyası: verilerin JSON olarak, başka uygulamaların okuduğu bir biçimde, ve fotoğrafların ile sesli mesajların.',
   },
   exportLink: {
     sentTitle: 'E-postana bak',
@@ -334,7 +334,8 @@ export const tr: Messages = {
     anotherEmail: 'Başka bir e-posta kullan',
     downloadTitle: 'Verilerini indir',
     downloadText: 'Dosyada sağlık verilerin var. Onu güvenli bir yerde sakla.',
-    downloadNote: 'Dışa aktarma sayfasında sayılan her şeyi içeren, JSON biçiminde tek bir dosya.',
+    downloadNote:
+      'Dışa aktarma sayfasında sayılan her şeyi içeren tek bir ZIP dosyası: verilerin JSON olarak, fotoğrafların ve sesli mesajların.',
     download: 'İndir',
     backToStart: 'Başa dön',
     again: 'Bağlantı 30 dakika boyunca çalışır; olmazsa yeniden indirebilirsin.',

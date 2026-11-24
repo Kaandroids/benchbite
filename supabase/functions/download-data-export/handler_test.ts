@@ -1,4 +1,7 @@
 import { assertEquals } from '@std/assert';
+import { strFromU8, unzipSync } from 'fflate';
+
+import { EXPORT_JSON } from '../_shared/data_export_zip.ts';
 
 import type { Client } from '../_shared/supabase.ts';
 import { handleExportDownload } from './handler.ts';
@@ -27,7 +30,7 @@ const post = (fields: Record<string, string>) =>
   });
 
 Deno.test(
-  'answers with the export as a file no cache keeps, asking with the token’s hash',
+  'answers with the export as a ZIP no cache keeps, asking with the token’s hash',
   async () => {
     const { admin, calls } = fakeAdmin({ data: { format: 'benchbite-export' }, error: null });
     const response = await handleExportDownload(post({ token: TOKEN }), {
@@ -38,10 +41,15 @@ Deno.test(
     assertEquals(response.status, 200);
     assertEquals(
       response.headers.get('content-disposition'),
-      'attachment; filename="benchbite-data-2026-11-18.json"',
+      'attachment; filename="benchbite-data-2026-11-18.zip"',
     );
+    assertEquals(response.headers.get('content-type'), 'application/zip');
     assertEquals(response.headers.get('cache-control'), 'no-store');
-    assertEquals(await response.json(), { format: 'benchbite-export' });
+    const entries = unzipSync(new Uint8Array(await response.arrayBuffer()));
+    assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)), {
+      format: 'benchbite-export',
+      media: [],
+    });
     assertEquals(calls[0]!.fn, 'export_data_by_link');
     assertEquals(calls[0]!.args.p_token_hash!.includes(TOKEN), false);
   },

@@ -329,7 +329,7 @@ export const de: Messages = {
     linkNote: 'Der Link funktioniert 30 Minuten lang.',
     holds: 'In der Datei',
     holdsText:
-      'Profil, Ziel und Gewichte; dein Plan, Trainings und Rekorde; Mahlzeiten, Wasser und Schritte; deine eigenen Lebensmittel, Rezepte und Übungen; Chats mit Bite und sein Notizbuch; deine Einwilligungen. Als JSON, ein Format, das andere Apps lesen. Fotos und Sprachnachrichten sind nicht darin; die Chats sagen, wo sie waren.',
+      'Profil, Ziel und Gewichte; dein Plan, Trainings und Rekorde; Mahlzeiten, Wasser und Schritte; deine eigenen Lebensmittel, Rezepte und Übungen; Chats mit Bite mit ihren Fotos und Sprachnachrichten, sein Notizbuch und was jede Antwort verbraucht hat; deine Einwilligungen. Eine ZIP-Datei: deine Daten als JSON, ein Format, das andere Apps lesen, und deine Fotos und Sprachnachrichten.',
   },
   exportLink: {
     sentTitle: 'Schau in dein Postfach',
@@ -342,7 +342,8 @@ export const de: Messages = {
     anotherEmail: 'Andere E-Mail verwenden',
     downloadTitle: 'Deine Daten herunterladen',
     downloadText: 'Die Datei enthält deine Gesundheitsdaten. Bewahre sie sicher auf.',
-    downloadNote: 'Eine Datei, als JSON, mit allem, was die Exportseite aufzählt.',
+    downloadNote:
+      'Eine ZIP-Datei mit allem, was die Exportseite aufzählt: deine Daten als JSON und deine Fotos und Sprachnachrichten.',
     download: 'Herunterladen',
     backToStart: 'Zurück zum Start',
     again:
