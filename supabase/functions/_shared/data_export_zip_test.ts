@@ -165,3 +165,31 @@ Deno.test(
     assertEquals(Object.keys(working.uploaded), [`${A}/2.zip`]);
   },
 );
+
+Deno.test('leaves out a file whose read breaks off, and still makes the ZIP', async () => {
+  const client = {
+    storage: {
+      from: () => ({
+        download: (path: string) =>
+          path.endsWith('2.jpg')
+            ? Promise.reject(new TypeError('connection reset'))
+            : Promise.resolve({ data: new Blob(['x']), error: null }),
+      }),
+    },
+  } as unknown as Client;
+  const paths = [1, 2, 3].map((n) => `${A}/1/${n}.jpg`);
+  const entries = await unzip(
+    exportZip(client, exported(paths.map((path) => ({ bucket: 'coach-media', path })))),
+  );
+  assertEquals(Object.keys(entries).length, 3);
+  const listed = JSON.parse(strFromU8(entries[EXPORT_JSON]!)).media;
+  assertEquals(listed[1].missing, true);
+});
+
+Deno.test('removes only older exports, never a newer one stored first', async () => {
+  const store = fakeExportAdmin();
+  store.uploaded[`${A}/1.zip`] = new Uint8Array([1]);
+  store.uploaded[`${A}/5.zip`] = new Uint8Array([5]);
+  await storeExport(store.client, A, exported([]), new Date(2));
+  assertEquals(Object.keys(store.uploaded).sort(), [`${A}/2.zip`, `${A}/5.zip`]);
+});

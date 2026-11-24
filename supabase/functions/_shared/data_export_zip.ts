@@ -65,6 +65,12 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
               }
               return new Uint8Array(await data.arrayBuffer());
             })
+            // A read broken off midway throws rather than answering an error; and one read ahead is
+            // not awaited until its turn, so it is caught here.
+            .catch((cause: unknown) => {
+              logError('Reading a file for an export failed', cause);
+              return null;
+            })
         : Promise.resolve(null),
     );
   };
@@ -127,6 +133,15 @@ export const EXPORTS_BUCKET = 'data-exports';
 export const LINK_SECONDS = 3600;
 
 /**
+ * Whether a stored ZIP was made before `made`, by its name, <made in ms>.zip: an export finishing
+ * after a newer one removes only those, never the newer one.
+ */
+const isOlderExport = (path: string, made: Date) => {
+  const at = Number(path.slice(path.lastIndexOf('/') + 1).replace(/\.zip$/, ''));
+  return Number.isFinite(at) && at < made.getTime();
+};
+
+/**
  * Writes the ZIP of an export to storage, in place of the user's earlier one, and gives a link
  * that downloads it under its name. Downloading from storage is not bound by the function's time
  * limit, however large the ZIP and however slow the reader (ADR 0169). Throws when it cannot.
@@ -149,7 +164,7 @@ export async function storeExport(
   // Only once the new one is there: a failed upload leaves the earlier export and its link. One
   // left behind is removed by the purge.
   try {
-    await emptyFolder(admin, EXPORTS_BUCKET, userId, path);
+    await emptyFolder(admin, EXPORTS_BUCKET, userId, (other) => !isOlderExport(other, made));
   } catch (cause) {
     logError('Removing a user’s earlier exports failed', cause);
   }
