@@ -136,10 +136,16 @@ it('stops and deletes a recording the screen leaves', async () => {
 });
 
 it('plays out of the speaker again when recording fails to start', async () => {
-  fakeAudio.recorder.prepareToRecordAsync.mockRejectedValueOnce(new Error('busy'));
+  // Failed twice, as it is prepared once more after a moment.
+  fakeAudio.recorder.prepareToRecordAsync
+    .mockRejectedValueOnce(new Error('busy'))
+    .mockRejectedValueOnce(new Error('busy'));
   const { result, ends } = await recorder();
 
-  await act(async () => result.current.start());
+  await act(async () => {
+    result.current.start();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
 
   expect(ends).toEqual([{ problem: { reason: 'voice_not_recorded' } }]);
   expect(setAudioModeAsync).toHaveBeenLastCalledWith({
@@ -169,4 +175,30 @@ it('lets the next recording start only once the audio is back to playback', asyn
   });
   await act(async () => result.current.start());
   expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
+});
+
+it('prepares once more after a moment when the audio was not ready', async () => {
+  fakeAudio.recorder.prepareToRecordAsync.mockRejectedValueOnce(
+    new Error('Failed to prepare recorder'),
+  );
+  const { result, ends } = await recorder();
+
+  await act(async () => {
+    result.current.start();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
+  expect(fakeAudio.recorder.record).toHaveBeenCalled();
+  expect(ends).toEqual([]);
+});
+
+it('waits for the audio to settle after a message it paused', async () => {
+  const { result } = await recorder();
+
+  await act(async () => result.current.start({ afterPlayback: true }));
+  expect(fakeAudio.recorder.prepareToRecordAsync).not.toHaveBeenCalled();
+
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
 });
