@@ -1,6 +1,6 @@
 # 0168. Export the media and the record of the AI
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0169
 - **Date:** 2026-11-24
 
 ## Context
