@@ -5,9 +5,12 @@
 -- until its address is confirmed. It runs on the server, so a change made outside the app is told
 -- too.
 
--- Calls an Edge Function as call_scheduled_function() did (ADR 0131), now with a body and a
--- timeout of its own, as a trigger calls one too. Replaced rather than given new parameters in
--- place, which would make a second function and the jobs' calls by name ambiguous.
+-- Calls an Edge Function, as Supabase schedules them: the project URL and a secret API key are read
+-- from Vault when it is called, so that no key is kept in the migrations. Without them the call is
+-- skipped with a warning. Returns the pg_net request id, or null when nothing was sent.
+-- As before (ADR 0131), now with a body and a timeout, as the trigger below calls it too; the name
+-- stays for the scheduled jobs that call it. Replaced rather than given new parameters in place,
+-- which would make a second function and the jobs' calls by name ambiguous.
 drop function public.call_scheduled_function(text);
 
 create function public.call_scheduled_function(
