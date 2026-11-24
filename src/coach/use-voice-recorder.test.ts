@@ -147,3 +147,26 @@ it('plays out of the speaker again when recording fails to start', async () => {
     playsInSilentMode: true,
   });
 });
+
+it('lets the next recording start only once the audio is back to playback', async () => {
+  const playback = deferred();
+  const { result } = await recorder();
+
+  // A tap: started and let go at once.
+  await act(async () => result.current.start());
+  jest.mocked(setAudioModeAsync).mockReturnValueOnce(playback.promise);
+  let ending: Promise<void> = Promise.resolve();
+  await act(async () => {
+    ending = result.current.finish(true);
+  });
+  // Held again while the audio goes back to playback: nothing is prepared over it.
+  await act(async () => result.current.start());
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    playback.resolve();
+    await ending;
+  });
+  await act(async () => result.current.start());
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
+});

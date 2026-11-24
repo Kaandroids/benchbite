@@ -94,11 +94,20 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       return true;
     } catch (error) {
       reportError('Could not start recording a voice message', error);
-      void setAudioModeAsync(PLAYBACK_MODE);
+      await toPlayback();
       onEnd({ problem: { reason: 'voice_not_recorded' } });
       return false;
     }
   };
+
+  /**
+   * Back to playing out of the speaker, waited for before the next recording may start: a switch
+   * still on its way could land while the next one is prepared, which then fails (#720).
+   */
+  const toPlayback = () =>
+    setAudioModeAsync(PLAYBACK_MODE).catch((error: unknown) =>
+      reportError('Could not set the audio back to playback', error),
+    );
 
   const start = () => {
     if (busy.current) return;
@@ -132,7 +141,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       reportError('Could not stop recording a voice message', error);
       return null;
     } finally {
-      void setAudioModeAsync(PLAYBACK_MODE);
+      await toPlayback();
     }
   };
 
