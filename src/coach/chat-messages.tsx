@@ -249,7 +249,7 @@ const UserMessage = memo(function UserMessage({
         <MessagePhotos photos={message.photos} urls={mediaUrls} onOpen={onOpenPhoto} />
       ) : null}
       {message.removed?.photos ? (
-        <RemovedMedia label={t('bite.removed.photos', { count: message.removed.photos })} />
+        <RemovedMediaNote label={t('bite.removed.photos', { count: message.removed.photos })} />
       ) : null}
       {message.voice ? (
         <VoiceBubble
@@ -275,7 +275,9 @@ const UserMessage = memo(function UserMessage({
             },
           ]}
         >
-          {message.removed?.voice ? <RemovedMedia label={t('bite.removed.voice')} plain /> : null}
+          {message.removed?.voice ? (
+            <RemovedMediaNote label={t('bite.removed.voice')} plain />
+          ) : null}
           {message.text ? <Text>{message.text}</Text> : null}
         </View>
       ) : null}
@@ -404,7 +406,7 @@ const PHOTO_SMALL = 64;
  * Where a photo or voice message was, once removed 30 days after it was sent (#728, ADR 0170): a
  * quiet note, in a dashed frame of its own or, `plain`, inside the voice message's bubble.
  */
-function RemovedMedia({ label, plain = false }: { label: string; plain?: boolean }) {
+function RemovedMediaNote({ label, plain = false }: { label: string; plain?: boolean }) {
   const { colors, spacing } = useTheme();
   return (
     <View
