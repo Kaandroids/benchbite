@@ -349,6 +349,9 @@ describe('reportError', () => {
     const { reporting, sentry } = load(true);
     for (const error of [
       new TypeError('Network request failed'),
+      // Expo's fetch without an answer, in the system's words.
+      new Error('fetch failed: The network connection was lost.'),
+      new Error('fetch failed: Die Netzwerkverbindung wurde unterbrochen.'),
       // Apple's health store while the phone is locked, in English and in German.
       new Error(
         'Error Domain=com.apple.healthkit Code=6 "Protected health data is inaccessible" UserInfo={NSLocalizedDescription=Protected health data is inaccessible}',
