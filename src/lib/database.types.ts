@@ -2715,6 +2715,7 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      data_export_link_user: { Args: { p_token_hash: string }; Returns: string };
       day_calories: {
         Args: { from_day: string; to_day: string };
         Returns: {
