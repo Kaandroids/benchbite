@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { BiteSheet } from '@/coach/bite-sheet';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
+import { PRIVACY_POLICY_URL } from '@/lib/links';
 import { useTheme, type ColorTokens } from '@/theme';
 
 import { HEALTH_READS, type HealthRead } from './connection';
@@ -52,6 +54,7 @@ function AskSheet({
   title,
   body,
   next,
+  continueLabel,
   busy,
   onContinue,
   onClose,
@@ -60,6 +63,8 @@ function AskSheet({
   title: string;
   body: string;
   next: string;
+  /** The main button's label, Continue unless the sheet asks for a consent. */
+  continueLabel?: string;
   busy: boolean;
   onContinue: () => void;
   onClose: () => void;
@@ -69,7 +74,11 @@ function AskSheet({
   return (
     <BiteSheet title={title} body={body} onClose={onClose}>
       {children}
-      <Button label={t('health.consent.continue')} loading={busy} onPress={onContinue} />
+      <Button
+        label={continueLabel ?? t('health.consent.continue')}
+        loading={busy}
+        onPress={onContinue}
+      />
       <Button
         label={t('health.consent.notNow')}
         variant="secondary"
@@ -83,7 +92,10 @@ function AskSheet({
   );
 }
 
-/** Says what is read and kept, and when anything is written, before the system asks. */
+/**
+ * Says what is read, what for and what is kept, and asks for the consent to it before the system
+ * asks (#711, ADR 0166).
+ */
 export function ConsentSheet({
   store,
   busy,
@@ -98,6 +110,7 @@ export function ConsentSheet({
       title={t('health.consent.title', { store: name })}
       body={t('health.consent.body')}
       next={t(`health.consent.next.${store}`)}
+      continueLabel={t('health.consent.agree')}
       busy={busy}
       onContinue={onConnect}
       onClose={onClose}
@@ -122,7 +135,21 @@ export function ConsentSheet({
           </View>
         ))}
       </Card>
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="label">{t('health.consent.usedTitle')}</Text>
+        <Text color="textMuted">{t('health.consent.used')}</Text>
+      </View>
       <Text color="textMuted">{t('health.consent.keeps', { store: name })}</Text>
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="caption" color="textMuted">
+          {t('health.consent.agreement')}
+        </Text>
+        <TextLink
+          label={t('common.readPolicy')}
+          align="start"
+          onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+      </View>
     </AskSheet>
   );
 }

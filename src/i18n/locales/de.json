@@ -2628,6 +2628,10 @@
       "steps": "Schritte",
       "stepsWhen": "eine Summe pro Tag",
       "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts, ein Gewicht und eine Schrittzahl pro Tag sowie die Workouts anderer Apps, mit deinem Konto. In {{store}} wird nur geschrieben, wenn du das Speichern von Workouts einschaltest. Du kannst die Verbindung in den Einstellungen trennen.",
+      "usedTitle": "Wofür",
+      "used": "Für Puls und Kalorien deiner Trainings, für Gewicht, Schritte und andere Trainings in deinem Fortschritt und für Bite, wenn du KI erlaubt hast.",
+      "agreement": "Mit deiner Zustimmung erlaubst du Benchbite, diese Gesundheitsdaten für diese Zwecke zu verarbeiten.",
+      "agree": "Zustimmen und weiter",
       "continue": "Weiter",
       "notNow": "Nicht jetzt",
       "next": {
