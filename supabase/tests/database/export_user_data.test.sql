@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -51,6 +51,13 @@ insert into public.coach_messages (thread_id, role, content)
   select id, 'user', '[{"type": "text", "text": "Hi Bite"}]' from public.coach_threads
   where user_id = '00000000-0000-0000-0000-00000000000a';
 
+-- A's photo and voice message, an exercise photo, and B's photo.
+insert into storage.objects (bucket_id, name, metadata) values
+  ('coach-media', '00000000-0000-0000-0000-00000000000a/1/photo.jpg', '{"size": 1200}'),
+  ('coach-media', '00000000-0000-0000-0000-00000000000a/1/voice.m4a', '{"size": 3400}'),
+  ('exercise-photos', '00000000-0000-0000-0000-00000000000a/hip-thrust.jpg', '{"size": 900}'),
+  ('coach-media', '00000000-0000-0000-0000-00000000000b/2/photo.jpg', '{"size": 1500}');
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 create temp table made as select public.create_exercise(jsonb_build_object(
   'name', 'Hip thrust machine', 'metrics', jsonb_build_array('weight', 'reps'),
@@ -92,10 +99,10 @@ select is(
   'A chat comes with its messages'
 );
 select ok(
-  (select not (d->'data'->'coach_threads'->0->'messages'->0 ?| array['model', 'input_tokens'])
-      and not d->'data' ? 'ai_usage'
+  (select d->'data'->'coach_threads'->0->'messages'->0 ?& array['model', 'input_tokens']
+      and d->'data' ? 'ai_usage'
     from export),
-  'But not which model answered or what it cost, the service''s own'
+  'With which model answered and the record of the AI, about the user''s own use (ADR 0168)'
 );
 select is(
   (select d->'data'->'exercises'->0->>'name' from export),
@@ -135,6 +142,16 @@ select throws_ok(
   '42501',
   null,
   'Nor can anyone without an account or guest'
+);
+
+reset role;
+select is(
+  (select jsonb_agg(jsonb_build_array(m->>'bucket', m->>'path', (m->>'bytes')::int)) from export,
+    jsonb_array_elements(d->'media') m),
+  '[["coach-media", "00000000-0000-0000-0000-00000000000a/1/photo.jpg", 1200],
+    ["coach-media", "00000000-0000-0000-0000-00000000000a/1/voice.m4a", 3400],
+    ["exercise-photos", "00000000-0000-0000-0000-00000000000a/hip-thrust.jpg", 900]]'::jsonb,
+  'It lists the user''s own photos and voice messages, for the ZIP, and no other user''s'
 );
 
 select * from finish();
