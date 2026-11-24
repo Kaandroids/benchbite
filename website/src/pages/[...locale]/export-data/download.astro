@@ -22,6 +22,7 @@ const { exportLink } = messagesFor(locale);
       confirm={exportLink.download}
       keep={{ label: exportLink.backToStart, href: localePath(locale) }}
       failed={exportLink.failed}
+      limited={exportLink.limited}
       noLink={exportLink.noLink}
       askAgain={{
         label: exportLink.askAgain,

@@ -2,6 +2,7 @@ import { assertEquals } from '@std/assert';
 import { strFromU8, unzipSync } from 'fflate';
 
 import { EXPORT_JSON } from '../_shared/data_export_zip.ts';
+import { fakeExportAdmin } from '../_shared/fake_export_storage.ts';
 
 import type { Client } from '../_shared/supabase.ts';
 import { handleExportDownload } from './handler.ts';
@@ -29,31 +30,61 @@ const post = (fields: Record<string, string>) =>
     body: new URLSearchParams(fields),
   });
 
+const A = '00000000-0000-0000-0000-00000000000a';
+
+/** The service role's client of a stored export: the link's answer, the limit and storage. */
+function storingAdmin(exported: unknown, taken = true) {
+  const store = fakeExportAdmin({ taken });
+  const calls: string[] = [];
+  const client = store.client as unknown as { rpc: unknown };
+  client.rpc = (fn: string, args: Record<string, string>) => {
+    calls.push(
+      fn === 'export_data_by_link'
+        ? `${fn} ${args.p_token_hash!.includes(TOKEN) ? 'token' : 'hash'}`
+        : `${fn} ${args.p_user}`,
+    );
+    return Promise.resolve(
+      fn === 'export_data_by_link' ? { data: exported, error: null } : { data: taken, error: null },
+    );
+  };
+  return { ...store, calls };
+}
+
 Deno.test(
-  'answers with the export as a ZIP no cache keeps, asking with the token’s hash',
+  'sends the browser to the account’s ZIP in storage, asking with the token’s hash',
   async () => {
-    const { admin, calls } = fakeAdmin({ data: { format: 'benchbite-export' }, error: null });
+    const exported = { format: 'benchbite-export', account: { id: A }, media: [] };
+    const admin = storingAdmin(exported);
     const response = await handleExportDownload(post({ token: TOKEN }), {
-      admin,
+      admin: admin.client,
       siteUrl: SITE,
       now: NOW,
     });
-    assertEquals(response.status, 200);
+    const path = `${A}/${NOW().getTime()}.zip`;
+    assertEquals(response.status, 303);
     assertEquals(
-      response.headers.get('content-disposition'),
-      'attachment; filename="benchbite-data-2026-11-18.zip"',
+      response.headers.get('location'),
+      `https://storage.test/data-exports/${path}?token=t`,
     );
-    assertEquals(response.headers.get('content-type'), 'application/zip');
-    assertEquals(response.headers.get('cache-control'), 'no-store');
-    const entries = unzipSync(new Uint8Array(await response.arrayBuffer()));
-    assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)), {
-      format: 'benchbite-export',
-      media: [],
-    });
-    assertEquals(calls[0]!.fn, 'export_data_by_link');
-    assertEquals(calls[0]!.args.p_token_hash!.includes(TOKEN), false);
+    assertEquals(admin.calls, ['export_data_by_link hash', `take_data_export ${A}`]);
+    assertEquals(admin.signed[0]!.download, 'benchbite-data-2026-11-18.zip');
+    const entries = unzipSync(admin.uploaded[path]!);
+    assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)).account, { id: A });
   },
 );
+
+Deno.test('says the account used its two exports of the hour', async () => {
+  const admin = storingAdmin({ account: { id: A }, media: [] }, false);
+  const response = await handleExportDownload(post({ token: TOKEN }), {
+    admin: admin.client,
+    siteUrl: SITE,
+  });
+  assertEquals(
+    response.headers.get('location'),
+    `${SITE}/export-data/download#token=${TOKEN}&limit`,
+  );
+  assertEquals(Object.keys(admin.uploaded), []);
+});
 
 Deno.test('says a link that does not work has run out', async () => {
   const { admin } = fakeAdmin({ data: null, error: null });

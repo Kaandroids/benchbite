@@ -339,6 +339,7 @@ export const en = {
     backToStart: 'Back to the start',
     again: 'The link works for 30 minutes, so you can download again if it fails.',
     failed: "We couldn't make the file just now. Try again in a moment.",
+    limited: 'You can download your data twice an hour. Try again later.',
     noLink: 'This page opens from the link in the email. Ask for a link on the export page.',
     noScript:
       'This page needs JavaScript to read the link. You can also export your data in the app.',

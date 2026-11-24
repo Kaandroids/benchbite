@@ -1,7 +1,8 @@
 // The work of download-data-export (#553, ADR 0148): the page the email's link opened sends its
-// token, and the answer is the account's export as a ZIP with its photos and voice messages, the
-// same as the app's (ADR 0168).
-import { exportZip, zipResponse } from '../_shared/data_export_zip.ts';
+// token, and the answer sends the browser to the account's export, a ZIP with its photos and voice
+// messages in storage, the same as the app's (ADR 0168, ADR 0169), two an hour.
+import { storeExport } from '../_shared/data_export_zip.ts';
+import { isObject } from '../_shared/json.ts';
 import { sha256Hex } from '../_shared/hash.ts';
 import { readForm } from '../_shared/request.ts';
 import { redirect, siteLocale, sitePage } from '../_shared/site.ts';
@@ -41,5 +42,27 @@ export async function handleExportDownload(
   if (!data) {
     return page('export-data/expired');
   }
-  return zipResponse(exportZip(admin, data), now());
+  const account = isObject(data) && isObject(data.account) ? data.account.id : undefined;
+  if (typeof account !== 'string') {
+    logError('An export by link names no account', null);
+    return page(`export-data/download#token=${token}&failed`);
+  }
+  // Two an hour, as from the app: each reads every file the account has.
+  const { data: taken, error: limitError } = await admin.rpc('take_data_export', {
+    p_user: account,
+  });
+  if (limitError) {
+    logError('Taking an export failed', limitError);
+    return page(`export-data/download#token=${token}&failed`);
+  }
+  if (!taken) {
+    return page(`export-data/download#token=${token}&limit`);
+  }
+  try {
+    // The browser downloads the ZIP from storage, which no time limit cuts off (ADR 0169).
+    return redirect(await storeExport(admin, account, data, now()));
+  } catch (cause) {
+    logError('Storing an export failed', cause);
+    return page(`export-data/download#token=${token}&failed`);
+  }
 }

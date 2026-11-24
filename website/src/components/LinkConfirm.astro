@@ -11,6 +11,8 @@ type Props = {
   /** The way out without confirming. */
   keep: { label: string; href: string };
   failed: string;
+  /** Said when the account has used its tries for now, as the export's two an hour. */
+  limited?: string;
   noLink: string;
   askAgain: { label: string; href: string };
   noScript: string;
@@ -28,6 +30,7 @@ const {
   confirm,
   keep,
   failed,
+  limited,
   noLink,
   askAgain,
   noScript,
@@ -39,6 +42,7 @@ const {
 <div class="content" id="with-link" data-download={download ? '' : undefined} hidden>
   <slot />
   <p class="failed" id="failed" role="alert" hidden>{failed}</p>
+  {limited && <p class="failed" id="limited" role="alert" hidden>{limited}</p>}
   <form method="post" action={`${FUNCTIONS_URL}/${action}`}>
     <input type="hidden" name="locale" value={locale} />
     {Object.entries(fields).map(([name, value]) => <input type="hidden" name={name} value={value} />)}
@@ -66,6 +70,8 @@ const {
       content.hidden = false;
       noLink.hidden = true;
       (document.getElementById('failed') as HTMLElement).hidden = !fragment.has('failed');
+      const limited = document.getElementById('limited');
+      if (limited) limited.hidden = !fragment.has('limit');
       window.history.replaceState(null, '', window.location.pathname);
     } else if (content.hidden) {
       noLink.hidden = false;
@@ -82,7 +88,11 @@ const {
   const once = !(document.getElementById('with-link') as HTMLElement).hasAttribute('data-download');
   form.addEventListener('submit', () => {
     if (once) button.disabled = true;
-    else (document.getElementById('failed') as HTMLElement).hidden = true;
+    else {
+      (document.getElementById('failed') as HTMLElement).hidden = true;
+      const limited = document.getElementById('limited');
+      if (limited) limited.hidden = true;
+    }
   });
   // A page brought back by Back can be sent again.
   window.addEventListener('pageshow', () => {
