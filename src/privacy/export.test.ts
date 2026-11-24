@@ -3,7 +3,7 @@ import * as Sharing from 'expo-sharing';
 
 import { postFunction } from '@/lib/supabase';
 
-import { exportFileName, shareExport, writeExport } from './export';
+import { exportFileName, shareExport, TooManyExports, writeExport } from './export';
 
 jest.mock('@/lib/supabase', () => ({ postFunction: jest.fn() }));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn() }));
@@ -12,6 +12,9 @@ jest.mock('expo-file-system', () => {
     /** Every file made, and whether writing fails, for the tests to set. */
     static made: MockFile[] = [];
     static failWrite = false;
+    static downloadFileAsync = jest.fn((_url: string, file: MockFile) =>
+      MockFile.failWrite ? Promise.reject(new Error('full')) : Promise.resolve(file),
+    );
     uri: string;
     name: string;
     exists = true;
@@ -30,17 +33,21 @@ jest.mock('expo-file-system', () => {
 });
 
 type MockFile = File & { create: jest.Mock; write: jest.Mock; delete: jest.Mock };
-const Files = File as unknown as { made: MockFile[]; failWrite: boolean };
+const Files = File as unknown as {
+  made: MockFile[];
+  failWrite: boolean;
+  downloadFileAsync: jest.Mock;
+};
 
-/** The ZIP the server answers with, as bytes. */
-const ZIP = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+/** The link to the stored ZIP the server answers with. */
+const URL = 'https://storage.test/data-exports/a/1.zip?token=t';
 
 beforeEach(() => {
   jest.clearAllMocks();
   Files.made = [];
   Files.failWrite = false;
   jest.mocked(Paths.cache.list).mockReturnValue([]);
-  jest.mocked(postFunction).mockResolvedValue(new Response(ZIP, { status: 200 }));
+  jest.mocked(postFunction).mockResolvedValue(Response.json({ url: URL }));
 });
 
 it('names the file after the device’s day it was made', () => {
@@ -51,8 +58,7 @@ it('writes what the server gathers to a file in the cache', async () => {
   const file = (await writeExport(new Date(2026, 10, 18, 10))) as MockFile;
   expect(postFunction).toHaveBeenCalledWith('export-my-data', {});
   expect(file.uri).toBe('file:///cache/benchbite-data-2026-11-18.zip');
-  expect(file.create).toHaveBeenCalledWith({ overwrite: true });
-  expect(file.write.mock.calls[0][0]).toEqual(ZIP);
+  expect(Files.downloadFileAsync).toHaveBeenCalledWith(URL, file, { idempotent: true });
 });
 
 it('first deletes the exports an earlier run left, and nothing else', async () => {
@@ -86,4 +92,12 @@ it('shares the file as a ZIP, and leaves it for the next export to delete', asyn
     dialogTitle: 'Export your data',
   });
   expect(file.delete).not.toHaveBeenCalled();
+});
+
+it('says apart a third export in the hour, and downloads nothing', async () => {
+  jest
+    .mocked(postFunction)
+    .mockResolvedValue(Response.json({ error: 'too_many_exports' }, { status: 429 }));
+  await expect(writeExport()).rejects.toBeInstanceOf(TooManyExports);
+  expect(Files.downloadFileAsync).not.toHaveBeenCalled();
 });
