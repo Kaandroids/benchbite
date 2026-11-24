@@ -121,8 +121,17 @@ private struct FieldEditor: View {
       value = range.turned(value, by: detents, fast: fast)
       if value != previous { change(value) }
     }
-    .onAppear {
+    // The Crown turns only the view in focus. Set as the sheet appears, the focus may not land
+    // yet, and the Crown then goes to what is below (#718): it is set once the sheet shows, and
+    // taken back whenever it is lost while the editor is open.
+    .task {
+      try? await Task.sleep(for: .milliseconds(150))
       focused = true
+    }
+    .onChange(of: focused) {
+      if !focused { focused = true }
+    }
+    .onAppear {
       if empty { change(value) }
     }
   }
