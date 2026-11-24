@@ -7,7 +7,7 @@
     "@bacons/apple-targets": "^5.0.0",
     "@expo-google-fonts/nunito": "^0.4.2",
     "@kingstinct/react-native-healthkit": "^16.2.0",
-    "@sentry/react-native": "~8.28.1",
+    "@sentry/react-native": "~8.36.0",
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.107.1",
     "expo": "~58.0.26",
