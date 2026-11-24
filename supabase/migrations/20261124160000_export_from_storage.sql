@@ -111,3 +111,80 @@ select cron.schedule(
   '40 * * * *',
   'select public.request_data_exports_purge()'
 );
+
+-- The user a working export link is for, by its hash, as export_data_by_link() finds it, so that
+-- download-data-export takes the limit before it builds the export. Only the function calls it.
+create function public.data_export_link_user(p_token_hash bytea)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select link.user_id from public.data_export_links link
+  join auth.users on users.id = link.user_id and users.email = link.email
+  where link.token_hash = p_token_hash and link.expires_at > now();
+$$;
+
+revoke execute on function public.data_export_link_user(bytea) from public, anon, authenticated;
+grant execute on function public.data_export_link_user(bytea) to service_role;
+
+-- As before (20261123160000), and the user's export, which holds the health data the withdrawal
+-- deletes, is removed too.
+create or replace function public.withdraw_health_consent_of(user_id uuid)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare
+  -- Named apart from the tables' columns, so that queries cannot confuse the two.
+  owner_id uuid := withdraw_health_consent_of.user_id;
+begin
+  -- In the order other writes take them, the limits first (save_workout()), so that the two never
+  -- wait for each other. After a write being made now, which this then deletes, or before it,
+  -- which is then refused.
+  perform public.lock_user_limits(owner_id);
+  perform public.lock_health_consent(owner_id);
+  if not public.has_health_consent(owner_id) then
+    raise exception 'There is no health data consent to withdraw' using errcode = 'BB062';
+  end if;
+
+  perform public.end_ai_consent(owner_id);
+  -- Reading the store rests on this consent too: it ends with it.
+  perform public.end_health_app_consent(owner_id);
+  -- And the export of the data it held, once this commits (ADR 0169). Asked after the deletes, so
+  -- that a request that cannot be sent never stops the withdrawal; the daily purge catches it.
+  begin
+    perform public.call_scheduled_function(
+      'purge-data-exports', jsonb_build_object('userId', owner_id), 10000
+    );
+  exception when others then
+    raise warning 'purge-data-exports is not called: %', sqlerrm;
+  end;
+
+  delete from public.meal_entries m where m.user_id = owner_id;
+  -- After the meals, whose delete records them here.
+  delete from public.removed_meal_entries r where r.user_id = owner_id;
+  delete from public.water_days w where w.user_id = owner_id;
+  delete from public.step_days s where s.user_id = owner_id;
+
+  delete from public.workout_logs l where l.user_id = owner_id;
+  delete from public.outside_workouts o where o.user_id = owner_id;
+  delete from public.workout_moves m where m.user_id = owner_id;
+  delete from public.workouts w where w.user_id = owner_id;
+  delete from public.planned_days_kept k where k.user_id = owner_id;
+  delete from public.planned_days d where d.user_id = owner_id;
+  delete from public.applied_plans a where a.user_id = owner_id;
+
+  delete from public.day_nutrition_targets d where d.user_id = owner_id;
+  delete from public.own_nutrition_targets o where o.user_id = owner_id;
+  delete from public.streak_days s where s.user_id = owner_id;
+  delete from public.user_streaks s where s.user_id = owner_id;
+  delete from public.weight_entries w where w.user_id = owner_id;
+  delete from public.goals g where g.user_id = owner_id;
+  delete from public.profiles p where p.user_id = owner_id;
+
+  -- Last, as deleting workouts writes their planned days, which the withdrawal would refuse.
+  insert into public.health_data_consent_withdrawals (user_id) values (owner_id);
+end;
+$$;
