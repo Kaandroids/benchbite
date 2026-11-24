@@ -8,7 +8,15 @@ import type { SiteLocale } from '../_shared/site.ts';
 /** Which email: an account's first password, or a later one. */
 export type PasswordEmailKind = 'welcome' | 'changed';
 
-type Copy = { subject: string; title: string; body: string[]; points?: string[]; note: string };
+type Copy = {
+  subject: string;
+  title: string;
+  body: string[];
+  points?: string[];
+  /** After the points. */
+  after?: string;
+  note: string;
+};
 
 const COPY = {
   welcome: {
@@ -22,6 +30,7 @@ const COPY = {
         'Sign in on a new phone and everything is there.',
         'Nothing is lost if you delete the app.',
       ],
+      after: 'Sign in with this address and the password you just chose.',
       note: 'Didn’t create an account? Reset the password in the app with “Forgot your password?”, which signs out every other device, or write to support@benchbite.com.',
     },
     de: {
@@ -34,6 +43,7 @@ const COPY = {
         'Melde dich auf einem neuen Handy an, und alles ist da.',
         'Nichts geht verloren, wenn du die App löschst.',
       ],
+      after: 'Melde dich mit dieser Adresse und dem Passwort an, das du gerade gewählt hast.',
       note: 'Hast du kein Konto erstellt? Setze das Passwort in der App mit „Passwort vergessen?“ zurück, dann werden alle anderen Geräte abgemeldet, oder schreib an support@benchbite.com.',
     },
     tr: {
@@ -46,6 +56,7 @@ const COPY = {
         'Yeni bir telefonda giriş yap, hepsi orada.',
         'Uygulamayı silsen de hiçbir şey kaybolmaz.',
       ],
+      after: 'Bu adres ve az önce seçtiğin şifreyle giriş yap.',
       note: 'Hesap oluşturmadın mı? Uygulamada “Şifreni mi unuttun?” ile şifreyi sıfırla, diğer tüm cihazlarda oturum kapanır, ya da support@benchbite.com adresine yaz.',
     },
   },
@@ -81,12 +92,14 @@ export function passwordEmail(kind: PasswordEmailKind, locale: SiteLocale, to: s
   const parts = [
     ...copy.body.map(paragraph),
     ...(copy.points ? [list(copy.points)] : []),
+    ...(copy.after ? [paragraph(copy.after)] : []),
     note(copy.note),
   ];
   const text = [
     copy.title,
     ...copy.body,
     ...(copy.points ?? []).map((point) => `- ${point}`),
+    ...(copy.after ? [copy.after] : []),
     copy.note,
   ].join('\n\n');
   return { to, subject: copy.subject, html: accountEmailHtml(locale, copy.title, parts), text };

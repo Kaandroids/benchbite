@@ -60,6 +60,7 @@ Deno.test('welcomes an account for its first password, in its language', async (
   assertEquals(sent[0].subject, 'Willkommen bei Benchbite');
   assertStringIncludes(sent[0].html, 'Dein Konto ist bereit');
   assertStringIncludes(sent[0].text, 'Nichts geht verloren, wenn du die App löschst.');
+  assertStringIncludes(sent[0].text, 'Melde dich mit dieser Adresse und dem Passwort an');
 });
 
 Deno.test('says a later password was changed', async () => {
