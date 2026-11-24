@@ -322,7 +322,7 @@ export const en = {
     linkNote: 'The link works for 30 minutes.',
     holds: 'In the file',
     holdsText:
-      'Profile, goal and weights; your plan, workouts and records; meals, water and steps; your own foods, recipes and exercises; chats with Bite and its notebook; your consents. As JSON, a format other apps read. Photos and voice messages are not in it; the chats say where they were.',
+      'Profile, goal and weights; your plan, workouts and records; meals, water and steps; your own foods, recipes and exercises; chats with Bite with their photos and voice messages, its notebook and what each answer used; your consents. A ZIP: your data as JSON, a format other apps read, and your photos and voice messages.',
   },
   exportLink: {
     sentTitle: 'Check your email',
@@ -333,7 +333,8 @@ export const en = {
     anotherEmail: 'Use another email',
     downloadTitle: 'Download your data',
     downloadText: 'The file holds your health data. Keep it somewhere safe.',
-    downloadNote: 'One file, as JSON, with everything listed on the export page.',
+    downloadNote:
+      'One ZIP with everything listed on the export page: your data as JSON, and your photos and voice messages.',
     download: 'Download',
     backToStart: 'Back to the start',
     again: 'The link works for 30 minutes, so you can download again if it fails.',
