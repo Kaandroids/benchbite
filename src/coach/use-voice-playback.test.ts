@@ -10,6 +10,7 @@ beforeEach(() => {
 
 it('pauses what plays as the user records, and says so', async () => {
   fakeAudio.player.playing = true;
+  fakeAudio.player.paused = false;
   const { result } = await renderHook(() => useVoicePlayback());
 
   expect(result.current.pause()).toBe(true);
@@ -21,4 +22,12 @@ it('leaves a player with nothing playing alone, which would let go of the audio 
 
   expect(result.current.pause()).toBe(false);
   expect(fakeAudio.player.pause).not.toHaveBeenCalled();
+});
+
+it('pauses a message still loading to play, which would play over the recording', async () => {
+  fakeAudio.player.paused = false;
+  const { result } = await renderHook(() => useVoicePlayback());
+
+  expect(result.current.pause()).toBe(true);
+  expect(fakeAudio.player.pause).toHaveBeenCalledTimes(1);
 });
