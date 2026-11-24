@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(18);
 
 -- A has the health data consent; B does not.
 insert into auth.users (id, email, is_anonymous) values
@@ -62,10 +62,19 @@ select is(
   'and records nothing more'
 );
 
--- Given again, it ends with the health data consent it rests on.
+-- Given again, a minute later, it ends with the health data consent it rests on. The test runs in
+-- one transaction, whose now() does not move: the withdrawal is moved back instead.
+reset role;
+update public.health_app_consent_withdrawals set withdrawn_at = withdrawn_at - interval '1 minute';
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select public.give_health_app_consent('apple_health', '2026-11-23');
+select is(public.my_health_app_consent(), true, 'Given again, it holds again');
 select public.withdraw_health_consent();
 select is(public.my_health_app_consent(), false, 'Withdrawing the health data consent ends it');
+select is(
+  (select count(*) from public.health_app_consent_withdrawals)::integer, 2,
+  'and records its end'
+);
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
