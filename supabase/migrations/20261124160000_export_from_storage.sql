@@ -129,6 +129,25 @@ $$;
 revoke execute on function public.data_export_link_user(bytea) from public, anon, authenticated;
 grant execute on function public.data_export_link_user(bytea) to service_role;
 
+-- As before (20261120150000), with the link's user found by data_export_link_user(), so that the
+-- rule for a working link is written once.
+create or replace function public.export_data_by_link(p_token_hash bytea)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := public.data_export_link_user(p_token_hash);
+begin
+  if v_user is null then
+    return null;
+  end if;
+  return public.export_user_data(v_user);
+end;
+$$;
+
 -- As before (20261123160000), and the user's export, which holds the health data the withdrawal
 -- deletes, is removed too.
 create or replace function public.withdraw_health_consent_of(user_id uuid)
