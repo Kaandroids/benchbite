@@ -76,7 +76,7 @@ cross join (values
   ('guest_inactivity_period()'),
   ('inactive_guests_since(timestamptz, uuid)'),
   ('inactive_guest_removal_stalled()'),
-  ('call_scheduled_function(text)')
+  ('call_scheduled_function(text, jsonb, integer)')
 ) fns (fn)
 group by fn
 order by fn;

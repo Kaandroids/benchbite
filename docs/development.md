@@ -132,9 +132,12 @@ the EU instead ([ADR 0153](adr/0153-call-gemini-on-vertex-ai-in-the-eu.md)), whi
 as the example file says.
 
 Scheduled jobs call `purge-coach-media`, which removes the photos of deleted chats, and
-`remove-inactive-guests`, which deletes guests inactive for 90 days, with the project URL and
-secret key they read from Vault ([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),
-[ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md)). Store the local stack's in its
+`remove-inactive-guests`, which deletes guests inactive for 90 days, and saving a password calls
+`send-password-email`, which welcomes a new account or tells of a changed password, with the
+project URL and secret key they read from Vault
+([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),
+[ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md),
+[ADR 0167](adr/0167-welcome-a-new-account-and-tell-of-a-changed-password.md)). Store the local stack's in its
 Vault once, and again after `pnpm supabase db reset`:
 
 ```bash
