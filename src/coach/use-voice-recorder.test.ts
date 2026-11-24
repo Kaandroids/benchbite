@@ -8,7 +8,7 @@ import { act, renderHook } from '@/test/render';
 import { m4a } from '../../supabase/functions/coach-chat/test-voice';
 
 import { discardVoices, readVoice } from './chat-voice';
-import { useVoiceRecorder, type VoiceEnd } from './use-voice-recorder';
+import { SETTLE_MS, useVoiceRecorder, type VoiceEnd } from './use-voice-recorder';
 
 jest.mock('expo-haptics', () => ({
   ...jest.requireActual<typeof import('expo-haptics')>('expo-haptics'),
@@ -136,14 +136,69 @@ it('stops and deletes a recording the screen leaves', async () => {
 });
 
 it('plays out of the speaker again when recording fails to start', async () => {
-  fakeAudio.recorder.prepareToRecordAsync.mockRejectedValueOnce(new Error('busy'));
+  // Failed twice, as it is prepared once more after a moment.
+  fakeAudio.recorder.prepareToRecordAsync
+    .mockRejectedValueOnce(new Error('busy'))
+    .mockRejectedValueOnce(new Error('busy'));
   const { result, ends } = await recorder();
 
-  await act(async () => result.current.start());
+  await act(async () => {
+    result.current.start();
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50));
+  });
 
   expect(ends).toEqual([{ problem: { reason: 'voice_not_recorded' } }]);
   expect(setAudioModeAsync).toHaveBeenLastCalledWith({
     allowsRecording: false,
     playsInSilentMode: true,
   });
+});
+
+it('lets the next recording start only once the audio is back to playback', async () => {
+  const playback = deferred();
+  const { result } = await recorder();
+
+  // A tap: started and let go at once.
+  await act(async () => result.current.start());
+  jest.mocked(setAudioModeAsync).mockReturnValueOnce(playback.promise);
+  let ending: Promise<void> = Promise.resolve();
+  await act(async () => {
+    ending = result.current.finish(true);
+  });
+  // Held again while the audio goes back to playback: nothing is prepared over it.
+  await act(async () => result.current.start());
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    playback.resolve();
+    await ending;
+  });
+  await act(async () => result.current.start());
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
+});
+
+it('prepares once more after a moment when the audio was not ready', async () => {
+  fakeAudio.recorder.prepareToRecordAsync.mockRejectedValueOnce(
+    new Error('Failed to prepare recorder'),
+  );
+  const { result, ends } = await recorder();
+
+  await act(async () => {
+    result.current.start();
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50));
+  });
+
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
+  expect(fakeAudio.recorder.record).toHaveBeenCalled();
+  expect(ends).toEqual([]);
+});
+
+it('waits for the audio to settle after a message it paused', async () => {
+  const { result } = await recorder();
+
+  await act(async () => result.current.start({ afterPlayback: true }));
+  expect(fakeAudio.recorder.prepareToRecordAsync).not.toHaveBeenCalled();
+
+  await act(async () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50)));
+  expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
 });

@@ -28,6 +28,14 @@ const UPDATE_MS = 100;
 /** A recording shorter than this was a tap, not a message, and is not sent. */
 export const SHORTEST_MS = 500;
 
+/**
+ * How long the audio takes to settle: a paused player lets go of it 100 ms later, natively, which
+ * a recorder prepared meanwhile fails on (#720).
+ */
+export const SETTLE_MS = 150;
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** How many bars of loudness the recording shows, the latest last. */
 export const LEVELS = 24;
 
@@ -77,7 +85,17 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
     setLevels((all) => [...all, level(metering)].slice(-LEVELS));
   }
 
-  const begin = async (): Promise<boolean> => {
+  /** Prepares the recorder, once more after a moment if the audio was not ready for it (#720). */
+  const prepare = async () => {
+    try {
+      await recorder.prepareToRecordAsync();
+    } catch {
+      await wait(SETTLE_MS);
+      await recorder.prepareToRecordAsync();
+    }
+  };
+
+  const begin = async (afterPlayback: boolean): Promise<boolean> => {
     const permission = await getRecordingPermissionsAsync();
     if (!permission.granted) {
       // Asked once, as the hold ends; the next hold records.
@@ -86,26 +104,37 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       return false;
     }
     try {
+      // A message just paused lets go of the audio a moment later: recorded after that.
+      if (afterPlayback) await wait(SETTLE_MS);
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await recorder.prepareToRecordAsync();
+      await prepare();
       // Listed from the start, so that a recording the app cannot stop is deleted later.
       if (recorder.uri) listRecording(recorder.uri);
       recorder.record();
       return true;
     } catch (error) {
       reportError('Could not start recording a voice message', error);
-      void setAudioModeAsync(PLAYBACK_MODE);
+      await toPlayback();
       onEnd({ problem: { reason: 'voice_not_recorded' } });
       return false;
     }
   };
 
-  const start = () => {
+  /**
+   * Back to playing out of the speaker, waited for before the next recording may start: a switch
+   * still on its way could land while the next one is prepared, which then fails (#720).
+   */
+  const toPlayback = () =>
+    setAudioModeAsync(PLAYBACK_MODE).catch((error: unknown) =>
+      reportError('Could not set the audio back to playback', error),
+    );
+
+  const start = ({ afterPlayback = false }: { afterPlayback?: boolean } = {}) => {
     if (busy.current) return;
     busy.current = true;
     held.current = true;
     setLevels([]);
-    starting.current = begin().then((started) => {
+    starting.current = begin(afterPlayback).then((started) => {
       if (!started) {
         held.current = false;
         busy.current = false;
@@ -132,7 +161,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       reportError('Could not stop recording a voice message', error);
       return null;
     } finally {
-      void setAudioModeAsync(PLAYBACK_MODE);
+      await toPlayback();
     }
   };
 

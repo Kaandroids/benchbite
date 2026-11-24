@@ -23,8 +23,11 @@ export type RefusedDraft = { draft: Draft; problem: DraftProblem };
 type ChatComposerProps = {
   /** Sends what the user wrote, or a voice message; the composer empties as it does. */
   onSend: (message: Outgoing) => void;
-  /** Told as the mic is held, before anything records, as what plays has to stop first. */
-  onHold?: () => void;
+  /**
+   * Told as the mic is held, before anything records, as what plays has to stop first; says
+   * whether something played, which the recording then waits a moment for (#720).
+   */
+  onHold?: () => boolean;
   /** Stops Bite's answer; set while Bite answers, which the send button becomes. */
   onStop?: () => void;
   /**
@@ -215,8 +218,7 @@ export function ChatComposer({ onSend, onStop, refused, onRecording, onHold }: C
               onHold={() => {
                 setProblem(undefined);
                 setHint(false);
-                onHold?.();
-                voice.start();
+                voice.start({ afterPlayback: onHold?.() === true });
               }}
               onSlide={setCancelling}
               onRelease={(cancel) => void voice.finish(!cancel)}
