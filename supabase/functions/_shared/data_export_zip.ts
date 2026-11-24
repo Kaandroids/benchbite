@@ -25,43 +25,70 @@ const isMedia = (value: unknown): value is Media =>
 export const mediaEntry = ({ bucket, path }: Media) =>
   `media/${bucket}/${path.slice(path.indexOf('/') + 1)}`;
 
+/** Whether a path stays in its folder: one with a . or .. part could name another user's file. */
+const staysInFolder = (path: string) =>
+  path.split('/').every((part) => part !== '' && part !== '.' && part !== '..');
+
 /**
- * Streams the ZIP of an export, a file at a time, so that its size does not depend on memory. The
- * media are stored as they are, as photos and voice messages are compressed already; one that
- * cannot be read is left out, and the file says so.
+ * Streams the ZIP of an export, a file at a time as the reader asks for more, so that no more than
+ * one file is held at once. The media are stored as they are, as photos and voice messages are
+ * compressed already; one that cannot be read is left out, and the file says so.
  */
 export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint8Array> {
   const listed = isObject(exported) && Array.isArray(exported.media) ? exported.media : [];
   const media = listed.filter(isMedia);
-  return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const zip = new Zip((error, chunk, final) => {
-        if (error) return controller.error(error);
-        controller.enqueue(chunk);
-        if (final) controller.close();
-      });
-      const add = (name: string, data: Uint8Array) => {
-        const entry = new ZipPassThrough(name);
-        zip.add(entry);
-        entry.push(data, true);
-      };
-      const placed = [];
-      for (const item of media) {
-        const { data, error } = await admin.storage.from(item.bucket).download(item.path);
-        if (error || !data) {
-          logError('Reading a file for an export failed', error);
-          placed.push({ ...item, missing: true });
-          continue;
+  const placed: Record<string, unknown>[] = [];
+  let next = 0;
+  let zip: Zip;
+  const add = (name: string, data: Uint8Array) => {
+    const entry = new ZipPassThrough(name);
+    zip.add(entry);
+    entry.push(data, true);
+  };
+  return new ReadableStream<Uint8Array>(
+    {
+      start(controller) {
+        zip = new Zip((error, chunk, final) => {
+          if (error) return controller.error(error);
+          controller.enqueue(chunk);
+          if (final) controller.close();
+        });
+      },
+      // One file a call, so that the next is read only once the reader has taken this one; a file
+      // left out adds nothing to the stream, so the call goes on to the next.
+      async pull() {
+        for (;;) {
+          const item = media.at(next);
+          next += 1;
+          if (!item) {
+            const file = isObject(exported) ? { ...exported, media: placed } : exported;
+            add(EXPORT_JSON, strToU8(JSON.stringify(file, null, 2)));
+            zip.end();
+            return;
+          }
+          if (!staysInFolder(item.path)) {
+            placed.push({ ...item, missing: true });
+            continue;
+          }
+          const { data, error } = await admin.storage.from(item.bucket).download(item.path);
+          if (error || !data) {
+            logError('Reading a file for an export failed', error);
+            placed.push({ ...item, missing: true });
+            continue;
+          }
+          const file = mediaEntry(item);
+          add(file, new Uint8Array(await data.arrayBuffer()));
+          placed.push({ ...item, file });
+          return;
         }
-        const file = mediaEntry(item);
-        add(file, new Uint8Array(await data.arrayBuffer()));
-        placed.push({ ...item, file });
-      }
-      const file = isObject(exported) ? { ...exported, media: placed } : exported;
-      add(EXPORT_JSON, strToU8(JSON.stringify(file, null, 2)));
-      zip.end();
+      },
+      // The reader went away: nothing more is read.
+      cancel() {
+        next = media.length + 1;
+      },
     },
-  });
+    { highWaterMark: 1 },
+  );
 }
 
 /** The ZIP as a download that no cache keeps, as it holds health data. */

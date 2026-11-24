@@ -101,3 +101,35 @@ Deno.test('names a file in the ZIP by its bucket, without the user’s folder', 
     'media/coach-media/7/voice.m4a',
   );
 });
+
+Deno.test('reads a file only once the reader has taken the one before', async () => {
+  const files = Object.fromEntries(
+    Array.from({ length: 10 }, (_, i) => [`coach-media:${A}/1/${i}.jpg`, 'x'.repeat(1000)]),
+  );
+  const { client, read } = admin(files);
+  const stream = exportZip(
+    client,
+    exported(Object.keys(files).map((key) => ({ bucket: 'coach-media', path: key.split(':')[1] }))),
+  );
+  // Nothing read from the stream yet: the event loop settles with at most one file read ahead.
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assertEquals(read.length <= 2, true, `read ${read.length} files ahead`);
+  const entries = await unzip(stream);
+  assertEquals(Object.keys(entries).length, 11);
+});
+
+Deno.test('never reads a path that leaves the user’s folder, and says it is missing', async () => {
+  const { client, read } = admin({ [`exercise-photos:${A}/x.jpg`]: 'mine' });
+  const entries = await unzip(
+    exportZip(
+      client,
+      exported([
+        { bucket: 'exercise-photos', path: `${A}/../00000000-0000-0000-0000-00000000000b/x.jpg` },
+        { bucket: 'exercise-photos', path: `${A}/x.jpg` },
+      ]),
+    ),
+  );
+  assertEquals(read, [`exercise-photos:${A}/x.jpg`]);
+  assertEquals(Object.keys(entries).sort(), [EXPORT_JSON, 'media/exercise-photos/x.jpg']);
+  assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)).media[0].missing, true);
+});
