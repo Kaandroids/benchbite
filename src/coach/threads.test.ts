@@ -57,6 +57,24 @@ describe('storedMessages', () => {
     expect(messages.map((message) => message.unanswered)).toEqual([undefined, undefined, true]);
   });
 
+  it('reads back the photos and voice message removed after 30 days, as such', () => {
+    const [message] = storedMessages([
+      {
+        ...row(1, 'user'),
+        content: [
+          { type: 'text', text: 'Legs tomorrow?' },
+          { type: 'image', mimeType: 'image/jpeg', removed: true },
+          { type: 'audio', mimeType: 'audio/mp4', durationMs: 4200, removed: true },
+        ],
+      },
+      row(2, 'bite'),
+    ]);
+
+    expect(message).toMatchObject({ text: 'Legs tomorrow?', removed: { photos: 1, voice: true } });
+    expect(message!.photos).toBeUndefined();
+    expect(message!.voice).toBeUndefined();
+  });
+
   it("reads the user's photos back, with or without text", () => {
     const messages = storedMessages([
       {

@@ -17,7 +17,7 @@ import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
-import { messagePhotos } from './chat-photos';
+import { messagePhotos, removedMedia } from './chat-photos';
 import { messageVoice } from './chat-voice';
 import { messageMealCards } from './meal-cards';
 import { messageNotes } from './notes';
@@ -259,12 +259,14 @@ export function storedMessages(rows: StoredMessage[], next?: ChatMessage['role']
     const notes = row.role === 'bite' ? messageNotes(row.content) : [];
     const photos = row.role === 'user' ? messagePhotos(row.content) : [];
     const voice = row.role === 'user' ? messageVoice(row.content) : undefined;
+    const removed = row.role === 'user' ? removedMedia(row.content) : undefined;
     return {
       id: `stored-${row.id}`,
       role: row.role,
       text: messageText(row.content),
       ...(photos.length > 0 && { photos }),
       ...(voice && { voice }),
+      ...(removed && (removed.photos > 0 || removed.voice) && { removed }),
       expression: row.expression ?? undefined,
       cut: cutOf(row.interrupted),
       createdAt: new Date(row.created_at),
