@@ -45,3 +45,29 @@ Deno.test('says so when storage fails, so that the next run tries again', async 
   const { client } = admin(['a/1.zip'], { removeFails: true });
   assertEquals((await handlePurgeExports(post(), client)).status, 503);
 });
+
+Deno.test('removes one user’s export, as a withdrawal asks', async () => {
+  const removed: string[] = [];
+  const client = {
+    storage: {
+      from: (bucket: string) => ({
+        list: () =>
+          Promise.resolve({
+            data: removed.length ? [] : [{ id: '1', name: '9.zip' }],
+            error: null,
+          }),
+        remove: (paths: string[]) => {
+          removed.push(...paths.map((path) => `${bucket}:${path}`));
+          return Promise.resolve({ data: paths, error: null });
+        },
+      }),
+    },
+  } as unknown as Client;
+  const user = '00000000-0000-0000-0000-00000000000a';
+  const request = new Request('http://localhost/purge-data-exports', {
+    method: 'POST',
+    body: JSON.stringify({ userId: user }),
+  });
+  assertEquals(await (await handlePurgeExports(request, client)).json(), { purged: 'user' });
+  assertEquals(removed, [`data-exports:${user}/9.zip`]);
+});
