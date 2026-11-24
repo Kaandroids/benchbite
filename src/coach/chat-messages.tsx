@@ -248,6 +248,9 @@ const UserMessage = memo(function UserMessage({
       {message.photos?.length ? (
         <MessagePhotos photos={message.photos} urls={mediaUrls} onOpen={onOpenPhoto} />
       ) : null}
+      {message.removed?.photos ? (
+        <RemovedMediaNote label={t('bite.removed.photos', { count: message.removed.photos })} />
+      ) : null}
       {message.voice ? (
         <VoiceBubble
           id={message.id}
@@ -258,19 +261,24 @@ const UserMessage = memo(function UserMessage({
           onPlay={onPlay}
         />
       ) : null}
-      {/* A message may be photos alone; a voice message's text is in its bubble. */}
-      {message.text && !message.voice ? (
+      {/* A message may be photos alone; a voice message's text is in its bubble, and a removed
+          one's under its note. */}
+      {(message.text || message.removed?.voice) && !message.voice ? (
         <View
           style={[
             userBubble,
             {
+              gap: spacing.xs,
               backgroundColor: colors.userBubble,
               paddingHorizontal: spacing.md + 2,
               paddingVertical: spacing.sm + 2,
             },
           ]}
         >
-          <Text>{message.text}</Text>
+          {message.removed?.voice ? (
+            <RemovedMediaNote label={t('bite.removed.voice')} plain />
+          ) : null}
+          {message.text ? <Text>{message.text}</Text> : null}
         </View>
       ) : null}
       {message.unanswered ? (
@@ -393,6 +401,35 @@ const BiteMessage = memo(function BiteMessage({
 /** A photo of a message alone, and each of more than one. */
 const PHOTO = 92;
 const PHOTO_SMALL = 64;
+
+/**
+ * Where a photo or voice message was, once removed 30 days after it was sent (#728, ADR 0170): a
+ * quiet note, in a dashed frame of its own or, `plain`, inside the voice message's bubble.
+ */
+function RemovedMediaNote({ label, plain = false }: { label: string; plain?: boolean }) {
+  const { colors, spacing } = useTheme();
+  return (
+    <View
+      style={[
+        styles.removed,
+        { gap: spacing.sm },
+        !plain && {
+          borderWidth: 1,
+          borderStyle: 'dashed',
+          borderColor: colors.border,
+          borderRadius: radii.md,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm + 2,
+        },
+      ]}
+    >
+      <Icon name="minus" size={16} color="textMuted" />
+      <Text variant="caption" color="textMuted">
+        {label}
+      </Text>
+    </View>
+  );
+}
 
 /**
  * The photos of the user's message, above its text: from the device as it is sent, and from the
@@ -536,6 +573,10 @@ function Dot({ delay, color }: { delay: number; color: string }) {
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
+  },
+  removed: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   bite: {
     flexDirection: 'row',

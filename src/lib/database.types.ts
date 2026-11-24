@@ -2829,6 +2829,13 @@ export type Database = {
         }[];
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
+      expiring_coach_media: {
+        Args: { p_limit: number };
+        Returns: {
+          message_id: number;
+          path: string;
+        }[];
+      };
       export_buckets: { Args: Record<PropertyKey, never>; Returns: string[] };
       export_data_by_link: { Args: { p_token_hash: string }; Returns: Json };
       export_left_out: { Args: Record<PropertyKey, never>; Returns: string[] };
@@ -2859,6 +2866,7 @@ export type Database = {
       food_name_key: { Args: { name: string }; Returns: string };
       food_name_pattern: { Args: { term: string }; Returns: string };
       food_search_term: { Args: { query: string }; Returns: string };
+      forget_coach_media: { Args: { p_message_ids: number[] }; Returns: undefined };
       free_count_left: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
         Returns: number;
@@ -3414,6 +3422,7 @@ export type Database = {
       };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
       remove_old_account_deletions: { Args: Record<PropertyKey, never>; Returns: undefined };
+      remove_old_coach_chats: { Args: { p_limit?: number }; Returns: number };
       remove_old_consent_withdrawals: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_old_data_exports: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_unconfirmed_users: { Args: Record<PropertyKey, never>; Returns: undefined };
@@ -3425,6 +3434,7 @@ export type Database = {
         Args: { alternative_ids: number[]; workout_id: number };
         Returns: undefined;
       };
+      request_coach_media_expiry: { Args: Record<PropertyKey, never>; Returns: number };
       request_coach_media_purge: { Args: Record<PropertyKey, never>; Returns: number };
       request_data_exports_purge: { Args: Record<PropertyKey, never>; Returns: number };
       request_inactive_guest_removal: { Args: Record<PropertyKey, never>; Returns: number };

@@ -133,13 +133,15 @@ as the example file says.
 
 Scheduled jobs call `purge-coach-media`, which removes the photos of deleted chats,
 `remove-inactive-guests`, which deletes guests inactive for 90 days, and `purge-data-exports`,
-which removes the exports' ZIPs after a day, and saving a password calls
+which removes the exports' ZIPs after a day, and `expire-coach-media`, which removes the photos
+and voice messages of Bite's chats after 30 days, and saving a password calls
 `send-password-email`, which welcomes a new account or tells of a changed password, with the
 project URL and secret key they read from Vault
 ([ADR 0063](adr/0063-purge-chat-photos-from-a-queue.md),
 [ADR 0131](adr/0131-remove-guests-inactive-for-90-days.md),
 [ADR 0167](adr/0167-welcome-a-new-account-and-tell-of-a-changed-password.md),
-[ADR 0169](adr/0169-download-the-export-from-storage.md)). An export links to its ZIP in storage at
+[ADR 0169](adr/0169-download-the-export-from-storage.md),
+[ADR 0170](adr/0170-keep-bites-chats-for-30-days.md)). An export links to its ZIP in storage at
 `STORAGE_PUBLIC_URL` of `supabase/functions/.env`: on a phone, set it to your computer's address on
 the network, as `EXPO_PUBLIC_SUPABASE_URL`. Store the local stack's in its
 Vault once, and again after `pnpm supabase db reset`:

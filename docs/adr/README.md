@@ -185,3 +185,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0167](0167-welcome-a-new-account-and-tell-of-a-changed-password.md)      | Welcome a new account and tell of a changed password                                    | Accepted                                             |
 | [0168](0168-export-the-media-and-the-record-of-the-ai.md)                 | Export the media and the record of the AI                                               | Accepted, amended by ADR-0169                        |
 | [0169](0169-download-the-export-from-storage.md)                          | Download the export from storage                                                        | Accepted                                             |
+| [0170](0170-keep-bites-chats-for-30-days.md)                              | Keep Bite's chats for 30 days                                                           | Accepted                                             |

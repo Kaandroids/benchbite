@@ -73,6 +73,14 @@ export type ChatPhotoPart = {
   height?: number;
 };
 
+/**
+ * A photo or voice message removed 30 days after it was sent (ADR 0170), as the message keeps it:
+ * its type and size, without a path.
+ */
+export type ChatRemovedMediaPart = (Omit<ChatPhotoPart, 'path'> | Omit<ChatVoicePart, 'path'>) & {
+  removed: true;
+};
+
 /** A message to Bite: text, photos, or both. */
 export type ChatRequest = {
   message?: string;

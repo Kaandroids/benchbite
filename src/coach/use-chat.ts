@@ -44,6 +44,9 @@ function pause(ms: number, signal: AbortSignal) {
   });
 }
 
+/** How many photos of a message, and whether its voice message, were removed (ADR 0170). */
+export type RemovedMedia = { photos: number; voice: boolean };
+
 export type ChatMessage = {
   id: string;
   role: 'user' | 'bite';
@@ -52,6 +55,8 @@ export type ChatMessage = {
   photos?: MessagePhoto[];
   /** The user's voice message, with what was said in it as the text, once written down. */
   voice?: MessageVoice;
+  /** The photos and voice message removed 30 days after it was sent (ADR 0170). */
+  removed?: RemovedMedia;
   /** The face Bite answers with, once it is known. */
   expression?: AnswerExpression;
   /** A question Bite gave no answer to. */
@@ -86,6 +91,7 @@ export type DraftProblem = PhotosProblem | VoiceProblem;
  */
 export function canSendAgain(message: ChatMessage): boolean {
   return (
+    !message.removed &&
     !message.photos?.some((photo) => photo.data === undefined) &&
     (!message.voice || message.voice.data !== undefined)
   );
