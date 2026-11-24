@@ -54,6 +54,9 @@ private struct FieldEditor: View {
   @State private var lastTurn: Date?
   @FocusState private var focused: Bool
 
+  /// How far the Crown turns either way before it is brought back to the middle.
+  private static let span = 1_000.0
+
   /// Detents closer than this are a fast turn, which goes by the coarse step (ADR 0125).
   private static let fastWithin: TimeInterval = 0.09
 
@@ -102,9 +105,11 @@ private struct FieldEditor: View {
     .foregroundStyle(Theme.text)
     .focusable()
     .focused($focused)
-    // Unbounded detents: the value keeps to its range itself, by steps that differ with speed.
+    // Detents the value keeps to its range by itself, by steps that differ with speed. A small
+    // span, brought back to the middle as it nears an end: the system prepares each detent of the
+    // span, and two million of them took the app past the watch's memory limit (#718).
     .digitalCrownRotation(
-      $turned, from: -1_000_000, through: 1_000_000, by: 1, sensitivity: .medium,
+      $turned, from: -Self.span, through: Self.span, by: 1, sensitivity: .medium,
       isContinuous: false, isHapticFeedbackEnabled: true
     )
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.
@@ -114,12 +119,17 @@ private struct FieldEditor: View {
       guard whole != detent else { return }
       let detents = whole - detent
       detent = whole
+      Log.crown.debug("Turned \(detents, privacy: .public)")
       let now = Date()
       let fast = lastTurn.map { now.timeIntervalSince($0) < Self.fastWithin } ?? false
       lastTurn = now
       let previous = value
       value = range.turned(value, by: detents, fast: fast)
       if value != previous { change(value) }
+      if abs(whole) > Self.span / 2 {
+        turned = 0
+        detent = 0
+      }
     }
     // The Crown turns only the view in focus. Set as the sheet appears, the focus may not land
     // yet, and the Crown then goes to what is below (#718): it is set once the sheet shows, and
@@ -129,6 +139,7 @@ private struct FieldEditor: View {
       focused = true
     }
     .onChange(of: focused) {
+      Log.crown.info("Focus: \(focused, privacy: .public)")
       if !focused { focused = true }
     }
     .onAppear {
