@@ -26,9 +26,11 @@ file.
   `exercise-photos` under the user's folder, so that the list and the files cannot disagree.
 - **Edge Functions build the ZIP, one shared module for both:** `export-my-data` for the app,
   which reads the export as the signed-in user and the files with the service role, and
-  `download-data-export` for the website's link. The ZIP is streamed a file at a time, with the
-  media stored as they are, as they are compressed already, so that its size does not depend on
-  the function's memory.
+  `download-data-export` for the website's link. The ZIP is streamed a file at a time, the next
+  read from storage only once the reader has taken the last, so that the function holds one file
+  at a time however many there are. The media are stored as they are, as they are compressed
+  already. A path with a `.` or `..` part is never read, and the database lists only names in the
+  user's own folders.
 - **The app shares the ZIP** as before (ADR 0147), as `application/zip`. Builds before this one go
   on calling `export_my_data()` and get the file alone, with the list of media.
 
@@ -44,8 +46,9 @@ file.
 ## Consequences
 
 - The export grows with the user's media: up to 1.5 MB a photo or voice message.
-- Building it takes as long as reading the files, within the functions' time limit for the media
-  a user can have.
+- Building it takes as long as the reader takes to download it, and an Edge Function's response
+  ends at its wall-clock limit (150 s on Supabase's free plan, 400 s on a paid one): a very large
+  export on a slow connection can be cut off, and is then not saved, as the app reads it whole.
 - A file that cannot be read leaves the ZIP without it, and says so in the file, rather than
   failing the whole export.
 - The privacy policy's section on the export says what the ZIP holds (#726).
