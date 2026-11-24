@@ -75,6 +75,21 @@ describe('storedMessages', () => {
     expect(message!.voice).toBeUndefined();
   });
 
+  it('names a chat begun with photos by them, also once they were removed', () => {
+    const messages = storedMessages([
+      {
+        ...row(1, 'user'),
+        content: [
+          { type: 'image', mimeType: 'image/jpeg', removed: true },
+          { type: 'image', mimeType: 'image/jpeg', removed: true },
+        ],
+      },
+      row(2, 'bite'),
+    ]);
+
+    expect(firstMedia(messages)).toEqual({ firstPhotos: 2, firstVoice: false });
+  });
+
   it("reads the user's photos back, with or without text", () => {
     const messages = storedMessages([
       {

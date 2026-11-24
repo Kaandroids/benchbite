@@ -13,16 +13,17 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import type { Database, Json } from '@/lib/database.types';
+import type { ChatRemovedMediaPart } from '@shared/coach/chat';
 import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
-import { messagePhotos, removedMedia } from './chat-photos';
+import { messagePhotos } from './chat-photos';
 import { messageVoice } from './chat-voice';
 import { messageMealCards } from './meal-cards';
 import { messageNotes } from './notes';
 import { messageProposals } from './proposals';
-import type { ChatMessage } from './use-chat';
+import type { ChatMessage, RemovedMedia } from './use-chat';
 
 export const THREADS_KEY = ['coach-threads'];
 
@@ -152,6 +153,21 @@ export function useThreadText() {
 }
 
 /**
+ * The photos and voice message of a stored message that were removed 30 days after it was sent
+ * (#728, ADR 0170), whose parts keep their type and lose their path; undefined when none was.
+ */
+export function removedMedia(content: Json): RemovedMedia | undefined {
+  const parts = Array.isArray(content) ? content : [];
+  const removed = parts.filter(
+    (part): part is ChatRemovedMediaPart =>
+      !!part && typeof part === 'object' && !Array.isArray(part) && part.removed === true,
+  );
+  const photos = removed.filter((part) => part.type === 'image').length;
+  const voice = removed.some((part) => part.type === 'audio');
+  return photos > 0 || voice ? { photos, voice } : undefined;
+}
+
+/**
  * What the user's first message holds when it has no text, as `my_coach_threads()` tells it
  * (`first_photos`, `first_voice`), for a chat read with its messages: such a chat is called by it.
  */
@@ -159,8 +175,8 @@ export function firstMedia(messages: ChatMessage[]): FirstMedia {
   const first = messages.find((message) => message.role === 'user');
   const untitled = !!first && !first.text;
   return {
-    firstPhotos: untitled ? (first.photos?.length ?? 0) : 0,
-    firstVoice: untitled && !!first.voice,
+    firstPhotos: untitled ? (first.photos?.length ?? 0) + (first.removed?.photos ?? 0) : 0,
+    firstVoice: untitled && (!!first.voice || !!first.removed?.voice),
   };
 }
 
@@ -266,7 +282,7 @@ export function storedMessages(rows: StoredMessage[], next?: ChatMessage['role']
       text: messageText(row.content),
       ...(photos.length > 0 && { photos }),
       ...(voice && { voice }),
-      ...(removed && (removed.photos > 0 || removed.voice) && { removed }),
+      ...(removed && { removed }),
       expression: row.expression ?? undefined,
       cut: cutOf(row.interrupted),
       createdAt: new Date(row.created_at),
