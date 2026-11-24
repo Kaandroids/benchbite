@@ -118,6 +118,7 @@ it('records while the mic is held, and sends the voice message as it is let go',
   await stream.end();
 
   // Held again, what plays stops before anything records.
+  fakeAudio.player.playing = true;
   await hold();
   await screen.findByText('Listening…');
   expect(fakeAudio.player.pause.mock.invocationCallOrder.at(-1)).toBeLessThan(

@@ -42,6 +42,7 @@ export const fakeAudio = {
     fakeAudio.recorder.uri = 'file:///cache/voice.m4a';
     fakeAudio.recorderState = recorderState();
     fakeAudio.playerStatus = playerStatus();
+    fakeAudio.player.playing = false;
   },
 };
 
