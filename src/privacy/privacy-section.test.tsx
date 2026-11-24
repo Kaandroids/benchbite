@@ -4,7 +4,7 @@ import { useIsAccount } from '@/providers/session-provider';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { useConsents, useWithdrawAiConsent, useWithdrawHealthConsent } from './consents';
-import { shareExport, useWriteExport } from './export';
+import { shareExport, TooManyExports, useWriteExport } from './export';
 import { PrivacySection } from './privacy-section';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -14,7 +14,12 @@ jest.mock('./consents', () => ({
   useWithdrawAiConsent: jest.fn(),
   useWithdrawHealthConsent: jest.fn(),
 }));
-jest.mock('./export', () => ({ useWriteExport: jest.fn(), shareExport: jest.fn() }));
+jest.mock('./export', () => ({
+  useWriteExport: jest.fn(),
+  shareExport: jest.fn(),
+  // Its own, as the real module reaches the database; the sheet and the test share this one.
+  TooManyExports: class TooManyExports extends Error {},
+}));
 
 const GIVEN = new Date('2026-11-18T10:00:00Z');
 
@@ -127,6 +132,17 @@ it('says when the file could not be made', async () => {
   await render(<PrivacySection />);
   await fireEvent.press(screen.getByRole('button', { name: 'Export your data' }));
   expect(screen.getByText('Couldn’t make the file. Try again.')).toBeOnTheScreen();
+});
+
+it('says when the user has made their two exports of the hour', async () => {
+  jest
+    .mocked(useWriteExport)
+    .mockReturnValue(mutation({ isError: true, error: new TooManyExports() }));
+  await render(<PrivacySection />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Export your data' }));
+  expect(
+    screen.getByText('You can export your data twice an hour. Try again later.'),
+  ).toBeOnTheScreen();
 });
 
 it('offers to export the data first from a withdrawal', async () => {
