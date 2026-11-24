@@ -12,6 +12,10 @@ export default {
   // app have no session; it is long, random and works for 30 minutes. The platform's JWT check is
   // off, as a form sends none, and CORS is off: the browser saves the answer, and no script reads it.
   fetch: withSupabase<Database>({ auth: 'none', cors: 'disabled' }, (req, ctx) =>
-    handleExportDownload(req, { admin: ctx.supabaseAdmin, siteUrl: siteUrl() }),
+    handleExportDownload(req, {
+      admin: ctx.supabaseAdmin,
+      siteUrl: siteUrl(),
+      publicUrl: Deno.env.get('STORAGE_PUBLIC_URL'),
+    }),
   ),
 };

@@ -275,6 +275,7 @@
         "format": "Bir ZIP dosyası: verilerin JSON olarak, başka uygulamaların okuduğu bir biçimde, ve fotoğrafların ile sesli mesajların.",
         "confirm": "Dışa aktar",
         "failed": "Dosya oluşturulamadı. Tekrar dene.",
+        "tooMany": "Verilerini saatte iki kez dışa aktarabilirsin. Daha sonra tekrar dene.",
         "first": "Önce verilerini dışa aktar"
       }
     },

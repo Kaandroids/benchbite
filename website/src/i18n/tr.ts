@@ -340,6 +340,7 @@ export const tr: Messages = {
     backToStart: 'Başa dön',
     again: 'Bağlantı 30 dakika boyunca çalışır; olmazsa yeniden indirebilirsin.',
     failed: 'Dosyayı şu an oluşturamadık. Birazdan tekrar dene.',
+    limited: 'Verilerini saatte iki kez indirebilirsin. Daha sonra tekrar dene.',
     noLink: 'Bu sayfa e-postadaki bağlantıyla açılır. Dışa aktarma sayfasından bir bağlantı iste.',
     noScript:
       'Bu sayfanın bağlantıyı okuması için JavaScript gerekir. Verilerini uygulamada da dışa aktarabilirsin.',

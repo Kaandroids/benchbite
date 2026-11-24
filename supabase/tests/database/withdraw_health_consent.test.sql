@@ -53,6 +53,7 @@ create function pg_temp.kept_tables() returns text[] language sql as $$
     'account_deletion_codes', 'account_deletion_links', 'account_deletion_tries',
     'ai_calls_in_flight', 'ai_consent_withdrawals', 'ai_consents', 'ai_usage',
     'coach_media_deletions', 'consent_withdrawal_links', 'custom_foods', 'data_export_links',
+    'data_export_runs',
     'favourite_foods', 'health_app_consent_withdrawals', 'health_app_consents',
     'health_data_consent_withdrawals', 'health_data_consents', 'password_changes', 'recipes',
     'subscriptions', 'terms_acceptances'

@@ -1,6 +1,6 @@
 # 0148. Export a user's data from the website
 
-- **Status:** Accepted, amended by ADR-0168
+- **Status:** Accepted, amended by ADR-0168 and ADR-0169
 - **Date:** 2026-11-20
 
 ## Context

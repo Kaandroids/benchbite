@@ -275,6 +275,7 @@
         "format": "A ZIP: your data as JSON, a format other apps read, and your photos and voice messages.",
         "confirm": "Export",
         "failed": "Couldn’t make the file. Try again.",
+        "tooMany": "You can export your data twice an hour. Try again later.",
         "first": "Export your data first"
       }
     },

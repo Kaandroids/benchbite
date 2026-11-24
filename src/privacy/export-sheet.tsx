@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
-import { shareExport, useWriteExport } from './export';
+import { shareExport, TooManyExports, useWriteExport } from './export';
 
 /** What the file holds, as the user knows it. */
 const HOLDS = [
@@ -70,7 +70,11 @@ export function ExportSheet({ onClose }: ExportSheetProps) {
       </Text>
       {write.isError ? (
         <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
-          {t('settings.privacy.export.failed')}
+          {t(
+            write.error instanceof TooManyExports
+              ? 'settings.privacy.export.tooMany'
+              : 'settings.privacy.export.failed',
+          )}
         </Text>
       ) : null}
       <Button

@@ -349,6 +349,8 @@ export const de: Messages = {
     again:
       'Der Link funktioniert 30 Minuten lang, du kannst also noch einmal herunterladen, wenn es nicht klappt.',
     failed: 'Die Datei konnte gerade nicht erstellt werden. Versuch es gleich noch einmal.',
+    limited:
+      'Du kannst deine Daten zweimal pro Stunde herunterladen. Versuch es später noch einmal.',
     noLink:
       'Diese Seite öffnet sich über den Link in der E-Mail. Fordere einen Link auf der Exportseite an.',
     noScript:

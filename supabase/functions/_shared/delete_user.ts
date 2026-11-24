@@ -1,7 +1,8 @@
 // Deleting a user and all that is theirs (#134, ADR 0087), from the app or from the website's link
 // (ADR 0094). The user's rows go with the user through their foreign keys, and the photos of their
-// chats through the queue of ADR 0063. Their exercise photos go first: if that fails nothing else
-// has changed, and nothing could name those files once the user is gone.
+// chats through the queue of ADR 0063. Their exercise photos and their export (ADR 0169) go first:
+// if that fails nothing else has changed, and nothing could name those files once the user is gone.
+import { EXPORTS_BUCKET } from './data_export_zip.ts';
 import { EXERCISE_PHOTOS_BUCKET } from './exercise_photos.ts';
 import { emptyFolder } from './storage.ts';
 import { type Client, logError } from './supabase.ts';
@@ -10,8 +11,10 @@ import { type Client, logError } from './supabase.ts';
 export async function deleteUser(admin: Client, userId: string): Promise<boolean> {
   try {
     await emptyFolder(admin, EXERCISE_PHOTOS_BUCKET, userId);
+    // The export of the user's data, which holds it all (ADR 0169).
+    await emptyFolder(admin, EXPORTS_BUCKET, userId);
   } catch (cause) {
-    logError('Removing the exercise photos of a user being deleted failed', cause);
+    logError('Removing the files of a user being deleted failed', cause);
     return false;
   }
 
@@ -25,8 +28,9 @@ export async function deleteUser(admin: Client, userId: string): Promise<boolean
   // be logged.
   try {
     await emptyFolder(admin, EXERCISE_PHOTOS_BUCKET, userId);
+    await emptyFolder(admin, EXPORTS_BUCKET, userId);
   } catch (cause) {
-    logError('Removing the exercise photos of a deleted user failed', cause);
+    logError('Removing the files of a deleted user failed', cause);
   }
   return true;
 }

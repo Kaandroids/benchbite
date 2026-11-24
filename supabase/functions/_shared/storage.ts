@@ -6,12 +6,14 @@ export const PAGE_SIZE = 100;
 
 /**
  * Removes every file in a folder that holds no folders, a page at a time, until listing it finds
- * none. Throws when storage fails or removes nothing of a page, so that the caller can try again.
+ * none, but those `keep` says to leave. Throws when storage fails or removes nothing of a page, so
+ * that the caller can try again.
  */
 export async function emptyFolder(
   admin: Client,
   bucketName: string,
   folder: string,
+  keep: (path: string) => boolean = () => false,
 ): Promise<void> {
   const bucket = admin.storage.from(bucketName);
   for (;;) {
@@ -20,7 +22,8 @@ export async function emptyFolder(
     // A folder entry has no id.
     const paths = listed
       .filter((entry) => entry.id !== null)
-      .map((entry) => `${folder}/${entry.name}`);
+      .map((entry) => `${folder}/${entry.name}`)
+      .filter((path) => !keep(path));
     if (paths.length === 0) return;
 
     const { data: removed, error: removeError } = await bucket.remove(paths);
