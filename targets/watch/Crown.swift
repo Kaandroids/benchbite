@@ -48,8 +48,8 @@ struct CrownDetents: Equatable {
   static func at(_ position: Double, from detent: Double, reach: Double) -> CrownDetents {
     let whole = position.rounded()
     let moved = whole - detent
-    // Counted from where it is, and not brought back again, so that a Crown the system did not
-    // move back is not sent back over and over.
+    // Counted from where it is, turning nothing. Were the system to keep ignoring the way back,
+    // every other detent past half-way would be lost; on the watch it takes it (#718).
     if moved.magnitude > largestTurn {
       return CrownDetents(turned: 0, detent: whole, recentre: false)
     }
