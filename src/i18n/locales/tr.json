@@ -2283,6 +2283,11 @@
     },
     "continue": "Devam et",
     "allChats": "Tüm sohbetler",
+    "removed": {
+      "photos_one": "Fotoğraf silindi",
+      "photos_other": "{{count}} fotoğraf silindi",
+      "voice": "Sesli mesaj silindi"
+    },
     "photos": {
       "add": "Fotoğraf ekle",
       "addMore": "Başka fotoğraf ekle",

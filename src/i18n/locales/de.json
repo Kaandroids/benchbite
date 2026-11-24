@@ -2283,6 +2283,11 @@
     },
     "continue": "Weitermachen",
     "allChats": "Alle Chats",
+    "removed": {
+      "photos_one": "Foto gelöscht",
+      "photos_other": "{{count}} Fotos gelöscht",
+      "voice": "Sprachnachricht gelöscht"
+    },
     "photos": {
       "add": "Foto hinzufügen",
       "addMore": "Weiteres Foto hinzufügen",

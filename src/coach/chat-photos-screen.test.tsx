@@ -300,6 +300,36 @@ describe('a saved chat', () => {
     } as never);
   });
 
+  it('says where photos and a voice message were deleted, keeping what was said', async () => {
+    const removed = [
+      {
+        id: 'stored-1',
+        role: 'user',
+        text: 'What about this lunch?',
+        removed: { photos: 2, voice: false },
+      },
+      { id: 'stored-2', role: 'bite', text: 'About 40 g of protein.' },
+      {
+        id: 'stored-3',
+        role: 'user',
+        text: 'Can we go lighter on legs tomorrow?',
+        removed: { photos: 0, voice: true },
+      },
+      { id: 'stored-4', role: 'bite', text: 'Yes.' },
+    ];
+    jest.mocked(useThreadMessages).mockReturnValue({
+      isFetchedAfterMount: true,
+      data: { title: null, messages: removed, first: removed[0] },
+    } as never);
+    await renderBite();
+
+    expect(screen.getByText('2 photos deleted')).toBeOnTheScreen();
+    expect(screen.getByText('What about this lunch?')).toBeOnTheScreen();
+    expect(screen.getByText('Voice message deleted')).toBeOnTheScreen();
+    expect(screen.getByText('Can we go lighter on legs tomorrow?')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /Play/ })).toBeNull();
+  });
+
   it('shows its photos from coach-media, read in one batch, and opens one large', async () => {
     await renderBite();
 

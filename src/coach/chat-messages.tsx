@@ -248,6 +248,25 @@ const UserMessage = memo(function UserMessage({
       {message.photos?.length ? (
         <MessagePhotos photos={message.photos} urls={mediaUrls} onOpen={onOpenPhoto} />
       ) : null}
+      {message.removed?.photos ? (
+        <RemovedMedia label={t('bite.removed.photos', { count: message.removed.photos })} />
+      ) : null}
+      {message.removed?.voice ? (
+        <View
+          style={[
+            userBubble,
+            {
+              gap: spacing.xs,
+              backgroundColor: colors.userBubble,
+              paddingHorizontal: spacing.md + 2,
+              paddingVertical: spacing.sm + 2,
+            },
+          ]}
+        >
+          <RemovedMedia label={t('bite.removed.voice')} plain />
+          {message.text ? <Text>{message.text}</Text> : null}
+        </View>
+      ) : null}
       {message.voice ? (
         <VoiceBubble
           id={message.id}
@@ -259,7 +278,7 @@ const UserMessage = memo(function UserMessage({
         />
       ) : null}
       {/* A message may be photos alone; a voice message's text is in its bubble. */}
-      {message.text && !message.voice ? (
+      {message.text && !message.voice && !message.removed?.voice ? (
         <View
           style={[
             userBubble,
@@ -398,6 +417,35 @@ const PHOTO_SMALL = 64;
  * The photos of the user's message, above its text: from the device as it is sent, and from the
  * chat's kept photos once it is opened again, a quiet tile until each address is read.
  */
+/**
+ * Where a photo or voice message was, once removed 30 days after it was sent (#728, ADR 0170): a
+ * quiet note, in a dashed frame of its own or, `plain`, inside the voice message's bubble.
+ */
+function RemovedMedia({ label, plain = false }: { label: string; plain?: boolean }) {
+  const { colors, spacing } = useTheme();
+  return (
+    <View
+      style={[
+        styles.removed,
+        { gap: spacing.sm },
+        !plain && {
+          borderWidth: 1,
+          borderStyle: 'dashed',
+          borderColor: colors.border,
+          borderRadius: radii.md,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm + 2,
+        },
+      ]}
+    >
+      <Icon name="minus" size={16} color="textMuted" />
+      <Text variant="caption" color="textMuted">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function MessagePhotos({
   photos,
   urls,
@@ -536,6 +584,10 @@ function Dot({ delay, color }: { delay: number; color: string }) {
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
+  },
+  removed: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   bite: {
     flexDirection: 'row',
