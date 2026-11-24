@@ -256,12 +256,11 @@ content_path = "./supabase/templates/password-code.html"
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
-# Tells the owner whenever their password is saved, as a session that signed in recently can change
-# it without the current one (ADR 0093). Auth sends it for the first password of an account too.
+# Off: send-password-email tells the owner whenever their password is saved, as a session that
+# signed in recently can change it without the current one (ADR 0093), and welcomes an account for
+# its first password, which Auth's notice took for a change (ADR 0167).
 [auth.email.notification.password_changed]
-enabled = true
-subject = "{{ if eq .Data.locale \"de\" }}Dein Benchbite-Passwort wurde gespeichert{{ else if eq .Data.locale \"tr\" }}Benchbite şifren kaydedildi{{ else }}Your Benchbite password was saved{{ end }}"
-content_path = "./supabase/templates/password-saved.html"
+enabled = false
 
 [auth.sms]
 # Allow/disallow the phone provider. When false, users can't sign up or sign in with SMS.
@@ -511,6 +510,15 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/deno.json"
 entrypoint = "./functions/download-data-export/index.ts"
+
+# Emails the owner when an account's password is saved (ADR 0167). Only a trigger on auth.users
+# calls it, with the secret API key, which the function checks; the key is no JWT, so the platform's
+# JWT check is off.
+[functions.send-password-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/send-password-email/index.ts"
 
 # Removes the photos of deleted chats (ADR 0063). Only the pg_cron job calls it, with the secret
 # API key, which the function checks; the key is no JWT, so the platform's JWT check is off.
