@@ -1129,6 +1129,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      health_app_consent_withdrawals: {
+        Row: {
+          id: number;
+          user_id: string;
+          withdrawn_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Update: {
+          id?: never;
+          user_id?: string;
+          withdrawn_at?: string;
+        };
+        Relationships: [];
+      };
+      health_app_consents: {
+        Row: {
+          consent_version: string;
+          granted_at: string;
+          id: number;
+          store: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          consent_version: string;
+          granted_at?: string;
+          id?: never;
+          store: string;
+          user_id?: string;
+        };
+        Update: {
+          consent_version?: string;
+          granted_at?: string;
+          id?: never;
+          store?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       health_data_consent_withdrawals: {
         Row: {
           id: number;
@@ -2721,6 +2765,7 @@ export type Database = {
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
       end_ai_consent: { Args: { user_id: string }; Returns: undefined };
+      end_health_app_consent: { Args: { user_id: string }; Returns: undefined };
       exercise_bests: {
         Args: { exercise_ids: string[] };
         Returns: {
@@ -2810,6 +2855,10 @@ export type Database = {
           times: number;
         }[];
       };
+      give_health_app_consent: {
+        Args: { consent_version: string; store: string };
+        Returns: undefined;
+      };
       give_health_consent: { Args: { policy_version: string }; Returns: undefined };
       give_plan: {
         Args: {
@@ -2834,6 +2883,7 @@ export type Database = {
       guest_inactivity_period: { Args: Record<PropertyKey, never>; Returns: string };
       guest_still_inactive: { Args: { p_user: string }; Returns: boolean };
       has_ai_consent: { Args: { user_id: string }; Returns: boolean };
+      has_health_app_consent: { Args: { user_id: string }; Returns: boolean };
       has_health_consent: { Args: { user_id: string }; Returns: boolean };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -3135,6 +3185,7 @@ export type Database = {
           health_given_at: string;
         }[];
       };
+      my_health_app_consent: { Args: Record<PropertyKey, never>; Returns: boolean };
       my_latest_weight_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
@@ -3609,6 +3660,7 @@ export type Database = {
         Args: { p_consent: string; p_token_hash: string };
         Returns: boolean;
       };
+      withdraw_health_app_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
       withdraw_health_consent: { Args: Record<PropertyKey, never>; Returns: undefined };
       withdraw_health_consent_of: { Args: { user_id: string }; Returns: undefined };
       workout_limits: {

@@ -1,6 +1,6 @@
 # 0144. Delete the logs when the health data consent is withdrawn
 
-- **Status:** Accepted, amended by ADR-0145
+- **Status:** Accepted, amended by ADR-0145 and ADR-0166
 - **Date:** 2026-11-19
 
 ## Context

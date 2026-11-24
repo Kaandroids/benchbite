@@ -4,9 +4,11 @@ import { HEALTH_READS, setHealthConnected, setReadSync, useHealthConnected } fro
 import {
   healthAvailability,
   healthStillAllowed,
+  healthStore,
   releaseHealthAccess,
   requestHealthAccess,
 } from './health';
+import { giveHealthAppConsent, withdrawHealthAppConsent } from './health-app-consent';
 import { READ_KINDS } from './read-kinds';
 
 import { reportError } from '@/lib/reporting';
@@ -32,7 +34,10 @@ export function useHealthConnection() {
     let current = true;
     healthStillAllowed()
       .then((allowed) => {
-        if (current && !allowed) setHealthConnected(false);
+        if (current && !allowed) {
+          setHealthConnected(false);
+          void endConsent();
+        }
       })
       .catch((error: unknown) => reportError('Could not check the access to health data', error));
     return () => {
@@ -59,11 +64,17 @@ export function useHealthConnection() {
     }
   };
 
-  /** Asks the system, once the user agreed, and keeps whether reading was allowed. */
+  /**
+   * Records the user's consent, then asks the system and keeps whether reading was allowed. A
+   * consent that was not recorded asks nothing; one the system refused ends again (ADR 0166).
+   */
   const connect = async () => {
     if (busy) return;
     setBusy(true);
+    let given = false;
     try {
+      await giveHealthAppConsent(healthStore!);
+      given = true;
       const allowed = await requestHealthAccess();
       // Weight and steps are among what was asked for (ADR 0100, 0103); Android can allow the rest
       // without them, and Progress and Today then ask for each alone. They are set first, as
@@ -74,9 +85,12 @@ export function useHealthConnection() {
       }
       setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');
+      // A consent the system then refused ends with it: nothing is read.
+      if (!allowed) void endConsent();
     } catch (error) {
       reportError('Could not ask for the access to health data', error);
       setProblem('failed');
+      if (given) void endConsent();
     } finally {
       setBusy(false);
       setSheet(null);
@@ -88,6 +102,7 @@ export function useHealthConnection() {
     if (busy) return;
     setBusy(true);
     setHealthConnected(false);
+    void endConsent();
     try {
       await releaseHealthAccess();
     } catch (error) {
@@ -104,4 +119,13 @@ export function useHealthConnection() {
   };
 
   return { connected, sheet, problem, busy, open, connect, disconnect, close };
+}
+
+/** Records that reading stopped; reading has stopped either way, so a failure is only reported. */
+async function endConsent() {
+  try {
+    await withdrawHealthAppConsent();
+  } catch (error) {
+    reportError('Could not record the end of the health app consent', error);
+  }
 }

@@ -2628,6 +2628,10 @@
       "steps": "Adımlar",
       "stepsWhen": "her gün için bir toplam",
       "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, günde bir kilo ve adım sayısını ve diğer uygulamaların kaydettiği antrenmanları hesabınla birlikte saklar. {{store}} içine yalnızca antrenmanları kaydetmeyi açarsan yazar. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "usedTitle": "Ne için",
+      "used": "Antrenmanlarının nabzı ve kalorisi, ilerlemendeki kilon, adımların ve diğer antrenmanların için, yapay zekâya izin verdiysen Bite için de.",
+      "agreement": "Onaylayarak Benchbite’ın bu sağlık verilerini bu amaçlarla işlemesine izin verirsin.",
+      "agree": "Onayla ve devam et",
       "continue": "Devam",
       "notNow": "Şimdi değil",
       "next": {

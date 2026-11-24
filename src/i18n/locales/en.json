@@ -2628,6 +2628,10 @@
       "steps": "Steps",
       "stepsWhen": "a total for each day",
       "keeps": "It keeps each workout’s average and highest heart rate and its calories, a weight and a step count a day, and the workouts other apps recorded, with your account. It writes to {{store}} only if you turn on saving workouts. You can disconnect in Settings.",
+      "usedTitle": "Used for",
+      "used": "Your workouts’ heart rate and calories, your weight, steps and other workouts in your progress, and Bite, if you allowed AI.",
+      "agreement": "By agreeing, you allow Benchbite to process this health data for these purposes.",
+      "agree": "Agree and continue",
       "continue": "Continue",
       "notNow": "Not now",
       "next": {

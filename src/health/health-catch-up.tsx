@@ -9,7 +9,13 @@ import { LOGS_KEY, recentLogs } from '@/history/history';
 import { reportError } from '@/lib/reporting';
 import { useUserId } from '@/providers/session-provider';
 
-import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
+import {
+  HEALTH_READS,
+  isHealthConnected,
+  setHealthConnected,
+  useHealthConnected,
+} from './connection';
+import { hasHealthAppConsent } from './health-app-consent';
 import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
 import type { WorkoutStats } from './types';
 import { READ_KINDS } from './read-kinds';
@@ -66,6 +72,22 @@ export async function catchUpWorkoutHealth(queryClient: QueryClient): Promise<bo
   return changed;
 }
 
+/**
+ * Whether reading may go on. The consent is the account's: disconnecting on one phone ends it on
+ * the others too, which let go of their connection here, at each start and return to the front
+ * (ADR 0166). Without an answer, as offline, reading goes on.
+ */
+async function checkConsent(): Promise<boolean> {
+  try {
+    if (await hasHealthAppConsent()) return true;
+  } catch (error) {
+    reportError('Could not check the health app consent', error);
+    return true;
+  }
+  setHealthConnected(false);
+  return false;
+}
+
 /** The catch-up running now and whose it is, so that coming to the front again starts no other. */
 let running: { userId: string; done: Promise<unknown> } | null = null;
 
@@ -83,25 +105,31 @@ export function HealthCatchUp() {
       if (running?.userId === userId) return;
       const current = {
         userId,
-        done: Promise.all([
-          catchUpWorkoutHealth(queryClient)
-            .catch((error: unknown) =>
-              reportError('Could not catch up on the workouts’ health data', error),
-            )
-            .then(() => saveRecentWorkouts(queryClient))
-            .catch((error: unknown) =>
-              reportError('Could not save the workouts to the health store', error),
-            ),
-          ...HEALTH_READS.map((kind) =>
-            READ_KINDS[kind]
-              .bringIn(queryClient)
-              .catch((error: unknown) =>
-                reportError(`Could not take the ${kind} from the health store`, error),
-              ),
-          ),
-        ]).finally(() => {
-          if (running === current) running = null;
-        }),
+        done: checkConsent()
+          .then((holds) =>
+            holds
+              ? Promise.all([
+                  catchUpWorkoutHealth(queryClient)
+                    .catch((error: unknown) =>
+                      reportError('Could not catch up on the workouts’ health data', error),
+                    )
+                    .then(() => saveRecentWorkouts(queryClient))
+                    .catch((error: unknown) =>
+                      reportError('Could not save the workouts to the health store', error),
+                    ),
+                  ...HEALTH_READS.map((kind) =>
+                    READ_KINDS[kind]
+                      .bringIn(queryClient)
+                      .catch((error: unknown) =>
+                        reportError(`Could not take the ${kind} from the health store`, error),
+                      ),
+                  ),
+                ])
+              : null,
+          )
+          .finally(() => {
+            if (running === current) running = null;
+          }),
       };
       running = current;
     };

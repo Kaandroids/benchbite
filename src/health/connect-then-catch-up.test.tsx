@@ -4,7 +4,7 @@ import { recentLogs } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { setHealthConnected, setReadSync } from './connection';
+import { isHealthConnected, setHealthConnected, setReadSync } from './connection';
 import { HealthCatchUp } from './health-catch-up';
 import { requestAccess, stillAllowed, weightAllowed, weightsSince } from './platform';
 import { useHealthConnection } from './use-health-connection';
@@ -24,6 +24,8 @@ jest.mock('@/lib/supabase', () => ({
 }));
 jest.mock('@/history/history', () => ({ LOGS_KEY: ['workout-logs'], recentLogs: jest.fn() }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-1' }));
+
+let consentHolds = true;
 
 function Connect() {
   const { connect } = useHealthConnection();
@@ -48,7 +50,12 @@ beforeEach(() => {
   jest
     .mocked(supabase.auth.getSession)
     .mockResolvedValue({ data: { session: { user: { id: 'user-1' } } }, error: null } as never);
-  jest.mocked(supabase.rpc).mockResolvedValue({ data: 1, error: null } as never);
+  consentHolds = true;
+  jest.mocked(supabase.rpc).mockImplementation(((name: string) =>
+    Promise.resolve({
+      data: name === 'my_health_app_consent' ? consentHolds : 1,
+      error: null,
+    })) as never);
 });
 
 it('brings in the weights as soon as the store is connected', async () => {
@@ -64,4 +71,42 @@ it('brings in the weights as soon as the store is connected', async () => {
   await waitFor(() =>
     expect(supabase.rpc).toHaveBeenCalledWith('import_weights', expect.anything()),
   );
+});
+
+it('records the consent before the system asks', async () => {
+  await render(<Connect />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Connect' }));
+
+  await waitFor(() => expect(requestAccess).toHaveBeenCalled());
+  expect(supabase.rpc).toHaveBeenCalledWith(
+    'give_health_app_consent',
+    expect.objectContaining({ consent_version: '2026-11-23' }),
+  );
+  const [given] = jest.mocked(supabase.rpc).mock.invocationCallOrder;
+  const [asked] = jest.mocked(requestAccess).mock.invocationCallOrder;
+  expect(given).toBeLessThan(asked!);
+});
+
+it('asks the system nothing when the consent was not recorded', async () => {
+  jest
+    .mocked(supabase.rpc)
+    .mockResolvedValue({ data: null, error: { code: 'BB067', message: 'no' } } as never);
+  await render(<Connect />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Connect' }));
+
+  await waitFor(() =>
+    expect(supabase.rpc).toHaveBeenCalledWith('give_health_app_consent', expect.anything()),
+  );
+  expect(requestAccess).not.toHaveBeenCalled();
+});
+
+it('lets go of a connection made before its consent was asked for, and reads nothing', async () => {
+  consentHolds = false;
+  setHealthConnected(true);
+  await render(<HealthCatchUp />);
+
+  await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('my_health_app_consent'));
+  await waitFor(() => expect(isHealthConnected()).toBe(false));
+  expect(recentLogs).not.toHaveBeenCalled();
+  expect(weightsSince).not.toHaveBeenCalled();
 });
