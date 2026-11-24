@@ -181,3 +181,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0163](0163-take-the-exercise-pictures-out.md)                            | Take the exercise pictures out                                                          | Accepted, amended by ADR-0164                        |
 | [0164](0164-write-the-exercises-steps-in-our-own-words.md)                | Write the exercises' steps in our own words                                             | Accepted                                             |
 | [0165](0165-show-a-workouts-muscles-on-the-whole-figure.md)               | Show a workout's muscles on the whole figure                                            | Accepted                                             |
+| [0166](0166-ask-for-a-consent-before-reading-the-health-store.md)         | Ask for a consent before reading the health store                                       | Accepted                                             |
