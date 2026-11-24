@@ -15,6 +15,9 @@ The health data consent of the onboarding covers what the user enters and logs. 
 weight, steps and other apps' workouts read from the store come from another source, are read
 in the background, and stop when the user disconnects, so they are asked for on their own.
 
+This amends the part of ADR 0097 about the consent before the system's own screen, and adds the
+consent to read the store to what withdrawing the health data consent ends (ADR 0144).
+
 ## Decision
 
 - The sheet says what is read, what it is used for and what is kept, with a sentence that agreeing

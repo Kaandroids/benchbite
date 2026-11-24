@@ -1,6 +1,6 @@
 # 0097. Read workouts from Apple Health and Health Connect
 
-- **Status:** Accepted, amended by ADR-0105 and ADR-0108
+- **Status:** Accepted, amended by ADR-0105, ADR-0108 and ADR-0166
 - **Date:** 2026-11-08
 
 ## Context
