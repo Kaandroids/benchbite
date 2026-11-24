@@ -61,22 +61,6 @@ export function localTime(now: Date = new Date()): string {
   return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
-/**
- * The photos and voice message of a stored message that were removed 30 days after it was sent
- * (#728, ADR 0170): their parts keep their type and lose their path.
- */
-export function removedMedia(content: Json): { photos: number; voice: boolean } {
-  const parts = Array.isArray(content) ? content : [];
-  const removed = parts.filter(
-    (part): part is { type: string } =>
-      !!part && typeof part === 'object' && !Array.isArray(part) && part.removed === true,
-  );
-  return {
-    photos: removed.filter((part) => part.type === 'image').length,
-    voice: removed.some((part) => part.type === 'audio'),
-  };
-}
-
 /** The photos a stored message keeps, by their paths in `coach-media`, in order. */
 export function messagePhotos(content: Json): MessagePhoto[] {
   const parts = Array.isArray(content) ? content : [];
