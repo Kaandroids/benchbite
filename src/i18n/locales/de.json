@@ -269,10 +269,10 @@
           "profile": "Profil, Ziel, Gewichte und Zielwerte",
           "training": "Dein Plan, Trainings mit jedem Satz, und Rekorde",
           "food": "Mahlzeiten, Wasser und Schritte, deine eigenen Lebensmittel und Rezepte",
-          "bite": "Chats mit Bite und Bites Notizbuch",
+          "bite": "Chats mit Bite mit ihren Fotos und Sprachnachrichten, Bites Notizbuch und was jede Antwort verbraucht hat",
           "consents": "Deine Einwilligungen, und wann du sie erteilt hast"
         },
-        "format": "Als JSON, ein Format, das andere Apps lesen. Fotos und Sprachnachrichten sind nicht darin; die Chats sagen, wo sie waren.",
+        "format": "Eine ZIP-Datei: deine Daten als JSON, ein Format, das andere Apps lesen, und deine Fotos und Sprachnachrichten.",
         "confirm": "Exportieren",
         "failed": "Die Datei konnte nicht erstellt werden. Versuch es noch einmal.",
         "first": "Erst deine Daten exportieren"

@@ -269,10 +269,10 @@
           "profile": "Profile, goal, weights and targets",
           "training": "Your plan, workouts with every set, and records",
           "food": "Meals, water and steps, your own foods and recipes",
-          "bite": "Chats with Bite and Bite’s notebook",
+          "bite": "Chats with Bite with their photos and voice messages, Bite’s notebook, and what each answer used",
           "consents": "Your consents, and when you gave them"
         },
-        "format": "As JSON, a format other apps read. Photos and voice messages aren’t in it; the chats say where they were.",
+        "format": "A ZIP: your data as JSON, a format other apps read, and your photos and voice messages.",
         "confirm": "Export",
         "failed": "Couldn’t make the file. Try again.",
         "first": "Export your data first"
