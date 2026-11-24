@@ -1,4 +1,4 @@
-// The codes the database raises for requests it refuses (BB001 to BB066 in the migrations, and
+// The codes the database raises for requests it refuses (BB001 to BB067 in the migrations, and
 // some of Postgres's own), named by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',
