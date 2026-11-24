@@ -54,6 +54,12 @@ private struct FieldEditor: View {
   @State private var lastTurn: Date?
   @FocusState private var focused: Bool
 
+  /// How long after the sheet appears the focus is set, as set at once it may not land (#718).
+  private static let focusDelay: Duration = .milliseconds(150)
+
+  /// How far the Crown turns either way before it is brought back to the middle.
+  private static let span = 1_000.0
+
   /// Detents closer than this are a fast turn, which goes by the coarse step (ADR 0125).
   private static let fastWithin: TimeInterval = 0.09
 
@@ -102,27 +108,40 @@ private struct FieldEditor: View {
     .foregroundStyle(Theme.text)
     .focusable()
     .focused($focused)
-    // Unbounded detents: the value keeps to its range itself, by steps that differ with speed.
+    // Detents the value keeps to its range by itself, by steps that differ with speed. A small
+    // span, brought back to the middle as it nears an end: the system prepares each detent of the
+    // span, and two million of them took the app past the watch's memory limit (#718).
     .digitalCrownRotation(
-      $turned, from: -1_000_000, through: 1_000_000, by: 1, sensitivity: .medium,
+      $turned, from: -Self.span, through: Self.span, by: 1, sensitivity: .medium,
       isContinuous: false, isHapticFeedbackEnabled: true
     )
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.
     // Whole detents only, timed from one to the next, whatever the Crown reports in between.
     .onChange(of: turned) {
-      let whole = turned.rounded()
-      guard whole != detent else { return }
-      let detents = whole - detent
-      detent = whole
+      let next = CrownDetents.at(turned, from: detent, reach: Self.span)
+      detent = next.detent
+      if next.recentre { turned = 0 }
+      guard next.turned != 0 else { return }
+      Log.crown.debug("Turned \(next.turned, privacy: .public)")
       let now = Date()
       let fast = lastTurn.map { now.timeIntervalSince($0) < Self.fastWithin } ?? false
       lastTurn = now
       let previous = value
-      value = range.turned(value, by: detents, fast: fast)
+      value = range.turned(value, by: next.turned, fast: fast)
       if value != previous { change(value) }
     }
-    .onAppear {
+    // The Crown turns only the view in focus. Set as the sheet appears, the focus may not land
+    // yet, and the Crown then goes to what is below (#718): it is set once the sheet shows, and
+    // taken back whenever it is lost while the editor is open.
+    .task {
+      try? await Task.sleep(for: Self.focusDelay)
       focused = true
+    }
+    .onChange(of: focused) {
+      Log.crown.info("Focus: \(focused, privacy: .public)")
+      if !focused { focused = true }
+    }
+    .onAppear {
       if empty { change(value) }
     }
   }

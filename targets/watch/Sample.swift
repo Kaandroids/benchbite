@@ -22,7 +22,7 @@
       do {
         return try JSONDecoder().decode(Sample.self, from: Data(json.utf8))
       } catch {
-        NSLog("[Sample] Could not read BENCHBITE_SAMPLE: %@", String(describing: error))
+        Log.link.error("Could not read BENCHBITE_SAMPLE: \(String(describing: error), privacy: .public)")
         return nil
       }
     }()
