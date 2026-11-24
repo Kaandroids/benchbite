@@ -2765,6 +2765,7 @@ export type Database = {
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
       end_ai_consent: { Args: { user_id: string }; Returns: undefined };
+      end_health_app_consent: { Args: { user_id: string }; Returns: undefined };
       exercise_bests: {
         Args: { exercise_ids: string[] };
         Returns: {
