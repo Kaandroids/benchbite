@@ -54,6 +54,9 @@ private struct FieldEditor: View {
   @State private var lastTurn: Date?
   @FocusState private var focused: Bool
 
+  /// How long after the sheet appears the focus is set, as set at once it may not land (#718).
+  private static let focusDelay: Duration = .milliseconds(150)
+
   /// How far the Crown turns either way before it is brought back to the middle.
   private static let span = 1_000.0
 
@@ -115,27 +118,23 @@ private struct FieldEditor: View {
     // Only a turn changes a value there was: opening it, or moving on from it, changes none.
     // Whole detents only, timed from one to the next, whatever the Crown reports in between.
     .onChange(of: turned) {
-      let whole = turned.rounded()
-      guard whole != detent else { return }
-      let detents = whole - detent
-      detent = whole
-      Log.crown.debug("Turned \(detents, privacy: .public)")
+      let next = CrownDetents.at(turned, from: detent, span: Self.span)
+      detent = next.detent
+      if next.recentre { turned = 0 }
+      guard next.turned != 0 else { return }
+      Log.crown.debug("Turned \(next.turned, privacy: .public)")
       let now = Date()
       let fast = lastTurn.map { now.timeIntervalSince($0) < Self.fastWithin } ?? false
       lastTurn = now
       let previous = value
-      value = range.turned(value, by: detents, fast: fast)
+      value = range.turned(value, by: next.turned, fast: fast)
       if value != previous { change(value) }
-      if abs(whole) > Self.span / 2 {
-        turned = 0
-        detent = 0
-      }
     }
     // The Crown turns only the view in focus. Set as the sheet appears, the focus may not land
     // yet, and the Crown then goes to what is below (#718): it is set once the sheet shows, and
     // taken back whenever it is lost while the editor is open.
     .task {
-      try? await Task.sleep(for: .milliseconds(150))
+      try? await Task.sleep(for: Self.focusDelay)
       focused = true
     }
     .onChange(of: focused) {
