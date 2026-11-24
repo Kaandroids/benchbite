@@ -30,6 +30,7 @@ export const fakeAudio = {
   recorderState: recorderState(),
   player: {
     playing: false,
+    paused: true,
     play: jest.fn(),
     pause: jest.fn(),
     replace: jest.fn(),
@@ -42,6 +43,8 @@ export const fakeAudio = {
     fakeAudio.recorder.uri = 'file:///cache/voice.m4a';
     fakeAudio.recorderState = recorderState();
     fakeAudio.playerStatus = playerStatus();
+    fakeAudio.player.playing = false;
+    fakeAudio.player.paused = true;
   },
 };
 

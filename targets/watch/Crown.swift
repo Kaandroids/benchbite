@@ -28,3 +28,32 @@ extension CrownRange {
     return (Swift.min(Swift.max(next, min), max) * 100).rounded() / 100
   }
 }
+
+/// What a position the Crown reports turns, from the last whole detent counted (#718): whole
+/// detents only, whatever it reports in between; and back to the middle once half-way to an end,
+/// as how far it turns is kept small. A jump larger than a turn makes is taken as the Crown
+/// reporting a position it was not brought back from, and turns nothing.
+struct CrownDetents: Equatable {
+  /// The detents turned, signed; none when the position stays at the last whole detent.
+  let turned: Double
+  /// The whole detent to count the next position from.
+  let detent: Double
+  /// Whether to bring the Crown back to the middle of its span, at 0.
+  let recentre: Bool
+
+  /// The most detents a single report moves by; more is the Crown starting over.
+  static let largestTurn = 50.0
+
+  /// `reach` is how far the Crown turns either way; it is brought back once half-way there.
+  static func at(_ position: Double, from detent: Double, reach: Double) -> CrownDetents {
+    let whole = position.rounded()
+    let moved = whole - detent
+    // Counted from where it is, turning nothing. Were the system to keep ignoring the way back,
+    // every other detent past half-way would be lost; on the watch it takes it (#718).
+    if moved.magnitude > largestTurn {
+      return CrownDetents(turned: 0, detent: whole, recentre: false)
+    }
+    let recentre = whole.magnitude > reach / 2
+    return CrownDetents(turned: moved, detent: recentre ? 0 : whole, recentre: recentre)
+  }
+}

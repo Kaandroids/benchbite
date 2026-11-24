@@ -42,8 +42,17 @@ export function useVoicePlayback() {
     [player],
   );
 
-  /** Pauses what plays, as when the user records. */
-  const pause = useCallback(() => player.pause(), [player]);
+  /**
+   * Pauses what plays or is loading to play, as when the user records, and says whether anything
+   * did. A player with nothing to play is left alone: pausing it lets go of the audio a moment
+   * later, which the recording starting then could not prepare with (#720). `paused` is false
+   * from play() on, also while the message loads, when `playing` is not true yet.
+   */
+  const pause = useCallback(() => {
+    if (player.paused) return false;
+    player.pause();
+    return true;
+  }, [player]);
 
   return { player, active, toggle, pause };
 }
