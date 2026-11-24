@@ -6,6 +6,9 @@ import { strToU8, Zip, ZipPassThrough } from 'fflate';
 import { isObject } from './json.ts';
 import { type Client, logError } from './supabase.ts';
 
+/** The ZIP's name, with the day it was made, as the app's and the website's exports name it. */
+export const zipFileName = (made: Date) => `benchbite-data-${made.toISOString().slice(0, 10)}.zip`;
+
 /** The file's own name in the ZIP. */
 export const EXPORT_JSON = 'benchbite-data.json';
 
@@ -60,3 +63,14 @@ export function exportZip(admin: Client, exported: unknown): ReadableStream<Uint
     },
   });
 }
+
+/** The ZIP as a download that no cache keeps, as it holds health data. */
+export const zipResponse = (body: ReadableStream<Uint8Array>, made: Date) =>
+  new Response(body, {
+    headers: {
+      'content-type': 'application/zip',
+      'content-disposition': `attachment; filename="${zipFileName(made)}"`,
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    },
+  });
