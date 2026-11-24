@@ -8,7 +8,7 @@ import { act, renderHook } from '@/test/render';
 import { m4a } from '../../supabase/functions/coach-chat/test-voice';
 
 import { discardVoices, readVoice } from './chat-voice';
-import { useVoiceRecorder, type VoiceEnd } from './use-voice-recorder';
+import { SETTLE_MS, useVoiceRecorder, type VoiceEnd } from './use-voice-recorder';
 
 jest.mock('expo-haptics', () => ({
   ...jest.requireActual<typeof import('expo-haptics')>('expo-haptics'),
@@ -144,7 +144,7 @@ it('plays out of the speaker again when recording fails to start', async () => {
 
   await act(async () => {
     result.current.start();
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50));
   });
 
   expect(ends).toEqual([{ problem: { reason: 'voice_not_recorded' } }]);
@@ -185,7 +185,7 @@ it('prepares once more after a moment when the audio was not ready', async () =>
 
   await act(async () => {
     result.current.start();
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50));
   });
 
   expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(2);
@@ -199,6 +199,6 @@ it('waits for the audio to settle after a message it paused', async () => {
   await act(async () => result.current.start({ afterPlayback: true }));
   expect(fakeAudio.recorder.prepareToRecordAsync).not.toHaveBeenCalled();
 
-  await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
+  await act(async () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 50)));
   expect(fakeAudio.recorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
 });

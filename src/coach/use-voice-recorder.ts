@@ -32,7 +32,7 @@ export const SHORTEST_MS = 500;
  * How long the audio takes to settle: a paused player lets go of it 100 ms later, natively, which
  * a recorder prepared meanwhile fails on (#720).
  */
-const SETTLE_MS = 150;
+export const SETTLE_MS = 150;
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
