@@ -1,7 +1,7 @@
 import { assertEquals } from '@std/assert';
 import { strFromU8, unzipSync } from 'fflate';
 
-import { EXPORT_JSON, exportZip, mediaEntry } from './data_export_zip.ts';
+import { EXPORT_JSON, exportZip, mediaEntry, publicLink } from './data_export_zip.ts';
 import type { Client } from './supabase.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
@@ -132,4 +132,13 @@ Deno.test('never reads a path that leaves the user’s folder, and says it is mi
   assertEquals(read, [`exercise-photos:${A}/x.jpg`]);
   assertEquals(Object.keys(entries).sort(), [EXPORT_JSON, 'media/exercise-photos/x.jpg']);
   assertEquals(JSON.parse(strFromU8(entries[EXPORT_JSON]!)).media[0].missing, true);
+});
+
+Deno.test('points a link at the address outside Docker, when one is set', () => {
+  const signed = 'http://kong:8000/storage/v1/object/sign/data-exports/a/1.zip?token=t';
+  assertEquals(
+    publicLink(signed, 'http://192.168.1.20:54321'),
+    'http://192.168.1.20:54321/storage/v1/object/sign/data-exports/a/1.zip?token=t',
+  );
+  assertEquals(publicLink(signed, undefined), signed);
 });

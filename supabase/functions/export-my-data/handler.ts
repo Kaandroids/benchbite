@@ -10,12 +10,14 @@ export type ExportContext = {
   admin: Client;
   /** The user the request's token belongs to. */
   userId: string;
+  /** STORAGE_PUBLIC_URL, set only locally. */
+  publicUrl?: string;
   now?: () => Date;
 };
 
 export async function handleExport(
   req: Request,
-  { supabase, admin, userId, now = () => new Date() }: ExportContext,
+  { supabase, admin, userId, publicUrl, now = () => new Date() }: ExportContext,
 ): Promise<Response> {
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
@@ -37,7 +39,7 @@ export async function handleExport(
     return Response.json({ error: 'unavailable' }, { status: 503 });
   }
   try {
-    return Response.json({ url: await storeExport(admin, userId, data, now()) });
+    return Response.json({ url: await storeExport(admin, userId, data, now(), publicUrl) });
   } catch (cause) {
     logError('Storing an export failed', cause);
     return Response.json({ error: 'unavailable' }, { status: 503 });

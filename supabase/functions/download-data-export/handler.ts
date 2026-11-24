@@ -13,12 +13,14 @@ export type DownloadContext = {
   /** A client with the service role, which alone reads links, and reads the account's files. */
   admin: Client;
   siteUrl: string;
+  /** STORAGE_PUBLIC_URL, set only locally. */
+  publicUrl?: string;
   now?: () => Date;
 };
 
 export async function handleExportDownload(
   req: Request,
-  { admin, siteUrl, now = () => new Date() }: DownloadContext,
+  { admin, siteUrl, publicUrl, now = () => new Date() }: DownloadContext,
 ): Promise<Response> {
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
@@ -60,7 +62,7 @@ export async function handleExportDownload(
   }
   try {
     // The browser downloads the ZIP from storage, which no time limit cuts off (ADR 0169).
-    return redirect(await storeExport(admin, account, data, now()));
+    return redirect(await storeExport(admin, account, data, now(), publicUrl));
   } catch (cause) {
     logError('Storing an export failed', cause);
     return page(`export-data/download#token=${token}&failed`);

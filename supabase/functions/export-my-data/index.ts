@@ -16,6 +16,7 @@ export default {
       supabase: ctx.supabase,
       admin: ctx.supabaseAdmin,
       userId: ctx.userClaims!.id,
+      publicUrl: Deno.env.get('STORAGE_PUBLIC_URL'),
     }),
   ),
 };

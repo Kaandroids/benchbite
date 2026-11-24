@@ -112,6 +112,8 @@ export async function storeExport(
   userId: string,
   exported: unknown,
   made: Date,
+  /** STORAGE_PUBLIC_URL, which only the local stack sets (publicLink()). */
+  publicUrl?: string,
 ): Promise<string> {
   await emptyFolder(admin, EXPORTS_BUCKET, userId);
   const bucket = admin.storage.from(EXPORTS_BUCKET);
@@ -125,5 +127,17 @@ export async function storeExport(
     download: zipFileName(made),
   });
   if (signError) throw signError;
-  return data.signedUrl;
+  return publicLink(data.signedUrl, publicUrl);
+}
+
+/**
+ * The link as the phone or browser reaches it. Locally the functions sign with the address Supabase
+ * has inside Docker, which nothing outside reaches; STORAGE_PUBLIC_URL names the one they do. The
+ * hosted project signs with its public address and sets none.
+ */
+export function publicLink(signed: string, publicUrl: string | undefined): string {
+  if (!publicUrl) return signed;
+  const url = new URL(signed);
+  const base = new URL(publicUrl);
+  return new URL(`${url.pathname}${url.search}`, base).toString();
 }
