@@ -48,6 +48,19 @@ as $$
     ('password_changes', 'changed_at');
 $$;
 
+-- The private buckets of the user's own files that the export's ZIP holds, so that a test can tell
+-- a new one apart: exercise-images is public and holds the library's pictures, no user's files.
+create function public.export_buckets()
+returns setof text
+language sql
+immutable
+set search_path = ''
+as $$
+  values ('coach-media'), ('exercise-photos');
+$$;
+
+revoke execute on function public.export_buckets() from public, anon, authenticated;
+
 -- As before, without ai_usage.
 create or replace function public.export_left_out()
 returns setof text
@@ -131,8 +144,11 @@ begin
         'created_at', o.created_at
       ) order by o.bucket_id, o.name), '[]')
       from storage.objects o
-      where o.bucket_id in ('coach-media', 'exercise-photos')
+      where o.bucket_id in (select public.export_buckets())
         and o.name like target_id::text || '/%'
+        -- Only names in the user's own folders, as the app writes them: one with a . or .. part
+        -- could name another user's file once read by its path.
+        and o.name !~ '(^|/)\.\.?(/|$)'
     )
   );
 end;

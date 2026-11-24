@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(16);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -56,7 +56,9 @@ insert into storage.objects (bucket_id, name, metadata) values
   ('coach-media', '00000000-0000-0000-0000-00000000000a/1/photo.jpg', '{"size": 1200}'),
   ('coach-media', '00000000-0000-0000-0000-00000000000a/1/voice.m4a', '{"size": 3400}'),
   ('exercise-photos', '00000000-0000-0000-0000-00000000000a/hip-thrust.jpg', '{"size": 900}'),
-  ('coach-media', '00000000-0000-0000-0000-00000000000b/2/photo.jpg', '{"size": 1500}');
+  ('coach-media', '00000000-0000-0000-0000-00000000000b/2/photo.jpg', '{"size": 1500}'),
+  -- A name that leaves A's folder for B's, which an older policy let a user write.
+  ('exercise-photos', '00000000-0000-0000-0000-00000000000a/../00000000-0000-0000-0000-00000000000b/x.jpg', '{"size": 10}');
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 create temp table made as select public.create_exercise(jsonb_build_object(
@@ -152,6 +154,11 @@ select is(
     ["coach-media", "00000000-0000-0000-0000-00000000000a/1/voice.m4a", 3400],
     ["exercise-photos", "00000000-0000-0000-0000-00000000000a/hip-thrust.jpg", 900]]'::jsonb,
   'It lists the user''s own photos and voice messages, for the ZIP, and no other user''s'
+);
+select is_empty(
+  $$ select id from storage.buckets where not public
+     except select public.export_buckets() $$,
+  'Every private bucket of users'' files is in the export'
 );
 
 select * from finish();
