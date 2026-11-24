@@ -157,8 +157,9 @@ select is(
 );
 select is_empty(
   $$ select id from storage.buckets where not public
-     except select public.export_buckets() $$,
-  'Every private bucket of users'' files is in the export'
+     except select public.export_buckets()
+     except select public.export_left_out_buckets() $$,
+  'Every private bucket of users'' files is in the export or left out on purpose'
 );
 
 select * from finish();
