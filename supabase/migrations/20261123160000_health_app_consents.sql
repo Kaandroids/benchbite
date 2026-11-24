@@ -59,6 +59,22 @@ $$;
 
 revoke execute on function public.has_health_app_consent(uuid) from public, anon, authenticated;
 
+-- Ends the user's consent to read the store, if they have one. Shared by both withdrawals.
+create function public.end_health_app_consent(user_id uuid)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if public.has_health_app_consent(end_health_app_consent.user_id) then
+    insert into public.health_app_consent_withdrawals (user_id)
+    values (end_health_app_consent.user_id);
+  end if;
+end;
+$$;
+
+revoke execute on function public.end_health_app_consent(uuid) from public, anon, authenticated;
+
 -- Records the caller's consent to read the store, with the version of the sheet's text. It rests
 -- on the health data consent of the onboarding: without that one, nothing may be read (BB067).
 create function public.give_health_app_consent(store text, consent_version text)
@@ -74,6 +90,9 @@ begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
+  -- Not while the user's health data consent is being withdrawn, as on another phone: a consent
+  -- that slipped in would hold without the one it rests on.
+  perform public.lock_health_consent(caller_id);
   if not public.has_health_consent(caller_id) then
     raise exception 'The health data consent is needed first'
       using errcode = 'BB067';
@@ -101,9 +120,7 @@ begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
-  if public.has_health_app_consent(caller_id) then
-    insert into public.health_app_consent_withdrawals (user_id) values (caller_id);
-  end if;
+  perform public.end_health_app_consent(caller_id);
 end;
 $$;
 
@@ -190,9 +207,7 @@ begin
 
   perform public.end_ai_consent(owner_id);
   -- Reading the store rests on this consent too: it ends with it.
-  if public.has_health_app_consent(owner_id) then
-    insert into public.health_app_consent_withdrawals (user_id) values (owner_id);
-  end if;
+  perform public.end_health_app_consent(owner_id);
 
   delete from public.meal_entries m where m.user_id = owner_id;
   -- After the meals, whose delete records them here.
