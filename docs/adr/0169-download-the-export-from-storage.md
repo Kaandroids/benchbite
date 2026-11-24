@@ -53,6 +53,7 @@ This amends ADR 0168's delivery of the ZIP, and ADR 0148's download on the websi
   large export well within it; a user with thousands of photos and voice messages could still
   reach it, and the export would then fail.
 - A failed export still uses one of the two of the hour.
-- If the request to remove a withdrawn user's export cannot be sent, the daily purge removes it.
+- If the request to remove a withdrawn user's export cannot be sent, the daily purge removes it,
+  as it does an export still being built while the consent is withdrawn, stored only after it.
 - The egress of an export counts once per download, as before.
 - Old builds keep calling `export_my_data()` and get the file alone (ADR 0157).

@@ -152,8 +152,8 @@ begin
   perform public.end_ai_consent(owner_id);
   -- Reading the store rests on this consent too: it ends with it.
   perform public.end_health_app_consent(owner_id);
-  -- And the export of the data it held, once this commits (ADR 0169). Asked after the deletes, so
-  -- that a request that cannot be sent never stops the withdrawal; the daily purge catches it.
+  -- And the export of the data it held, removed once this commits (ADR 0169). A request that cannot
+  -- be sent is only warned of, so that it never stops the withdrawal; the daily purge catches it.
   begin
     perform public.call_scheduled_function(
       'purge-data-exports', jsonb_build_object('userId', owner_id), 10000
