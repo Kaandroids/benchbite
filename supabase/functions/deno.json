@@ -4,7 +4,7 @@
     "@supabase/functions-js": "jsr:@supabase/functions-js@2.119.0",
     "@supabase/server": "npm:@supabase/server@1.9.2",
     "@supabase/server/": "npm:/@supabase/server@1.9.2/",
-    "fflate": "npm:fflate@0.8.2",
+    "fflate": "npm:fflate@0.8.3",
     "zod": "npm:zod@4.6.7"
   }
 }

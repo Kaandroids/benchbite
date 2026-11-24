@@ -6,7 +6,7 @@
     "jsr:@supabase/functions-js@2.119.0": "2.119.0",
     "npm:@supabase/server@1.9.2": "1.9.2_@supabase+supabase-js@2.118.0",
     "npm:@supabase/storage-js@2": "2.118.0",
-    "npm:fflate@0.8.2": "0.8.2",
+    "npm:fflate@0.8.3": "0.8.3",
     "npm:openai@^4.52.5": "4.104.0_zod@4.6.7",
     "npm:zod@4.6.7": "4.6.7"
   },
@@ -163,8 +163,8 @@
     "event-target-shim@5.0.1": {
       "integrity": "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ=="
     },
-    "fflate@0.8.2": {
-      "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
+    "fflate@0.8.3": {
+      "integrity": "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA=="
     },
     "form-data-encoder@1.7.2": {
       "integrity": "sha512-qfqtYan3rxrnCk1VYaA4H+Ms9xdpPqvLZa6xmMgFvhO32x7/3J/ExcTd6qpxM0vH2GdMI+poehyBZvqfMTto8A=="
@@ -317,7 +317,7 @@
       "jsr:@std/assert@1.0.19",
       "jsr:@supabase/functions-js@2.119.0",
       "npm:@supabase/server@1.9.2",
-      "npm:fflate@0.8.2",
+      "npm:fflate@0.8.3",
       "npm:zod@4.6.7"
     ]
   }
