@@ -2,7 +2,7 @@ import { Linking } from 'react-native';
 
 import { PRIVACY_POLICY_URL, TERMS_URL } from '@/lib/links';
 import { createStep } from '@/test/step-mock';
-import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/requirements/built-with';
+import { HEALTH_CONSENT_VERSION, TERMS_VERSION } from '@/requirements/built-with';
 import { REQUIREMENTS_KEY } from '@/requirements/requirements';
 import { act, createTestQueryClient, fireEvent, render, screen, waitFor } from '@/test/render';
 
@@ -22,7 +22,7 @@ const continueButton = () => screen.getByRole('button', { name: 'Continue' });
 const agreeBox = () => screen.getByRole('checkbox', { name: AGREE });
 const termsBox = () => screen.getByRole('checkbox', { name: TERMS });
 const BOTH = {
-  consentedPolicyVersion: PRIVACY_POLICY_VERSION,
+  consentedPolicyVersion: HEALTH_CONSENT_VERSION,
   acceptedTermsVersion: TERMS_VERSION,
 };
 
@@ -147,7 +147,7 @@ describe('ConsentStep', () => {
   });
 
   it('withdraws a consent given earlier when unticking', async () => {
-    mockStep = createStep({ consentedPolicyVersion: PRIVACY_POLICY_VERSION });
+    mockStep = createStep({ consentedPolicyVersion: HEALTH_CONSENT_VERSION });
     await render(<ConsentStep />);
     await fireEvent.press(agreeBox());
     expect(mockStep.answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
