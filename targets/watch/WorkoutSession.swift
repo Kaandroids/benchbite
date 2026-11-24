@@ -87,7 +87,8 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// Takes up the session the system kept running while the app was ended, which it says by
   /// launching the app to recover it; until then nothing starts or ends.
   func recover() {
-    guard HKHealthStore.isHealthDataAvailable(), session == nil else {
+    guard HKHealthStore.isHealthDataAvailable() else { return }
+    guard session == nil else {
       Log.session.info("Recovery asked with a session already held")
       return
     }
@@ -97,7 +98,7 @@ final class WorkoutSession: NSObject, ObservableObject {
       Task { @MainActor in
         guard let self else { return }
         if let error {
-          NSLog("[WorkoutSession] Could not recover: %@", error.localizedDescription)
+          Log.session.error("Could not recover: \(error.localizedDescription, privacy: .public)")
         }
         let workoutId = UserDefaults.standard.string(forKey: Self.workoutIdKey)
         Log.session.info(
@@ -263,7 +264,7 @@ final class WorkoutSession: NSObject, ObservableObject {
         healthStore: store, workoutConfiguration: configuration)
       return session
     } catch {
-      NSLog("[WorkoutSession] Could not start: %@", error.localizedDescription)
+      Log.session.error("Could not start: \(error.localizedDescription, privacy: .public)")
       return nil
     }
   }
@@ -271,7 +272,7 @@ final class WorkoutSession: NSObject, ObservableObject {
   /// Collects the session's measurements from `start`, and ends it once it has run too long.
   private func collect(from start: Date) {
     builder?.beginCollection(withStart: start) { _, error in
-      if let error { NSLog("[WorkoutSession] Could not collect: %@", error.localizedDescription) }
+      if let error { Log.session.error("Could not collect: \(error.localizedDescription, privacy: .public)") }
     }
     limit(from: start)
   }
@@ -309,14 +310,14 @@ final class WorkoutSession: NSObject, ObservableObject {
     if session.state != .ended { session.end() }
     builder.endCollection(withEnd: max(end, builder.startDate ?? end)) { _, error in
       if let error {
-        NSLog("[WorkoutSession] Could not end: %@", error.localizedDescription)
+        Log.session.error("Could not end: \(error.localizedDescription, privacy: .public)")
         builder.discardWorkout()
       } else if saved {
         let totals = workoutId.map { Self.totals(of: builder, for: $0) }
         Task { @MainActor in self.totals = totals }
         builder.finishWorkout { _, error in
           if let error {
-            NSLog("[WorkoutSession] Could not save: %@", error.localizedDescription)
+            Log.session.error("Could not save: \(error.localizedDescription, privacy: .public)")
           }
         }
       } else {
@@ -396,7 +397,7 @@ extension WorkoutSession: HKWorkoutSessionDelegate {
 
   nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error)
   {
-    NSLog("[WorkoutSession] Failed: %@", error.localizedDescription)
+    Log.session.error("Failed: \(error.localizedDescription, privacy: .public)")
     Task { @MainActor in self.sessionEnded(workoutSession) }
   }
 }

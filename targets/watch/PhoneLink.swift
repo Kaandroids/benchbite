@@ -173,7 +173,7 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
     if let signalling { sign["rest"] = signalling }
     if let heartRate { sign["bpm"] = heartRate }
     session.sendMessage(sign, replyHandler: nil) { error in
-      NSLog("[PhoneLink] Could not say the watch is there: %@", error.localizedDescription)
+      Log.link.error("Could not say the watch is there: \(error.localizedDescription, privacy: .public)")
     }
   }
 
