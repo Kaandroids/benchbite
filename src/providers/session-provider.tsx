@@ -10,9 +10,9 @@ import {
 } from 'react';
 import { AppState } from 'react-native';
 
+import { captchaToken } from '@/captcha/captcha';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { reportError } from '@/lib/reporting';
-import { captchaToken } from '@/captcha/captcha';
 import { supabase } from '@/lib/supabase';
 
 export type SessionState =
