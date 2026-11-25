@@ -202,7 +202,7 @@ export function CaptchaHost() {
           setSupportMultipleWindows={false}
           onError={() => fail('load')}
           onHttpError={() => fail('http')}
-          style={styles.widget}
+          style={styles.page}
           containerStyle={styles.widget}
           scrollEnabled={false}
           bounces={false}
@@ -232,9 +232,14 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
   },
-  // Turnstile's widget is 65 points high; the frame leaves room for its border.
+  // Turnstile's widget is 65 points high; the frame leaves room for its border. The WebView's own
+  // container grows with `flex: 1`, which in a sheet of no set height would leave it none.
   widget: {
+    flex: 0,
     height: 72,
+  },
+  page: {
+    flex: 1,
     backgroundColor: 'transparent',
   },
 });
