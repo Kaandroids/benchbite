@@ -15,8 +15,14 @@ import { CaptchaError, setCaptchaHost, type TokenRequest } from './captcha';
 /** The page that runs Turnstile, on the website (ADR 0171); a local one can stand in for it. */
 export const CAPTCHA_URL =
   process.env.EXPO_PUBLIC_CAPTCHA_URL ?? 'https://www.benchbite.com/captcha/';
-/** Cloudflare's test key, which always passes unseen, unless the build names the real one. */
-export const SITE_KEY = process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000BB';
+/**
+ * The widget's key, which is public: the production one in a release build, which only the hosted
+ * project accepts, and in development Cloudflare's test key, which always passes unseen, as the
+ * local stack checks no captcha (ADR 0171).
+ */
+export const SITE_KEY =
+  process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY ??
+  (__DEV__ ? '1x00000000000000000000BB' : '0x4AAAAAAGSIyuXZv1X5V6ht');
 
 /** How long the page has to load, and an unseen check to give a token. */
 const WAIT_MS = 20_000;
