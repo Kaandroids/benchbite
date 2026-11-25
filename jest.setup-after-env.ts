@@ -23,3 +23,10 @@ jest.mock('./src/health/platform', () => require('./src/test/health-platform'));
 
 // Sentry sends nothing in tests; this stand-in's functions are mocks (ADR 0149).
 jest.mock('@sentry/react-native', () => require('./src/test/sentry'));
+
+// Requests to Supabase Auth get a captcha token without Turnstile, which only a device runs
+// (ADR 0171); captcha.test.ts tests the real one.
+jest.mock('./src/captcha/captcha', () => ({
+  ...jest.requireActual('./src/captcha/captcha'),
+  captchaToken: jest.fn(() => Promise.resolve('captcha-token')),
+}));
