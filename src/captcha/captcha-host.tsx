@@ -25,8 +25,6 @@ export const TEST_SITE_KEY =
 
 /** How long the page has to load, and an unseen check to give a token. */
 const WAIT_MS = 20_000;
-/** The page's own origin, as a local one in development may be served over plain http. */
-const PAGE_ORIGIN = /^[a-z]+:\/\/[^/]+/i.exec(CAPTCHA_URL)?.[0] ?? 'https://www.benchbite.com';
 /** Where Turnstile's own frames come from. */
 const CHALLENGES = 'https://challenges.cloudflare.com/';
 
@@ -83,9 +81,9 @@ export function CaptchaHost() {
   }, []);
 
   const fail = useCallback(
-    (detail: string) => {
+    (detail: string, expected = false) => {
       pageState.current = 'failed';
-      settle({ error: new CaptchaError('failed', detail) });
+      settle({ error: new CaptchaError('failed', detail, expected) });
     },
     [settle],
   );
@@ -159,13 +157,14 @@ export function CaptchaHost() {
     }
   };
 
-  // The page and Turnstile's frames load in the WebView; a link of theirs, as to Cloudflare's
-  // privacy policy, opens in the browser.
+  // The page and Turnstile's frames load in the WebView, the frames from addresses such as
+  // about:srcdoc and blob:, which a real check needs and a test key never loads; a link of
+  // theirs, as to Cloudflare's privacy policy, opens in the browser.
   const onShouldStartLoad = ({ url, isTopFrame }: ShouldStartLoadRequest) => {
+    if (isTopFrame === false) return true;
     if (url.startsWith(CAPTCHA_URL) || url.startsWith(CHALLENGES) || url === 'about:blank') {
       return true;
     }
-    if (isTopFrame === false) return true;
     // Only a web page, never a call, a message or a link into an app.
     if (url.startsWith('https://')) {
       void Linking.openURL(url).catch(() => {});
@@ -197,7 +196,9 @@ export function CaptchaHost() {
           key={page}
           ref={web}
           source={{ uri: source }}
-          originWhitelist={[`${PAGE_ORIGIN}*`, 'https://*']}
+          // Every load is decided by onShouldStartLoad: the WebView's own list would block the
+          // frames' about: and blob: addresses, and the check would never end.
+          originWhitelist={['*']}
           onMessage={onMessage}
           onShouldStartLoadWithRequest={onShouldStartLoad}
           setSupportMultipleWindows={false}
@@ -206,7 +207,8 @@ export function CaptchaHost() {
             // A check shown had no timer; the page loading again must still answer in time.
             if (pending.current) waitUnseen(pending.current);
           }}
-          onError={() => fail('load')}
+          // A page that could not load, as offline, is no fault to report.
+          onError={() => fail('load', true)}
           onHttpError={() => fail('http')}
           style={styles.page}
           containerStyle={styles.widget}

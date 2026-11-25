@@ -97,6 +97,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
       // On success, onAuthStateChange receives the new session.
       await signInAnonymously();
     } catch (error) {
+      // A guest session that cannot start leaves the app on its error screen; say why.
+      reportError('Could not start a guest session', error);
       setState({
         status: 'error',
         error: error instanceof Error ? error : new Error(String(error)),

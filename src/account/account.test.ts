@@ -85,10 +85,10 @@ describe('accountError', () => {
     expect(accountError(new Error('boom'))).toBe('unknown');
   });
 
-  it('reads a captcha that gave no token as such, which is not reported', () => {
-    const error = new CaptchaError('failed', 'timeout');
-    expect(accountError(error)).toBe('captcha');
-    expect(isExpected(error)).toBe(true);
+  it('reads a captcha that gave no token as such, reported unless the page could not load', () => {
+    expect(accountError(new CaptchaError('failed', 'timeout'))).toBe('captcha');
+    expect(isExpected(new CaptchaError('failed', 'timeout'))).toBe(false);
+    expect(isExpected(new CaptchaError('failed', 'load', true))).toBe(true);
   });
 });
 
