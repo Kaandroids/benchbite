@@ -212,6 +212,8 @@ token_verifications = 30
 web3 = 30
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# Off here: the hosted project checks Cloudflare Turnstile, which the deploy workflow adds with its
+# secret, as it does the email sender (ADR 0171). The app sends a token either way.
 # [auth.captcha]
 # enabled = true
 # provider = "hcaptcha"
