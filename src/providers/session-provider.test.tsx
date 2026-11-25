@@ -2,6 +2,7 @@ import { AuthApiError, type Session } from '@supabase/supabase-js';
 import { Storage } from 'expo-sqlite/kv-store';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { CaptchaError, captchaToken } from '@/captcha/captcha';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
@@ -138,6 +139,14 @@ describe('SessionProvider', () => {
     expect(result.current).toMatchObject({ error: new Error('network down') });
   });
 
+  it('cannot start when no captcha token comes, and says so', async () => {
+    jest.mocked(captchaToken).mockRejectedValueOnce(new CaptchaError('failed', 'timeout'));
+    const { result } = await renderSession();
+    await act(() => result.current.retry());
+    expect(auth.signInAnonymously).not.toHaveBeenCalled();
+    expect(result.current.status).toBe('error');
+  });
+
   it('shares one request between concurrent sign-ins', async () => {
     let finish: (value: unknown) => void = () => {};
     auth.signInAnonymously.mockReturnValue(
@@ -148,7 +157,12 @@ describe('SessionProvider', () => {
     const { result } = await renderSession();
     const first = result.current.retry();
     const second = result.current.retry();
-    expect(auth.signInAnonymously).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(auth.signInAnonymously).toHaveBeenCalledTimes(1));
+    // With a captcha token the person cannot decline, as the app needs a session (ADR 0171).
+    expect(captchaToken).toHaveBeenCalledWith({ cancellable: false });
+    expect(auth.signInAnonymously).toHaveBeenCalledWith({
+      options: { captchaToken: 'captcha-token' },
+    });
     await act(async () => {
       finish({ data: {}, error: null });
       await Promise.all([first, second]);
