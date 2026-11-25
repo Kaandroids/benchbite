@@ -168,21 +168,21 @@ describe('ConfirmEmailScreen', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
 
-    it('waits a minute, asks for the change again for a guest, and starts waiting', async () => {
+    it('waits two minutes, asks for the change again for a guest, and starts waiting', async () => {
       await renderScreen();
-      const waiting = screen.getByRole('button', { name: 'Send again in 1:00' });
+      const waiting = screen.getByRole('button', { name: 'Send again in 2:00' });
       await fireEvent.press(waiting);
       expect(auth.resend).not.toHaveBeenCalled();
-      await act(async () => jest.advanceTimersByTime(60_000));
+      await act(async () => jest.advanceTimersByTime(120_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith({ email: EMAIL }));
       expect(auth.resend).not.toHaveBeenCalled();
-      expect(await screen.findByRole('button', { name: 'Send again in 1:00' })).toBeOnTheScreen();
+      expect(await screen.findByRole('button', { name: 'Send again in 2:00' })).toBeOnTheScreen();
     });
 
     it('sends a new user their code again', async () => {
       await renderScreen('new');
-      await act(async () => jest.advanceTimersByTime(60_000));
+      await act(async () => jest.advanceTimersByTime(120_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       await waitFor(() =>
         expect(auth.resend).toHaveBeenCalledWith({

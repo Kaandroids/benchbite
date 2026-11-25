@@ -111,7 +111,7 @@
       "weakPassword": "Dein Passwort braucht mindestens {{min}} Zeichen.",
       "passwordTooLong": "Dein Passwort darf höchstens {{max}} Zeichen haben.",
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
-      "codeWait": "Wir haben gerade einen Code geschickt. Versuch es in einer Minute noch einmal.",
+      "codeWait": "Wir haben gerade einen Code geschickt. Versuch es in ein paar Minuten noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
       "captcha": "Wir konnten nicht prüfen, dass du ein Mensch bist. Prüfe deine Verbindung und versuch es noch einmal.",
       "serverError": "Bei uns ist etwas schiefgelaufen. Versuch es gleich noch einmal.",

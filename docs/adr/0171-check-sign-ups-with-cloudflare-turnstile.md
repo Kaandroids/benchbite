@@ -48,8 +48,12 @@ code, refreshing a session and changing the user, as a guest's address, need non
 
 - Cloudflare learns the IP address and browser details of whoever signs up or in; the privacy
   policy names it as a processor (#726).
-- A guest's email change needs no token, so one guest can still ask for a code a minute, limited
-  by `max_frequency`; making many guests needs a token each.
+- A guest's email change (`PUT /user`) needs no token, and Supabase Auth cannot be made to ask for
+  one there; it also sends the email before it writes to the database, so no trigger can stop it.
+  So the shared limit goes up from 30 to 500 emails an hour and `max_frequency` from one to two
+  minutes: one guest sends at most 30 an hour, and using the limit up needs many guests, each with
+  a token. Limits per account and per address, before an email is sent, need Supabase's Send Email
+  Hook, which is left for later.
 - Builds older than this one cannot sign up, sign in or start a guest session once the hosted
   project checks the captcha. Only the maintainer's builds are that old.
 - The website must be deployed with the page before the hosted project checks the captcha.

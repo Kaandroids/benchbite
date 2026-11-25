@@ -23,7 +23,7 @@ export type Credentials = { email: string; password: string };
 /** The digits of the code sent by email, as `otp_length` in `supabase/config.toml`. */
 export const CODE_LENGTH = 6;
 /** How long before another code can be asked for, as `max_frequency` in `supabase/config.toml`. */
-export const RESEND_SECONDS = 60;
+export const RESEND_SECONDS = 120;
 
 /** A guest becoming an account, or a new user for someone without a session. */
 export type NewAccountKind = 'guest' | 'new';

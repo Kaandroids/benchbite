@@ -111,7 +111,7 @@
       "weakPassword": "Use a password with at least {{min}} characters.",
       "passwordTooLong": "Use a password with at most {{max}} characters.",
       "rateLimited": "Too many tries. Wait a moment and try again.",
-      "codeWait": "We sent a code a moment ago. Try again in a minute.",
+      "codeWait": "We sent a code a moment ago. Try again in a few minutes.",
       "offline": "No connection. Check your internet and try again.",
       "captcha": "We couldn’t check that you’re a person. Check your connection and try again.",
       "serverError": "Something went wrong on our side. Try again in a moment.",
