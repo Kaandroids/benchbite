@@ -186,7 +186,7 @@ export const tr: Messages = {
       { title: 'Silinenler', text: 'Hesabın ve sana ait her şey, çoğunlukla 24 saat içinde.' },
       {
         title: 'En fazla 28 gün kalanlar',
-        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar ve sana gönderdiğimiz e-postaların kayıtları, üzerine yazılana kadar. Bite’ın arkasındaki yapay zekâ bunlara dahil değil: neyi sakladığını gizlilik politikası anlatır. Bu sayfadan yapılan bir istek yaklaşık bir gün saklanır.',
+        text: 'Hesabının verilerinin, kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyaları ve sana gönderdiğimiz e-postaların kayıtları, üzerine yazılana kadar. Bite’ın arkasındaki yapay zekâ bunlara dahil değil: neyi sakladığını gizlilik politikası anlatır. Bu sayfadan yapılan bir istek yaklaşık bir gün saklanır. Bu web sitesinin ziyaretlerine ve botlara karşı yapılan kontrollere ait kayıtlar IP adresini içerir ama hesabını içermez; ne kadar saklandıklarını gizlilik politikası anlatır.',
       },
       {
         title: 'Bizim silemeyeceklerimiz',

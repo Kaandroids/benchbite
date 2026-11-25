@@ -191,7 +191,7 @@ export const en = {
       },
       {
         title: 'Kept for up to 28 days',
-        text: 'Copies in the backups and logs of the services we use, and their records of the emails we sent you, until these are overwritten. The AI behind Bite is not one of them: the privacy policy says what it keeps. A request made on this page is kept for about a day.',
+        text: 'Copies of your account’s data in the backups and logs of the services we use, and their records of the emails we sent you, until these are overwritten. The AI behind Bite is not one of them: the privacy policy says what it keeps. A request made on this page is kept for about a day. Records of visits to this website and of the checks against bots hold your IP address but not your account; the privacy policy says how long they are kept.',
       },
       {
         title: 'Not ours to delete',

@@ -190,7 +190,7 @@ export const de: Messages = {
       },
       {
         title: 'Bis zu 28 Tage aufbewahrt',
-        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, und ihre Einträge zu den E-Mails, die wir dir geschickt haben, bis sie überschrieben werden. Die KI hinter Bite gehört nicht dazu: Was sie aufbewahrt, steht in der Datenschutzerklärung. Eine Anfrage auf dieser Seite wird etwa einen Tag lang aufbewahrt.',
+        text: 'Kopien der Daten deines Kontos in den Backups und Logs der Dienste, die wir nutzen, und ihre Einträge zu den E-Mails, die wir dir geschickt haben, bis sie überschrieben werden. Die KI hinter Bite gehört nicht dazu: Was sie aufbewahrt, steht in der Datenschutzerklärung. Eine Anfrage auf dieser Seite wird etwa einen Tag lang aufbewahrt. Aufzeichnungen über Besuche dieser Website und über die Prüfung auf Bots enthalten deine IP-Adresse, aber nicht dein Konto; wie lange sie aufbewahrt werden, steht in der Datenschutzerklärung.',
       },
       {
         title: 'Nicht von uns zu löschen',
