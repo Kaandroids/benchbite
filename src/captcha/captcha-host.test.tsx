@@ -16,6 +16,7 @@ type WebViewProps = {
   onShouldStartLoadWithRequest: (request: { url: string; isTopFrame?: boolean }) => boolean;
   onError: () => void;
   onLoadStart: () => void;
+  originWhitelist: string[];
 };
 
 const mockInject = jest.fn();
@@ -195,6 +196,16 @@ it('fails when an unseen check gives no token in time', async () => {
   } finally {
     jest.useRealTimers();
   }
+});
+
+it('lets Turnstile’s frames load from about: and blob: addresses, which a real check needs', async () => {
+  await renderHost();
+  // The WebView's own list would block them before onShouldStartLoad is asked.
+  expect(mockProps.originWhitelist).toEqual(['*']);
+  const load = mockProps.onShouldStartLoadWithRequest;
+  expect(load({ url: 'about:srcdoc', isTopFrame: false })).toBe(true);
+  expect(load({ url: 'blob:https://challenges.cloudflare.com/x', isTopFrame: false })).toBe(true);
+  expect(load({ url: 'about:srcdoc', isTopFrame: true })).toBe(false);
 });
 
 it('opens a link of the widget’s in the browser', async () => {
