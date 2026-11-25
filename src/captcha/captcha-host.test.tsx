@@ -182,7 +182,8 @@ it('fails when the page does not load', async () => {
   const token = captchaToken();
   await act(() => Promise.resolve());
   await act(() => mockProps.onError());
-  await expect(token).rejects.toMatchObject({ reason: 'failed' });
+  // As offline: told on the screen, not reported.
+  await expect(token).rejects.toMatchObject({ reason: 'failed', expected: true });
 });
 
 it('fails when an unseen check gives no token in time', async () => {

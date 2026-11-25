@@ -81,9 +81,9 @@ export function CaptchaHost() {
   }, []);
 
   const fail = useCallback(
-    (detail: string) => {
+    (detail: string, expected = false) => {
       pageState.current = 'failed';
-      settle({ error: new CaptchaError('failed', detail) });
+      settle({ error: new CaptchaError('failed', detail, expected) });
     },
     [settle],
   );
@@ -207,7 +207,8 @@ export function CaptchaHost() {
             // A check shown had no timer; the page loading again must still answer in time.
             if (pending.current) waitUnseen(pending.current);
           }}
-          onError={() => fail('load')}
+          // A page that could not load, as offline, is no fault to report.
+          onError={() => fail('load', true)}
           onHttpError={() => fail('http')}
           style={styles.page}
           containerStyle={styles.widget}

@@ -7,17 +7,19 @@
 /** Why no token came: the person closed the check, or Turnstile could not give one. */
 export class CaptchaError extends Error {
   /**
-   * Whether reportError() leaves it out: a check the person closed, or a page that could not load,
-   * as offline. Any other failure is reported, as a check that never ends would go unseen.
+   * Whether reportError() leaves it out: a check the person closed, and what the host passes as
+   * such, a page that could not load, as offline. Any other failure is reported, as a check that
+   * never ends would go unseen.
    */
   readonly expected: boolean;
 
   constructor(
     readonly reason: 'cancelled' | 'failed',
-    readonly detail?: string,
+    detail?: string,
+    expected = reason === 'cancelled',
   ) {
     super(`No captcha token: ${reason}${detail ? ` (${detail})` : ''}`);
-    this.expected = reason === 'cancelled' || detail === 'load';
+    this.expected = expected;
   }
 }
 

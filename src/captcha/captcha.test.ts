@@ -54,6 +54,5 @@ it('fails when no host comes', async () => {
 it('reports a check that failed, but not one closed or a page that could not load', () => {
   expect(new CaptchaError('failed', 'timeout').expected).toBe(false);
   expect(new CaptchaError('failed', '600010').expected).toBe(false);
-  expect(new CaptchaError('failed', 'load').expected).toBe(true);
   expect(new CaptchaError('cancelled').expected).toBe(true);
 });

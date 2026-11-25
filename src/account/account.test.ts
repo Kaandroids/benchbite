@@ -88,7 +88,7 @@ describe('accountError', () => {
   it('reads a captcha that gave no token as such, reported unless the page could not load', () => {
     expect(accountError(new CaptchaError('failed', 'timeout'))).toBe('captcha');
     expect(isExpected(new CaptchaError('failed', 'timeout'))).toBe(false);
-    expect(isExpected(new CaptchaError('failed', 'load'))).toBe(true);
+    expect(isExpected(new CaptchaError('failed', 'load', true))).toBe(true);
   });
 });
 
