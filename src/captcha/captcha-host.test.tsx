@@ -148,6 +148,22 @@ it('starts a request over when the page loads again, as for a new theme', async 
   await expect(token).resolves.toBe('abc');
 });
 
+it('fails when a page loading again under a shown check never gets ready', async () => {
+  jest.useFakeTimers();
+  try {
+    await renderHost();
+    const token = captchaToken({ cancellable: false });
+    const failed = expect(token).rejects.toMatchObject({ reason: 'failed' });
+    await act(() => jest.advanceTimersByTimeAsync(0));
+    await page({ type: 'interactive', shown: true });
+    await act(() => mockProps.onLoadStart());
+    await act(() => jest.advanceTimersByTimeAsync(20_000));
+    await failed;
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 it('waits for a page loading again before it asks', async () => {
   await renderHost();
   await act(() => mockProps.onLoadStart());

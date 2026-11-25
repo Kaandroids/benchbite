@@ -62,11 +62,10 @@ export function CaptchaHost() {
   const { t, i18n } = useTranslation();
   const { colors, scheme } = useTheme();
   const web = useRef<ComponentRef<typeof WebView>>(null);
-  // Whether the page now loaded can give tokens; a request that comes before waits for it.
-  const ready = useRef(false);
-  // A page that failed is loaded again for the next request, not at once, so that one that
-  // cannot load, as offline, does not load again and again.
-  const stale = useRef(false);
+  // The page's state: `ready` gives tokens, and a request that comes while it is `loading` waits
+  // for it. One that `failed` is loaded again for the next request, not at once, so that a page
+  // that cannot load, as offline, does not load again and again.
+  const pageState = useRef<'loading' | 'ready' | 'failed'>('loading');
   const pending = useRef<Pending | null>(null);
   const [page, setPage] = useState(0);
   const [interactive, setInteractive] = useState<TokenRequest | null>(null);
@@ -86,8 +85,7 @@ export function CaptchaHost() {
 
   const fail = useCallback(
     (detail: string) => {
-      ready.current = false;
-      stale.current = true;
+      pageState.current = 'failed';
       settle({ error: new CaptchaError('failed', detail) });
     },
     [settle],
@@ -110,10 +108,10 @@ export function CaptchaHost() {
           const current: Pending = { request, resolve, reject };
           pending.current = current;
           waitUnseen(current);
-          if (stale.current) {
-            stale.current = false;
+          if (pageState.current === 'failed') {
+            pageState.current = 'loading';
             setPage((count) => count + 1);
-          } else if (ready.current) {
+          } else if (pageState.current === 'ready') {
             run();
           }
           // Otherwise the page's `ready` runs it.
@@ -127,7 +125,7 @@ export function CaptchaHost() {
     if (!message) return;
     switch (message.type) {
       case 'ready': {
-        ready.current = true;
+        pageState.current = 'ready';
         // A request that waited, or whose page loaded again, as for a new theme or language,
         // starts over on this page: a check shown on the last one is gone with it.
         const current = pending.current;
@@ -205,7 +203,9 @@ export function CaptchaHost() {
           onShouldStartLoadWithRequest={onShouldStartLoad}
           setSupportMultipleWindows={false}
           onLoadStart={() => {
-            ready.current = false;
+            pageState.current = 'loading';
+            // A check shown had no timer; the page loading again must still answer in time.
+            if (pending.current) waitUnseen(pending.current);
           }}
           onError={() => fail('load')}
           onHttpError={() => fail('http')}
