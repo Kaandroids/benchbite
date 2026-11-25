@@ -62,10 +62,12 @@ export function CaptchaHost() {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing, scheme } = useTheme();
   const web = useRef<ComponentRef<typeof WebView>>(null);
+  // Whether the page now loaded can give tokens; a request that comes before waits for it.
   const ready = useRef(false);
-  const onReady = useRef<(() => void)[]>([]);
+  // A page that failed is loaded again for the next request, not at once, so that one that
+  // cannot load, as offline, does not load again and again.
+  const stale = useRef(false);
   const pending = useRef<Pending | null>(null);
-  // A new page after one failed to load or gave no token.
   const [page, setPage] = useState(0);
   const [interactive, setInteractive] = useState<TokenRequest | null>(null);
 
@@ -85,7 +87,7 @@ export function CaptchaHost() {
   const fail = useCallback(
     (detail: string) => {
       ready.current = false;
-      setPage((count) => count + 1);
+      stale.current = true;
       settle({ error: new CaptchaError('failed', detail) });
     },
     [settle],
@@ -99,6 +101,8 @@ export function CaptchaHost() {
     [fail],
   );
 
+  const run = () => web.current?.injectJavaScript('window.benchbiteCaptcha(); true;');
+
   useEffect(() => {
     setCaptchaHost(
       (request) =>
@@ -106,12 +110,13 @@ export function CaptchaHost() {
           const current: Pending = { request, resolve, reject };
           pending.current = current;
           waitUnseen(current);
-          const run = () => web.current?.injectJavaScript('window.benchbiteCaptcha(); true;');
-          if (ready.current) {
+          if (stale.current) {
+            stale.current = false;
+            setPage((count) => count + 1);
+          } else if (ready.current) {
             run();
-          } else {
-            onReady.current.push(run);
           }
+          // Otherwise the page's `ready` runs it.
         }),
     );
     return () => setCaptchaHost(null);
@@ -121,11 +126,18 @@ export function CaptchaHost() {
     const message = pageMessage(nativeEvent.data);
     if (!message) return;
     switch (message.type) {
-      case 'ready':
+      case 'ready': {
         ready.current = true;
-        onReady.current.forEach((run) => run());
-        onReady.current = [];
+        // A request that waited, or whose page loaded again, as for a new theme or language,
+        // starts over on this page: a check shown on the last one is gone with it.
+        const current = pending.current;
+        if (current) {
+          setInteractive(null);
+          waitUnseen(current);
+          run();
+        }
         break;
+      }
       case 'token':
         settle({ token: message.token });
         break;
@@ -157,7 +169,10 @@ export function CaptchaHost() {
       return true;
     }
     if (isTopFrame === false) return true;
-    void Linking.openURL(url).catch(() => {});
+    // Only a web page, never a call, a message or a link into an app.
+    if (url.startsWith('https://')) {
+      void Linking.openURL(url).catch(() => {});
+    }
     return false;
   };
 
@@ -200,6 +215,9 @@ export function CaptchaHost() {
           onMessage={onMessage}
           onShouldStartLoadWithRequest={onShouldStartLoad}
           setSupportMultipleWindows={false}
+          onLoadStart={() => {
+            ready.current = false;
+          }}
           onError={() => fail('load')}
           onHttpError={() => fail('http')}
           style={styles.page}

@@ -15,6 +15,7 @@ type WebViewProps = {
   onMessage: (event: { nativeEvent: { data: string } }) => void;
   onShouldStartLoadWithRequest: (request: { url: string; isTopFrame?: boolean }) => boolean;
   onError: () => void;
+  onLoadStart: () => void;
 };
 
 const mockInject = jest.fn();
@@ -108,13 +109,55 @@ it('cannot be closed at first launch, and goes on once tapped', async () => {
   await expect(token).resolves.toBe('abc');
 });
 
-it('fails when Turnstile cannot give a token, and loads the page again', async () => {
+it('fails when Turnstile cannot give a token, and loads the page again for the next request', async () => {
   await renderHost();
   const token = captchaToken();
   await act(() => Promise.resolve());
   await page({ type: 'error', code: '600010' });
   await expect(token).rejects.toMatchObject({ reason: 'failed' });
+  expect(mockMounts).toBe(1);
+
+  const next = captchaToken();
+  await act(() => Promise.resolve());
   expect(mockMounts).toBe(2);
+  await page({ type: 'ready' });
+  expect(mockInject).toHaveBeenCalledTimes(2);
+  await page({ type: 'token', token: 'abc' });
+  await expect(next).resolves.toBe('abc');
+});
+
+it('does not load a page that failed again and again while nothing asks', async () => {
+  await render(<CaptchaHost />);
+  await act(() => mockProps.onError());
+  await act(() => mockProps.onError());
+  expect(mockMounts).toBe(1);
+});
+
+it('starts a request over when the page loads again, as for a new theme', async () => {
+  await renderHost();
+  const token = captchaToken({ cancellable: false });
+  await act(() => Promise.resolve());
+  await page({ type: 'interactive', shown: true });
+  expect(screen.getByRole('header', { name: 'One moment' })).toBeOnTheScreen();
+
+  await act(() => mockProps.onLoadStart());
+  await page({ type: 'ready' });
+  expect(screen.queryByText('One moment')).toBeNull();
+  expect(mockInject).toHaveBeenCalledTimes(2);
+  await page({ type: 'token', token: 'abc' });
+  await expect(token).resolves.toBe('abc');
+});
+
+it('waits for a page loading again before it asks', async () => {
+  await renderHost();
+  await act(() => mockProps.onLoadStart());
+  const token = captchaToken();
+  await act(() => Promise.resolve());
+  expect(mockInject).not.toHaveBeenCalled();
+  await page({ type: 'ready' });
+  expect(mockInject).toHaveBeenCalledTimes(1);
+  await page({ type: 'token', token: 'abc' });
+  await expect(token).resolves.toBe('abc');
 });
 
 it('fails when the page does not load', async () => {
@@ -148,4 +191,7 @@ it('opens a link of the widget’s in the browser', async () => {
   );
   expect(load({ url: 'https://www.cloudflare.com/privacypolicy/', isTopFrame: true })).toBe(false);
   expect(open).toHaveBeenCalledWith('https://www.cloudflare.com/privacypolicy/');
+  expect(load({ url: 'tel:+4930123', isTopFrame: true })).toBe(false);
+  expect(load({ url: 'benchbite://settings', isTopFrame: true })).toBe(false);
+  expect(open).toHaveBeenCalledTimes(1);
 });
