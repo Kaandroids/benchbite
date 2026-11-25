@@ -3,6 +3,7 @@ import { Storage } from 'expo-sqlite/kv-store';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { CaptchaError, captchaToken } from '@/captcha/captcha';
+import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
@@ -19,6 +20,10 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
+jest.mock('@/lib/reporting', () => ({
+  ...jest.requireActual('@/lib/reporting'),
+  reportError: jest.fn(),
+}));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
@@ -145,6 +150,10 @@ describe('SessionProvider', () => {
     await act(() => result.current.retry());
     expect(auth.signInAnonymously).not.toHaveBeenCalled();
     expect(result.current.status).toBe('error');
+    expect(reportError).toHaveBeenCalledWith(
+      'Could not start a guest session',
+      expect.any(CaptchaError),
+    );
   });
 
   it('shares one request between concurrent sign-ins', async () => {
