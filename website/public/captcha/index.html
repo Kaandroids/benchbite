@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  The captcha of the app (#455, ADR 0171): Cloudflare Turnstile has no native SDK, so the app opens
+  this page in a WebView and takes the token it posts. It is a static file, outside the site's
+  pages, as it loads Turnstile's script, which their policy does not allow.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; style-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Benchbite</title>
+    <link rel="stylesheet" href="./captcha.css" />
+    <script src="./captcha.js" defer></script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=benchbiteCaptchaLoaded"
+      defer
+    ></script>
+  </head>
+  <body>
+    <div id="widget"></div>
+  </body>
+</html>

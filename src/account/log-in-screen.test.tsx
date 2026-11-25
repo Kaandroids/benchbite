@@ -54,6 +54,7 @@ describe('LogInScreen', () => {
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'kaan@example.com',
       password: 'secret12',
+      options: { captchaToken: 'captcha-token' },
     });
   });
 
@@ -71,6 +72,7 @@ describe('LogInScreen', () => {
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'kaan@example.com',
       password: 'secret12',
+      options: { captchaToken: 'captcha-token' },
     });
   });
 
@@ -130,7 +132,13 @@ describe('LogInScreen', () => {
       expect(
         await screen.findByText('We sent a 6-digit code to kaan@example.com.'),
       ).toBeOnTheScreen();
-      expect(auth.resend).toHaveBeenCalledWith({ email: 'kaan@example.com', type: 'signup' });
+      await waitFor(() =>
+        expect(auth.resend).toHaveBeenCalledWith({
+          email: 'kaan@example.com',
+          type: 'signup',
+          options: { captchaToken: 'captcha-token' },
+        }),
+      );
       await fireEvent.changeText(screen.getByLabelText('6-digit code'), '123456');
       await waitFor(() =>
         expect(auth.verifyOtp).toHaveBeenCalledWith({

@@ -1,5 +1,6 @@
 import { AuthApiError, AuthRetryableFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 
+import { CaptchaError } from '@/captcha/captcha';
 import { isExpected } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
@@ -8,6 +9,7 @@ import { sessionValue } from '@/test/context-mocks';
 
 import {
   accountError,
+  useAccountError,
   useCreateAccount,
   useSendDeletionCode,
   useSignIn,
@@ -54,6 +56,7 @@ describe('accountError', () => {
     ['weak_password', 'weakPassword'],
     ['over_request_rate_limit', 'rateLimited'],
     ['over_email_send_rate_limit', 'codeWait'],
+    ['captcha_failed', 'captcha'],
     ['something_new', 'unknown'],
   ])('reads %s as %s', (code, reason) => {
     expect(accountError(apiError(code))).toBe(reason);
@@ -81,6 +84,27 @@ describe('accountError', () => {
   it('reads anything else as unknown', () => {
     expect(accountError(new Error('boom'))).toBe('unknown');
   });
+
+  it('reads a captcha that gave no token as such, which is not reported', () => {
+    const error = new CaptchaError('failed', 'timeout');
+    expect(accountError(error)).toBe('captcha');
+    expect(isExpected(error)).toBe(true);
+  });
+});
+
+describe('useAccountError', () => {
+  it('says why a request failed', async () => {
+    const { result } = await renderHook(() => useAccountError(new CaptchaError('failed')));
+    expect(result.current).toEqual({
+      reason: 'captcha',
+      message: 'We couldn’t check that you’re a person. Check your connection and try again.',
+    });
+  });
+
+  it('says nothing of a check the person closed', async () => {
+    const { result } = await renderHook(() => useAccountError(new CaptchaError('cancelled')));
+    expect(result.current).toEqual({ reason: null, message: null });
+  });
 });
 
 describe('useCreateAccount', () => {
@@ -94,8 +118,13 @@ describe('useCreateAccount', () => {
   it('creates a new user when the guest session ended', async () => {
     given('ended');
     const { result } = await renderHook(useCreateAccount);
-    await expect(act(() => result.current.mutateAsync(CREDENTIALS))).resolves.toBe('new');
-    expect(auth.signUp).toHaveBeenCalledWith({ ...TRIMMED, options: { data: LOCALE } });
+    // Awaited, not with resolves: act's answer comes before the sign-up, which waits for the
+    // captcha token.
+    expect(await act(() => result.current.mutateAsync(CREDENTIALS))).toBe('new');
+    expect(auth.signUp).toHaveBeenCalledWith({
+      ...TRIMMED,
+      options: { data: LOCALE, captchaToken: 'captcha-token' },
+    });
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 
@@ -122,7 +151,10 @@ describe('useSignIn', () => {
   it('signs in', async () => {
     const { result } = await renderHook(useSignIn);
     await act(() => result.current.mutateAsync(CREDENTIALS));
-    expect(auth.signInWithPassword).toHaveBeenCalledWith(TRIMMED);
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({
+      ...TRIMMED,
+      options: { captchaToken: 'captcha-token' },
+    });
   });
 
   it('fails with the error Supabase answers', async () => {

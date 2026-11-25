@@ -43,7 +43,9 @@ describe('ForgotPasswordScreen', () => {
     await renderScreen();
     expect(screen.getByLabelText('Email')).toHaveProp('value', ' kaan@example.com ');
     expect(await sendCode()).toBeOnTheScreen();
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith('kaan@example.com');
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith('kaan@example.com', {
+      captchaToken: 'captcha-token',
+    });
   });
 
   it('signs in with the whole code, as a reset', async () => {
@@ -81,7 +83,7 @@ describe('ForgotPasswordScreen', () => {
     await renderScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Send code' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'We sent a code a moment ago. Try again in a minute.',
+      'We sent a code a moment ago. Try again in a few minutes.',
     );
   });
 
@@ -103,13 +105,13 @@ describe('ForgotPasswordScreen', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
 
-    it('waits a minute, then sends a new code', async () => {
+    it('waits two minutes, then sends a new code', async () => {
       await renderScreen();
       await sendCode();
-      await act(async () => jest.advanceTimersByTime(60_000));
+      await act(async () => jest.advanceTimersByTime(120_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       await waitFor(() => expect(auth.resetPasswordForEmail).toHaveBeenCalledTimes(2));
-      expect(await screen.findByRole('button', { name: 'Send again in 1:00' })).toBeOnTheScreen();
+      expect(await screen.findByRole('button', { name: 'Send again in 2:00' })).toBeOnTheScreen();
     });
 
     it('clears an error of sending again once the next code is typed', async () => {
@@ -119,7 +121,7 @@ describe('ForgotPasswordScreen', () => {
         data: {},
         error: new AuthRetryableFetchError('Failed to fetch', 0),
       } as never);
-      await act(async () => jest.advanceTimersByTime(60_000));
+      await act(async () => jest.advanceTimersByTime(120_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       expect(
         await screen.findByText('No connection. Check your internet and try again.'),

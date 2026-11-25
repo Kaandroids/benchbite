@@ -23,6 +23,11 @@
     "choose": "Galeriden seç",
     "cancel": "Vazgeç"
   },
+  "captcha": {
+    "title": "Bir saniye",
+    "body": "Devam etmeden önce bir insan olduğunu doğrulamamız gerekiyor.",
+    "cancel": "Vazgeç"
+  },
   "sessionError": {
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
@@ -106,8 +111,9 @@
       "weakPassword": "Şifren en az {{min}} karakter olmalı.",
       "passwordTooLong": "Şifren en fazla {{max}} karakter olabilir.",
       "rateLimited": "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.",
-      "codeWait": "Az önce bir kod gönderdik. Bir dakika sonra tekrar dene.",
+      "codeWait": "Az önce bir kod gönderdik. Birkaç dakika sonra tekrar dene.",
       "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
+      "captcha": "Doğrulama yapılamadı. Bağlantını kontrol edip tekrar dene.",
       "serverError": "Bizim tarafımızda bir sorun oldu. Birazdan tekrar dene.",
       "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene.",
       "emailNotConfirmed": "Önce e-postanı onayla. Sana gönderdiğimiz kodu bul.",

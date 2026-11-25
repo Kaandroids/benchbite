@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { AccountRefusal } from '@shared/account_refusals';
 
+import { CaptchaError, captchaToken } from '@/captcha/captcha';
 import { functionRefusal } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
@@ -22,7 +23,7 @@ export type Credentials = { email: string; password: string };
 /** The digits of the code sent by email, as `otp_length` in `supabase/config.toml`. */
 export const CODE_LENGTH = 6;
 /** How long before another code can be asked for, as `max_frequency` in `supabase/config.toml`. */
-export const RESEND_SECONDS = 60;
+export const RESEND_SECONDS = 120;
 
 /** A guest becoming an account, or a new user for someone without a session. */
 export type NewAccountKind = 'guest' | 'new';
@@ -60,6 +61,7 @@ export type AccountError =
   | 'rateLimited'
   | 'codeWait'
   | 'offline'
+  | 'captcha'
   | 'serverError'
   | 'unknown';
 
@@ -75,6 +77,8 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   over_request_rate_limit: 'rateLimited',
   // Another code within a minute of the last, as for a guest who corrects their address.
   over_email_send_rate_limit: 'codeWait',
+  // A captcha token Turnstile gave but Auth did not accept, as one that expired (ADR 0171).
+  captcha_failed: 'captcha',
 };
 
 // The errors the account's Edge Functions answer with (ADR 0095), by what they mean to the user.
@@ -153,6 +157,9 @@ export function accountError(error: unknown): AccountError {
   if (error instanceof FunctionsFetchError) {
     return 'offline';
   }
+  if (error instanceof CaptchaError) {
+    return 'captcha';
+  }
   // supabase-js reports both a request that never got an answer (status 0) and a server error
   // (5xx) as retryable; only the first is about the connection.
   if (isAuthRetryableFetchError(error)) {
@@ -196,7 +203,8 @@ export function accountErrorMessage(t: TFunction, error: unknown): string {
 /** The reason a request failed, with the message that says it. */
 export function useAccountError(error: unknown) {
   const { t } = useTranslation();
-  return error
+  // A check the person closed is no failure to tell them of.
+  return error && !(error instanceof CaptchaError && error.reason === 'cancelled')
     ? { reason: accountError(error), message: accountErrorMessage(t, error) }
     : { reason: null, message: null };
 }
@@ -228,7 +236,11 @@ async function isAccountPassword(password: string): Promise<boolean> {
     throw new Error('No account is signed in');
   }
   const previous = (await supabase.auth.getSession()).data.session?.access_token;
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: { captchaToken: await captchaToken() },
+  });
   if (isAuthApiError(error) && error.code === 'invalid_credentials') {
     return false;
   }
@@ -275,7 +287,11 @@ export function useCreateAccount() {
       const data = { locale: i18n.language };
       const { error } = user
         ? await supabase.auth.updateUser({ email, data })
-        : await supabase.auth.signUp({ email, password, options: { data } });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { data, captchaToken: await captchaToken() },
+          });
       if (error) {
         throw error;
       }
@@ -327,7 +343,11 @@ export function useResendCode() {
       const { error } =
         kind === 'guest'
           ? await supabase.auth.updateUser({ email })
-          : await supabase.auth.resend({ email, type: 'signup' });
+          : await supabase.auth.resend({
+              email,
+              type: 'signup',
+              options: { captchaToken: await captchaToken() },
+            });
       if (error) {
         throw error;
       }
@@ -343,7 +363,9 @@ export function useSendResetCode() {
   return useMutation({
     meta: { where: 'Could not send the code to reset the password' },
     mutationFn: async ({ email }: { email: string }) => {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        captchaToken: await captchaToken(),
+      });
       if (error) {
         throw error;
       }
@@ -407,7 +429,10 @@ export function useSignIn() {
   return useMutation({
     meta: { where: 'Could not log in' },
     mutationFn: async (credentials: Credentials) => {
-      const { error } = await supabase.auth.signInWithPassword(normalized(credentials));
+      const { error } = await supabase.auth.signInWithPassword({
+        ...normalized(credentials),
+        options: { captchaToken: await captchaToken() },
+      });
       if (error) {
         throw error;
       }

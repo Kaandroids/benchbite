@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { AppState } from 'react-native';
 
+import { captchaToken } from '@/captcha/captcha';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { reportError } from '@/lib/reporting';
 import { supabase } from '@/lib/supabase';
@@ -65,8 +66,9 @@ let pendingSignIn: Promise<void> | null = null;
 // Concurrent calls share one request. React runs effects twice in development, and two requests
 // would create two anonymous users.
 function signInAnonymously(): Promise<void> {
-  pendingSignIn ??= supabase.auth
-    .signInAnonymously()
+  // The app cannot go on without a session, so the person cannot close the check (ADR 0171).
+  pendingSignIn ??= captchaToken({ cancellable: false })
+    .then((captchaToken) => supabase.auth.signInAnonymously({ options: { captchaToken } }))
     .then(({ error }) => {
       if (error) throw error;
     })

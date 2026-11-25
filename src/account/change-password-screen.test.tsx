@@ -70,6 +70,7 @@ describe('ChangePasswordScreen', () => {
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'kaan@example.com',
       password: 'the old one',
+      options: { captchaToken: 'captcha-token' },
     });
     expect(auth.updateUser).toHaveBeenCalledWith({ password: 'a new one!' });
     expect(auth.signInWithPassword.mock.invocationCallOrder[0]).toBeLessThan(

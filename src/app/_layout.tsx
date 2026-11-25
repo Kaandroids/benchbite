@@ -19,6 +19,7 @@ import { useClaimDevice } from '@/account/device-owner';
 import { NewPasswordScreen } from '@/account/new-password-screen';
 import { SessionEnded } from '@/account/session-ended';
 import { AnimatedSplash } from '@/brand/animated-splash';
+import { CaptchaHost } from '@/captcha/captcha-host';
 import { AppErrorBoundary } from '@/components/error-screen';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
@@ -67,6 +68,8 @@ function RootLayout() {
           </OnboardingProvider>
         </QueryProvider>
       </SessionProvider>
+      {/* Over everything, the splash screen too, for when the check needs a tap (ADR 0171). */}
+      <CaptchaHost />
     </GestureHandlerRootView>
   );
 }
