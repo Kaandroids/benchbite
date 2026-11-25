@@ -43,7 +43,9 @@ describe('ForgotPasswordScreen', () => {
     await renderScreen();
     expect(screen.getByLabelText('Email')).toHaveProp('value', ' kaan@example.com ');
     expect(await sendCode()).toBeOnTheScreen();
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith('kaan@example.com');
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith('kaan@example.com', {
+      captchaToken: 'captcha-token',
+    });
   });
 
   it('signs in with the whole code, as a reset', async () => {

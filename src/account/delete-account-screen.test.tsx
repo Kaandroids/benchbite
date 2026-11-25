@@ -231,6 +231,7 @@ describe('an account', () => {
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'kaan@example.com',
       password: 'guess',
+      options: { captchaToken: 'captcha-token' },
     });
     expect(supabase.functions.invoke).not.toHaveBeenCalledWith('delete-account', expect.anything());
     expect(leaveDeletedUser).not.toHaveBeenCalled();
@@ -244,6 +245,7 @@ describe('an account', () => {
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'kaan@example.com',
       password: 'secret',
+      options: { captchaToken: 'captcha-token' },
     });
     expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
       body: { signedIn: true },
@@ -262,6 +264,7 @@ describe('an account', () => {
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'new@example.com',
       password: 'secret',
+      options: { captchaToken: 'captcha-token' },
     });
   });
 

@@ -185,7 +185,11 @@ describe('ConfirmEmailScreen', () => {
       await act(async () => jest.advanceTimersByTime(60_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       await waitFor(() =>
-        expect(auth.resend).toHaveBeenCalledWith({ email: EMAIL, type: 'signup' }),
+        expect(auth.resend).toHaveBeenCalledWith({
+          email: EMAIL,
+          type: 'signup',
+          options: { captchaToken: 'captcha-token' },
+        }),
       );
       expect(auth.updateUser).not.toHaveBeenCalled();
     });
