@@ -63,6 +63,29 @@ export function SheetTitle({ children }: { children: string }) {
   );
 }
 
+/**
+ * The panel of a sheet, at the bottom edge with its grabber: in `Sheet`, and where a sheet must
+ * stay mounted while unseen, which a `Modal` does not, as the captcha's.
+ */
+export function SheetPanel({ children }: { children: ReactNode }) {
+  const { colors, radii, spacing } = useTheme();
+  return (
+    <SafeAreaView
+      edges={['bottom']}
+      style={{
+        backgroundColor: colors.background,
+        borderTopLeftRadius: radii.xl,
+        borderTopRightRadius: radii.xl,
+        padding: spacing.xl,
+        gap: spacing.lg,
+      }}
+    >
+      <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+      {children}
+    </SafeAreaView>
+  );
+}
+
 type SheetProps = {
   onClose: () => void;
   children: ReactNode;
@@ -71,7 +94,7 @@ type SheetProps = {
 /** A bottom sheet over a scrim, which closes when the scrim is tapped or on the back button. */
 export function Sheet({ onClose, children }: SheetProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors } = useTheme();
   useEffect(
     () => () => {
       closedAt = Date.now();
@@ -91,19 +114,7 @@ export function Sheet({ onClose, children }: SheetProps) {
             onPress={onClose}
             style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
           />
-          <SafeAreaView
-            edges={['bottom']}
-            style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: radii.xl,
-              borderTopRightRadius: radii.xl,
-              padding: spacing.xl,
-              gap: spacing.lg,
-            }}
-          >
-            <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-            {children}
-          </SafeAreaView>
+          <SheetPanel>{children}</SheetPanel>
         </KeyboardAvoiding>
       </SafeAreaProvider>
     </Modal>

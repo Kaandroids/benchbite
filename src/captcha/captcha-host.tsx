@@ -2,11 +2,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 
 import { Button } from '@/components/ui/button';
+import { SheetPanel, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -60,7 +60,7 @@ function pageMessage(data: string): PageMessage | null {
  */
 export function CaptchaHost() {
   const { t, i18n } = useTranslation();
-  const { colors, radii, spacing, scheme } = useTheme();
+  const { colors, scheme } = useTheme();
   const web = useRef<ComponentRef<typeof WebView>>(null);
   // Whether the page now loaded can give tokens; a request that comes before waits for it.
   const ready = useRef(false);
@@ -192,20 +192,9 @@ export function CaptchaHost() {
       accessibilityViewIsModal={shown}
     >
       <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]} />
-      <SafeAreaView
-        edges={['bottom']}
-        style={{
-          backgroundColor: colors.background,
-          borderTopLeftRadius: radii.xl,
-          borderTopRightRadius: radii.xl,
-          padding: spacing.xl,
-          gap: spacing.md,
-        }}
-      >
-        <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-        <Text variant="headline" accessibilityRole="header">
-          {t('captcha.title')}
-        </Text>
+      {/* Not a Sheet, whose Modal would unmount the WebView, which runs the unseen checks too. */}
+      <SheetPanel>
+        <SheetTitle>{t('captcha.title')}</SheetTitle>
         <Text color="textMuted">{t('captcha.body')}</Text>
         <WebView
           key={page}
@@ -233,7 +222,7 @@ export function CaptchaHost() {
             onPress={() => settle({ error: new CaptchaError('cancelled') })}
           />
         ) : null}
-      </SafeAreaView>
+      </SheetPanel>
     </View>
   );
 }
@@ -243,12 +232,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     zIndex: 1000,
     elevation: 1000,
-  },
-  grabber: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
   },
   // Turnstile's widget is 65 points high; the frame leaves room for its border. The WebView's own
   // container grows with `flex: 1`, which in a sheet of no set height would leave it none.
