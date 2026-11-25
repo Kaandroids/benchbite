@@ -16,13 +16,12 @@ import { CaptchaError, setCaptchaHost, type TokenRequest } from './captcha';
 export const CAPTCHA_URL =
   process.env.EXPO_PUBLIC_CAPTCHA_URL ?? 'https://www.benchbite.com/captcha/';
 /**
- * The widget's key, which is public: the production one in a release build, which only the hosted
- * project accepts, and in development Cloudflare's test key, which always passes unseen, as the
- * local stack checks no captcha (ADR 0171).
+ * The widget's key, which the page holds for production (ADR 0171): only a development build names
+ * one, Cloudflare's test key that always passes unseen, as the local stack checks no captcha. The
+ * page takes no other key from the app.
  */
-export const SITE_KEY =
-  process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY ??
-  (__DEV__ ? '1x00000000000000000000BB' : '0x4AAAAAAGSIyuXZv1X5V6ht');
+export const TEST_SITE_KEY =
+  process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY ?? (__DEV__ ? '1x00000000000000000000BB' : undefined);
 
 /** How long the page has to load, and an unseen check to give a token. */
 const WAIT_MS = 20_000;
@@ -176,7 +175,7 @@ export function CaptchaHost() {
 
   const shown = interactive !== null;
   const source = `${CAPTCHA_URL}?${new URLSearchParams({
-    sitekey: SITE_KEY,
+    ...(TEST_SITE_KEY && { sitekey: TEST_SITE_KEY }),
     theme: scheme,
     lang: i18n.language,
   }).toString()}`;

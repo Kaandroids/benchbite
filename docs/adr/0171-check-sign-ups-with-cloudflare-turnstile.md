@@ -27,8 +27,8 @@ code, refreshing a session and changing the user, as a guest's address, need non
   form the person may close it, which ends the request without a message; at first launch, which
   needs a guest session, they cannot. When no token comes, the form says so, and a first launch
   shows its screen for no connection.
-- **Keys:** the site key is public and in the app and the page; a development build uses
-  Cloudflare's test key. The secret key is the repository's secret `TURNSTILE_SECRET_KEY`, which
+- **Keys:** the site key is public and held by the page alone; a development build of the
+  app names Cloudflare's test key, the only kind of key the page takes from it. The secret key is the repository's secret `TURNSTILE_SECRET_KEY`, which
   the deploy workflow adds to the settings it pushes, as it does the email sender. The local stack
   checks no captcha, so tests, scripts and end-to-end flows run as before.
 

@@ -52,7 +52,7 @@ async function renderHost() {
   return view;
 }
 
-it('loads the page with the test key, in the app’s theme and language', async () => {
+it('loads the page with the test key in development, in the app’s theme and language', async () => {
   await renderHost();
   const url = new URL(mockProps.source.uri);
   expect(`${url.origin}${url.pathname}`).toBe(CAPTCHA_URL);

@@ -4,7 +4,8 @@
 // - { type: 'token', token } for each token, which the app asks for with window.benchbiteCaptcha();
 // - { type: 'interactive', shown } when Turnstile needs the person to tap, and once it no longer does;
 // - { type: 'error', code } when no token can be had.
-// The site key is the app's, from the address: the production key, or one of Cloudflare's test keys.
+// The site key is the production one, held here alone; a development build of the app names one of
+// Cloudflare's test keys in the address instead.
 'use strict';
 
 const PRODUCTION_KEY = '0x4AAAAAAGSIyuXZv1X5V6ht';
