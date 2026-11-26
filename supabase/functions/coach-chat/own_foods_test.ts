@@ -313,3 +313,17 @@ Deno.test('searches a food named twice in a recipe once', async () => {
   );
   assertEquals(calls.filter((call) => call.name === 'search_foods').length, 1);
 });
+
+Deno.test('keeps the grams of a portion as the count it keeps', async () => {
+  const { context, proposed } = foodContext();
+  await runTool(
+    'propose_recipe',
+    { ...RECIPE, ingredients: [{ name: 'Onion', portions: 0.25 }] },
+    context,
+  );
+  const change = proposed()!.change as { ingredients: unknown[] };
+  // 0.25 is kept as 0.3 onions, of 110 g each.
+  assertEquals(change.ingredients, [
+    { foodId: 'G480100', grams: 33, portionUnit: 'piece', portionCount: 0.3 },
+  ]);
+});

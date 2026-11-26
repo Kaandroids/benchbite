@@ -37,10 +37,10 @@ import {
   foodIdOf,
   foodsNamed,
   type FoundFood,
-  ingredientGrams,
   isSameFood,
   type RecipeIngredient,
   recipeCard,
+  tenth,
 } from './own_foods.ts';
 import { alternativeName, workoutName } from './workout.ts';
 
@@ -929,12 +929,14 @@ const TOOLS = [
       for (const [index, { grams, portions }] of recipe.ingredients.entries()) {
         const food = foods[index]!;
         if (portions === undefined) {
-          ingredients.push({ food, grams: ingredientGrams(grams!) });
+          ingredients.push({ food, grams: tenth(grams!) });
         } else if (food.portion_unit && food.portion_grams) {
+          // The count as it is kept, and the grams of that count, so that the two agree.
+          const count = tenth(portions);
           ingredients.push({
             food,
-            grams: ingredientGrams(portions * food.portion_grams),
-            portion: { unit: food.portion_unit, count: Math.round(portions * 10) / 10 },
+            grams: tenth(count * food.portion_grams),
+            portion: { unit: food.portion_unit, count },
           });
         } else {
           return { error: `${food.name} has no portion: give its grams.` };

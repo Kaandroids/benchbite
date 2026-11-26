@@ -87,12 +87,10 @@ export type RecipeIngredient = {
   portion?: { unit: PortionUnit; count: number };
 };
 
-/** Grams as an ingredient keeps them, to a tenth (numeric(6, 1)). */
-export function ingredientGrams(grams: number): number {
-  return Math.round(grams * 10) / 10;
+/** A value to a tenth, as an ingredient keeps its grams and portions (numeric(6, 1)). */
+export function tenth(value: number): number {
+  return Math.round(value * 10) / 10;
 }
-
-const tenth = (value: number) => Math.round(value * 10) / 10;
 
 /**
  * The card of a recipe: each ingredient with its calories, and one serving, the whole weight and
