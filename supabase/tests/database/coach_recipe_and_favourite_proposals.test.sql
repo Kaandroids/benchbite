@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -30,6 +30,9 @@ insert into ids select 'stock', max(id) from public.custom_foods;
 insert into public.custom_foods (user_id, name, kcal, protein_g, carbs_g, fat_g) values
   ('00000000-0000-0000-0000-00000000000b', 'Their stock', 10, 1, 1, 0);
 insert into ids select 'b stock', max(id) from public.custom_foods;
+insert into public.recipes (user_id, name, servings, serving_unit) values
+  ('00000000-0000-0000-0000-00000000000b', 'Their soup', 2, 'bowl');
+insert into ids select 'b recipe', max(id) from public.recipes;
 insert into public.favourite_foods (user_id, food_id) values
   ('00000000-0000-0000-0000-00000000000a', 'B101000');
 
@@ -167,6 +170,10 @@ select throws_ok(
   'BB070', null, 'nor to add someone else''s food'
 );
 select throws_ok(
+  format($$select pg_temp.propose('favourites', '{"add": [{"recipeId": %s}]}')$$, pg_temp.id('b recipe')),
+  'BB070', null, 'nor someone else''s recipe'
+);
+select throws_ok(
   $$select pg_temp.propose('favourites', '{"add": [{"foodId": "C133000"}, {"foodId": "C133000"}]}')$$,
   '22023', null, 'each food once'
 );
@@ -182,6 +189,22 @@ select is(
 );
 select is(pg_temp.decide(pg_temp.id('favourites'), 'undo'), 'undone', 'the user undoes it');
 select is(pg_temp.favourites(), array['B101000'], 'undoing puts the favourites back');
+
+-- Not applied once what it replaces changed in the app meanwhile.
+insert into ids select 'stew', pg_temp.propose(
+  'recipe', pg_temp.soup(pg_temp.id('stock')) || '{"name": "Stew"}'
+);
+insert into public.recipes (name, servings, serving_unit) values ('stew', 1, 'plate');
+select throws_ok(
+  format($$select pg_temp.decide(%s, 'apply')$$, pg_temp.id('stew')),
+  'BB035', null, 'not a recipe of a name saved since'
+);
+insert into ids select 'oats', pg_temp.propose('favourites', '{"add": [{"foodId": "C133000"}]}');
+insert into public.favourite_foods (food_id) values ('C133000');
+select throws_ok(
+  format($$select pg_temp.decide(%s, 'apply')$$, pg_temp.id('oats')),
+  'BB035', null, 'nor favourites starred since'
+);
 
 -- Someone else cannot decide them.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
