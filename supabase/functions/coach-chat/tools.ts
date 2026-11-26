@@ -1,7 +1,8 @@
 // What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
 // records and plan, and the food and exercise libraries; the changes it may propose, which the
-// user applies (ADR 0058), to the food log too (ADR 0068); the meals it estimates, as cards the
-// user adds (ADR 0062); and the notes it keeps about the user (ADR 0071). Each tool runs with the
+// user applies (ADR 0058), to the food log too (ADR 0068), and new recipes and changes to the
+// favourites (ADR 0172); the meals it estimates, as cards the user adds (ADR 0062); and the notes
+// it keeps about the user (ADR 0071). Each tool runs with the
 // user's token, so row level security and the database's functions decide what it sees and may
 // do, and returns little, to keep the answer cheap.
 import { z } from 'zod';
