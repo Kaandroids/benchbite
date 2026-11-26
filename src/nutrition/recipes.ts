@@ -19,12 +19,7 @@ import { RECIPE_KEY, RECIPES_KEY } from './food-keys';
 import { NOTHING, scaled, totalOf, totalsOf, type Totals } from './totals';
 import { useReloadFoods } from './quick-foods';
 
-/** How many servings a recipe makes at most, and how many ingredients it has, as the database allows. */
-export const MAX_SERVINGS = 50;
-export const MAX_INGREDIENTS = 50;
-
-/** The most a serving weighs, as an entry holds at most this much (ADR 0038). */
-export const MAX_SERVING_GRAMS = 5000;
+export { MAX_INGREDIENTS, MAX_SERVING_GRAMS, MAX_SERVINGS } from '@shared/foods';
 
 /** An ingredient: a library food or one of one's own, with how much of it goes in. */
 export type Ingredient = Amount & {

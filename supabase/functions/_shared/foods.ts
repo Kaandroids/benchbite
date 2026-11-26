@@ -10,6 +10,18 @@
 export const FOOD_QUERY_LENGTH = { min: 2, max: 50 } as const;
 
 /**
+ * How long a recipe's name may be, how many servings it makes and ingredients it has, what an
+ * ingredient and a serving weigh at most, as `recipes`, `recipe_ingredients` and save_recipe()
+ * allow (ADR 0038).
+ */
+export const MAX_RECIPE_NAME = 120;
+export const MAX_SERVINGS = 50;
+export const MAX_INGREDIENTS = 50;
+export const MAX_INGREDIENT_GRAMS = 5000;
+/** The most a serving weighs, as an entry holds at most this much. */
+export const MAX_SERVING_GRAMS = 5000;
+
+/**
  * A food's name as search_foods() and log_meal_estimate() compare it: a mirror of food_name_key()
  * in the database, which lowercases after making the Turkish dotted and dotless i a plain i.
  */

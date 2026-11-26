@@ -20,7 +20,15 @@ import type {
   ProposalTarget,
 } from '../_shared/coach/chat.ts';
 import { Constants } from '../_shared/database.types.ts';
-import { FOOD_QUERY_LENGTH, nameKey } from '../_shared/foods.ts';
+import {
+  FOOD_QUERY_LENGTH,
+  MAX_INGREDIENT_GRAMS,
+  MAX_INGREDIENTS,
+  MAX_RECIPE_NAME,
+  MAX_SERVING_GRAMS,
+  MAX_SERVINGS,
+  nameKey,
+} from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { ModelItem } from '../_shared/meal/item.ts';
@@ -213,11 +221,6 @@ const FOOD_LOG_REFUSALS = {
   log: 'A food log proposal could not be made',
 } satisfies Refusals;
 
-/** A recipe's longest name, most servings and most ingredients, as `recipes` and save_recipe() allow. */
-const MAX_RECIPE_NAME = 120;
-const MAX_SERVINGS = 50;
-const MAX_INGREDIENTS = 50;
-
 /** The most foods one favourites proposal adds and takes out, as coach_favourites_change() allows. */
 const MAX_FAVOURITE_CHANGES = 10;
 
@@ -241,8 +244,8 @@ const RECIPE_REFUSALS = {
     BB068:
       'The user has a recipe of that name already: pick another name, or log the one they have.',
     BB070: 'An ingredient is not a food the user can log; search for it again.',
-    '22023': 'A serving weighs at most 5,000 g: give more servings or fewer grams.',
-    '23514': `A value is out of range: a name of up to ${MAX_RECIPE_NAME} characters, 1 to ${MAX_SERVINGS} servings, up to 5,000 g an ingredient.`,
+    '22023': `A serving weighs at most ${MAX_SERVING_GRAMS} g: give more servings or fewer grams.`,
+    '23514': `A value is out of range: a name of up to ${MAX_RECIPE_NAME} characters, 1 to ${MAX_SERVINGS} servings, up to ${MAX_INGREDIENT_GRAMS} g an ingredient.`,
   },
   otherwise: 'The recipe could not be proposed just now.',
   log: 'A recipe could not be proposed',
@@ -899,7 +902,7 @@ const TOOLS = [
           z
             .object({
               name: FOOD_QUERY.describe('The food, exactly as search_foods named it.'),
-              grams: z.number().positive().max(5000).optional(),
+              grams: z.number().positive().max(MAX_INGREDIENT_GRAMS).optional(),
               portions: z
                 .number()
                 .positive()
