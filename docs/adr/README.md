@@ -187,3 +187,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0169](0169-download-the-export-from-storage.md)                          | Download the export from storage                                                        | Accepted                                             |
 | [0170](0170-keep-bites-chats-for-30-days.md)                              | Keep Bite's chats for 30 days                                                           | Accepted                                             |
 | [0171](0171-check-sign-ups-with-cloudflare-turnstile.md)                  | Check sign-ups with Cloudflare Turnstile                                                | Accepted                                             |
+| [0172](0172-bite-proposes-recipes-and-favourites.md)                      | Bite proposes recipes and favourites                                                    | Accepted                                             |
