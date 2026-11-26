@@ -2617,6 +2617,7 @@ export type Database = {
         Returns: string;
       };
       check_app_version: { Args: Record<PropertyKey, never>; Returns: undefined };
+      check_coach_foods: { Args: { foods: Json }; Returns: undefined };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_set_targets: { Args: { items: Json }; Returns: undefined };
@@ -2629,6 +2630,8 @@ export type Database = {
       };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_alternatives_state: { Args: { workout_id: number }; Returns: Json };
+      coach_favourites_change: { Args: { change: Json }; Returns: Json };
+      coach_favourites_state: { Args: { change: Json }; Returns: Json };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
       coach_media_purge_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -2655,6 +2658,8 @@ export type Database = {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
         Returns: number[];
       };
+      coach_recipe_change: { Args: { change: Json }; Returns: Json };
+      coach_recipe_state: { Args: { change: Json }; Returns: Json };
       coach_thread_title: { Args: { message: string }; Returns: string };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       copy_meal_entries: {
@@ -2982,6 +2987,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_coach_food_ref: { Args: { ref: Json }; Returns: boolean };
       is_guest: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_held_workout: { Args: { workout_id: number }; Returns: boolean };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
@@ -3542,6 +3548,7 @@ export type Database = {
       };
       share_left: { Args: { budget: number; used: number }; Returns: number };
       stale_data_exports: { Args: { p_limit: number }; Returns: string[] };
+      star_coach_foods: { Args: { foods: Json; starred: boolean }; Returns: undefined };
       start_account_deletion: {
         Args: { p_email: string; p_ip_hash: string; p_token_hash: string };
         Returns: string;
@@ -3755,7 +3762,9 @@ export type Database = {
         | 'alternative'
         | 'alternative_switch'
         | 'note'
-        | 'note_archive';
+        | 'note_archive'
+        | 'recipe'
+        | 'favourites';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone' | 'replaced';
       coach_role: 'user' | 'bite';
       equipment:
@@ -4061,6 +4070,8 @@ export const Constants = {
         'alternative_switch',
         'note',
         'note_archive',
+        'recipe',
+        'favourites',
       ],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone', 'replaced'],
       coach_role: ['user', 'bite'],
