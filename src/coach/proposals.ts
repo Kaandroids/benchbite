@@ -14,6 +14,7 @@ import { toIsoDate } from '@/i18n/dates';
 import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import { reloadDay } from '@/nutrition/entries';
+import { reloadFoods } from '@/nutrition/quick-foods';
 import { reloadTargets } from '@/nutrition/targets';
 import { reloadPlan } from '@/workouts/workouts';
 
@@ -143,7 +144,8 @@ export function useDecideProposal(card: ShownProposal) {
 
 /**
  * Loads again what a proposal applied or undone changed: the plan with its alternatives, the
- * targets, each day of the food log it moved entries from or to, or the notebook.
+ * targets, each day of the food log it moved entries from or to, the notebook, or the foods with
+ * their recipes and favourites.
  */
 function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
   switch (card.kind) {
@@ -160,6 +162,9 @@ function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
     case 'note':
     case 'note_archive':
       return queryClient.invalidateQueries({ queryKey: NOTES_KEY });
+    case 'recipe':
+    case 'favourites':
+      return reloadFoods(queryClient);
   }
 }
 
