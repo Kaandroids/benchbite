@@ -297,3 +297,19 @@ Deno.test('marks recipes and favourites among the foods found', async () => {
     [['Lentil soup', undefined, true]],
   );
 });
+
+Deno.test('searches a food named twice in a recipe once', async () => {
+  const { context, calls } = foodContext();
+  await runTool(
+    'propose_recipe',
+    {
+      ...RECIPE,
+      ingredients: [
+        { name: 'Onion', grams: 50 },
+        { name: ' Onion', grams: 30 },
+      ],
+    },
+    context,
+  );
+  assertEquals(calls.filter((call) => call.name === 'search_foods').length, 1);
+});

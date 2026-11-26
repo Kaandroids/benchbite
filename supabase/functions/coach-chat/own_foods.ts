@@ -6,25 +6,12 @@ import type {
   PortionUnit,
   ProposalCard,
 } from '../_shared/coach/chat.ts';
-import type { Database } from '../_shared/database.types.ts';
-import { FOOD_QUERY_LENGTH, nameKey } from '../_shared/foods.ts';
+import { FOOD_QUERY_LENGTH, nameKey, refOfRow } from '../_shared/foods.ts';
+import type { FoundFood } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import type { Client } from '../_shared/supabase.ts';
 
-/**
- * A food as search_foods() and list_favourite_foods() give it, by exactly one of its ids, and
- * with its portion or none, which the generated types do not mark as nullable.
- */
-export type FoundFood = Omit<
-  Database['public']['Functions']['search_foods']['Returns'][number],
-  'food_id' | 'custom_food_id' | 'recipe_id' | 'portion_unit' | 'portion_grams'
-> & {
-  food_id: string | null;
-  custom_food_id: number | null;
-  recipe_id: number | null;
-  portion_unit: PortionUnit | null;
-  portion_grams: number | null;
-};
+export type { FoundFood };
 
 /** A food as a proposal names it, as the database does: by exactly one of its ids. */
 export type FoodId =
@@ -35,18 +22,21 @@ export type FoodId =
     };
 
 export function foodIdOf(food: FoundFood): FoodId {
-  if (food.recipe_id !== null) return { recipeId: food.recipe_id };
-  if (food.custom_food_id !== null) {
-    return { customFoodId: food.custom_food_id };
+  const ref = refOfRow(food);
+  switch (ref.kind) {
+    case 'recipe':
+      return { recipeId: ref.id };
+    case 'custom':
+      return { customFoodId: ref.id };
+    case 'library':
+      return { foodId: ref.id };
   }
-  return { foodId: food.food_id ?? '' };
 }
 
 /** Whether two rows are the same food. */
 export function isSameFood(a: FoundFood, b: FoundFood): boolean {
-  return (
-    a.food_id === b.food_id && a.custom_food_id === b.custom_food_id && a.recipe_id === b.recipe_id
-  );
+  const [x, y] = [refOfRow(a), refOfRow(b)];
+  return x.kind === y.kind && x.id === y.id;
 }
 
 /**
@@ -61,16 +51,19 @@ export async function foodsNamed(
   names: string[],
   takes: (food: FoundFood) => boolean = () => true,
 ): Promise<(FoundFood | undefined)[]> {
+  // Each name once, as an ingredient may come twice.
+  const searches = new Map<string, Promise<FoundFood[]>>();
+  const search = async (query: string) => {
+    if (query.length < FOOD_QUERY_LENGTH.min || query.length > FOOD_QUERY_LENGTH.max) return [];
+    const { data, error } = await supabase.rpc('search_foods', { language, query });
+    if (error) throw error;
+    return data as FoundFood[];
+  };
   const found = await Promise.all(
-    names.map(async (name) => {
+    names.map((name) => {
       const query = name.trim();
-      if (query.length < FOOD_QUERY_LENGTH.min || query.length > FOOD_QUERY_LENGTH.max) return [];
-      const { data, error } = await supabase.rpc('search_foods', {
-        language,
-        query,
-      });
-      if (error) throw error;
-      return data as FoundFood[];
+      if (!searches.has(query)) searches.set(query, search(query));
+      return searches.get(query)!;
     }),
   );
   return names.map((name, index) =>

@@ -9,13 +9,19 @@ import type { EstimateFood, EstimateItem, Per100 } from './estimate.ts';
 import type { ModelItem } from './item.ts';
 
 /**
- * A food search_foods() found, by exactly one of its ids, which the generated types do not mark as
- * nullable.
+ * A food search_foods() found, as list_favourite_foods() gives one too: by exactly one of its ids,
+ * and with its portion or none, which the generated types do not mark as nullable.
  */
-type FoundFood = Pick<
+export type FoundFood = Omit<
   Database['public']['Functions']['search_foods']['Returns'][number],
-  'name' | 'kcal' | 'protein_g' | 'carbs_g' | 'fat_g'
-> & { food_id: string | null; custom_food_id: number | null; recipe_id: number | null };
+  'food_id' | 'custom_food_id' | 'recipe_id' | 'portion_unit' | 'portion_grams'
+> & {
+  food_id: string | null;
+  custom_food_id: number | null;
+  recipe_id: number | null;
+  portion_unit: Database['public']['Enums']['portion_unit'] | null;
+  portion_grams: number | null;
+};
 
 /**
  * The items with the values of the food each matched in the library or the user's own foods and
