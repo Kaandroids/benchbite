@@ -869,7 +869,7 @@ function RecipeChange({ card }: { card: Extract<Proposal, { kind: 'recipe' }> })
               key={index}
               accessible
               accessibilityLabel={`${ingredient.name}, ${amount}`}
-              style={[styles.ingredient, listDivider(index === 0, colors.track)]}
+              style={[styles.ingredient, listDivider(index === 0, colors.border)]}
             >
               <Text variant="bodyStrong" style={styles.flex}>
                 {ingredient.name}
@@ -929,7 +929,7 @@ function FavouritesChange({ card }: { card: Extract<Proposal, { kind: 'favourite
               style={[
                 styles.favourite,
                 { gap: spacing.sm + 2 },
-                listDivider(index === 0, colors.track),
+                listDivider(index === 0, colors.border),
               ]}
             >
               <Star filled={food.add} size={18} />
