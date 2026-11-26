@@ -2220,7 +2220,9 @@
       "log_meal_card": "Öğününü hazırlıyorum…",
       "save_note": "Bunu not ediyorum…",
       "update_note": "Notlarımdaki değişikliği hazırlıyorum…",
-      "archive_note": "Notlarımdaki değişikliği hazırlıyorum…"
+      "archive_note": "Notlarımdaki değişikliği hazırlıyorum…",
+      "propose_recipe": "Tarifini hazırlıyorum…",
+      "propose_favourites": "Favorilerindeki değişikliği hazırlıyorum…"
     },
     "failures": {
       "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",
@@ -2478,6 +2480,24 @@
       "give": "Onay ver",
       "notNow": "Şimdi değil",
       "notSaved": "Onayın kaydedilemedi. Tekrar dene."
+    },
+    "recipe": {
+      "title": "Yeni tarif",
+      "save": "Tarifi kaydet",
+      "saved": "Tariflerine kaydedildi",
+      "detail": "{{name}} · {{servings}} · her biri {{calories}} kcal",
+      "serving": "{{serving}} · {{grams}} g"
+    },
+    "favourites": {
+      "title": "Favoriler",
+      "add": "Ekle · {{values}}",
+      "remove": "Çıkar · {{values}}",
+      "forServing": "{{serving}} için {{calories}} kcal",
+      "changed": "Favoriler değişti",
+      "added_one": "{{count}} eklendi",
+      "added_other": "{{count}} eklendi",
+      "removed_one": "{{count}} çıkarıldı",
+      "removed_other": "{{count}} çıkarıldı"
     }
   },
   "premium": {

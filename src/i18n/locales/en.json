@@ -2220,7 +2220,9 @@
       "log_meal_card": "Preparing your meal…",
       "save_note": "Noting that down…",
       "update_note": "Preparing a change to my notes…",
-      "archive_note": "Preparing a change to my notes…"
+      "archive_note": "Preparing a change to my notes…",
+      "propose_recipe": "Preparing your recipe…",
+      "propose_favourites": "Preparing a change to your favourites…"
     },
     "failures": {
       "unavailable": "Bite couldn't answer just now. Try again.",
@@ -2478,6 +2480,24 @@
       "give": "Give your OK",
       "notNow": "Not now",
       "notSaved": "Couldn’t save your OK. Try again."
+    },
+    "recipe": {
+      "title": "New recipe",
+      "save": "Save recipe",
+      "saved": "Saved to your recipes",
+      "detail": "{{name}} · {{servings}} · {{calories}} kcal each",
+      "serving": "{{serving}} · {{grams}} g"
+    },
+    "favourites": {
+      "title": "Favourites",
+      "add": "Add · {{values}}",
+      "remove": "Remove · {{values}}",
+      "forServing": "{{calories}} kcal for {{serving}}",
+      "changed": "Favourites changed",
+      "added_one": "{{count}} added",
+      "added_other": "{{count}} added",
+      "removed_one": "{{count}} removed",
+      "removed_other": "{{count}} removed"
     }
   },
   "premium": {
