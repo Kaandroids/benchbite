@@ -6,12 +6,10 @@ import type {
   PortionUnit,
   ProposalCard,
 } from '../_shared/coach/chat.ts';
-import { FOOD_QUERY_LENGTH, nameKey, refOfRow } from '../_shared/foods.ts';
-import type { FoundFood } from '../_shared/meal/match.ts';
+import { nameKey, refOfRow, tenth } from '../_shared/foods.ts';
+import { type FoundFood, searchOnce } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import type { Client } from '../_shared/supabase.ts';
-
-export type { FoundFood };
 
 /** A food as a proposal names it, as the database does: by exactly one of its ids. */
 export type FoodId =
@@ -51,21 +49,8 @@ export async function foodsNamed(
   names: string[],
   takes: (food: FoundFood) => boolean = () => true,
 ): Promise<(FoundFood | undefined)[]> {
-  // Each name once, as an ingredient may come twice.
-  const searches = new Map<string, Promise<FoundFood[]>>();
-  const search = async (query: string) => {
-    if (query.length < FOOD_QUERY_LENGTH.min || query.length > FOOD_QUERY_LENGTH.max) return [];
-    const { data, error } = await supabase.rpc('search_foods', { language, query });
-    if (error) throw error;
-    return data as FoundFood[];
-  };
-  const found = await Promise.all(
-    names.map((name) => {
-      const query = name.trim();
-      if (!searches.has(query)) searches.set(query, search(query));
-      return searches.get(query)!;
-    }),
-  );
+  const search = searchOnce(supabase, language);
+  const found = await Promise.all(names.map((name) => search(name.trim())));
   return names.map((name, index) =>
     found[index]!.find((food) => takes(food) && nameKey(food.name) === nameKey(name)),
   );
@@ -86,11 +71,6 @@ export type RecipeIngredient = {
   grams: number;
   portion?: { unit: PortionUnit; count: number };
 };
-
-/** A value to a tenth, as an ingredient keeps its grams and portions (numeric(6, 1)). */
-export function tenth(value: number): number {
-  return Math.round(value * 10) / 10;
-}
 
 /**
  * The card of a recipe: each ingredient with its calories, and one serving, the whole weight and

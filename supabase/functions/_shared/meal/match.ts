@@ -2,7 +2,7 @@
 // own foods (#299, ADR 0059, ADR 0060), shared by estimate-meal and the coach chat, so that the
 // same food comes out at the same values wherever a meal is estimated.
 import type { Database } from '../database.types.ts';
-import { FOOD_QUERY_LENGTH, nameKey, refOfRow } from '../foods.ts';
+import { FOOD_QUERY_LENGTH, nameKey, refOfRow, tenth } from '../foods.ts';
 import type { Language } from '../prompt.ts';
 import { type Client, logError } from '../supabase.ts';
 import type { EstimateFood, EstimateItem, Per100 } from './estimate.ts';
@@ -33,11 +33,11 @@ export async function matchItems(
   language: Language,
   items: ModelItem[],
 ): Promise<EstimateItem[]> {
-  const searches = new Map<string, Promise<FoundFood[]>>();
-  const search = (query: string) => {
-    if (!searches.has(query)) searches.set(query, searchFoods(supabase, language, query));
-    return searches.get(query)!;
-  };
+  // A search that fails finds nothing, and its item is estimated.
+  const search = searchOnce(supabase, language, (error) => {
+    logError('Could not search the foods', error);
+    return [];
+  });
   return await Promise.all(
     items.map(async (item) => {
       const food = bestMatch(item.searchName, item.per100.kcal, await search(item.searchName));
@@ -55,7 +55,26 @@ export async function matchItems(
   );
 }
 
-/** The foods search_foods() finds, or none when it cannot search; the item is then estimated. */
+/**
+ * Searches search_foods() as the user, each query once, as a meal or a recipe may name a food
+ * twice; a query of a length it never finds finds nothing. A search that fails gives what
+ * `onError` makes of the error, or fails.
+ */
+export function searchOnce(
+  supabase: Client,
+  language: Language,
+  onError?: (error: unknown) => FoundFood[],
+): (query: string) => Promise<FoundFood[]> {
+  const searches = new Map<string, Promise<FoundFood[]>>();
+  return (query) => {
+    if (!searches.has(query)) {
+      const found = searchFoods(supabase, language, query);
+      searches.set(query, onError ? found.catch(onError) : found);
+    }
+    return searches.get(query)!;
+  };
+}
+
 async function searchFoods(
   supabase: Client,
   language: Language,
@@ -63,11 +82,8 @@ async function searchFoods(
 ): Promise<FoundFood[]> {
   if (query.length < FOOD_QUERY_LENGTH.min || query.length > FOOD_QUERY_LENGTH.max) return [];
   const { data, error } = await supabase.rpc('search_foods', { query, language });
-  if (error) {
-    logError('Could not search the foods', error);
-    return [];
-  }
-  return data;
+  if (error) throw error;
+  return data as FoundFood[];
 }
 
 /**
@@ -148,7 +164,6 @@ function per100Of(row: FoundFood): Per100 {
 
 /** The model's values, to a tenth, as the library has them. */
 function rounded(values: Per100): Per100 {
-  const tenth = (value: number) => Math.round(value * 10) / 10;
   return {
     kcal: tenth(values.kcal),
     proteinG: tenth(values.proteinG),

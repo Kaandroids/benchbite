@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert';
 
-import type { FoundFood } from './own_foods.ts';
+import type { FoundFood } from '../_shared/meal/match.ts';
 import { recipeCard } from './own_foods.ts';
 import type { ToolContext } from './tools.ts';
 import { runTool } from './tools.ts';
