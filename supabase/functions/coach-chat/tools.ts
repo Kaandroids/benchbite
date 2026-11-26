@@ -19,7 +19,7 @@ import type {
   ProposalTarget,
 } from '../_shared/coach/chat.ts';
 import { Constants } from '../_shared/database.types.ts';
-import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
+import { FOOD_QUERY_LENGTH, nameKey } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { ModelItem } from '../_shared/meal/item.ts';
@@ -30,6 +30,17 @@ import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import { mealAt } from './meal_card.ts';
+import {
+  favouriteFoods,
+  favouriteOf,
+  foodIdOf,
+  foodsNamed,
+  type FoundFood,
+  ingredientGrams,
+  isSameFood,
+  type RecipeIngredient,
+  recipeCard,
+} from './own_foods.ts';
 import { alternativeName, workoutName } from './workout.ts';
 
 export type ToolContext = {
@@ -199,6 +210,53 @@ const FOOD_LOG_REFUSALS = {
   },
   otherwise: 'The change could not be proposed just now.',
   log: 'A food log proposal could not be made',
+} satisfies Refusals;
+
+/** A recipe's longest name, most servings and most ingredients, as `recipes` and save_recipe() allow. */
+const MAX_RECIPE_NAME = 120;
+const MAX_SERVINGS = 50;
+const MAX_INGREDIENTS = 50;
+
+/** The most foods one favourites proposal adds and takes out, as coach_favourites_change() allows. */
+const MAX_FAVOURITE_CHANGES = 10;
+
+const PORTION_UNIT = z.enum(Constants.public.Enums.portion_unit);
+
+/** What Bite is told when the user asked for no recipe or favourite in words. */
+const NOT_ASKED =
+  'The user asked for no change in words. Ask them what to save; a photo never asks for it.';
+
+/** What Bite is told of foods it named that are none the user can log. */
+function notFound(names: string[]): string {
+  return `Not found in the food library or the user's own foods: ${names.join(', ')}. Search with search_foods and give a name it gave, or tell the user they can add it as their own food in Nutrition, or leave it out.`;
+}
+
+/** The database's refusals of a recipe. */
+const RECIPE_REFUSALS = {
+  meanings: {
+    BB028: 'The user has as many recipes as they may; they can delete one in Nutrition.',
+    BB029: 'The user has added as many recipes as they may, deleted ones included.',
+    BB038: REFUSALS.meanings.BB038,
+    BB068:
+      'The user has a recipe of that name already: pick another name, or log the one they have.',
+    BB070: 'An ingredient is not a food the user can log; search for it again.',
+    '22023': 'A serving weighs at most 5,000 g: give more servings or fewer grams.',
+    '23514': `A value is out of range: a name of up to ${MAX_RECIPE_NAME} characters, 1 to ${MAX_SERVINGS} servings, up to 5,000 g an ingredient.`,
+  },
+  otherwise: 'The recipe could not be proposed just now.',
+  log: 'A recipe could not be proposed',
+} satisfies Refusals;
+
+/** The database's refusals of a change to the favourites. */
+const FAVOURITE_REFUSALS = {
+  meanings: {
+    BB027: 'The user has as many favourites as they may; they can take some out first.',
+    BB038: REFUSALS.meanings.BB038,
+    BB069: 'A food to add is a favourite already, or one to take out is not one; search again.',
+    BB070: 'A food is not one the user can log; search for it again.',
+  },
+  otherwise: 'The change could not be proposed just now.',
+  log: 'A favourites change could not be proposed',
 } satisfies Refusals;
 
 /** The user may save no more foods of their own, which an item the library lacks needs. */
@@ -405,21 +463,26 @@ const TOOLS = [
   tool({
     name: 'search_foods',
     description:
-      "Foods in the library and the user's own foods and recipes that match a name, with their values per 100 g and their usual portion in grams.",
+      "Foods in the library and the user's own foods and recipes that match a name, with their values per 100 g and their usual portion in grams, marking the user's recipes and favourites.",
     args: z.object({ query: FOOD_QUERY.describe('A food name, such as "oat flakes".') }),
-    run: async ({ query }, { supabase, language }) =>
-      read(await supabase.rpc('search_foods', { language, query }))
-        .slice(0, 10)
-        .map((food) => ({
-          name: food.name,
-          per100g: {
-            kcal: food.kcal,
-            proteinG: food.protein_g,
-            carbsG: food.carbs_g,
-            fatG: food.fat_g,
-          },
-          portion: { unit: food.portion_unit, grams: food.portion_grams },
-        })),
+    run: async ({ query }, { supabase, language }) => {
+      const [found, favourites] = await Promise.all([
+        supabase.rpc('search_foods', { language, query }),
+        favouriteFoods(supabase, language),
+      ]);
+      return (read(found) as FoundFood[]).slice(0, 10).map((food) => ({
+        name: food.name,
+        per100g: {
+          kcal: food.kcal,
+          proteinG: food.protein_g,
+          carbsG: food.carbs_g,
+          fatG: food.fat_g,
+        },
+        portion: { unit: food.portion_unit, grams: food.portion_grams },
+        ...(food.recipe_id !== null && { recipe: true }),
+        ...(favourites.some((favourite) => isSameFood(favourite, food)) && { favourite: true }),
+      }));
+    },
   }),
   tool({
     name: 'search_exercises',
@@ -813,6 +876,146 @@ const TOOLS = [
         ...(note && { note }),
       };
       return { mealCard };
+    },
+  }),
+  // A new recipe and changes to the favourites (ADR 0172), which only the user's words ask for.
+  tool({
+    name: 'propose_recipe',
+    proposes: 'recipe',
+    description:
+      "Proposes saving a dish as one of the user's recipes, which the user saves with a tap; it saves nothing itself. Give each ingredient by the name search_foods gave for it, with its grams or a number of its portions.",
+    args: z.object({
+      name: z
+        .string()
+        .trim()
+        .min(1)
+        .max(MAX_RECIPE_NAME)
+        .describe("The dish's name, in the user's language."),
+      servings: z.number().int().min(1).max(MAX_SERVINGS).describe('How many servings it makes.'),
+      servingUnit: PORTION_UNIT.describe('What a serving is, such as a bowl or a plate.'),
+      ingredients: z
+        .array(
+          z
+            .object({
+              name: FOOD_QUERY.describe('The food, exactly as search_foods named it.'),
+              grams: z.number().positive().max(5000).optional(),
+              portions: z
+                .number()
+                .positive()
+                .max(100)
+                .optional()
+                .describe("How many of the food's portion, as search_foods gave it."),
+            })
+            .refine(({ grams, portions }) => (grams === undefined) !== (portions === undefined), {
+              message: 'Each ingredient gives grams or portions, not both',
+            }),
+        )
+        .min(1)
+        .max(MAX_INGREDIENTS),
+    }),
+    run: async (recipe, { supabase, language, threadId, today, hasText }) => {
+      if (!hasText) return { error: NOT_ASKED };
+      // Not a recipe: an ingredient is a food of the library or one of the user's own.
+      const foods = await foodsNamed(
+        supabase,
+        language,
+        recipe.ingredients.map((i) => i.name),
+        (food) => food.recipe_id === null,
+      );
+      const missing = recipe.ingredients.filter((_, index) => !foods[index]).map((i) => i.name);
+      if (missing.length) return { error: notFound(missing) };
+      const ingredients: RecipeIngredient[] = [];
+      for (const [index, { grams, portions }] of recipe.ingredients.entries()) {
+        const food = foods[index]!;
+        if (portions === undefined) {
+          ingredients.push({ food, grams: ingredientGrams(grams!) });
+        } else if (food.portion_unit && food.portion_grams) {
+          ingredients.push({
+            food,
+            grams: ingredientGrams(portions * food.portion_grams),
+            portion: { unit: food.portion_unit, count: Math.round(portions * 10) / 10 },
+          });
+        } else {
+          return { error: `${food.name} has no portion: give its grams.` };
+        }
+      }
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'recipe',
+        change: {
+          name: recipe.name,
+          servings: recipe.servings,
+          servingUnit: recipe.servingUnit,
+          ingredients: ingredients.map(({ food, grams, portion }) => ({
+            ...foodIdOf(food),
+            grams,
+            ...(portion && { portionUnit: portion.unit, portionCount: portion.count }),
+          })),
+        },
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, RECIPE_REFUSALS);
+      return { proposal: recipeCard(proposed.data, recipe, ingredients) };
+    },
+  }),
+  tool({
+    name: 'propose_favourites',
+    proposes: 'favourites',
+    description:
+      "Proposes adding foods to the user's favourites and taking foods out of them, which the user applies with a tap; it changes nothing itself. Name each food exactly as search_foods named it; it marks the favourites.",
+    args: z
+      .object({
+        add: z.array(FOOD_QUERY).max(MAX_FAVOURITE_CHANGES).optional(),
+        remove: z.array(FOOD_QUERY).max(MAX_FAVOURITE_CHANGES).optional(),
+      })
+      .refine(
+        ({ add = [], remove = [] }) =>
+          add.length + remove.length >= 1 && add.length + remove.length <= MAX_FAVOURITE_CHANGES,
+        { message: `Name 1 to ${MAX_FAVOURITE_CHANGES} foods in all` },
+      ),
+    run: async ({ add = [], remove = [] }, { supabase, language, threadId, today, hasText }) => {
+      if (!hasText) return { error: NOT_ASKED };
+      const [added, favourites] = await Promise.all([
+        foodsNamed(supabase, language, add),
+        favouriteFoods(supabase, language),
+      ]);
+      const missing = add.filter((_, index) => !added[index]);
+      if (missing.length) return { error: notFound(missing) };
+      const removed = remove.map((name) =>
+        favourites.find((food) => nameKey(food.name) === nameKey(name)),
+      );
+      const notFavourites = remove.filter((_, index) => !removed[index]);
+      if (notFavourites.length) {
+        return { error: `Not among the user's favourites: ${notFavourites.join(', ')}.` };
+      }
+      const already = added.filter((food) => favourites.some((f) => isSameFood(f, food!)));
+      if (already.length) {
+        const names = already.map((food) => food!.name).join(', ');
+        return { error: `Favourites already: ${names}. Leave them out.` };
+      }
+      const foods = [
+        ...added.map((food) => ({ food: food!, add: true })),
+        ...removed.map((food) => ({ food: food!, add: false })),
+      ];
+      if (new Set(foods.map(({ food }) => JSON.stringify(foodIdOf(food)))).size < foods.length) {
+        return { error: 'Name each food once.' };
+      }
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'favourites',
+        change: {
+          add: added.map((food) => foodIdOf(food!)),
+          remove: removed.map((food) => foodIdOf(food!)),
+        },
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, FAVOURITE_REFUSALS);
+      const proposal: ProposalCard = {
+        kind: 'favourites',
+        id: proposed.data,
+        foods: foods.map(({ food, add }) => favouriteOf(food, add)),
+      };
+      return { proposal };
     },
   }),
   tool({

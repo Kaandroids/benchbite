@@ -710,6 +710,14 @@ function proposalText(proposal: ProposalCard): string {
   if (proposal.kind === 'note_archive') {
     return `(Proposed archiving the note "${proposal.text}" (${proposal.category}): ${proposal.reason}.)`;
   }
+  if (proposal.kind === 'recipe') {
+    const ingredients = proposal.ingredients.map((i) => `${i.name} ${i.grams} g`).join(', ');
+    return `(Proposed saving the recipe "${proposal.name}", ${proposal.servings} ${proposal.servingUnit} servings: ${ingredients}.)`;
+  }
+  if (proposal.kind === 'favourites') {
+    const foods = proposal.foods.map((f) => `${f.add ? 'add' : 'remove'} ${f.name}`).join(', ');
+    return `(Proposed changing the favourites: ${foods}.)`;
+  }
   const swaps = changesText({ swaps: proposal.swaps, removed: [], added: [] });
   return `(Proposed for ${workoutName(proposal.workout)}: ${swaps}.)`;
 }
