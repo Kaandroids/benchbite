@@ -27,6 +27,8 @@ export const COACH_TOOLS = [
   'save_note',
   'update_note',
   'archive_note',
+  'propose_recipe',
+  'propose_favourites',
 ] as const;
 
 export type CoachToolName = (typeof COACH_TOOLS)[number];
@@ -200,9 +202,9 @@ export type CardAlternative = { name: string | null; position: number };
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
  * user's language, the targets in use and the new ones, entries of the food log moved, resized or
  * removed (ADR 0068), changes to several workouts and their alternatives (ADR 0075), or a note
- * changed or archived (ADR 0133). Bite proposes `workout` no more; its cards stay with the
- * messages that have them. The user applies it, keeps things as they are, or undoes it, by its
- * `id` (decide_coach_proposal()).
+ * changed or archived (ADR 0133), or a new recipe and changes to the favourites (ADR 0172). Bite
+ * proposes `workout` no more; its cards stay with the messages that have them. The user applies
+ * it, keeps things as they are, or undoes it, by its `id` (decide_coach_proposal()).
  */
 export type ProposalCard =
   | {
@@ -263,7 +265,43 @@ export type ProposalCard =
       category: NoteCategory;
       text: string;
       reason: string;
+    }
+  | {
+      /**
+       * A new recipe (ADR 0172): its name, how many servings it makes and their unit, its
+       * ingredients, and what one serving weighs and adds.
+       */
+      kind: 'recipe';
+      id: number;
+      name: string;
+      servings: number;
+      servingUnit: PortionUnit;
+      ingredients: CardIngredient[];
+      serving: { grams: number; kcal: number; proteinG: number; carbsG: number; fatG: number };
+    }
+  | {
+      /** Foods added to the favourites and taken out of them (ADR 0172), in that order. */
+      kind: 'favourites';
+      id: number;
+      foods: CardFavourite[];
     };
+
+/** A unit of a portion, such as a bowl, as the database names it. */
+export type PortionUnit = Database['public']['Enums']['portion_unit'];
+
+/** An ingredient of a recipe as its card shows it, with the portion picked, if one was. */
+export type CardIngredient = {
+  name: string;
+  grams: number;
+  kcal: number;
+  portion?: { unit: PortionUnit; count: number };
+};
+
+/**
+ * A food a favourites proposal adds or takes out, with its calories per 100 g, or per serving
+ * for a recipe (`serving`).
+ */
+export type CardFavourite = { name: string; add: boolean; kcal: number; serving?: PortionUnit };
 
 /** A note as a proposal's card shows it; `reviewOn` is the day to ask again, YYYY-MM-DD. */
 export type CardNote = { category: NoteCategory; text: string; reviewOn: string | null };
@@ -281,6 +319,8 @@ export const SHOWN_PROPOSAL_KINDS = [
   'alternative_switch',
   'note',
   'note_archive',
+  'recipe',
+  'favourites',
 ] as const satisfies readonly ProposalCard['kind'][];
 
 /**
