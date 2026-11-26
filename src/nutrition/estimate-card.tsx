@@ -11,6 +11,7 @@ import { useTheme, type ColorTokens } from '@/theme';
 import { MACRO_TEXT_MIN_SCALE, MACROS } from './macro-targets';
 import { confidenceOf, estimateTotals, itemTotals, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
+import type { Totals } from './totals';
 
 type EstimateCardProps = {
   meal: Meal;
@@ -115,15 +116,20 @@ export function EstimateItemRow({
   );
 }
 
-/**
- * What the items add up to, set apart from them under its title: the calories and each macro in
- * its colour, a quarter each.
- */
+/** What the items add up to, set apart from them under its title. */
 export function EstimateTotals({ items }: { items: EstimateItem[] }) {
+  const { t } = useTranslation();
+  return <MacroTotals title={t('nutrition.photo.total')} totals={estimateTotals(items)} />;
+}
+
+/**
+ * Calories and macros set apart under a title, such as a meal's total or a recipe's serving: the
+ * calories and each macro in its colour, a quarter each.
+ */
+export function MacroTotals({ title, totals }: { title: string; totals: Totals }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const totals = estimateTotals(items);
   return (
     <View
       style={{
@@ -134,7 +140,7 @@ export function EstimateTotals({ items }: { items: EstimateItem[] }) {
       }}
     >
       <Text variant="captionStrong" color="textMuted">
-        {t('nutrition.photo.total')}
+        {title}
       </Text>
       <View style={[styles.totals, { gap: spacing.xs }]}>
         <Total value={format(Math.round(totals.calories))} label="kcal" />

@@ -646,3 +646,78 @@ describe('a note change', () => {
     expect(await screen.findByText('Kept as it is')).toBeOnTheScreen();
   });
 });
+
+describe('a recipe', () => {
+  const RECIPE: Card = {
+    kind: 'recipe',
+    id: 14,
+    name: 'Lentil soup',
+    servings: 4,
+    servingUnit: 'bowl',
+    ingredients: [
+      { name: 'Red lentils, dried', grams: 250, kcal: 850 },
+      { name: 'Onion', grams: 110, kcal: 33, portion: { unit: 'piece', count: 1 } },
+    ],
+    serving: { grams: 387.5, kcal: 302.8, proteinG: 15.6, carbsG: 34.7, fatG: 8.6 },
+  };
+
+  it('shows its ingredients and what a serving adds, to save', async () => {
+    await render(<ProposalCard card={RECIPE} state={pending} />);
+
+    expect(screen.getByText('New recipe')).toBeOnTheScreen();
+    expect(screen.getByText('4 bowls')).toBeOnTheScreen();
+    expect(screen.getByText('Lentil soup')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Red lentils, dried, 250 g · 850 kcal')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Onion, 1 piece · 110 g · 33 kcal')).toBeOnTheScreen();
+    expect(screen.getByText('1 bowl · 388 g')).toBeOnTheScreen();
+    expect(screen.getByLabelText('303 kcal')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Save recipe' })).toBeOnTheScreen();
+  });
+
+  it('saves it and folds into a line with Undo', async () => {
+    decides('applied');
+    await render(<ProposalCard card={RECIPE} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Save recipe' }));
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'decide_coach_proposal',
+      expect.objectContaining({ proposal_id: 14, decision: 'apply' }),
+    );
+    expect(await screen.findByText('Saved to your recipes')).toBeOnTheScreen();
+    expect(screen.getByText('Lentil soup · 4 bowls · 303 kcal each')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+});
+
+describe('a change to the favourites', () => {
+  const FAVOURITES: Card = {
+    kind: 'favourites',
+    id: 15,
+    foods: [
+      { name: 'Oat flakes', add: true, kcal: 372 },
+      { name: 'Lentil soup', add: true, kcal: 303, serving: 'bowl' },
+      { name: 'Milk chocolate', add: false, kcal: 536 },
+    ],
+  };
+
+  it('shows the foods it adds and takes out', async () => {
+    await render(<ProposalCard card={FAVOURITES} state={pending} />);
+
+    expect(screen.getByText('Favourites')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Oat flakes, Add · 372 kcal per 100 g')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Lentil soup, Add · 303 kcal for 1 bowl')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Milk chocolate, Remove · 536 kcal per 100 g')).toBeOnTheScreen();
+  });
+
+  it('applies it and sums it up, with Undo', async () => {
+    decides('applied');
+    await render(<ProposalCard card={FAVOURITES} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Favourites changed')).toBeOnTheScreen();
+    expect(screen.getByText('2 added, 1 removed')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+});

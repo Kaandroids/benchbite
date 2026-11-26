@@ -49,7 +49,7 @@
 - **Bite, the coach.** A chat, typed or spoken, that knows the plan, the meals and the workouts,
   and keeps a notebook of what matters, such as an injury. Bite turns a meal described or
   photographed into a card to add with a tap, and proposes changes to workouts, targets, the food
-  log and its notes as cards the user applies or undoes.
+  log, recipes, favourites and its notes as cards the user applies or undoes.
 - **Progress and streaks.** Weight over time, monthly summaries, and a daily streak with freezes
   for the days life gets in the way.
 - **Free, with a premium plan to come.** The plan, logging and the health apps are free. Bite and

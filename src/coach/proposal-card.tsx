@@ -19,6 +19,9 @@ import { Was } from '@/components/ui/was';
 import { daysBetween, fromIsoDate, useShortDateFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useDayName } from '@/nutrition/day-name';
+import { MacroTotals } from '@/nutrition/estimate-card';
+import { Star } from '@/nutrition/favourite-star';
+import { usePortionLabel } from '@/nutrition/portion-label';
 import { spacing, useTheme, type ColorTokens } from '@/theme';
 import { useAlternativeName } from '@/workouts/alternatives';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
@@ -159,6 +162,8 @@ function applyLabel(card: Proposal) {
       return 'bite.proposal.changeNote';
     case 'note_archive':
       return 'bite.proposal.move';
+    case 'recipe':
+      return 'bite.recipe.save';
     default:
       return 'bite.proposal.apply';
   }
@@ -188,6 +193,10 @@ function ProposalBody({ card }: { card: Proposal }) {
       return <NoteChange card={card} />;
     case 'note_archive':
       return <NoteArchive card={card} />;
+    case 'recipe':
+      return <RecipeChange card={card} />;
+    case 'favourites':
+      return <FavouritesChange card={card} />;
   }
 }
 
@@ -618,6 +627,8 @@ function useApplied() {
   const summary = useSummary();
   const foodLogDetail = useFoodLogDetail();
   const date = useShortDateFormat(new Date());
+  const portionLabel = usePortionLabel();
+  const { format } = useNumberFormat();
   return (card: Proposal): { text: string; detail?: string } => {
     switch (card.kind) {
       case 'note': {
@@ -635,6 +646,28 @@ function useApplied() {
       }
       case 'note_archive':
         return { text: t('bite.proposal.noteArchived'), detail: card.text };
+      case 'recipe':
+        return {
+          text: t('bite.recipe.saved'),
+          detail: t('bite.recipe.detail', {
+            name: card.name,
+            servings: portionLabel(card.servingUnit, card.servings),
+            calories: format(Math.round(card.serving.kcal)),
+          }),
+        };
+      case 'favourites': {
+        const added = card.foods.filter((food) => food.add).length;
+        const removed = card.foods.length - added;
+        return {
+          text: t('bite.favourites.changed'),
+          detail: [
+            added ? t('bite.favourites.added', { count: added }) : null,
+            removed ? t('bite.favourites.removed', { count: removed }) : null,
+          ]
+            .filter(Boolean)
+            .join(', '),
+        };
+      }
       case 'food_log':
         return {
           text: t('bite.proposal.applied', { summary: summary(card) }),
@@ -652,7 +685,7 @@ function useSummary() {
   const { format } = useNumberFormat();
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
-  return (card: Exclude<Proposal, { kind: 'note' | 'note_archive' }>) => {
+  return (card: Exclude<Proposal, { kind: 'note' | 'note_archive' | 'recipe' | 'favourites' }>) => {
     switch (card.kind) {
       case 'workouts': {
         const only = onlyWorkout(card);
@@ -801,6 +834,125 @@ function FoodLogChanges({ card }: { card: FoodLogProposal }) {
   );
 }
 
+/**
+ * A new recipe (ADR 0172): its name, each ingredient with the portion picked, its grams and
+ * calories, and what one serving weighs and adds.
+ */
+function RecipeChange({ card }: { card: Extract<Proposal, { kind: 'recipe' }> }) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const { format } = useNumberFormat();
+  const portionLabel = usePortionLabel();
+  const { serving } = card;
+  return (
+    <View style={{ gap: spacing.md }}>
+      <View style={{ gap: spacing.sm }}>
+        <Header
+          title={t('bite.recipe.title')}
+          tag={portionLabel(card.servingUnit, card.servings)}
+        />
+        <Text variant="headline">{card.name}</Text>
+      </View>
+      <View>
+        {card.ingredients.map((ingredient, index) => {
+          const amount = [
+            ingredient.portion
+              ? portionLabel(ingredient.portion.unit, ingredient.portion.count)
+              : null,
+            t('nutrition.grams', { count: format(ingredient.grams) }),
+            t('nutrition.kcal', { calories: format(Math.round(ingredient.kcal)) }),
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          return (
+            <View
+              key={index}
+              accessible
+              accessibilityLabel={`${ingredient.name}, ${amount}`}
+              style={[styles.ingredient, listDivider(index === 0, colors.border)]}
+            >
+              <Text variant="bodyStrong" style={styles.flex}>
+                {ingredient.name}
+              </Text>
+              <Text variant="caption" color="textMuted">
+                {amount}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+      <MacroTotals
+        title={t('bite.recipe.serving', {
+          serving: portionLabel(card.servingUnit, 1),
+          grams: format(Math.round(serving.grams)),
+        })}
+        totals={{
+          calories: serving.kcal,
+          proteinG: serving.proteinG,
+          carbsG: serving.carbsG,
+          fatG: serving.fatG,
+        }}
+      />
+    </View>
+  );
+}
+
+/**
+ * Foods added to the favourites, with a filled star, and taken out, struck through with an empty
+ * one (ADR 0172), each with its calories per 100 g, or a recipe's per serving.
+ */
+function FavouritesChange({ card }: { card: Extract<Proposal, { kind: 'favourites' }> }) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const { format } = useNumberFormat();
+  const portionLabel = usePortionLabel();
+  return (
+    <>
+      <Header title={t('bite.favourites.title')} tag={null} />
+      <View>
+        {card.foods.map((food, index) => {
+          const calories = format(food.kcal);
+          const values = food.serving
+            ? t('bite.favourites.forServing', {
+                calories,
+                serving: portionLabel(food.serving, 1),
+              })
+            : t('nutrition.amount.per100g', { calories });
+          const detail = t(food.add ? 'bite.favourites.add' : 'bite.favourites.remove', {
+            values,
+          });
+          return (
+            <View
+              key={index}
+              accessible
+              accessibilityLabel={`${food.name}, ${detail}`}
+              style={[
+                styles.favourite,
+                { gap: spacing.sm + 2 },
+                listDivider(index === 0, colors.border),
+              ]}
+            >
+              <Star filled={food.add} size={18} />
+              <View style={[styles.flex, { gap: 2 }]}>
+                <Text
+                  variant="bodyStrong"
+                  color={food.add ? 'text' : 'textMuted'}
+                  style={food.add ? undefined : styles.struck}
+                >
+                  {food.name}
+                </Text>
+                <Text variant="caption" color="textMuted">
+                  {detail}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </>
+  );
+}
+
 /** What each change of an applied food log proposal did, in short, for the line under it. */
 function useFoodLogDetail() {
   const { t } = useTranslation();
@@ -843,6 +995,17 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: spacing.sm,
     gap: 2,
+  },
+  ingredient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  favourite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
   },
   target: {
     flexDirection: 'row',
