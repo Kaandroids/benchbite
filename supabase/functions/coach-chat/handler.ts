@@ -36,6 +36,7 @@ import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
+  CALL_AS_TEXT,
   CARD_MISSING,
   CARD_NOT_MADE,
   NO_LOOKUPS_LEFT,
@@ -49,7 +50,9 @@ import {
   messageText,
   snapshotText,
   SYSTEM,
+  TextCallFilter,
   untaggedAll,
+  withoutTextCall,
 } from './prompt.ts';
 import { removeMedia } from './media.ts';
 import { type CheckedPhoto, checkPhotos, storePhotos } from './photos.ts';
@@ -328,6 +331,7 @@ class Turn {
   finish?: Finish;
   reason?: string;
   #face = new FaceReader();
+  #calls = new TextCallFilter();
   #roundStarted = false;
 
   constructor(private readonly send: (event: ChatEvent) => void) {}
@@ -335,15 +339,26 @@ class Turn {
   /** A new request's answer starts, with its own face to read off. */
   round() {
     this.#face = new FaceReader();
+    this.#calls = new TextCallFilter();
     this.#roundStarted = false;
   }
 
-  said(text: string) {
-    this.#show(this.#face.push(text));
+  /** Whether this request's answer wrote a tool call as text, which is not shown. */
+  get wroteCall(): boolean {
+    return this.#calls.found;
   }
 
-  /** The end of a request's answer: what was held back while it might have been a face. */
+  said(text: string) {
+    this.#show(this.#face.push(this.#calls.push(text)));
+  }
+
+  /**
+   * The end of a request's answer: what was held back while it might have been a tool call
+   * written as text, or a face.
+   */
   ended() {
+    const rest = this.#calls.end();
+    if (rest) this.#show(this.#face.push(rest));
     this.#show(this.#face.end());
   }
 
@@ -453,6 +468,7 @@ async function answer(
     let lookups = 0;
     let toldNoCard = false;
     let toldNoLookups = false;
+    let toldTextCall = false;
     while (!(await stop.look({ now: true }))) {
       // Once the lookups are used up, Bite answers with what it has, and may not call a tool.
       const answerOnly = lookups >= MAX_TOOL_ROUNDS;
@@ -487,9 +503,23 @@ async function answer(
       }
       turn.ended();
       if (stop.stopped) break;
-      const said = textOf(spoken);
+      // A tool call written as text does nothing: it and what follows it are neither shown nor
+      // sent back to the model.
+      const wroteCall = turn.wroteCall;
+      const said = withoutTextCall(textOf(spoken));
+      const kept: Part[] = !wroteCall ? spoken : said.trim() ? [{ type: 'text', text: said }] : [];
 
       if (!calls.length) {
+        // Bite is asked once to make the call it wrote, whatever the thread made before.
+        if (wroteCall && !toldTextCall && !answerOnly) {
+          toldTextCall = true;
+          console.warn('Bite wrote a tool call as text', { model: turn.usage.model });
+          messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
+            role: 'user',
+            parts: [{ type: 'text', text: CALL_AS_TEXT }],
+          });
+          continue;
+        }
         // The model may write of the card it means to make and end without making it. Told so
         // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
         // tool may be called, it says it could not (#402). While it may, not after a card earlier
@@ -513,13 +543,10 @@ async function answer(
           mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
-        messages.push(
-          { role: 'model', parts: spoken },
-          {
-            role: 'user',
-            parts: [{ type: 'text', text: answerOnly ? CARD_NOT_MADE : CARD_MISSING }],
-          },
-        );
+        messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
+          role: 'user',
+          parts: [{ type: 'text', text: answerOnly ? CARD_NOT_MADE : CARD_MISSING }],
+        });
         continue;
       }
       // A model may call a tool all the same once none is left: the call is not run but answered
@@ -560,7 +587,7 @@ async function answer(
         ...(lastLookup ? [turn.trace.some(isShown) ? NO_LOOKUPS_LEFT : NO_LOOKUPS_NOR_CARDS] : []),
       ];
       messages.push(
-        { role: 'model', parts: [...spoken, ...calls] },
+        { role: 'model', parts: [...kept, ...calls] },
         {
           role: 'user',
           parts: [...results, ...words.map((text): Part => ({ type: 'text', text }))],
@@ -967,8 +994,9 @@ function toMessage(
   cards: Map<number, MealCardState>,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
+  // A tool call an older answer wrote as text is left out, so that Bite does not copy it.
   const said = parts.flatMap((part) =>
-    partOfType(part, 'text') && typeof part.text === 'string' ? [part.text] : [],
+    partOfType(part, 'text') && typeof part.text === 'string' ? [withoutTextCall(part.text)] : [],
   );
   // What Bite proposed and the meals it estimated, with where they stand, so that it knows on
   // later messages, whether or not it said a word.

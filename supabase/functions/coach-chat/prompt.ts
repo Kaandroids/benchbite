@@ -76,6 +76,67 @@ export const CARD_NOT_MADE =
 export const SAID_ALREADY =
   'Your words before these results are shown to the user already: go on from them, without saying them again.';
 
+/**
+ * Where a tool call begins that the model wrote as text instead of making it, as Gemini 3.5
+ * Flash-Lite did on 2026-11-27: `<call:default_api:log_meal_card{items:[…]}>`. Written so, it does
+ * nothing: it is neither shown nor kept, and Bite is asked once to make the call (CALL_AS_TEXT).
+ */
+const TEXT_CALL = '<call:';
+
+/** The text before a tool call written as text, which ends what is shown of it; all, without one. */
+export function withoutTextCall(text: string): string {
+  const at = text.indexOf(TEXT_CALL);
+  return at < 0 ? text : text.slice(0, at);
+}
+
+/**
+ * An answer's text as it streams, with a tool call written as text, and all after it, left out.
+ * What may be the start of one is held until the next text, or the end, tells.
+ */
+export class TextCallFilter {
+  #held = '';
+  #found = false;
+
+  /** Whether the text wrote a tool call. */
+  get found(): boolean {
+    return this.#found;
+  }
+
+  /** The text to show of `text`. */
+  push(text: string): string {
+    if (this.#found) return '';
+    const all = this.#held + text;
+    const at = all.indexOf(TEXT_CALL);
+    if (at >= 0) {
+      this.#found = true;
+      this.#held = '';
+      return all.slice(0, at);
+    }
+    const held = heldBack(all);
+    this.#held = all.slice(all.length - held);
+    return all.slice(0, all.length - held);
+  }
+
+  /** What was held back, at the end of the text. */
+  end(): string {
+    const rest = this.#found ? '' : this.#held;
+    this.#held = '';
+    return rest;
+  }
+}
+
+/** How much of the end of `text` may begin a tool call written as text. */
+function heldBack(text: string): number {
+  for (let length = Math.min(TEXT_CALL.length - 1, text.length); length > 0; length--) {
+    if (TEXT_CALL.startsWith(text.slice(-length))) return length;
+  }
+  return 0;
+}
+
+/** What Bite is told once when its answer wrote a tool call as text instead of making it. */
+export const CALL_AS_TEXT =
+  'Your answer wrote a tool call as text, which does nothing and is not shown to the user. Make the call now as a function call, never in text, then go on from your words above without saying them again. If you cannot make it, say why in a sentence.';
+
 /** What Bite is told when a note it saved waits on its card for the user's yes (ADR 0071). */
 export const NOTE_ASKED =
   "Not kept yet: the app's card asks the user whether to keep it. Never say you noted, saved or will remember it.";
