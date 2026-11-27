@@ -1,64 +1,149 @@
+<!-- Written by `pnpm emails` from supabase/functions/_shared/auth_templates.ts: change it there. -->
+{{ if eq .Data.locale "de" }}
 <!doctype html>
-<!-- Laid out as the other account emails, here and in functions/_shared/account_email.ts: change them together. -->
-<html>
-  <body
-    style="
-      margin: 0;
-      padding: 24px;
-      background: #f6f6f8;
-      font-family: Helvetica, Arial, sans-serif;
-      color: #16171a;
-    "
-  >
-    <div
-      style="
-        max-width: 480px;
-        margin: 0 auto;
-        padding: 32px;
-        border-radius: 20px;
-        background: #ffffff;
-      "
-    >
-      <p style="margin: 0 0 24px; font-size: 22px; font-weight: 800">benchbite</p>
-      {{ if eq .Data.locale "de" }}
-      <h1 style="margin: 0 0 12px; font-size: 24px">Bestätige deine E-Mail-Adresse</h1>
-      <p style="margin: 0 0 16px">
-        Gib diesen Code in der App ein, um dein Konto fertig einzurichten:
-      </p>
-      {{ else if eq .Data.locale "tr" }}
-      <h1 style="margin: 0 0 12px; font-size: 24px">E-posta adresini onayla</h1>
-      <p style="margin: 0 0 16px">Hesabını tamamlamak için bu kodu uygulamaya gir:</p>
-      {{ else }}
-      <h1 style="margin: 0 0 12px; font-size: 24px">Confirm your email</h1>
-      <p style="margin: 0 0 16px">Enter this code in the app to finish creating your account:</p>
-      {{ end }}
-      <p
-        style="
-          margin: 0 0 16px;
-          padding: 14px 24px;
-          display: inline-block;
-          border-radius: 14px;
-          background: #f6f6f8;
-          font-size: 32px;
-          font-weight: 800;
-          letter-spacing: 4px;
-        "
-      >
-        {{ .Token }}
-      </p>
-      {{ if eq .Data.locale "de" }}
-      <p style="margin: 0; color: #676a72">
-        Er gilt 15 Minuten. Falls du das nicht warst, kannst du diese E-Mail ignorieren.
-      </p>
-      {{ else if eq .Data.locale "tr" }}
-      <p style="margin: 0; color: #676a72">
-        15 dakika geçerlidir. Bunu sen istemediysen bu e-postayı yok sayabilirsin.
-      </p>
-      {{ else }}
-      <p style="margin: 0; color: #676a72">
-        It works for 15 minutes. If you didn't ask for this, you can ignore this email.
-      </p>
-      {{ end }}
-    </div>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Bestätige deine E-Mail-Adresse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800;900&amp;display=swap" rel="stylesheet">
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bb-page { background: #111214 !important; }
+        .bb-card { background: #1B1C1F !important; color: #F2F3F5 !important; }
+        .bb-muted, .bb-muted a { color: #9A9DA5 !important; }
+        .bb-code { background: #25272B !important; color: #F2F3F5 !important; }
+        .bb-button { background: #FF7F26 !important; border-bottom-color: #D45A00 !important; }
+        .bb-button a { color: #1C0C00 !important; }
+        .bb-tick { background: rgba(255, 127, 38, 0.12) !important; color: #FF7F26 !important; }
+        .bb-line { border-top-color: #2B2D31 !important; }
+      }
+    </style>
+  </head>
+  <body class="bb-page" style="margin: 0; padding: 0; background: #F6F6F8">
+    <table role="presentation" class="bb-page" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #F6F6F8">
+      <tr>
+        <td align="center" style="padding: 24px 12px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 480px">
+            <tr>
+              <td class="bb-card" style="padding: 28px; border-radius: 20px; background: #FFFFFF; color: #16171A; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5; text-align: left">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 26px"><tr><td><img src="https://www.benchbite.com/images/email/icon.png" width="34" height="34" alt="" style="display: block; border: 0"></td><td style="padding-left: 10px; font-size: 21px; font-weight: 900">benchbite</td></tr></table>
+                <h1 style="margin: 0 0 10px; font-size: 24px; line-height: 1.25; font-weight: 800">Bestätige deine E-Mail-Adresse</h1>
+                <p style="margin: 0 0 16px">Gib diesen Code in der App ein, um dein Konto fertig einzurichten:</p>
+                <p class="bb-code" style="margin: 4px 0 18px; padding: 16px 0 16px 10px; border-radius: 16px; background: #ECEDF0; text-align: center; font-size: 36px; line-height: 1.2; font-weight: 900; letter-spacing: 10px">{{ .Token }}</p>
+                <p class="bb-muted" style="margin: 0 0 10px; font-size: 14px; color: #676A72">Er gilt 15 Minuten. Falls du das nicht warst, kannst du diese E-Mail ignorieren.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="bb-muted" style="padding: 16px 28px 0; color: #676A72; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.55; text-align: center">
+                Du bekommst diese E-Mail wegen deines Benchbite-Kontos.<br>
+                Benchbite · support@benchbite.com · <a href="https://www.benchbite.com/de/imprint" style="color: #676A72">Impressum</a> · <a href="https://www.benchbite.com/de/privacy" style="color: #676A72">Datenschutz</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>
+{{ else if eq .Data.locale "tr" }}
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>E-posta adresini onayla</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800;900&amp;display=swap" rel="stylesheet">
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bb-page { background: #111214 !important; }
+        .bb-card { background: #1B1C1F !important; color: #F2F3F5 !important; }
+        .bb-muted, .bb-muted a { color: #9A9DA5 !important; }
+        .bb-code { background: #25272B !important; color: #F2F3F5 !important; }
+        .bb-button { background: #FF7F26 !important; border-bottom-color: #D45A00 !important; }
+        .bb-button a { color: #1C0C00 !important; }
+        .bb-tick { background: rgba(255, 127, 38, 0.12) !important; color: #FF7F26 !important; }
+        .bb-line { border-top-color: #2B2D31 !important; }
+      }
+    </style>
+  </head>
+  <body class="bb-page" style="margin: 0; padding: 0; background: #F6F6F8">
+    <table role="presentation" class="bb-page" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #F6F6F8">
+      <tr>
+        <td align="center" style="padding: 24px 12px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 480px">
+            <tr>
+              <td class="bb-card" style="padding: 28px; border-radius: 20px; background: #FFFFFF; color: #16171A; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5; text-align: left">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 26px"><tr><td><img src="https://www.benchbite.com/images/email/icon.png" width="34" height="34" alt="" style="display: block; border: 0"></td><td style="padding-left: 10px; font-size: 21px; font-weight: 900">benchbite</td></tr></table>
+                <h1 style="margin: 0 0 10px; font-size: 24px; line-height: 1.25; font-weight: 800">E-posta adresini onayla</h1>
+                <p style="margin: 0 0 16px">Hesabını tamamlamak için bu kodu uygulamaya gir:</p>
+                <p class="bb-code" style="margin: 4px 0 18px; padding: 16px 0 16px 10px; border-radius: 16px; background: #ECEDF0; text-align: center; font-size: 36px; line-height: 1.2; font-weight: 900; letter-spacing: 10px">{{ .Token }}</p>
+                <p class="bb-muted" style="margin: 0 0 10px; font-size: 14px; color: #676A72">15 dakika geçerlidir. Bunu sen istemediysen bu e-postayı yok sayabilirsin.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="bb-muted" style="padding: 16px 28px 0; color: #676A72; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.55; text-align: center">
+                Bu e-postayı Benchbite hesabın nedeniyle alıyorsun.<br>
+                Benchbite · support@benchbite.com · <a href="https://www.benchbite.com/tr/imprint" style="color: #676A72">Künye</a> · <a href="https://www.benchbite.com/tr/privacy" style="color: #676A72">Gizlilik</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+{{ else }}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Confirm your email</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800;900&amp;display=swap" rel="stylesheet">
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bb-page { background: #111214 !important; }
+        .bb-card { background: #1B1C1F !important; color: #F2F3F5 !important; }
+        .bb-muted, .bb-muted a { color: #9A9DA5 !important; }
+        .bb-code { background: #25272B !important; color: #F2F3F5 !important; }
+        .bb-button { background: #FF7F26 !important; border-bottom-color: #D45A00 !important; }
+        .bb-button a { color: #1C0C00 !important; }
+        .bb-tick { background: rgba(255, 127, 38, 0.12) !important; color: #FF7F26 !important; }
+        .bb-line { border-top-color: #2B2D31 !important; }
+      }
+    </style>
+  </head>
+  <body class="bb-page" style="margin: 0; padding: 0; background: #F6F6F8">
+    <table role="presentation" class="bb-page" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #F6F6F8">
+      <tr>
+        <td align="center" style="padding: 24px 12px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 480px">
+            <tr>
+              <td class="bb-card" style="padding: 28px; border-radius: 20px; background: #FFFFFF; color: #16171A; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5; text-align: left">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 26px"><tr><td><img src="https://www.benchbite.com/images/email/icon.png" width="34" height="34" alt="" style="display: block; border: 0"></td><td style="padding-left: 10px; font-size: 21px; font-weight: 900">benchbite</td></tr></table>
+                <h1 style="margin: 0 0 10px; font-size: 24px; line-height: 1.25; font-weight: 800">Confirm your email</h1>
+                <p style="margin: 0 0 16px">Enter this code in the app to finish creating your account:</p>
+                <p class="bb-code" style="margin: 4px 0 18px; padding: 16px 0 16px 10px; border-radius: 16px; background: #ECEDF0; text-align: center; font-size: 36px; line-height: 1.2; font-weight: 900; letter-spacing: 10px">{{ .Token }}</p>
+                <p class="bb-muted" style="margin: 0 0 10px; font-size: 14px; color: #676A72">It works for 15 minutes. If you didn&#39;t ask for this, you can ignore this email.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="bb-muted" style="padding: 16px 28px 0; color: #676A72; font-family: Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.55; text-align: center">
+                You get this email because of your Benchbite account.<br>
+                Benchbite · support@benchbite.com · <a href="https://www.benchbite.com/imprint" style="color: #676A72">Imprint</a> · <a href="https://www.benchbite.com/privacy" style="color: #676A72">Privacy</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+{{ end }}

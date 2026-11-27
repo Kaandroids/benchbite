@@ -4,3 +4,5 @@ dist/
 .astro/
 assets/
 supabase/functions/deno.lock
+# Written by pnpm emails from supabase/functions/_shared/auth_templates.ts
+supabase/templates/
