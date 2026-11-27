@@ -76,11 +76,10 @@ type Shot = {
   line: Record<Language, string>;
   badge?: string;
   /**
-   * The part of the screen enlarged: a fixed part, in the screen's pixels, where it stands the
-   * same in each language, or the card around a point, in shares of the screen, where its place
-   * changes with the words.
+   * The part of the screen enlarged: a fixed part, in the screen's pixels, one for all languages or
+   * one each where the words move it, or the card around a point, in shares of the screen.
    */
-  callout?: ({ region: Region } | { cardAround: [number, number] }) & {
+  callout?: ({ region: Region | Record<Language, Region> } | { cardAround: [number, number] }) & {
     zoom: number;
     tilt: number;
     /** How far right of the middle it stands. */
@@ -121,7 +120,16 @@ const SHOTS: Shot[] = [
       de: 'Das letzte Mal neben jedem Satz, und jeder neue Rekord',
       tr: 'Her setin yanında geçen sefer, kırılan her rekor',
     },
-    callout: { region: { x: 100, y: 956, width: 1124, height: 235 }, zoom: 1.15, tilt: -2 },
+    // The second set's row, higher in German and Turkish, whose exercise name takes one line.
+    callout: {
+      region: {
+        en: { x: 100, y: 956, width: 1124, height: 227 },
+        de: { x: 100, y: 912, width: 1124, height: 227 },
+        tr: { x: 100, y: 912, width: 1124, height: 227 },
+      },
+      zoom: 1.15,
+      tilt: -2,
+    },
   },
   {
     file: '3-nutrition.png',
@@ -482,7 +490,9 @@ async function draw(shot: Shot, language: Language): Promise<Buffer> {
     const { zoom, tilt, shift = 0 } = shot.callout;
     const region =
       'region' in shot.callout
-        ? shot.callout.region
+        ? 'x' in shot.callout.region
+          ? shot.callout.region
+          : shot.callout.region[language]
         : cardAround(
             await screen.clone().ensureAlpha().raw().toBuffer(),
             shot.callout.cardAround,
