@@ -7,9 +7,12 @@ const FUNCTIONS = new URL('../../', import.meta.url);
 /** Where a model may be reached: the model interface itself, and aiModel(). */
 const ALLOWED = ['_shared/llm/', '_shared/ai_usage.ts'];
 
-/** What reaching a model looks like: our model, Gemini's own client or API, or its key. */
+/**
+ * What reaching a model looks like: our model, Gemini's own client or API, or its key. Google
+ * Fonts, which the emails load Nunito from, is no model.
+ */
 const MODEL =
-  /\blanguageModel\b|\bGeminiModel\b|llm\/gemini|@google\/genai|googleapis\.com|GEMINI_API_KEY/;
+  /\blanguageModel\b|\bGeminiModel\b|llm\/gemini|@google\/genai|(?<!fonts\.)googleapis\.com|GEMINI_API_KEY/;
 
 /** Every source file under `dir`, its tests left out. */
 async function* sources(dir: URL): AsyncIterable<URL> {
