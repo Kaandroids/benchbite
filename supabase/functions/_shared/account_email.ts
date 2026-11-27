@@ -105,11 +105,11 @@ export type LayoutOptions = {
   bite?: boolean;
 };
 
-const heading = (title: string) =>
-  `<h1 style="margin: 0 0 10px; font-size: 24px; line-height: 1.25; font-weight: 800">${escape(title)}</h1>`;
+const heading = (title: string, margin = '0 0 10px') =>
+  `<h1 style="margin: ${margin}; font-size: 24px; line-height: 1.25; font-weight: 800">${escape(title)}</h1>`;
 
 const greeting = (title: string) =>
-  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 14px"><tr><td style="padding-right: 14px"><img src="${IMAGES}/bite.png" width="64" height="64" alt="" style="display: block; border: 0"></td><td><h1 style="margin: 0; font-size: 24px; line-height: 1.25; font-weight: 800">${escape(title)}</h1></td></tr></table>`;
+  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 14px"><tr><td style="padding-right: 14px"><img src="${IMAGES}/bite.png" width="64" height="64" alt="" style="display: block; border: 0"></td><td>${heading(title, '0')}</td></tr></table>`;
 
 /** The page around an email's parts, which are HTML already made safe. */
 export function accountEmailHtml(
