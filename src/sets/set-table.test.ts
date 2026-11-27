@@ -1,4 +1,4 @@
-import { readSetValue } from './set-table';
+import { readSetValue, showSetValue } from './set-table';
 
 describe('readSetValue', () => {
   it('reads weights to a quarter kilogram and other values as whole numbers', () => {
@@ -17,5 +17,20 @@ describe('readSetValue', () => {
     expect(readSetValue('reps', '')).toBeNull();
     expect(readSetValue('reps', 'abc')).toBeNull();
     expect(readSetValue('reps', '5000')).toBe(999);
+  });
+});
+
+describe('showSetValue', () => {
+  const german = new Intl.NumberFormat('de', { maximumFractionDigits: 2, useGrouping: false });
+  const number = (value: number) => german.format(value);
+
+  it('writes a number as the app language does, and a time as minutes and seconds', () => {
+    expect(showSetValue('weightKg', 77.5, number)).toBe('77,5');
+    expect(showSetValue('meters', 2000, number)).toBe('2000');
+    expect(showSetValue('seconds', 90, number)).toBe('1:30');
+  });
+
+  it('shows nothing for no value', () => {
+    expect(showSetValue('reps', null, number)).toBe('');
   });
 });
