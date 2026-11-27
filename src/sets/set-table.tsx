@@ -66,6 +66,10 @@ export function SetHeader({ kind, showLast }: SetHeaderProps) {
         variant="captionStrong"
         color="textMuted"
         align="center"
+        // A longer word, as German "SATZ", shrinks to the number's width rather than break.
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
         style={{ width: NUMBER_WIDTH }}
       >
         {t('session.columns.set')}
