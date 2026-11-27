@@ -343,11 +343,6 @@ class Turn {
     this.#roundStarted = false;
   }
 
-  /** Whether this request's answer wrote a tool call as text, which is not shown. */
-  get wroteCall(): boolean {
-    return this.#calls.found;
-  }
-
   said(text: string) {
     this.#show(this.#face.push(this.#calls.push(text)));
   }
@@ -463,8 +458,9 @@ async function answer(
       savesNotes: snapshot.savesNotes,
     };
 
-    // The rounds whose lookups ran, and the two things Bite is told at most once a turn: that its
-    // answer spoke of a card it did not make (#386), and that no lookups are left (#387).
+    // The rounds whose lookups ran, and the three things Bite is told at most once a turn: that its
+    // answer wrote a tool call as text, that it spoke of a card it did not make (#386), and that no
+    // lookups are left (#387).
     let lookups = 0;
     let toldNoCard = false;
     let toldNoLookups = false;
@@ -505,19 +501,23 @@ async function answer(
       if (stop.stopped) break;
       // A tool call written as text does nothing: it and what follows it are neither shown nor
       // sent back to the model.
-      const wroteCall = turn.wroteCall;
-      const said = withoutTextCall(textOf(spoken));
+      const whole = textOf(spoken);
+      const said = withoutTextCall(whole);
+      const wroteCall = said !== whole;
       const kept: Part[] = !wroteCall ? spoken : said.trim() ? [{ type: 'text', text: said }] : [];
+      // Bite is told a word after what it said in this round, which is kept for it.
+      const tell = (text: string) =>
+        messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
+          role: 'user',
+          parts: [{ type: 'text', text }],
+        });
 
       if (!calls.length) {
         // Bite is asked once to make the call it wrote, whatever the thread made before.
         if (wroteCall && !toldTextCall && !answerOnly) {
           toldTextCall = true;
           console.warn('Bite wrote a tool call as text', { model: turn.usage.model });
-          messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
-            role: 'user',
-            parts: [{ type: 'text', text: CALL_AS_TEXT }],
-          });
+          tell(CALL_AS_TEXT);
           continue;
         }
         // The model may write of the card it means to make and end without making it. Told so
@@ -543,10 +543,7 @@ async function answer(
           mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
-        messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
-          role: 'user',
-          parts: [{ type: 'text', text: answerOnly ? CARD_NOT_MADE : CARD_MISSING }],
-        });
+        tell(answerOnly ? CARD_NOT_MADE : CARD_MISSING);
         continue;
       }
       // A model may call a tool all the same once none is left: the call is not run but answered

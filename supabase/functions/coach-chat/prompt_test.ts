@@ -322,14 +322,12 @@ Deno.test('holds back what may begin a tool call written as text until it can te
     [split.push('Here it is <'), split.push('ca'), split.push('ll:default_api:x{}>'), split.end()],
     ['Here it is ', '', '', ''],
   );
-  assertEquals(split.found, true);
 
   const plain = new TextCallFilter();
   assertEquals(
     [plain.push('Less than <'), plain.push(' 2 g.'), plain.end()],
     ['Less than ', '< 2 g.', ''],
   );
-  assertEquals(plain.found, false);
 
   const atEnd = new TextCallFilter();
   assertEquals([atEnd.push('Keep it <c'), atEnd.end()], ['Keep it ', '<c']);

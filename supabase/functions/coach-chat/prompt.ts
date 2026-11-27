@@ -97,11 +97,6 @@ export class TextCallFilter {
   #held = '';
   #found = false;
 
-  /** Whether the text wrote a tool call. */
-  get found(): boolean {
-    return this.#found;
-  }
-
   /** The text to show of `text`. */
   push(text: string): string {
     if (this.#found) return '';
