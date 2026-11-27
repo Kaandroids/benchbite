@@ -6,7 +6,8 @@
 ## Context
 
 Since SDK 56 Expo links its modules on iOS as precompiled XCFrameworks. `expo-image-manipulator`,
-which shrinks the photos of the user's own exercises (`src/exercises/photos.ts`), comes with its
+which shrinks the photos of the user's own exercises (`src/exercises/photos.ts`) and the photos sent
+to Bite, of a meal or in the chat (`src/lib/photos.ts`), comes with its
 dependencies precompiled too: `SDWebImage.xcframework` and `SDWebImageWebPCoder.xcframework`,
 copied into `ios/Pods/ExpoImageManipulator`. Neither carries a privacy manifest, nor a signature.
 
@@ -27,7 +28,8 @@ Since 2025-02-12 App Store Connect rejects an upload that lacks them (ITMS-91061
 - **Every module from source** (`usePrecompiledModules: false`): the same fix for this module, at
   the cost of a much longer build for all the others, which have no such problem.
 - **Dropping the image manipulator,** sending photos as the picker gives them: larger uploads to
-  storage and a change to the exercise photos for a build problem.
+  storage, and photos to Bite many times larger, which cost more and can pass the 1.5 MB a function
+  takes per photo, for a build problem.
 - **Adding SDWebImage's manifest to the app's own:** Apple wants the manifest in the SDK's bundle,
   and its signature too, which an app cannot give a binary it did not make.
 
