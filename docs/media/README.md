@@ -65,7 +65,7 @@ to `store/out/<language>/`, which Git does not keep: draw them again to upload t
 
 Take each screen as above, with the app in that language (Settings → Language), on the iPhone 17
 Pro Max simulator at full size, and without the device's outline, which would draw the Dynamic
-Island: `xcrun simctl io <id> screenshot --mask=ignored store/source/<language>/<file>.png`.
+Island: `xcrun simctl io <id> screenshot --mask=ignored docs/media/store/source/<language>/<file>.png`.
 The files and what they show:
 
 | File                   | Shows                                                                                                     |
@@ -89,7 +89,7 @@ The messages to Bite, in each language:
 - Turkish: "Öğle yemeğim bu. Bir de yaklaşık 200 ml yeşil smoothie içtim. Kaydeder misin?" and
   "Sol omzum baş üstü preslerde ağrıyor. Üst vücut antrenmanımdan çıkarabilir misin?"
 
-Add the photo to the simulator first: `xcrun simctl addmedia <id> store/photos/salmon-poke-bowl.jpg`.
+Add the photo to the simulator first: `xcrun simctl addmedia <id> docs/media/store/photos/salmon-poke-bowl.jpg`.
 It is "Salmon Poke Bowl (S) with Spicy mayo sauce - Kitokito" by Andy Li, given to the public
 domain under [CC0 1.0](<https://commons.wikimedia.org/wiki/File:Salmon_Poke_Bowl_(S)_with_Spicy_mayo_sauce_-_Kitokito.jpg>).
 Bite's answers differ from one try to the next: take one whose words are whole and whose photo
