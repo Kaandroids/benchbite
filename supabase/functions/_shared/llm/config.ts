@@ -12,7 +12,8 @@ export type ModelConfig = {
 
 /**
  * Chat runs on Flash, which makes its tool calls as calls, where Flash-Lite wrote some as text
- * (ADR 0173); writing down a voice note stays on Flash-Lite, which takes audio. A meal photo and
+ * (ADR 0173); writing down a voice note stays on Flash-Lite, the cheaper model, as it calls no
+ * tools. A meal photo and
  * the reviews run on Flash too, which reads photos and writes longer texts better (#289).
  * `LLM_MODEL_<TASK>` overrides a model, such as `LLM_MODEL_COACH_CHAT=gemini-3.5-flash-lite`; the
  * model needs a price (ADR 0051).

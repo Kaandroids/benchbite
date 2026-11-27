@@ -22,7 +22,7 @@ photos and writes the reviews. Every AI call is priced and held to the user's bu
 ## Decision
 
 - **Chat runs on Gemini 3.8 Flash,** with low thinking, as the meal photos do. Writing down a voice
-  note (`coach_voice`) stays on Flash-Lite: it calls no tools.
+  note (`coach_voice`) stays on Flash-Lite, the cheaper model: it calls no tools.
 - **A tool call written as text is caught** whatever the model: it and what follows it are neither
   shown nor kept, earlier answers are read without it, and Bite is asked once to make the call.
 - **Why an answer ended early is logged,** in the provider's own words, such as
@@ -46,5 +46,7 @@ photos and writes the reviews. Every AI call is priced and held to the user's bu
   answer of 7,500 tokens in and 500 out, before the cache. From 2027-01-01 Flash costs twice that
   again. The budget of ADR 0078 stays: a user who chats a lot reaches the weekly $1.50 sooner,
   at about 180 such answers a week now and about 90 from 2027.
+- A voice message's audio is heard by the chat on Flash now, at Flash's price, as the chat hears
+  it itself (ADR 0072); only writing it down stays on Flash-Lite.
 - Flash answers somewhat slower than Flash-Lite; the answer streams, so the first words come soon.
 - The text-call check is a guard for any model, and its retry is counted like any other request.
