@@ -105,8 +105,8 @@ const SHOTS: Shot[] = [
       tr: ['Antrenman ve kalori\n', 'tek planda', ''],
     },
     line: {
-      en: 'A plan from a few questions, no account needed',
-      de: 'Ein Plan aus ein paar Fragen, ganz ohne Konto',
+      en: 'A plan from a few questions,\nno account needed',
+      de: 'Ein Plan aus ein paar Fragen,\nganz ohne Konto',
       tr: 'Birkaç soruyla planın hazır, hesap gerekmez',
     },
     callout: { cardAround: [0.5, 0.18], zoom: 1.18, tilt: -2 },
@@ -123,7 +123,7 @@ const SHOTS: Shot[] = [
     line: {
       en: 'Last time beside every set, and new records as they fall',
       de: 'Das letzte Mal neben jedem Satz, und jeder neue Rekord',
-      tr: 'Her setin yanında geçen sefer, kırılan her rekor',
+      tr: 'Her setin yanında geçen sefer,\nkırılan her rekor',
     },
     // The second set's row, higher in German and Turkish, whose exercise name takes one line.
     callout: {
@@ -147,7 +147,7 @@ const SHOTS: Shot[] = [
     line: {
       en: 'Your own foods, favourites, water and a meal from a photo',
       de: 'Eigene Lebensmittel, Favoriten, Wasser und Mahlzeiten per Foto',
-      tr: 'Kendi besinlerin, favorilerin, su ve fotoğraftan öğün',
+      tr: 'Kendi besinlerin, favorilerin,\nsu ve fotoğraftan öğün',
     },
     callout: { cardAround: [0.5, 0.25], zoom: 1.15, tilt: 2 },
   },
@@ -161,7 +161,7 @@ const SHOTS: Shot[] = [
       tr: ['Ne yediğini ', "Bite'a", ' söyle'],
     },
     line: {
-      en: 'Send a photo, add a word, and Bite logs it for you',
+      en: 'Send a photo, add a word,\nand Bite logs it for you',
       de: 'Schick ein Foto, sag kurz was dazu, und Bite trägt es ein',
       tr: 'Fotoğraf gönder, bir not ekle, Bite kaydetsin',
     },
@@ -180,7 +180,7 @@ const SHOTS: Shot[] = [
     line: {
       en: 'Bite notes an injury and suggests a swap you apply or undo',
       de: 'Bite merkt sich eine Verletzung und schlägt eine Änderung vor',
-      tr: 'Bite sakatlığını not eder ve bir değişiklik önerir',
+      tr: 'Bite sakatlığını not eder\nve bir değişiklik önerir',
     },
     callout: { cardAround: [0.5, 0.68], zoom: 1.08, tilt: 2 },
     bite: { expression: 'thinking', left: 978, top: 618, size: 288, tilt: 8 },
