@@ -79,8 +79,10 @@ functions in schema pg_temp to public` after creating them.
 ### Email
 
 Locally, Auth and the Edge Functions send email to Mailpit and not to anyone: read codes at
-<http://127.0.0.1:54324>. After changing `supabase/config.toml` or `supabase/templates/`, run
-`pnpm supabase stop` and `pnpm supabase start`, which keeps the data.
+<http://127.0.0.1:54324>. The emails share one layout in `supabase/functions/_shared/account_email.ts`;
+the Auth templates in `supabase/templates/` are written from it with `pnpm emails`, never by hand
+([ADR 0175](adr/0175-one-layout-for-the-account-emails.md)). After changing `supabase/config.toml`
+or `supabase/templates/`, run `pnpm supabase stop` and `pnpm supabase start`, which keeps the data.
 
 ### Dev account
 
