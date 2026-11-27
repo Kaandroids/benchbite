@@ -84,19 +84,20 @@ opens the App Store's front on iOS.
 
 `app.json` says that the app uses no encryption beyond what is exempt
 (`ios.config.usesNonExemptEncryption`) and holds its privacy manifest (`ios.privacyManifests`): the
-reasons it uses certain system APIs, the data it collects, and that it does not track
-([ADR 0155](adr/0155-declare-encryption-and-data-use-to-apple.md)). The watch app's manifest is
+reasons it uses certain system APIs, the data it collects, and that it does not track ([ADR
+0155](adr/0155-declare-encryption-and-data-use-to-apple.md)). The watch app's manifest is
 `targets/watch/PrivacyInfo.xcprivacy`. React Native's merging of the libraries' manifests into the
 app's is off (`privacyManifestAggregationEnabled` in `app.json`): it links the app's manifest into
 the watch app beside the watch's own, which fails the build, and for a library built from source it
-would add reasons the app left out on purpose. Nothing adds a library's reasons by itself, so a
-new library with native code is checked by hand. To see what a build carries, run
+would add reasons the app left out on purpose. Nothing adds a library's reasons by itself, so a new
+library with native code is checked by hand. To see what a build carries, run
 `APP_VARIANT=production pnpm expo prebuild --platform ios --no-install` and read
-`ios/Benchbite/PrivacyInfo.xcprivacy`; the libraries' own manifests are under `ios/Pods` after
-`pod install`. A module Expo ships precompiled may carry an SDK on Apple's list with neither a
-manifest nor a signature: build such a module from source, in `expo.autolinking.ios.buildFromSource`
-in `package.json` ([ADR 0174](adr/0174-build-the-image-manipulator-from-source.md)), and check the
-built app with `find <Benchbite.app> -name PrivacyInfo.xcprivacy`. Keep the manifest, the privacy policy and the stores' privacy details in step.
+`ios/Benchbite/PrivacyInfo.xcprivacy`; the libraries' own manifests are under `ios/Pods` after `pod
+install`. A module Expo ships precompiled may carry an SDK on Apple's list with neither a manifest
+nor a signature: build such a module from source, in `expo.autolinking.ios.buildFromSource` in
+`package.json` ([ADR 0174](adr/0174-build-the-image-manipulator-from-source.md)), and check the
+built app with `find <Benchbite.app> -name PrivacyInfo.xcprivacy`. Keep the manifest, the privacy
+policy and the stores' privacy details in step.
 
 ## Deploy the website
 

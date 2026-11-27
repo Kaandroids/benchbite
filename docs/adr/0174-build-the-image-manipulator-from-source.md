@@ -7,9 +7,9 @@
 
 Since SDK 56 Expo links its modules on iOS as precompiled XCFrameworks. `expo-image-manipulator`,
 which shrinks the photos of the user's own exercises (`src/exercises/photos.ts`) and the photos sent
-to Bite, of a meal or in the chat (`src/lib/photos.ts`), comes with its
-dependencies precompiled too: `SDWebImage.xcframework` and `SDWebImageWebPCoder.xcframework`,
-copied into `ios/Pods/ExpoImageManipulator`. Neither carries a privacy manifest, nor a signature.
+to Bite, of a meal or in the chat (`src/lib/photos.ts`), comes with its dependencies precompiled
+too: `SDWebImage.xcframework` and `SDWebImageWebPCoder.xcframework`, copied into
+`ios/Pods/ExpoImageManipulator`. Neither carries a privacy manifest, nor a signature.
 
 SDWebImage is on Apple's list of SDKs that need a privacy manifest, and a signature when used as a
 binary ([third-party SDK requirements](https://developer.apple.com/support/third-party-SDK-requirements)).
