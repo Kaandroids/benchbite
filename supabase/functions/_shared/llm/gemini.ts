@@ -165,10 +165,13 @@ export class GeminiModel implements LanguageModel {
       // Left before its end, the stream closes its connection, so that the request stops.
       await chunks.return?.();
     }
+    const finish = finishOf(last);
+    const reason = last.candidates?.[0]?.finishReason ?? last.promptFeedback?.blockReason;
     yield {
       type: 'done',
       usage: usageOf({ ...last, usageMetadata: usage }, model),
-      finish: finishOf(last),
+      finish,
+      ...(finish !== 'stop' && reason && { reason }),
     };
   }
 

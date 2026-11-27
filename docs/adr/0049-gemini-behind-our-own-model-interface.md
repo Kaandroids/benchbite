@@ -1,6 +1,6 @@
 # 0049. Gemini behind our own language model interface
 
-- **Status:** Accepted, amended by ADR-0051 and ADR-0153
+- **Status:** Accepted, amended by ADR-0051, ADR-0153 and ADR-0173
 - **Date:** 2026-10-29
 
 ## Context
@@ -22,7 +22,7 @@ month, and it runs in the EU on Vertex AI.
   call reports its tokens, with the reasoning and cached input apart, for the usage limit (#288).
 - **Gemini is the provider**, behind that interface, over its REST API with `fetch` rather than an
   SDK. Photos and audio go inline, in base64, rather than through an upload API.
-- **Each task has its model in one place** (`config.ts`): chat on Gemini 3.5 Flash-Lite, a meal
+- **Each task has its model in one place** (`config.ts`): chat on Gemini 3.5 Flash-Lite (Flash since ADR 0173), a meal
   photo and the reviews on Gemini 3.8 Flash, each with how much it reasons. `LLM_MODEL_<TASK>`
   overrides a model without a change to the code.
 - **Two backends, chosen explicitly** by `GEMINI_BACKEND`, which has no default. `studio` uses the Gemini Developer API with `GEMINI_API_KEY`,

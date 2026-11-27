@@ -8,6 +8,8 @@ import {
   untaggedAll,
   snapshotText,
   SYSTEM,
+  TextCallFilter,
+  withoutTextCall,
 } from './prompt.ts';
 import type { Snapshot } from './snapshot.ts';
 
@@ -304,4 +306,29 @@ Deno.test('finds a card spoken of in each language, and not other words', async 
     true,
   );
   assertEquals(mentionsCard('Squat eklemeyi öneririm.', 'tr'), true);
+});
+
+Deno.test('leaves out a tool call written as text, and all after it', () => {
+  assertEquals(
+    withoutTextCall('I made the card! <call:default_api:log_meal_card{items:[]}> Tap it.'),
+    'I made the card! ',
+  );
+  assertEquals(withoutTextCall('Eat < 2 g of salt.'), 'Eat < 2 g of salt.');
+});
+
+Deno.test('holds back what may begin a tool call written as text until it can tell', () => {
+  const split = new TextCallFilter();
+  assertEquals(
+    [split.push('Here it is <'), split.push('ca'), split.push('ll:default_api:x{}>'), split.end()],
+    ['Here it is ', '', '', ''],
+  );
+
+  const plain = new TextCallFilter();
+  assertEquals(
+    [plain.push('Less than <'), plain.push(' 2 g.'), plain.end()],
+    ['Less than ', '< 2 g.', ''],
+  );
+
+  const atEnd = new TextCallFilter();
+  assertEquals([atEnd.push('Keep it <c'), atEnd.end()], ['Keep it ', '<c']);
 });

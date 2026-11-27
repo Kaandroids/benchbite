@@ -7,6 +7,7 @@ import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
 import {
+  CALL_AS_TEXT,
   CARD_MISSING,
   CARD_NOT_MADE,
   NO_LOOKUPS_LEFT,
@@ -2075,3 +2076,114 @@ Deno.test('logs a meal from photos as a card, and reads both back later', async 
     },
   ]);
 });
+
+Deno.test(
+  'asks Bite once more when it writes a tool call as text, and never shows it',
+  async () => {
+    const model = new FakeModel(
+      {
+        parts: [
+          { type: 'text', text: '[[happy]] I made the card! <ca' },
+          { type: 'text', text: 'll:default_api:log_meal_card{items:[]}>' },
+        ],
+        usage: FAKE_USAGE,
+        finish: 'other',
+      },
+      [{ type: 'text', text: 'Tap Add to log it.' }],
+    );
+    // A thread whose earlier answer made a card, after which Bite is not told of a missing one.
+    const { ctx, inserted } = context(model, {}, WITH_CARD);
+
+    const answer = await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+    assertEquals(model.requests.length, 2);
+    assertEquals(model.requests[1].messages.slice(-2), [
+      { role: 'model', parts: [{ type: 'text', text: '[[happy]] I made the card! ' }] },
+      { role: 'user', parts: [{ type: 'text', text: CALL_AS_TEXT }] },
+    ]);
+    const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+    assertEquals(shown.join(''), 'I made the card! Tap Add to log it.');
+    assertEquals(inserted.at(-1)!.rows.at(-1)!.content, [
+      { type: 'text', text: 'I made the card! Tap Add to log it.' },
+    ]);
+    assertEquals(answer.at(-1), { event: 'done', threadId: 7, messageId: 101 });
+  },
+);
+
+Deno.test('asks only once when Bite writes a tool call as text again', async () => {
+  const written = [{ type: 'text' as const, text: 'Done <call:default_api:x{}>' }];
+  const model = new FakeModel(written, written);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), context(model).ctx));
+
+  assertEquals(model.requests.length, 2);
+  const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+  assertEquals(
+    shown.some((text) => text.includes('<call:')),
+    false,
+  );
+});
+
+Deno.test("reads Bite's earlier answer without the tool call it wrote as text", async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'happy',
+          content: [{ type: 'text', text: 'Here is the card. <call:default_api:log_meal_card{}>' }],
+        },
+        { role: 'user', content: [{ type: 'text', text: 'Why did it say <call:x>?' }] },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  // Newest first from the database, oldest first to the model: the user's words are read whole,
+  // their tag's bracket made harmless as always.
+  assertEquals(model.requests[0].messages.slice(0, 2), [
+    { role: 'user', parts: [{ type: 'text', text: 'Why did it say \u2039call:x>?' }] },
+    { role: 'model', parts: [{ type: 'text', text: '[[happy]] Here is the card. ' }] },
+  ]);
+});
+
+Deno.test('asks Bite once more when its answer is only a tool call written as text', async () => {
+  const model = new FakeModel(
+    [{ type: 'text', text: '<call:default_api:log_meal_card{items:[]}>' }],
+    [{ type: 'text', text: '[[happy]] Tap Add to log it.' }],
+  );
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), context(model).ctx));
+
+  // Nothing of the first answer is kept for Bite: the word follows the user's message.
+  const [asked, told] = model.requests[1].messages.slice(-2);
+  assertEquals(
+    [asked.role, told],
+    ['user', { role: 'user', parts: [{ type: 'text', text: CALL_AS_TEXT }] }],
+  );
+  const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+  assertEquals(shown.join(''), 'Tap Add to log it.');
+});
+
+Deno.test(
+  'asks no more when Bite writes a tool call as text once no lookups are left',
+  async () => {
+    const search = (id: string) => [
+      { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
+    ];
+    const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5'].map(search), [
+      { type: 'text', text: '[[sad]] I found nothing. <call:default_api:x{}>' },
+    ]);
+
+    const answer = await events(await handleChatRequest(ask(MESSAGE), context(model).ctx));
+
+    assertEquals(model.requests.length, 6);
+    const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+    assertEquals(shown.join(''), 'I found nothing. ');
+  },
+);

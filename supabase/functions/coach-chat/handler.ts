@@ -36,6 +36,7 @@ import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
+  CALL_AS_TEXT,
   CARD_MISSING,
   CARD_NOT_MADE,
   NO_LOOKUPS_LEFT,
@@ -49,7 +50,9 @@ import {
   messageText,
   snapshotText,
   SYSTEM,
+  TextCallFilter,
   untaggedAll,
+  withoutTextCall,
 } from './prompt.ts';
 import { removeMedia } from './media.ts';
 import { type CheckedPhoto, checkPhotos, storePhotos } from './photos.ts';
@@ -324,9 +327,11 @@ class Turn {
   /** The tool calls and their results, in order, as the message keeps them. */
   trace: Part[] = [];
   usage = { model: undefined as string | undefined, input: 0, cached: 0, output: 0, thinking: 0 };
-  /** Why the last request's answer ended. */
+  /** Why the last request's answer ended, and the provider's own word for it when not a stop. */
   finish?: Finish;
+  reason?: string;
   #face = new FaceReader();
+  #calls = new TextCallFilter();
   #roundStarted = false;
 
   constructor(private readonly send: (event: ChatEvent) => void) {}
@@ -334,15 +339,21 @@ class Turn {
   /** A new request's answer starts, with its own face to read off. */
   round() {
     this.#face = new FaceReader();
+    this.#calls = new TextCallFilter();
     this.#roundStarted = false;
   }
 
   said(text: string) {
-    this.#show(this.#face.push(text));
+    this.#show(this.#face.push(this.#calls.push(text)));
   }
 
-  /** The end of a request's answer: what was held back while it might have been a face. */
+  /**
+   * The end of a request's answer: what was held back while it might have been a tool call
+   * written as text, or a face.
+   */
   ended() {
+    const rest = this.#calls.end();
+    if (rest) this.#show(this.#face.push(rest));
     this.#show(this.#face.end());
   }
 
@@ -447,11 +458,13 @@ async function answer(
       savesNotes: snapshot.savesNotes,
     };
 
-    // The rounds whose lookups ran, and the two things Bite is told at most once a turn: that its
-    // answer spoke of a card it did not make (#386), and that no lookups are left (#387).
+    // The rounds whose lookups ran, and the three things Bite is told at most once a turn: that its
+    // answer wrote a tool call as text, that it spoke of a card it did not make (#386), and that no
+    // lookups are left (#387).
     let lookups = 0;
     let toldNoCard = false;
     let toldNoLookups = false;
+    let toldTextCall = false;
     while (!(await stop.look({ now: true }))) {
       // Once the lookups are used up, Bite answers with what it has, and may not call a tool.
       const answerOnly = lookups >= MAX_TOOL_ROUNDS;
@@ -481,13 +494,32 @@ async function answer(
           turn.usage.output += usage.outputTokens;
           turn.usage.thinking += usage.thinkingTokens;
           turn.finish = event.finish;
+          turn.reason = event.reason;
         }
       }
       turn.ended();
       if (stop.stopped) break;
-      const said = textOf(spoken);
+      // A tool call written as text does nothing: it and what follows it are neither shown nor
+      // sent back to the model.
+      const whole = textOf(spoken);
+      const said = withoutTextCall(whole);
+      const wroteCall = said !== whole;
+      const kept: Part[] = !wroteCall ? spoken : said.trim() ? [{ type: 'text', text: said }] : [];
+      // Bite is told a word after what it said in this round, which is kept for it.
+      const tell = (text: string) =>
+        messages.push(...(kept.length ? [{ role: 'model' as const, parts: kept }] : []), {
+          role: 'user',
+          parts: [{ type: 'text', text }],
+        });
 
       if (!calls.length) {
+        // Bite is asked once to make the call it wrote, whatever the thread made before.
+        if (wroteCall && !toldTextCall && !answerOnly) {
+          toldTextCall = true;
+          console.warn('Bite wrote a tool call as text', { model: turn.usage.model });
+          tell(CALL_AS_TEXT);
+          continue;
+        }
         // The model may write of the card it means to make and end without making it. Told so
         // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
         // tool may be called, it says it could not (#402). While it may, not after a card earlier
@@ -511,13 +543,7 @@ async function answer(
           mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
-        messages.push(
-          { role: 'model', parts: spoken },
-          {
-            role: 'user',
-            parts: [{ type: 'text', text: answerOnly ? CARD_NOT_MADE : CARD_MISSING }],
-          },
-        );
+        tell(answerOnly ? CARD_NOT_MADE : CARD_MISSING);
         continue;
       }
       // A model may call a tool all the same once none is left: the call is not run but answered
@@ -558,7 +584,7 @@ async function answer(
         ...(lastLookup ? [turn.trace.some(isShown) ? NO_LOOKUPS_LEFT : NO_LOOKUPS_NOR_CARDS] : []),
       ];
       messages.push(
-        { role: 'model', parts: [...spoken, ...calls] },
+        { role: 'model', parts: [...kept, ...calls] },
         {
           role: 'user',
           parts: [...results, ...words.map((text): Part => ({ type: 'text', text }))],
@@ -578,6 +604,15 @@ async function answer(
     }
   }
 
+  // An answer the model ended other than by stopping is cut short; the logs say why, as the
+  // message keeps only that it was.
+  if (turn.finish && turn.finish !== 'stop') {
+    console.warn("Bite's answer ended early", {
+      finish: turn.finish,
+      reason: turn.reason,
+      model: turn.usage.model,
+    });
+  }
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   // Nothing is written into a deleted thread, not even its media for a moment (ADR 0143).
   if (stop.gone) return send({ event: 'error', reason: 'not_saved' });
@@ -956,8 +991,12 @@ function toMessage(
   cards: Map<number, MealCardState>,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
+  // A tool call an older answer of Bite's wrote as text is left out, so that Bite does not copy
+  // it; what the user wrote is read whole.
   const said = parts.flatMap((part) =>
-    partOfType(part, 'text') && typeof part.text === 'string' ? [part.text] : [],
+    partOfType(part, 'text') && typeof part.text === 'string'
+      ? [row.role === 'user' ? part.text : withoutTextCall(part.text)]
+      : [],
   );
   // What Bite proposed and the meals it estimated, with where they stand, so that it knows on
   // later messages, whether or not it said a word.
