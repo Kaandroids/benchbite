@@ -189,3 +189,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0171](0171-check-sign-ups-with-cloudflare-turnstile.md)                  | Check sign-ups with Cloudflare Turnstile                                                | Accepted                                             |
 | [0172](0172-bite-proposes-recipes-and-favourites.md)                      | Bite proposes recipes and favourites                                                    | Accepted                                             |
 | [0173](0173-bites-chat-on-gemini-flash.md)                                | Bite's chat on Gemini Flash                                                             | Accepted                                             |
+| [0174](0174-build-the-image-manipulator-from-source.md)                   | Build the image manipulator from source on iOS                                          | Accepted                                             |
