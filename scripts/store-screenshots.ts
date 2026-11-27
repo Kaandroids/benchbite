@@ -11,6 +11,9 @@ import { join } from 'node:path';
 
 import sharp, { type OverlayOptions } from 'sharp';
 
+import { BRAND_ORANGE } from '../src/brand/mark.ts';
+import { darkColors, lightColors } from '../src/theme/colors.ts';
+
 const ROOT = join(import.meta.dirname, '..');
 const STORE_DIR = join(ROOT, 'docs', 'media', 'store');
 const FONTS = join(ROOT, 'node_modules', '@expo-google-fonts', 'nunito');
@@ -35,28 +38,30 @@ type Language = (typeof LANGUAGES)[number];
 /** The app's colour tokens (src/theme/colors.ts) a screenshot is drawn in. */
 const THEMES = {
   light: {
-    background: '#F6F6F8',
-    text: '#16171A',
-    accent: '#C2410C',
-    muted: '#676A72',
-    bezel: '#16171A',
-    wash: 'rgba(255, 106, 16, 0.10)',
+    background: lightColors.background,
+    text: lightColors.text,
+    accent: lightColors.primaryText,
+    muted: lightColors.textMuted,
+    bezel: lightColors.text,
+    wash: lightColors.primaryWash,
   },
   dark: {
-    background: '#111214',
-    text: '#F2F3F5',
-    accent: '#FF7F26',
-    muted: '#9A9DA5',
-    bezel: '#2B2D31',
-    wash: 'rgba(255, 127, 38, 0.10)',
+    background: darkColors.background,
+    text: darkColors.text,
+    accent: darkColors.primaryText,
+    muted: darkColors.textMuted,
+    bezel: darkColors.border,
+    wash: darkColors.primaryWash,
   },
-} as const;
+};
 
 /** The caption's size, which keeps every caption to two lines. */
 const CAPTION_SIZE = 88;
 
 /** The frame of an enlarged part, the app's `primary`. */
-const CALLOUT_FRAME = '#E05300';
+const CALLOUT_FRAME = lightColors.primary;
+/** The watch's case, as dark as the dark theme's borders. */
+const WATCH_CASE = darkColors.border;
 
 type Expression = 'happy' | 'thinking' | 'surprised';
 
@@ -259,13 +264,18 @@ async function text(markup: string, fontfile: string, face: string, size: number
   return { data, width: info.width, height: info.height };
 }
 
-/** A rounded rectangle as an SVG image, filled or only outlined. */
-function roundedRect(width: number, height: number, radius: number, fill: string, stroke = '') {
-  const inset = stroke ? 0 : 0;
+/** A rounded rectangle as an SVG image. */
+function roundedRect(width: number, height: number, radius: number, fill: string) {
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
-      `<rect x="${inset}" y="${inset}" width="${width}" height="${height}" rx="${radius}" fill="${fill}" ${stroke}/></svg>`,
+      `<rect width="${width}" height="${height}" rx="${radius}" fill="${fill}"/></svg>`,
   );
+}
+
+/** A colour written as #RRGGBB, as its red, green and blue. */
+function rgb(hex: string): [number, number, number] {
+  const value = parseInt(hex.slice(1), 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
 }
 
 /** An image with its corners rounded off. */
@@ -309,8 +319,8 @@ function biteSvg(expression: Expression, size: number): Buffer {
   const line = (d: string, width = 3) =>
     `<path d="${d}" fill="none" stroke="#16171A" stroke-width="${width}" stroke-linecap="round"/>`;
   const cheeks = (opacity: number, rx = 5, ry = 3, cy = 55) =>
-    `<ellipse cx="29" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FF6A10" opacity="${opacity}"/>` +
-    `<ellipse cx="71" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FF6A10" opacity="${opacity}"/>`;
+    `<ellipse cx="29" cy="${cy}" rx="${rx}" ry="${ry}" fill="${BRAND_ORANGE}" opacity="${opacity}"/>` +
+    `<ellipse cx="71" cy="${cy}" rx="${rx}" ry="${ry}" fill="${BRAND_ORANGE}" opacity="${opacity}"/>`;
   const eyes = (left: number, right: number, cy: number, r: number, glint: number, g: number) =>
     `<ellipse cx="${left}" cy="${cy}" rx="${r}" ry="${r}" fill="#16171A"/>` +
     `<ellipse cx="${right}" cy="${cy}" rx="${r}" ry="${r}" fill="#16171A"/>` +
@@ -343,7 +353,7 @@ function biteSvg(expression: Expression, size: number): Buffer {
       '<circle cx="81.4" cy="25.6" r="10" fill="#000000"/>' +
       '<circle cx="67.3" cy="14.8" r="9" fill="#000000"/>' +
       '<circle cx="89.6" cy="41.4" r="9" fill="#000000"/></mask></defs>' +
-      '<circle cx="50" cy="50" r="50" fill="#FF6A10"/>' +
+      `<circle cx="50" cy="50" r="50" fill="${BRAND_ORANGE}"/>` +
       '<g transform="translate(9 7) scale(0.82)">' +
       '<g mask="url(#bite)"><circle cx="50" cy="52" r="38" fill="#FFFFFF"/>' +
       '<circle cx="50" cy="52" r="32" fill="none" stroke="#FFD9C2" stroke-width="3"/></g>' +
@@ -496,7 +506,7 @@ async function draw(shot: Shot, language: Language): Promise<Buffer> {
         : cardAround(
             await screen.clone().ensureAlpha().raw().toBuffer(),
             shot.callout.cardAround,
-            shot.theme === 'dark' ? [17, 18, 20] : [246, 246, 248],
+            rgb(theme.background),
           );
     const scale = SCREEN_SCALE * zoom;
     const inner = {
@@ -561,7 +571,7 @@ async function draw(shot: Shot, language: Language): Promise<Buffer> {
         top: watch.top - 100 + 54,
       },
       {
-        input: roundedRect(watch.width, watch.height, 120, '#2B2D31'),
+        input: roundedRect(watch.width, watch.height, 120, WATCH_CASE),
         left: watch.left,
         top: watch.top,
       },
