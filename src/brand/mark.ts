@@ -2,20 +2,14 @@
 // the splash screen and the in-app animation, so they all draw the same shape. Coordinates are
 // in a 100 × 100 box with the plate in the middle.
 
-// app.json repeats the splash colours and width for the native splash screen, and the dark
-// colours mirror the dark theme's tokens, which the Node icon script cannot import.
-// mark.test.ts checks that they all agree.
+// app.json repeats the splash colours and width for the native splash screen; mark.test.ts checks
+// that they agree. The dark icon and splash screen take the dark theme's tokens
+// (src/theme/colors.ts), which the icon script imports.
 
 /** The brand orange behind the light icon and splash screen. */
 export const BRAND_ORANGE = '#FF6A10';
 /** A lighter orange beside the brand's, for every other of Bite's sparkles. */
 export const BRAND_ORANGE_LIGHT = '#FFB27F';
-/** The mark's colour on dark backgrounds: the dark theme's `primary`. */
-export const BRAND_ORANGE_DARK = '#FF7F26';
-/** The dark icon's background: the dark theme's `surface`. */
-export const BRAND_SURFACE_DARK = '#1B1C1F';
-/** The dark splash screen's background: the dark theme's `background`. */
-export const BRAND_BACKGROUND_DARK = '#111214';
 
 /** The plate's width in the native splash screen, `imageWidth` in app.json. */
 export const SPLASH_PLATE_WIDTH = 140;

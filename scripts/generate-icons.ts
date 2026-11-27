@@ -6,16 +6,8 @@ import { join } from 'node:path';
 
 import sharp from 'sharp';
 
-import {
-  BITE_CIRCLES,
-  BRAND_ORANGE,
-  BRAND_ORANGE_DARK,
-  BRAND_SURFACE_DARK,
-  HOLE,
-  MARK_BOX,
-  PLATE,
-  RING,
-} from '../src/brand/mark.ts';
+import { BITE_CIRCLES, BRAND_ORANGE, HOLE, MARK_BOX, PLATE, RING } from '../src/brand/mark.ts';
+import { darkColors } from '../src/theme/colors.ts';
 
 const IMAGES_DIR = join(import.meta.dirname, '..', 'assets', 'images');
 const WEBSITE_DIR = join(import.meta.dirname, '..', 'website', 'public');
@@ -78,7 +70,7 @@ const LIGHT_ICON: Drawing = { ...IOS_ICON, color: WHITE, background: BRAND_ORANG
 
 const images: Record<string, Drawing> = {
   'icon.png': LIGHT_ICON,
-  'ios-icon-dark.png': { ...IOS_ICON, color: BRAND_ORANGE_DARK, background: BRAND_SURFACE_DARK },
+  'ios-icon-dark.png': { ...IOS_ICON, color: darkColors.primary, background: darkColors.surface },
   // iOS tints the grey levels of this one in the tinted home screen style.
   'ios-icon-tinted.png': { ...IOS_ICON, color: WHITE, background: '#000000' },
   // Launchers crop the adaptive icon to the middle two thirds, so the mark stays well inside.
@@ -86,7 +78,12 @@ const images: Record<string, Drawing> = {
   'android-icon-foreground.png': { size: 1024, color: WHITE, bitten: true, scale: 0.6 },
   // The whole plate: the animation in the app takes the bite.
   'splash-icon.png': { size: 512, color: WHITE, bitten: false, scale: PLATE_ONLY },
-  'splash-icon-dark.png': { size: 512, color: BRAND_ORANGE_DARK, bitten: false, scale: PLATE_ONLY },
+  'splash-icon-dark.png': {
+    size: 512,
+    color: darkColors.primary,
+    bitten: false,
+    scale: PLATE_ONLY,
+  },
 };
 
 for (const [file, drawing] of Object.entries(images)) {
