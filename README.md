@@ -186,6 +186,7 @@ supply chain ([Release](https://github.com/Kaandroids/benchbite/milestone/12)).
 
 - [Development](docs/development.md): running the app and the backend locally
 - [Deployment](docs/deployment.md): the hosted project, its monitoring and installing on an iPhone
+- [The stores' privacy details](docs/store-privacy.md): what to answer in App Store Connect and Google Play
 - [Architecture Decision Records](docs/adr/README.md): why the app is built the way it is
 - [CLAUDE.md](CLAUDE.md): the conventions every change follows
 - [CONTRIBUTING.md](CONTRIBUTING.md): how changes get into the project
