@@ -93,7 +93,10 @@ would add reasons the app left out on purpose. Nothing adds a library's reasons 
 new library with native code is checked by hand. To see what a build carries, run
 `APP_VARIANT=production pnpm expo prebuild --platform ios --no-install` and read
 `ios/Benchbite/PrivacyInfo.xcprivacy`; the libraries' own manifests are under `ios/Pods` after
-`pod install`. Keep the manifest, the privacy policy and the stores' privacy details in step.
+`pod install`. A module Expo ships precompiled may carry an SDK on Apple's list with neither a
+manifest nor a signature: build such a module from source, in `expo.autolinking.ios.buildFromSource`
+in `package.json` ([ADR 0174](adr/0174-build-the-image-manipulator-from-source.md)), and check the
+built app with `find <Benchbite.app> -name PrivacyInfo.xcprivacy`. Keep the manifest, the privacy policy and the stores' privacy details in step.
 
 ## Deploy the website
 
