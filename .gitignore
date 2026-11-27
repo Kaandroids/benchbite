@@ -52,3 +52,6 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+# App Store screenshots, drawn by pnpm store:screenshots
+docs/media/store/out/
