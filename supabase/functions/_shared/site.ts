@@ -14,9 +14,12 @@ export function sitePage(siteUrl: string, locale: SiteLocale, path: string): str
   return `${siteUrl}/${locale === 'en' ? '' : `${locale}/`}${path}`;
 }
 
+/** The live site. */
+export const LIVE_SITE = 'https://www.benchbite.com';
+
 /** The site's address: `SITE_URL`, as locally, or the live site. */
 export function siteUrl(env: (name: string) => string | undefined = Deno.env.get): string {
-  return (env('SITE_URL') ?? 'https://www.benchbite.com').replace(/\/$/, '');
+  return (env('SITE_URL') ?? LIVE_SITE).replace(/\/$/, '');
 }
 
 /** Sends the browser on to a page after a form, as a GET. */

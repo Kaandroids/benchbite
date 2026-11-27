@@ -3,13 +3,12 @@
 // styles, as Outlook and Gmail need; the dark theme in a <style> block, for the clients that let an
 // email choose (Apple Mail, iOS). The colours are the app's tokens in src/theme/colors.ts.
 import type { Email } from './email.ts';
-import { type SiteLocale, sitePage } from './site.ts';
+import { LIVE_SITE, type SiteLocale, sitePage } from './site.ts';
 
 /** Text made safe to put in HTML. */
 export const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-/** The live site, which holds the emails' images and the pages their footer links to. */
-const LIVE_SITE = 'https://www.benchbite.com';
+/** The emails' images are on the live site, also when the email is sent locally. */
 const IMAGES = `${LIVE_SITE}/images/email`;
 
 /** The app's tokens of the same names, light and dark. */
