@@ -2151,3 +2151,39 @@ Deno.test("reads Bite's earlier answer without the tool call it wrote as text", 
     { role: 'model', parts: [{ type: 'text', text: '[[happy]] Here is the card. ' }] },
   ]);
 });
+
+Deno.test('asks Bite once more when its answer is only a tool call written as text', async () => {
+  const model = new FakeModel(
+    [{ type: 'text', text: '<call:default_api:log_meal_card{items:[]}>' }],
+    [{ type: 'text', text: '[[happy]] Tap Add to log it.' }],
+  );
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), context(model).ctx));
+
+  // Nothing of the first answer is kept for Bite: the word follows the user's message.
+  const [asked, told] = model.requests[1].messages.slice(-2);
+  assertEquals(
+    [asked.role, told],
+    ['user', { role: 'user', parts: [{ type: 'text', text: CALL_AS_TEXT }] }],
+  );
+  const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+  assertEquals(shown.join(''), 'Tap Add to log it.');
+});
+
+Deno.test(
+  'asks no more when Bite writes a tool call as text once no lookups are left',
+  async () => {
+    const search = (id: string) => [
+      { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
+    ];
+    const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5'].map(search), [
+      { type: 'text', text: '[[sad]] I found nothing. <call:default_api:x{}>' },
+    ]);
+
+    const answer = await events(await handleChatRequest(ask(MESSAGE), context(model).ctx));
+
+    assertEquals(model.requests.length, 6);
+    const shown = answer.flatMap((event) => (event.event === 'text' ? [event.text] : []));
+    assertEquals(shown.join(''), 'I found nothing. ');
+  },
+);
