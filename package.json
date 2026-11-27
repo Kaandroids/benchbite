@@ -97,5 +97,14 @@
     "check:plans": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-plans.ts",
     "test": "jest"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "ios": {
+        "buildFromSource": [
+          "expo-image-manipulator"
+        ]
+      }
+    }
+  }
 }
