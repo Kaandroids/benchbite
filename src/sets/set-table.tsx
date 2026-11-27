@@ -8,7 +8,7 @@ import { minutesAndSeconds } from '@/lib/time';
 import { typography, useTheme } from '@/theme';
 
 import { parseTime, setValueOf, type SetField, type SetKind } from './fields';
-import { useDescribeSet } from './set-words';
+import { useDescribeSet, useSetWords } from './set-words';
 import { MAX_SETS, type SetValues } from './values';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
@@ -23,11 +23,19 @@ function fieldStyle(kind: SetKind, showLast: boolean) {
   return showLast ? { width: kind.fields.length === 1 ? 96 : 68 } : styles.flex;
 }
 
-function show(field: SetField, value: number | null): string {
+/**
+ * A value as its field shows it: a time as "1:30", a number as the app's language writes it, as
+ * "77,5" in German and Turkish, as last time's values beside it are (useSetWords()).
+ */
+export function showSetValue(
+  field: SetField,
+  value: number | null,
+  number: (value: number) => string,
+): string {
   if (value === null) {
     return '';
   }
-  return field === 'seconds' ? minutesAndSeconds(value) : String(value);
+  return field === 'seconds' ? minutesAndSeconds(value) : number(value);
 }
 
 /** Reads a typed value; null when it is none, also when it rounds to nothing, such as "0.4" reps. */
@@ -125,6 +133,7 @@ function SetInput({
   ref,
 }: SetInputProps) {
   const { colors, radii } = useTheme();
+  const { number } = useSetWords();
   // Typed text is shown until editing ends, so that "1:" or "2." can be typed on the way, unless
   // the value changed meanwhile from elsewhere, as from the watch (ADR 0109).
   const [text, setText] = useState<string | null>(null);
@@ -132,7 +141,9 @@ function SetInput({
   const saved = useRef<number | null | undefined>(undefined);
   const textValue = text === null ? null : readSetValue(field, text);
   const shown =
-    text !== null && (textValue === null || textValue === value) ? text : show(field, value);
+    text !== null && (textValue === null || textValue === value)
+      ? text
+      : showSetValue(field, value, number);
   const running = clock !== null;
   return (
     <TextInput
