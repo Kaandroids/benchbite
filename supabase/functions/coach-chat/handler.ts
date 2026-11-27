@@ -324,8 +324,9 @@ class Turn {
   /** The tool calls and their results, in order, as the message keeps them. */
   trace: Part[] = [];
   usage = { model: undefined as string | undefined, input: 0, cached: 0, output: 0, thinking: 0 };
-  /** Why the last request's answer ended. */
+  /** Why the last request's answer ended, and the provider's own word for it when not a stop. */
   finish?: Finish;
+  reason?: string;
   #face = new FaceReader();
   #roundStarted = false;
 
@@ -481,6 +482,7 @@ async function answer(
           turn.usage.output += usage.outputTokens;
           turn.usage.thinking += usage.thinkingTokens;
           turn.finish = event.finish;
+          turn.reason = event.reason;
         }
       }
       turn.ended();
@@ -578,6 +580,15 @@ async function answer(
     }
   }
 
+  // An answer the model ended other than by stopping is cut short; the logs say why, as the
+  // message keeps only that it was.
+  if (turn.finish && turn.finish !== 'stop') {
+    console.warn("Bite's answer ended early", {
+      finish: turn.finish,
+      reason: turn.reason,
+      model: turn.usage.model,
+    });
+  }
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   // Nothing is written into a deleted thread, not even its media for a moment (ADR 0143).
   if (stop.gone) return send({ event: 'error', reason: 'not_saved' });

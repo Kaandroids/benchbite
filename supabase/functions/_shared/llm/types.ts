@@ -82,8 +82,13 @@ export type ModelResponse = {
 /** The parts a stream brings as they come. */
 type StreamedPart = Extract<Part, { type: 'text' | 'toolCall' }>;
 
-/** What a streamed answer brings, in order: text as it comes, tool calls, and the end. */
-export type StreamEvent = StreamedPart | { type: 'done'; usage: Usage; finish: Finish };
+/**
+ * What a streamed answer brings, in order: text as it comes, tool calls, and the end. An end that
+ * is not a plain stop carries the provider's own word for it in `reason`, for the logs, as
+ * `finish` folds several of them into `other`.
+ */
+export type StreamEvent =
+  StreamedPart | { type: 'done'; usage: Usage; finish: Finish; reason?: string };
 
 /** The text of an answer's parts, without its tool calls. */
 export function textOf(parts: Part[]): string {
