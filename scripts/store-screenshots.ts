@@ -3,7 +3,9 @@
 // beside it and, on some, Bite. The design was approved as a mock-up on 2026-11-27. The screens
 // are in docs/media/store/source/<language>/, taken as docs/media/README.md says; the
 // screenshots go to docs/media/store/out/<language>/, which Git ignores, at the size App Store
-// Connect asks for the 6.9" iPhone. Run with `pnpm store:screenshots`.
+// Connect asks for the 6.9" iPhone. Run with `pnpm store:screenshots`, which sets
+// PANGOCAIRO_BACKEND=fc before sharp loads: on macOS, Pango otherwise finds fonts through CoreText,
+// which ignores the Nunito files given here and draws the text in Helvetica.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
