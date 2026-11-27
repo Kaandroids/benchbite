@@ -313,7 +313,9 @@ async function shadow(
 
 /**
  * Bite, as src/coach/bite-face.tsx draws it on its orange circle, with one of its expressions from
- * src/coach/bite-expressions.tsx, on a 100 × 100 box.
+ * src/coach/bite-expressions.tsx, on a 100 × 100 box. Its ink, rim and tongue copy PALETTE
+ * there, which a Node script cannot import, as that file draws with react-native-svg: they change
+ * with it.
  */
 function biteSvg(expression: Expression, size: number): Buffer {
   const line = (d: string, width = 3) =>
