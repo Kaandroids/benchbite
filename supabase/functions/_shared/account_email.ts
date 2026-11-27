@@ -8,8 +8,9 @@ import { LIVE_SITE, type SiteLocale, sitePage } from './site.ts';
 /** Text made safe to put in HTML. */
 export const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-/** The emails' images are on the live site, also when the email is sent locally. */
+/** The emails' images and font are on the live site, also when the email is sent locally. */
 const IMAGES = `${LIVE_SITE}/images/email`;
+const FONTS = `${LIVE_SITE}/fonts/email`;
 
 /** The app's tokens of the same names, light and dark. */
 const LIGHT = {
@@ -38,6 +39,13 @@ const DARK: typeof LIGHT = {
   onPrimary: '#1C0C00',
   primaryWash: 'rgba(255, 127, 38, 0.1)',
 };
+
+/**
+ * Nunito from our own site, where the client loads web fonts, as the website does: from Google
+ * Fonts, opening an email would tell Google who read it. Latin and Latin Extended, for Turkish.
+ */
+const FONT_FACES = `@font-face { font-family: Nunito; font-weight: 400 900; font-display: swap; src: url(${FONTS}/nunito-latin-wght-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+      @font-face { font-family: Nunito; font-weight: 400 900; font-display: swap; src: url(${FONTS}/nunito-latin-ext-wght-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }`;
 
 /** Nunito where the client loads it, else the system's own sans serif. */
 const FONT = "Nunito, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -129,8 +137,8 @@ export function accountEmailHtml(
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
     <title>${escape(title)}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800;900&amp;display=swap" rel="stylesheet">
     <style>
+      ${FONT_FACES}
       ${DARK_STYLE}
     </style>
   </head>
