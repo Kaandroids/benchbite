@@ -2124,7 +2124,7 @@ Deno.test('asks only once when Bite writes a tool call as text again', async () 
   );
 });
 
-Deno.test('reads an earlier answer without the tool call it wrote as text', async () => {
+Deno.test("reads Bite's earlier answer without the tool call it wrote as text", async () => {
   const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
   const { ctx } = context(
     model,
@@ -2137,14 +2137,17 @@ Deno.test('reads an earlier answer without the tool call it wrote as text', asyn
           expression: 'happy',
           content: [{ type: 'text', text: 'Here is the card. <call:default_api:log_meal_card{}>' }],
         },
+        { role: 'user', content: [{ type: 'text', text: 'Why did it say <call:x>?' }] },
       ],
     },
   );
 
   await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
 
-  assertEquals(model.requests[0].messages[0], {
-    role: 'model',
-    parts: [{ type: 'text', text: '[[happy]] Here is the card. ' }],
-  });
+  // Newest first from the database, oldest first to the model: the user's words are read whole,
+  // their tag's bracket made harmless as always.
+  assertEquals(model.requests[0].messages.slice(0, 2), [
+    { role: 'user', parts: [{ type: 'text', text: 'Why did it say \u2039call:x>?' }] },
+    { role: 'model', parts: [{ type: 'text', text: '[[happy]] Here is the card. ' }] },
+  ]);
 });

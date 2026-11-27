@@ -994,9 +994,12 @@ function toMessage(
   cards: Map<number, MealCardState>,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
-  // A tool call an older answer wrote as text is left out, so that Bite does not copy it.
+  // A tool call an older answer of Bite's wrote as text is left out, so that Bite does not copy
+  // it; what the user wrote is read whole.
   const said = parts.flatMap((part) =>
-    partOfType(part, 'text') && typeof part.text === 'string' ? [withoutTextCall(part.text)] : [],
+    partOfType(part, 'text') && typeof part.text === 'string'
+      ? [row.role === 'user' ? part.text : withoutTextCall(part.text)]
+      : [],
   );
   // What Bite proposed and the meals it estimated, with where they stand, so that it knows on
   // later messages, whether or not it said a word.
