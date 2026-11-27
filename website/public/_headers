@@ -10,3 +10,8 @@
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   X-Robots-Tag: noindex
+
+# The emails load Nunito from here (ADR 0175); mail clients built on browsers load a font from
+# another site only when it allows them.
+/fonts/email/*
+  Access-Control-Allow-Origin: *

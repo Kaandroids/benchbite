@@ -1,7 +1,7 @@
 // The emails sent when an account's password is saved (#481, ADR 0167), in the app's language, in
 // the layout of _shared/account_email.ts: a welcome for its first password, and a notice for any
 // later one, which tells the owner of a change they did not make.
-import { accountEmailHtml, escape, note, paragraph } from '../_shared/account_email.ts';
+import { accountEmailHtml, divider, note, paragraph, points } from '../_shared/account_email.ts';
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
 
@@ -82,17 +82,14 @@ const COPY = {
   },
 } satisfies Record<PasswordEmailKind, Record<SiteLocale, Copy>>;
 
-const list = (points: string[]) =>
-  `<ul style="margin: 0 0 16px; padding-left: 20px">${points
-    .map((point) => `<li style="margin: 0 0 6px">${escape(point)}</li>`)
-    .join('')}</ul>`;
-
 export function passwordEmail(kind: PasswordEmailKind, locale: SiteLocale, to: string): Email {
   const copy: Copy = COPY[kind][locale];
   const parts = [
     ...copy.body.map(paragraph),
-    ...(copy.points ? [list(copy.points)] : []),
+    ...(copy.points ? [points(copy.points)] : []),
     ...(copy.after ? [paragraph(copy.after)] : []),
+    // The welcome is longer: a line sets its note apart.
+    ...(kind === 'welcome' ? [divider()] : []),
     note(copy.note),
   ];
   const text = [
@@ -102,5 +99,7 @@ export function passwordEmail(kind: PasswordEmailKind, locale: SiteLocale, to: s
     ...(copy.after ? [copy.after] : []),
     copy.note,
   ].join('\n\n');
-  return { to, subject: copy.subject, html: accountEmailHtml(locale, copy.title, parts), text };
+  // Bite greets in the welcome alone, so that a notice of a change stays plain.
+  const html = accountEmailHtml(locale, copy.title, parts, { bite: kind === 'welcome' });
+  return { to, subject: copy.subject, html, text };
 }

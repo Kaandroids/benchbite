@@ -107,13 +107,18 @@ Deno.test('says so when the user cannot be read or the email cannot be sent', as
   assert(failing.sent.length === 1);
 });
 
-Deno.test('writes each email in every language, with the welcome’s points listed', async () => {
-  for (const locale of ['en', 'de', 'tr']) {
-    for (const kind of ['welcome', 'changed']) {
-      const { sent, context: ctx } = context({ email: 'kaan@example.com', locale });
-      await handlePasswordEmail(request({ userId: A, kind }), ctx);
-      assertEquals(sent.length, 1, `${kind} in ${locale}`);
-      assertEquals(sent[0].html.includes('<ul'), kind === 'welcome', `${kind} in ${locale}`);
+Deno.test(
+  'writes each email in every language, with Bite and the points in the welcome',
+  async () => {
+    for (const locale of ['en', 'de', 'tr']) {
+      for (const kind of ['welcome', 'changed']) {
+        const { sent, context: ctx } = context({ email: 'kaan@example.com', locale });
+        await handlePasswordEmail(request({ userId: A, kind }), ctx);
+        assertEquals(sent.length, 1, `${kind} in ${locale}`);
+        const welcome = kind === 'welcome';
+        assertEquals(sent[0].html.includes('&#10003;'), welcome, `${kind} in ${locale}`);
+        assertEquals(sent[0].html.includes('/email/bite.png'), welcome, `${kind} in ${locale}`);
+      }
     }
-  }
-});
+  },
+);

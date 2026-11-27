@@ -1,7 +1,7 @@
 // Draws the app icons and the splash screen image from the mark in src/brand/mark.ts and writes
-// them to assets/images, and the website's favicon to website/public. Run with `pnpm icons` after
-// changing the mark.
-import { writeFile } from 'node:fs/promises';
+// them to assets/images, and the website's favicon and the emails' images to website/public. Run
+// with `pnpm icons` after changing the mark.
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import sharp from 'sharp';
@@ -21,6 +21,8 @@ type Drawing = {
   background?: string;
   /** Draws the background as a circle, with transparent corners. */
   round?: boolean;
+  /** Rounds the background's corners by this share of its side, with transparent corners. */
+  corner?: number;
   bitten: boolean;
   /** Share of the image the mark's 100 × 100 box takes up. */
   scale: number;
@@ -30,7 +32,15 @@ function circle(cx: number, cy: number, r: number, fill: string): string {
   return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`;
 }
 
-function markSvg({ size, color, background, round = false, bitten, scale }: Drawing): string {
+function markSvg({
+  size,
+  color,
+  background,
+  round = false,
+  corner = 0,
+  bitten,
+  scale,
+}: Drawing): string {
   const { cx, cy } = PLATE;
   const cuts = [
     `<circle cx="${cx}" cy="${cy}" r="${RING.r}" fill="none" stroke="#000" stroke-width="${RING.width}"/>`,
@@ -45,18 +55,18 @@ function markSvg({ size, color, background, round = false, bitten, scale }: Draw
       ${cuts.join('\n      ')}
     </mask>
   </defs>
-  ${background ? backgroundSvg(background, round) : ''}
+  ${background ? backgroundSvg(background, round, corner) : ''}
   <g transform="translate(${offset} ${offset}) scale(${scale})">
     <rect width="${MARK_BOX}" height="${MARK_BOX}" fill="${color}" mask="url(#mark)"/>
   </g>
 </svg>`;
 }
 
-function backgroundSvg(fill: string, round: boolean): string {
+function backgroundSvg(fill: string, round: boolean, corner: number): string {
   const half = MARK_BOX / 2;
   return round
     ? circle(half, half, half, fill)
-    : `<rect width="${MARK_BOX}" height="${MARK_BOX}" fill="${fill}"/>`;
+    : `<rect width="${MARK_BOX}" height="${MARK_BOX}" rx="${MARK_BOX * corner}" fill="${fill}"/>`;
 }
 
 // The splash image is only the plate, so `imageWidth` in app.json is the plate's width.
@@ -102,3 +112,26 @@ await sharp(Buffer.from(markSvg({ ...FAVICON, size: 96 })))
   .png()
   .toFile(join(WEBSITE_DIR, 'favicon.png'));
 console.log('Wrote website/public/favicon.png');
+
+// The emails' images (ADR 0175), as PNGs, which mail clients show where many block SVG, at three
+// times the size the emails draw them. Outlook does not round an image, so the corners are drawn.
+const EMAIL_DIR = join(WEBSITE_DIR, 'images', 'email');
+await mkdir(EMAIL_DIR, { recursive: true });
+/** The icon's corner radius beside the name, as on the website (`CORNER_RATIO` in Brand.astro). */
+const EMAIL_ICON_CORNER = 0.28;
+await sharp(Buffer.from(markSvg({ ...LIGHT_ICON, size: 102, corner: EMAIL_ICON_CORNER })))
+  .png()
+  .toFile(join(EMAIL_DIR, 'icon.png'));
+console.log('Wrote website/public/images/email/icon.png');
+// Bite, happy, on a round ground of the brand's orange, for the welcome email.
+const BITE_SIZE = 192;
+const face = await sharp(await readFile(join(WEBSITE_DIR, 'images', 'bite-happy.svg')))
+  .resize({ width: Math.round(BITE_SIZE * 0.8) })
+  .png()
+  .toBuffer();
+const ground = `<svg xmlns="http://www.w3.org/2000/svg" width="${BITE_SIZE}" height="${BITE_SIZE}">${circle(BITE_SIZE / 2, BITE_SIZE / 2, BITE_SIZE / 2, BRAND_ORANGE)}</svg>`;
+await sharp(Buffer.from(ground))
+  .composite([{ input: face, gravity: 'center' }])
+  .png()
+  .toFile(join(EMAIL_DIR, 'bite.png'));
+console.log('Wrote website/public/images/email/bite.png');
