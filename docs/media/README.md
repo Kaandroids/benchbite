@@ -37,7 +37,10 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
 ## Taking the screenshots
 
 1. Start Metro without the developer tools, so that no developer buttons show:
-   `pnpm start --no-dev --minify`. In the development build's menu, turn off the tools button.
+   `set -a; . ./.env.local; set +a; EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SENTRY_DSN= pnpm start --no-dev --minify --clear`.
+   Without `--no-dev`'s development tools, Expo also reads `.env.production.local`, which points at
+   the hosted project: the variables set here keep the app on the local stack and out of Sentry.
+   In the development build's menu, turn off the tools button.
 2. Log in as the demo account in the simulator (Settings → Log in). After running the seed again,
    log out first: the old session belongs to the deleted account.
 3. Give the status bar a fixed time and full bars:
@@ -51,6 +54,46 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    workout?", and keep the plan as it is. For `workout-finished.png`, open the last workout in the
    history. For `workout-active.png`, start Upper body and tick the first set; discard the workout
    afterwards.
+
+## The App Store screenshots
+
+`pnpm store:screenshots` draws the App Store's screenshots (#557) from the screens in
+`store/source/<language>/`: the 6.9" iPhone size, 1320 × 2868, without transparency, a caption
+above each screen with one word in the brand's colour, a part of it enlarged and, on some, Bite.
+The captions, the parts and Bite's faces are in `scripts/store-screenshots.ts`. The screenshots go
+to `store/out/<language>/`, which Git does not keep: draw them again to upload them.
+
+Take each screen as above, with the app in that language (Settings → Language), on the iPhone 17
+Pro Max simulator at full size, and without the device's outline, which would draw the Dynamic
+Island: `xcrun simctl io <id> screenshot --mask=ignored store/source/<language>/<file>.png`.
+The files and what they show:
+
+| File                   | Shows                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `1-today.png`          | Today                                                                                                     |
+| `2-workout.png`        | Upper body with the first set at 77.5 kg × 12 and the second at 80 kg × 10, a new record; discarded after |
+| `3-nutrition.png`      | Nutrition                                                                                                 |
+| `4-bite-meal.png`      | A new chat: the photo `store/photos/salmon-poke-bowl.jpg` and the message below, its card unadded         |
+| `5-bite-remembers.png` | A new chat: the shoulder message below, the plan kept as it is                                            |
+| `6-workout-watch.png`  | The last workout in the history, with the watch's heart rate                                              |
+| `7-progress.png`       | Progress                                                                                                  |
+| `8-today-dark.png`     | Today, with the simulator in dark mode (`xcrun simctl ui <id> appearance dark`)                           |
+
+The messages to Bite, in each language:
+
+- English: "Here's my lunch. I also had a green smoothie, about 200 ml. Can you log it?" and "My
+  left shoulder hurts on overhead presses. Can you swap them out of my upper body workout?"
+- German: "Hier ist mein Mittagessen. Dazu hatte ich einen grünen Smoothie, etwa 200 ml. Kannst du
+  es eintragen?" and "Meine linke Schulter schmerzt beim Überkopfdrücken. Kannst du das aus meinem
+  Oberkörper-Training nehmen?"
+- Turkish: "Öğle yemeğim bu. Bir de yaklaşık 200 ml yeşil smoothie içtim. Kaydeder misin?" and
+  "Sol omzum baş üstü preslerde ağrıyor. Üst vücut antrenmanımdan çıkarabilir misin?"
+
+Add the photo to the simulator first: `xcrun simctl addmedia <id> store/photos/salmon-poke-bowl.jpg`.
+It is "Salmon Poke Bowl (S) with Spicy mayo sauce - Kitokito" by Andy Li, given to the public
+domain under [CC0 1.0](<https://commons.wikimedia.org/wiki/File:Salmon_Poke_Bowl_(S)_with_Spicy_mayo_sauce_-_Kitokito.jpg>).
+Bite's answers differ from one try to the next: take one whose words are whole and whose photo
+and card fit on the screen.
 
 ## Taking the watch's screenshots
 
