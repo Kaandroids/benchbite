@@ -31,6 +31,9 @@ The design was approved as a mock-up on 2026-11-27.
   `pnpm icons`: many clients block SVG, and Outlook does not round an image, so the icon's corners
   are drawn. The name beside it is text, so an email with images off still says who sent it. Every
   email keeps its plain-text part.
+- **Nunito comes from the website too,** `www.benchbite.com/fonts/email/`, with a CORS header in
+  `website/public/_headers` that lets mail clients load it. From Google Fonts, opening an email
+  would tell Google who read it, which the website avoids for the same reason.
 
 ## Alternatives considered
 
@@ -40,6 +43,8 @@ The design was approved as a mock-up on 2026-11-27.
   in two places, and the test would only compare parts of the layout.
 - **Images embedded in each email** (`data:` or attachments): Gmail blocks `data:` images, and
   attachments make every email heavier.
+- **Nunito from Google Fonts:** nothing to host, but every opened email would reach Google with
+  the reader's address.
 
 ## Consequences
 
