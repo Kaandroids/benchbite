@@ -266,6 +266,21 @@ Deno.test("says the provider's own word for an end that is not a plain stop", as
   ]);
 });
 
+Deno.test('says why a prompt was blocked, which no answer gives', async () => {
+  const { model } = gemini(() =>
+    sse(['data: {"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"}}\r\n\r\n']),
+  );
+
+  const events: StreamEvent[] = [];
+  for await (const event of model.stream(request)) events.push(event);
+
+  const done = events.at(-1);
+  assertEquals(done?.type === 'done' && [done.finish, done.reason], [
+    'blocked',
+    'PROHIBITED_CONTENT',
+  ]);
+});
+
 Deno.test('throws a billed model error when a stream ends before its answer did', async () => {
   const { model } = gemini(() =>
     sse(['data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}]}\r\n\r\n']),
