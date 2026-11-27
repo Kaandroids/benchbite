@@ -37,7 +37,7 @@ const DARK: typeof LIGHT = {
   primaryButton: '#FF7F26',
   primaryButtonLedge: '#D45A00',
   onPrimary: '#1C0C00',
-  primaryWash: 'rgba(255, 127, 38, 0.12)',
+  primaryWash: 'rgba(255, 127, 38, 0.1)',
 };
 
 /** Nunito where the client loads it, else the system's own sans serif. */
