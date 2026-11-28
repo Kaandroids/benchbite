@@ -59,6 +59,11 @@
     "video": "Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.mp4",
     "poster": "Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.jpg"
   },
+  "Bicycling_Stationary": {
+    "source": "Bicycling_Stationary.mp4",
+    "video": "Bicycling_Stationary/c618f26e370655c8.mp4",
+    "poster": "Bicycling_Stationary/c618f26e370655c8.jpg"
+  },
   "Bodyweight_Squat": {
     "source": "Bodyweight_Squat.mp4",
     "video": "Bodyweight_Squat/6543c46cf7b0ba47.mp4",
@@ -83,6 +88,11 @@
     "source": "Crunches.mp4",
     "video": "Crunches/89620cd920968c6b.mp4",
     "poster": "Crunches/89620cd920968c6b.jpg"
+  },
+  "Dead_Bug": {
+    "source": "Dead_Bug.mp4",
+    "video": "Dead_Bug/4e8e1a77e0228c27.mp4",
+    "poster": "Dead_Bug/4e8e1a77e0228c27.jpg"
   },
   "Decline_Push-Up": {
     "source": "Decline_Push-Up.mp4",
@@ -139,6 +149,11 @@
     "video": "EZ-Bar_Skullcrusher/7efc1d7d21c68953.mp4",
     "poster": "EZ-Bar_Skullcrusher/7efc1d7d21c68953.jpg"
   },
+  "Face_Pull": {
+    "source": "Face_Pull.mp4",
+    "video": "Face_Pull/719961b589582fa6.mp4",
+    "poster": "Face_Pull/719961b589582fa6.jpg"
+  },
   "Freehand_Jump_Squat": {
     "source": "Freehand_Jump_Squat.mp4",
     "video": "Freehand_Jump_Squat/22a25b59586758aa.mp4",
@@ -174,10 +189,20 @@
     "video": "Hammer_Curls/39d4312501dce484.mp4",
     "poster": "Hammer_Curls/39d4312501dce484.jpg"
   },
+  "Hanging_Leg_Raise": {
+    "source": "Hanging_Leg_Raise.mp4",
+    "video": "Hanging_Leg_Raise/522a8ba1d900d290.mp4",
+    "poster": "Hanging_Leg_Raise/522a8ba1d900d290.jpg"
+  },
   "Incline_Dumbbell_Press": {
     "source": "Incline_Dumbbell_Press.mp4",
     "video": "Incline_Dumbbell_Press/a8c8a7a747570ce6.mp4",
     "poster": "Incline_Dumbbell_Press/a8c8a7a747570ce6.jpg"
+  },
+  "Inverted_Row": {
+    "source": "Inverted_Row.mp4",
+    "video": "Inverted_Row/cdf3c977a8d11cb1.mp4",
+    "poster": "Inverted_Row/cdf3c977a8d11cb1.jpg"
   },
   "One-Arm_Dumbbell_Row": {
     "source": "One-Arm_Dumbbell_Row.mp4",
@@ -213,6 +238,11 @@
     "source": "Romanian_Deadlift.mp4",
     "video": "Romanian_Deadlift/2d7504ebd8c58acd.mp4",
     "poster": "Romanian_Deadlift/2d7504ebd8c58acd.jpg"
+  },
+  "Rowing_Stationary": {
+    "source": "Rowing_Stationary.mp4",
+    "video": "Rowing_Stationary/410c58dcd1c9eccd.mp4",
+    "poster": "Rowing_Stationary/410c58dcd1c9eccd.jpg"
   },
   "Russian_Twist": {
     "source": "Russian_Twist.mp4",
@@ -278,5 +308,15 @@
     "source": "Tricep_Dumbbell_Kickback.mp4",
     "video": "Tricep_Dumbbell_Kickback/7e75c7846cf1e1ed.mp4",
     "poster": "Tricep_Dumbbell_Kickback/7e75c7846cf1e1ed.jpg"
+  },
+  "Triceps_Pushdown": {
+    "source": "Triceps_Pushdown.mp4",
+    "video": "Triceps_Pushdown/272cb1a41a119f74.mp4",
+    "poster": "Triceps_Pushdown/272cb1a41a119f74.jpg"
+  },
+  "Wide-Grip_Lat_Pulldown": {
+    "source": "Wide-Grip_Lat_Pulldown.mp4",
+    "video": "Wide-Grip_Lat_Pulldown/1705741388288d0f.mp4",
+    "poster": "Wide-Grip_Lat_Pulldown/1705741388288d0f.jpg"
   }
 }
