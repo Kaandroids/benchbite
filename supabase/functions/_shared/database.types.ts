@@ -904,6 +904,36 @@ export type Database = {
           },
         ];
       };
+      exercise_videos: {
+        Row: {
+          created_at: string;
+          exercise_id: string;
+          poster_path: string;
+          video_path: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          exercise_id: string;
+          poster_path: string;
+          video_path: string;
+        };
+        Update: {
+          created_at?: string;
+          exercise_id?: string;
+          poster_path?: string;
+          video_path?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'exercise_videos_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: true;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       exercises: {
         Row: {
           archived_at: string | null;
