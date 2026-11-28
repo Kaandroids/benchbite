@@ -64,6 +64,11 @@
     "video": "Bicycling_Stationary/c618f26e370655c8.mp4",
     "poster": "Bicycling_Stationary/c618f26e370655c8.jpg"
   },
+  "Body_Tricep_Press": {
+    "source": "Body_Tricep_Press.mp4",
+    "video": "Body_Tricep_Press/91249a74a6b86e07.mp4",
+    "poster": "Body_Tricep_Press/91249a74a6b86e07.jpg"
+  },
   "Bodyweight_Squat": {
     "source": "Bodyweight_Squat.mp4",
     "video": "Bodyweight_Squat/6543c46cf7b0ba47.mp4",
@@ -204,6 +209,11 @@
     "video": "Inverted_Row/cdf3c977a8d11cb1.mp4",
     "poster": "Inverted_Row/cdf3c977a8d11cb1.jpg"
   },
+  "Leg_Press": {
+    "source": "Leg_Press.mp4",
+    "video": "Leg_Press/bcc0ad597c7ce32a.mp4",
+    "poster": "Leg_Press/bcc0ad597c7ce32a.jpg"
+  },
   "One-Arm_Dumbbell_Row": {
     "source": "One-Arm_Dumbbell_Row.mp4",
     "video": "One-Arm_Dumbbell_Row/7d904751d55f8530.mp4",
@@ -248,6 +258,16 @@
     "source": "Russian_Twist.mp4",
     "video": "Russian_Twist/772664fc79b91b0f.mp4",
     "poster": "Russian_Twist/772664fc79b91b0f.jpg"
+  },
+  "Seated_Cable_Rows": {
+    "source": "Seated_Cable_Rows.mp4",
+    "video": "Seated_Cable_Rows/bc10408b96163746.mp4",
+    "poster": "Seated_Cable_Rows/bc10408b96163746.jpg"
+  },
+  "Seated_Calf_Raise": {
+    "source": "Seated_Calf_Raise.mp4",
+    "video": "Seated_Calf_Raise/ec375533c827cfae.mp4",
+    "poster": "Seated_Calf_Raise/ec375533c827cfae.jpg"
   },
   "Seated_Dumbbell_Curl": {
     "source": "Seated_Dumbbell_Curl.mp4",
