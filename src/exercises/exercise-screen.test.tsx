@@ -181,24 +181,6 @@ describe('ExerciseScreen', () => {
     await render(<ExerciseScreen id="row" />);
     expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
   });
-});
-
-describe('EditExerciseScreen', () => {
-  it("says when the exercise is gone or not the user's, rather than loading on", async () => {
-    jest.mocked(useKindLock).mockReturnValue(query(null) as never);
-    mockDetails([ROW], []);
-    await render(<EditExerciseScreen id="gone" />);
-    expect(screen.getByText('Exercise not found')).toBeTruthy();
-    await render(<EditExerciseScreen id="row" />);
-    expect(screen.getByText('Exercise not found')).toBeTruthy();
-  });
-
-  it('neither edits nor archives during a workout, which it would leave', async () => {
-    mockDetails([{ ...ROW, custom: true }], []);
-    await render(<ExerciseScreen id="row" canEdit={false} />);
-    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
-  });
   it('shows the video in place of the map, for an exercise that has one', async () => {
     mockDetails([ROW], ['Sit down.']);
     jest.mocked(useExerciseVideo).mockReturnValue(
@@ -257,6 +239,25 @@ describe('EditExerciseScreen', () => {
     } as never);
     await render(<ExerciseScreen id="row" />);
     expect(screen.queryByText('Front')).toBeNull();
-    expect(screen.getByLabelText('Loading')).toBeTruthy();
+    // The error stays, its button loading, until the video is back.
+    expect(screen.getByText("This couldn't load")).toBeTruthy();
+  });
+});
+
+describe('EditExerciseScreen', () => {
+  it("says when the exercise is gone or not the user's, rather than loading on", async () => {
+    jest.mocked(useKindLock).mockReturnValue(query(null) as never);
+    mockDetails([ROW], []);
+    await render(<EditExerciseScreen id="gone" />);
+    expect(screen.getByText('Exercise not found')).toBeTruthy();
+    await render(<EditExerciseScreen id="row" />);
+    expect(screen.getByText('Exercise not found')).toBeTruthy();
+  });
+
+  it('neither edits nor archives during a workout, which it would leave', async () => {
+    mockDetails([{ ...ROW, custom: true }], []);
+    await render(<ExerciseScreen id="row" canEdit={false} />);
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
   });
 });
