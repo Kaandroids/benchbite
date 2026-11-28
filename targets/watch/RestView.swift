@@ -39,10 +39,12 @@ struct RestView: View {
           .lineLimit(1)
           .minimumScaleFactor(0.8)
       }
+      // The two changes by 15 seconds keep a narrow fixed width, so that skipping has the rest for
+      // its word, long in German, also on a 40 mm watch.
       HStack(spacing: 6) {
-        change("−15", to: endsAt - 15_000)
+        change("−15", to: endsAt - 15_000).frame(width: 40)
         change(L10n.t("skip"), to: nil)
-        change("+15", to: endsAt + 15_000)
+        change("+15", to: endsAt + 15_000).frame(width: 40)
       }
     }
     .foregroundStyle(Theme.text)

@@ -100,19 +100,24 @@ and card fit on the screen.
 The simulators pass the phone's states to the watch but not the watch's commands to the phone, so
 a watch there never follows a workout. A debug build of the watch app shows a sample instead,
 given at launch (`targets/watch/Sample.swift`): `scripts/watch-sample.ts` prints a workout like the
-demo account's Upper body at a set (`set`), in a rest (`rest`) or saved (`summary`).
+demo account's Upper body at a set (`set`), in a rest (`rest`) or saved (`summary`), in English,
+German or Turkish (`en`, `de`, `tr`; English when left out).
 
 1. Build with `pnpm ios` and install the watch app on an Apple Watch simulator (46 mm), as
    [Development](../development.md#the-apple-watch-app) says.
-2. Launch it with a sample, `<scene>` being `set`, `rest` or `summary`; the locale gives the
-   numbers a decimal point:
+2. Launch it with a sample, `<scene>` being `set`, `rest` or `summary`, and `<language>` `en`,
+   `de` or `tr`; the locale gives the numbers their decimal point or comma (`en_US`, `de_DE`,
+   `tr_TR`):
 
    ```bash
-   SIMCTL_CHILD_BENCHBITE_SAMPLE="$(node scripts/watch-sample.ts <scene>)" \
-     xcrun simctl launch <watch simulator id> com.benchbite.app.dev.watchkitapp -AppleLocale en_US
+   SIMCTL_CHILD_BENCHBITE_SAMPLE="$(node scripts/watch-sample.ts <scene> <language>)" \
+     xcrun simctl launch <watch simulator id> com.benchbite.app.dev.watchkitapp \
+     -AppleLocale <locale> -AppleLanguages "(<language>)"
    ```
 
-3. Take it with `xcrun simctl io <watch simulator id> screenshot docs/media/watch-<scene>.png`.
+3. Take it with `xcrun simctl io <watch simulator id> screenshot <file>`: for the README,
+   `docs/media/watch-<scene>.png` in English; for the App Store, which shows them as they are,
+   `docs/media/store/watch/<language>/<scene>.png`, 416 × 496 from the 46 mm watch.
    Before the next scene, end the app:
    `xcrun simctl terminate <watch simulator id> com.benchbite.app.dev.watchkitapp`.
 
