@@ -20,11 +20,12 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { DB_CONTAINER } from './lib/local-stack.ts';
+import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
+
 const ROOT = join(import.meta.dirname, '..');
 const MANIFEST = join(ROOT, 'supabase', 'exercise-videos.json');
-const MIGRATIONS = join(ROOT, 'supabase', 'migrations');
 const SUPABASE = join(ROOT, 'node_modules', '.bin', 'supabase');
-const DB_CONTAINER = 'supabase_db_benchbite';
 const BUCKET = 'exercise-media';
 const LIST = 'Hareket_Listesi.md';
 
@@ -129,19 +130,19 @@ function make(id: string, source: string): Entry {
   return entry;
 }
 
-/** A value for SQL, quoted. */
-const sql = (value: string) => `'${value.replaceAll("'", "''")}'`;
-
 /** Writes the migration of the new or changed videos, after every migration there is. */
 function writeMigration(changed: [string, Entry][]) {
-  const now = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-  const last = readdirSync(MIGRATIONS).sort().at(-1)?.slice(0, 14) ?? '';
+  const now = timestamp();
+  const last = readdirSync(MIGRATIONS_DIR).sort().at(-1)?.slice(0, 14) ?? '';
   const stamp = now > last ? now : String(BigInt(last) + 1n);
   const values = changed
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, entry]) => `  (${sql(id)}, ${sql(entry.video)}, ${sql(entry.poster)})`)
+    .map(
+      ([id, entry]) =>
+        `  (${sqlString(id)}, ${sqlString(entry.video)}, ${sqlString(entry.poster)})`,
+    )
     .join(',\n');
-  const file = join(MIGRATIONS, `${stamp}_exercise_videos.sql`);
+  const file = join(MIGRATIONS_DIR, `${stamp}_exercise_videos.sql`);
   writeFileSync(
     file,
     `-- Videos of ${changed.length} exercise${changed.length === 1 ? '' : 's'}, written by \`pnpm exercise-videos\` (ADR 0176).
