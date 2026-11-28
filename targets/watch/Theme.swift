@@ -61,6 +61,10 @@ struct PillButtonStyle: ButtonStyle {
       let prominent = style.prominent
       configuration.label
         .font(.rounded(style.fontSize, .heavy))
+        // One line, smaller where a language's word is long, never broken inside a word.
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .padding(.horizontal, 4)
         .frame(maxWidth: .infinity, minHeight: style.height)
         .foregroundStyle(prominent ? Theme.onAccent : Theme.text)
         .background(prominent ? Theme.accent : Theme.control, in: Capsule())
