@@ -46,7 +46,7 @@ After rotating the key, update it with
 
 A batch of exercise videos ([ADR 0176](adr/0176-show-videos-of-the-exercises.md)) reaches the
 hosted project in two steps: **Deploy Supabase** applies its migration, then
-`pnpm exercise-videos <folder> --remote`, run on the Mac that made the videos, uploads the files
+`pnpm import:exercise-videos <folder> --remote`, run on the Mac that made the videos, uploads the files
 the hosted `exercise-media` bucket does not have yet, from the merged
 `supabase/exercise-videos.json`. Between the two, the app shows the muscle map of an exercise
 whose video is not there.

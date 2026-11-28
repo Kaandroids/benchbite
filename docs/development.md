@@ -114,7 +114,7 @@ Some exercises have a short video, which the app shows in place of the muscle ma
 ([ADR 0176](adr/0176-show-videos-of-the-exercises.md)). The videos are made outside the
 repository, in a folder with their originals and a list of the exercises, `Hareket_Listesi.md`, in
 which a finished video's row is ticked (✅) with its file. With the local stack running and
-[ffmpeg](https://ffmpeg.org) installed, `pnpm exercise-videos <folder>` makes the app's copies in
+[ffmpeg](https://ffmpeg.org) installed, `pnpm import:exercise-videos <folder>` makes the app's copies in
 `<folder>/app/`, writes a migration for the new or changed ones, records them in
 `supabase/exercise-videos.json` and uploads them to the local `exercise-media` bucket. After
 `pnpm supabase db reset`, which empties the bucket, run it again to upload them.

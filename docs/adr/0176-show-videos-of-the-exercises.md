@@ -29,7 +29,7 @@ exercises first; 876 in all, at about 2.5 MB each.
   cached for a year without going stale. No policy lets a client change the bucket.
 - **The table `exercise_videos`** names each exercise's video and poster. Everyone reads it, as
   the library; only migrations write it.
-- **`pnpm exercise-videos <folder>`** matches the ticked rows of the list to the library by their
+- **`pnpm import:exercise-videos <folder>`** matches the ticked rows of the list to the library by their
   English name, makes the copies beside the originals, writes a migration for the new or changed
   ones, records them in `supabase/exercise-videos.json`, and uploads what the bucket lacks;
   `--remote` uploads to the hosted project after the merge.

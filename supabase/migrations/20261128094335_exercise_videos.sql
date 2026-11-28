@@ -1,4 +1,4 @@
--- Videos of 31 exercises, written by `pnpm exercise-videos` (ADR 0176).
+-- Videos of 31 exercises, written by `pnpm import:exercise-videos` (ADR 0176).
 insert into public.exercise_videos (exercise_id, video_path, poster_path)
 values
   ('Arnold_Dumbbell_Press', 'Arnold_Dumbbell_Press/58969bf6d50290a5.mp4', 'Arnold_Dumbbell_Press/58969bf6d50290a5.jpg'),

@@ -11,8 +11,8 @@
 //   them in supabase/exercise-videos.json;
 // - uploads to the exercise-media bucket the files it does not have yet.
 //
-//   pnpm exercise-videos <folder>            the local stack: migration, manifest and upload
-//   pnpm exercise-videos <folder> --remote   the hosted project: only the upload, after the merge
+//   pnpm import:exercise-videos <folder>            the local stack: migration, manifest and upload
+//   pnpm import:exercise-videos <folder> --remote   the hosted project: only the upload, after the merge
 //
 // It needs ffmpeg, and the local stack running for the exercises' names.
 import { createHash } from 'node:crypto';
@@ -57,7 +57,7 @@ const args = process.argv.slice(2);
 const remote = args.includes('--remote');
 const folder = args.find((arg) => !arg.startsWith('--'));
 if (!folder) {
-  console.error('Usage: pnpm exercise-videos <folder> [--remote]');
+  console.error('Usage: pnpm import:exercise-videos <folder> [--remote]');
   process.exit(1);
 }
 const output = join(folder, 'app');
@@ -145,7 +145,7 @@ function writeMigration(changed: [string, Entry][]) {
   const file = join(MIGRATIONS_DIR, `${stamp}_exercise_videos.sql`);
   writeFileSync(
     file,
-    `-- Videos of ${changed.length} exercise${changed.length === 1 ? '' : 's'}, written by \`pnpm exercise-videos\` (ADR 0176).
+    `-- Videos of ${changed.length} exercise${changed.length === 1 ? '' : 's'}, written by \`pnpm import:exercise-videos\` (ADR 0176).
 insert into public.exercise_videos (exercise_id, video_path, poster_path)
 values
 ${values}
