@@ -7,7 +7,7 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 function answer(result: { data: unknown; error: unknown }) {
-  const query = {
+  const query: { select: jest.Mock; eq: jest.Mock; maybeSingle: jest.Mock } = {
     select: jest.fn(() => query),
     eq: jest.fn(() => query),
     maybeSingle: jest.fn(() => Promise.resolve(result)),
