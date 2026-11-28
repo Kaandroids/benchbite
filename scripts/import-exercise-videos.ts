@@ -1,7 +1,8 @@
 // Brings the exercises' videos into the app (ADR 0176), a batch at a time. The videos are made
 // outside the repository, in a folder with a list of the exercises (`Hareket_Listesi.md`), in
-// which a finished video's row is ticked (✅) and names its file. For each ticked video this
-// script:
+// which a finished video's row is ticked (✅), or marked as passable for now (🟡), and names its
+// file. A passable video is shown until a better take replaces it under the same file name. For
+// each of them this script:
 //
 // - finds its exercise by the name in the list's English column;
 // - makes the app's copy beside the originals, in `<folder>/app/`: 960 × 540 H.264, muted, ready
@@ -62,11 +63,14 @@ if (!folder) {
 }
 const output = join(folder, 'app');
 
+/** The marks of a finished row: done, or passable until a better take. */
+const FINISHED = ['✅', '🟡'];
+
 /** The finished videos in the list: the English name of each and its file. */
 function finished(): { name: string; file: string }[] {
   const rows = readFileSync(join(folder!, LIST), 'utf8')
     .split('\n')
-    .filter((line) => line.startsWith('|') && line.includes('✅'));
+    .filter((line) => line.startsWith('|') && FINISHED.some((mark) => line.includes(mark)));
   return rows.map((line) => {
     // | # | Status | Name (EN) | Name (TR) | Equipment | Muscle | Video file |
     const cells = line.split('|').map((cell) => cell.trim());
