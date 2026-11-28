@@ -190,6 +190,27 @@ function upload(manifest: Manifest) {
   );
 }
 
+/**
+ * Checks that every recorded video can be uploaded: its copies are in `<folder>/app/`, or are made
+ * again from its original, which must still be the one recorded. A copy that is there already is
+ * trusted, as its name carries the hash, so old originals may be cleaned out once their copies exist.
+ */
+function check(manifest: Manifest) {
+  for (const [id, entry] of Object.entries(manifest)) {
+    if (existsSync(join(output, entry.video)) && existsSync(join(output, entry.poster))) {
+      continue;
+    }
+    if (!existsSync(join(folder!, entry.source))) {
+      throw new Error(
+        `The copy of ${id}'s video is missing, and so is its original ${entry.source}.`,
+      );
+    }
+    if (make(id, entry.source).video !== entry.video) {
+      throw new Error(`${entry.source} is not the video recorded for ${id}.`);
+    }
+  }
+}
+
 const manifest = readManifest();
 if (!remote) {
   const ids = exerciseIds();
@@ -205,6 +226,8 @@ if (!remote) {
     }
     manifest[id] = entry;
   }
+  // Before anything is written, so that a batch is recorded only when all of it can be uploaded.
+  check(manifest);
   if (changed.length > 0) {
     writeMigration(changed);
     const sorted = Object.fromEntries(
@@ -217,12 +240,7 @@ if (!remote) {
   } else {
     console.log('No new or changed videos.');
   }
-}
-// Every recorded video is uploaded, so each is made again where its copy is missing, also one whose
-// row is no longer ticked, and must still be the original it was recorded from.
-for (const [id, entry] of Object.entries(manifest)) {
-  if (make(id, entry.source).video !== entry.video) {
-    throw new Error(`${entry.source} is not the video recorded for ${id}.`);
-  }
+} else {
+  check(manifest);
 }
 upload(manifest);

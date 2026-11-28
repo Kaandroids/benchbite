@@ -86,6 +86,7 @@
     "check:watch": "node scripts/check-watch-protocol.ts",
     "test:watch": "swift test --package-path targets/watch-tests",
     "import:exercises": "node scripts/import-exercises.ts",
+    "import:exercise-videos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-exercise-videos.ts",
     "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "emails": "cd supabase/functions && deno run --allow-write=../templates _shared/auth_templates.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",
@@ -94,7 +95,6 @@
     "functions:check": "cd supabase/functions && deno check . && deno lint && deno test --allow-read=.,../templates --clean --coverage=../../coverage/functions",
     "coverage:report": "node scripts/coverage-report.ts",
     "vault:local": "node scripts/set-local-vault.ts",
-    "import:exercise-videos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/exercise-videos.ts",
     "seed:demo": "node scripts/seed-demo.ts",
     "check:plans": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-plans.ts",
     "test": "jest"
