@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { act, fireEvent, render, screen } from '@/test/render';
@@ -47,12 +48,11 @@ it('shows the poster and a spinner until the first frame', async () => {
   expect(screen.queryByTestId('video-poster')).toBeNull();
 });
 
-it('pauses and plays on a tap', async () => {
+it('pauses and plays on a tap, also while it loads', async () => {
   await render(<ExerciseVideo video={VIDEO} onError={jest.fn()} />);
-  await act(() => fakeVideo.emit('playingChange', { isPlaying: true }));
+  // Not playing yet: the player is still loading, and the tap still means pause.
   await fireEvent.press(screen.getByLabelText('How the exercise goes'));
   expect(fakeVideo.player.pause).toHaveBeenCalledTimes(1);
-  await act(() => fakeVideo.emit('playingChange', { isPlaying: false }));
   expect(screen.getByLabelText('How the exercise goes')).toHaveProp(
     'accessibilityHint',
     'Plays the video',
@@ -74,4 +74,20 @@ it('tells the screen when the video cannot play', async () => {
   await render(<ExerciseVideo video={VIDEO} onError={onError} />);
   await act(() => fakeVideo.emit('statusChange', { status: 'error' }));
   expect(onError).toHaveBeenCalled();
+});
+
+it('plays on when the app comes back to the screen, unless it was paused by a tap', async () => {
+  const listeners: ((state: string) => void)[] = [];
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, listener) => {
+    listeners.push(listener as (state: string) => void);
+    return { remove: jest.fn() } as never;
+  });
+  await render(<ExerciseVideo video={VIDEO} onError={jest.fn()} />);
+  expect(fakeVideo.player.play).toHaveBeenCalledTimes(1);
+  await act(() => listeners.forEach((listener) => listener('active')));
+  expect(fakeVideo.player.play).toHaveBeenCalledTimes(2);
+
+  await fireEvent.press(screen.getByLabelText('How the exercise goes'));
+  await act(() => listeners.forEach((listener) => listener('active')));
+  expect(fakeVideo.player.play).toHaveBeenCalledTimes(2);
 });

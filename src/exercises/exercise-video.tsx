@@ -3,7 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, AppState, Image, Pressable, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { Icon } from '@/components/ui/icon';
@@ -13,8 +13,8 @@ import type { ExerciseVideo as Video } from './video';
 
 /**
  * How an exercise goes (ADR 0176): its video, muted and looping, in place of the muscle map. It
- * plays while the screen is in front, from the phone's cache after the first time, and a tap
- * pauses or plays it. Its poster shows until the first frame, and with Reduce Motion on it waits
+ * plays while the screen is in front, again when the app comes back to it, from the phone's cache
+ * after the first time, and a tap pauses or plays it. Its poster shows until the first frame, and with Reduce Motion on it waits
  * for a tap. `onError` tells the screen to show the map instead.
  */
 export function ExerciseVideo({ video, onError }: { video: Video; onError: () => void }) {
@@ -25,13 +25,14 @@ export function ExerciseVideo({ video, onError }: { video: Video; onError: () =>
     created.loop = true;
     created.muted = true;
   });
-  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   const [firstFrame, setFirstFrame] = useState(false);
-  // Paused by a tap, which leaving and coming back keeps; Reduce Motion starts paused.
+  // Paused by a tap, which leaving and coming back keeps; Reduce Motion starts paused. A tap goes
+  // by this rather than by the player, which is not playing yet while it loads.
   const [paused, setPaused] = useState(reduceMotion);
-  // The same, for the focus effect, which a tap should not run again.
+  // The same, for the effects below, which a tap should not run again.
   const pausedRef = useRef(paused);
+  const focusedRef = useRef(false);
 
   useEffect(() => {
     if (status === 'error') {
@@ -42,15 +43,29 @@ export function ExerciseVideo({ video, onError }: { video: Video; onError: () =>
   // Plays only while the screen is in front, so it never runs behind another screen.
   useFocusEffect(
     useCallback(() => {
+      focusedRef.current = true;
       if (!pausedRef.current) {
         player.play();
       }
-      return () => player.pause();
+      return () => {
+        focusedRef.current = false;
+        player.pause();
+      };
     }, [player]),
   );
 
+  // The system pauses it when the app leaves; it plays on when the app comes back to this screen.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && focusedRef.current && !pausedRef.current) {
+        player.play();
+      }
+    });
+    return () => subscription.remove();
+  }, [player]);
+
   const toggle = () => {
-    if (isPlaying) {
+    if (!paused) {
       player.pause();
       pausedRef.current = true;
       setPaused(true);
@@ -65,7 +80,7 @@ export function ExerciseVideo({ video, onError }: { video: Video; onError: () =>
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={t('exercise.video')}
-      accessibilityHint={isPlaying ? t('exercise.pauseVideo') : t('exercise.playVideo')}
+      accessibilityHint={paused ? t('exercise.playVideo') : t('exercise.pauseVideo')}
       onPress={toggle}
       style={[
         styles.frame,
@@ -90,13 +105,13 @@ export function ExerciseVideo({ video, onError }: { video: Video; onError: () =>
       {!firstFrame && !paused ? (
         <ActivityIndicator style={styles.spinner} size="small" color={colors.textMuted} />
       ) : null}
-      {isPlaying || (!paused && !firstFrame) ? null : (
+      {paused ? (
         <View style={styles.center} pointerEvents="none">
           <View style={[styles.play, { backgroundColor: colors.surface }]}>
             <Icon name="play" size={20} color="text" />
           </View>
         </View>
-      )}
+      ) : null}
     </Pressable>
   );
 }
