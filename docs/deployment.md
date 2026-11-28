@@ -42,6 +42,15 @@ select vault.create_secret('<default secret key>', 'secret_key');
 After rotating the key, update it with
 `select vault.update_secret(id, '<new key>') from vault.secrets where name = 'secret_key';`.
 
+### Upload the exercises' videos
+
+A batch of exercise videos ([ADR 0176](adr/0176-show-videos-of-the-exercises.md)) reaches the
+hosted project in two steps: **Deploy Supabase** applies its migration, then
+`pnpm exercise-videos <folder> --remote`, run on the Mac that made the videos, uploads the files
+the hosted `exercise-media` bucket does not have yet, from the merged
+`supabase/exercise-videos.json`. Between the two, the app shows the muscle map of an exercise
+whose video is not there.
+
 ## Supported versions and the texts' versions
 
 The app asks the server when it opens which versions of it are still supported and which version
