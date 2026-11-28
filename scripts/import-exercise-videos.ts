@@ -77,7 +77,7 @@ function finished(): { name: string; file: string }[] {
     const name = cells[3]!.replace('⭐', '').trim();
     const file = cells[7] ?? '';
     if (!file) {
-      throw new Error(`${name} is ticked in ${LIST} without a video file.`);
+      throw new Error(`${name} is marked finished in ${LIST} without a video file.`);
     }
     return { name, file };
   });
