@@ -155,9 +155,13 @@ on conflict (exercise_id) do update
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
 }
 
-/** The Supabase CLI on the local stack, or on the hosted project with `--remote`. */
+/**
+ * The Supabase CLI on the local stack, or on the hosted project with `--remote`, whose changes
+ * the CLI asks to confirm: running the script with `--remote` is that confirmation.
+ */
 function supabase(...command: string[]): string {
-  return execFileSync(SUPABASE, [...command, '--experimental', ...(remote ? ['--remote'] : [])], {
+  const target = remote ? ['--remote', '--yes'] : [];
+  return execFileSync(SUPABASE, [...command, '--experimental', ...target], {
     encoding: 'utf8',
   });
 }
