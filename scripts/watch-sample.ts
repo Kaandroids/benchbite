@@ -19,25 +19,30 @@ type Scene = (typeof SCENES)[number];
 const NAMES = {
   en: {
     workout: 'Upper body',
-    exercises: ['Bench press', 'Barbell row', 'Overhead press', 'Lat pulldown'],
+    exercises: {
+      bench: 'Bench press',
+      row: 'Barbell row',
+      press: 'Overhead press',
+      pulldown: 'Lat pulldown',
+    },
   },
   de: {
     workout: 'Oberkörper',
-    exercises: [
-      'Bankdrücken (Langhantel)',
-      'Langhantelrudern',
-      'Schulterdrücken stehend',
-      'Latzug breit',
-    ],
+    exercises: {
+      bench: 'Bankdrücken (Langhantel)',
+      row: 'Langhantelrudern',
+      press: 'Schulterdrücken stehend',
+      pulldown: 'Latzug breit',
+    },
   },
   tr: {
     workout: 'Üst vücut',
-    exercises: [
-      'Bench Press (Halter)',
-      'Barbell Row',
-      'Military Press',
-      'Geniş Tutuş Lat Pulldown',
-    ],
+    exercises: {
+      bench: 'Bench Press (Halter)',
+      row: 'Barbell Row',
+      press: 'Military Press',
+      pulldown: 'Geniş Tutuş Lat Pulldown',
+    },
   },
 };
 type Language = keyof typeof NAMES;
@@ -114,10 +119,10 @@ function workout(scene: Scene) {
     clock: null,
     setsToSave: 2,
     exercises: [
-      exercise('bench', names.exercises[0]!, 82.5, 8, 2),
-      exercise('row', names.exercises[1]!, 70, 10, 0),
-      exercise('press', names.exercises[2]!, 45, 8, 0),
-      exercise('pulldown', names.exercises[3]!, 62.5, 10, 0),
+      exercise('bench', names.exercises.bench, 82.5, 8, 2),
+      exercise('row', names.exercises.row, 70, 10, 0),
+      exercise('press', names.exercises.press, 45, 8, 0),
+      exercise('pulldown', names.exercises.pulldown, 62.5, 10, 0),
     ],
     applied: [],
     follows: true,
