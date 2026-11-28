@@ -217,12 +217,12 @@ if (!remote) {
   } else {
     console.log('No new or changed videos.');
   }
-} else {
-  // The hosted project gets what the merged manifest lists, made again where they are missing.
-  for (const [id, entry] of Object.entries(manifest)) {
-    if (make(id, entry.source).video !== entry.video) {
-      throw new Error(`${entry.source} is not the video recorded for ${id}.`);
-    }
+}
+// Every recorded video is uploaded, so each is made again where its copy is missing, also one whose
+// row is no longer ticked, and must still be the original it was recorded from.
+for (const [id, entry] of Object.entries(manifest)) {
+  if (make(id, entry.source).video !== entry.video) {
+    throw new Error(`${entry.source} is not the video recorded for ${id}.`);
   }
 }
 upload(manifest);
