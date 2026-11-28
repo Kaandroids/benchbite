@@ -44,6 +44,11 @@
     "video": "Barbell_Squat/4150bd22399f7555.mp4",
     "poster": "Barbell_Squat/4150bd22399f7555.jpg"
   },
+  "Bench_Dips": {
+    "source": "Bench_Dips.mp4",
+    "video": "Bench_Dips/478154a3fa5716d7.mp4",
+    "poster": "Bench_Dips/478154a3fa5716d7.jpg"
+  },
   "Bent_Over_Barbell_Row": {
     "source": "Barbell_Row.mp4",
     "video": "Bent_Over_Barbell_Row/9868d25c81059d9d.mp4",
@@ -54,10 +59,40 @@
     "video": "Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.mp4",
     "poster": "Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.jpg"
   },
+  "Bodyweight_Squat": {
+    "source": "Bodyweight_Squat.mp4",
+    "video": "Bodyweight_Squat/6543c46cf7b0ba47.mp4",
+    "poster": "Bodyweight_Squat/6543c46cf7b0ba47.jpg"
+  },
+  "Bodyweight_Walking_Lunge": {
+    "source": "Bodyweight_Walking_Lunge.mp4",
+    "video": "Bodyweight_Walking_Lunge/45e0e20fe5202f63.mp4",
+    "poster": "Bodyweight_Walking_Lunge/45e0e20fe5202f63.jpg"
+  },
+  "Butt_Lift_Bridge": {
+    "source": "Butt_Lift_Bridge.mp4",
+    "video": "Butt_Lift_Bridge/716b86ff6d4dc9a6.mp4",
+    "poster": "Butt_Lift_Bridge/716b86ff6d4dc9a6.jpg"
+  },
   "Concentration_Curls": {
     "source": "Concentration_Curls.mp4",
     "video": "Concentration_Curls/1bb2a83b51dbb8a4.mp4",
     "poster": "Concentration_Curls/1bb2a83b51dbb8a4.jpg"
+  },
+  "Crunches": {
+    "source": "Crunches.mp4",
+    "video": "Crunches/89620cd920968c6b.mp4",
+    "poster": "Crunches/89620cd920968c6b.jpg"
+  },
+  "Decline_Push-Up": {
+    "source": "Decline_Push-Up.mp4",
+    "video": "Decline_Push-Up/ef6a360e5c211c4c.mp4",
+    "poster": "Decline_Push-Up/ef6a360e5c211c4c.jpg"
+  },
+  "Dips_-_Triceps_Version": {
+    "source": "Dips_Triceps.mp4",
+    "video": "Dips_-_Triceps_Version/d57edc8fbf27ee24.mp4",
+    "poster": "Dips_-_Triceps_Version/d57edc8fbf27ee24.jpg"
   },
   "Dumbbell_Bench_Press": {
     "source": "Dumbbell_Bench_Press.mp4",
@@ -94,6 +129,21 @@
     "video": "Dumbbell_Squat/7b29f94fd2007377.mp4",
     "poster": "Dumbbell_Squat/7b29f94fd2007377.jpg"
   },
+  "EZ-Bar_Curl": {
+    "source": "EZ-Bar_Curl.mp4",
+    "video": "EZ-Bar_Curl/b9be3434909dc125.mp4",
+    "poster": "EZ-Bar_Curl/b9be3434909dc125.jpg"
+  },
+  "EZ-Bar_Skullcrusher": {
+    "source": "EZ-Bar_Skullcrusher.mp4",
+    "video": "EZ-Bar_Skullcrusher/7efc1d7d21c68953.mp4",
+    "poster": "EZ-Bar_Skullcrusher/7efc1d7d21c68953.jpg"
+  },
+  "Freehand_Jump_Squat": {
+    "source": "Freehand_Jump_Squat.mp4",
+    "video": "Freehand_Jump_Squat/22a25b59586758aa.mp4",
+    "poster": "Freehand_Jump_Squat/22a25b59586758aa.jpg"
+  },
   "Front_Dumbbell_Raise": {
     "source": "Front_Dumbbell_Raise.mp4",
     "video": "Front_Dumbbell_Raise/0ea1383c08e2c1ba.mp4",
@@ -103,6 +153,11 @@
     "source": "Front_Squat.mp4",
     "video": "Front_Squat_Clean_Grip/ace14d914e17a731.mp4",
     "poster": "Front_Squat_Clean_Grip/ace14d914e17a731.jpg"
+  },
+  "Glute_Kickback": {
+    "source": "Glute_Kickback.mp4",
+    "video": "Glute_Kickback/242cff1afdb90892.mp4",
+    "poster": "Glute_Kickback/242cff1afdb90892.jpg"
   },
   "Goblet_Squat": {
     "source": "Goblet_Squat.mp4",
@@ -129,10 +184,25 @@
     "video": "One-Arm_Dumbbell_Row/7d904751d55f8530.mp4",
     "poster": "One-Arm_Dumbbell_Row/7d904751d55f8530.jpg"
   },
+  "Plank": {
+    "source": "Plank.mp4",
+    "video": "Plank/86744e6004a84dbb.mp4",
+    "poster": "Plank/86744e6004a84dbb.jpg"
+  },
   "Preacher_Curl": {
     "source": "Preacher_Curl.mp4",
     "video": "Preacher_Curl/df2826e8cce8071f.mp4",
     "poster": "Preacher_Curl/df2826e8cce8071f.jpg"
+  },
+  "Pullups": {
+    "source": "Pullups.mp4",
+    "video": "Pullups/a566b65f649d632e.mp4",
+    "poster": "Pullups/a566b65f649d632e.jpg"
+  },
+  "Pushups": {
+    "source": "Pushups.mp4",
+    "video": "Pushups/dd4d1287569ec049.mp4",
+    "poster": "Pushups/dd4d1287569ec049.jpg"
   },
   "Reverse_Flyes": {
     "source": "Reverse_Flyes.mp4",
@@ -143,6 +213,11 @@
     "source": "Romanian_Deadlift.mp4",
     "video": "Romanian_Deadlift/2d7504ebd8c58acd.mp4",
     "poster": "Romanian_Deadlift/2d7504ebd8c58acd.jpg"
+  },
+  "Russian_Twist": {
+    "source": "Russian_Twist.mp4",
+    "video": "Russian_Twist/772664fc79b91b0f.mp4",
+    "poster": "Russian_Twist/772664fc79b91b0f.jpg"
   },
   "Seated_Dumbbell_Curl": {
     "source": "Seated_Dumbbell_Curl.mp4",
@@ -158,6 +233,11 @@
     "source": "Split_Squat.mp4",
     "video": "Split_Squat_with_Dumbbells/617462c73e922e06.mp4",
     "poster": "Split_Squat_with_Dumbbells/617462c73e922e06.jpg"
+  },
+  "Standing_Dumbbell_Calf_Raise": {
+    "source": "Standing_Dumbbell_Calf_Raise.mp4",
+    "video": "Standing_Dumbbell_Calf_Raise/e7be8634b3f35199.mp4",
+    "poster": "Standing_Dumbbell_Calf_Raise/e7be8634b3f35199.jpg"
   },
   "Standing_Dumbbell_Triceps_Extension": {
     "source": "Standing_Dumbbell_Triceps_Extension.mp4",
