@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -14,14 +14,16 @@ import { useTheme } from '@/theme';
 import { useArchiveExercise } from './custom';
 import { ExerciseNotFound } from './exercise-not-found';
 import { useExerciseDetails, findExercise } from './library';
+import { ExerciseVideo } from './exercise-video';
 import { MuscleMap } from './muscle-map';
 import { usePictureUrls } from './photos';
+import { useExerciseVideo } from './video';
 
 /**
- * How to do an exercise: the muscles it works on the body from the front and the back, or the
- * start and end photos of the user's own exercise, its equipment and level, and the steps. The
- * user's own exercises are edited and archived from here, but not during a workout, whose screen
- * the editor would leave.
+ * How to do an exercise: its video, else the muscles it works on the body from the front and the
+ * back, or the start and end photos of the user's own exercise, its equipment and level, and the
+ * steps. The user's own exercises are edited and archived from here, but not during a workout,
+ * whose screen the editor would leave.
  */
 export function ExerciseScreen({
   id,
@@ -41,16 +43,28 @@ export function ExerciseScreen({
     path ? [{ path, end: index === 1 }] : [],
   );
   const urls = usePictureUrls(pictures.map((picture) => picture.path));
+  const video = useExerciseVideo(id);
+  // A video that cannot be read or played gives way to the map, as for an exercise without one.
+  const [videoFailed, setVideoFailed] = useState(false);
+  const onVideoError = useCallback(() => setVideoFailed(true), []);
+  const shownVideo = videoFailed ? null : (video.data ?? null);
   const archive = useArchiveExercise(id);
   // The width of a map's tile, known once it is laid out; the figure is drawn to fit it.
   const [tileWidth, setTileWidth] = useState(0);
   // Inside the tile's border, with room around the figure.
   const mapSize = tileWidth - 2 * BORDER - 2 * spacing.sm;
 
-  if (!allLoaded([library, instructions])) {
+  // Waits for the video too, also when trying again after it failed, so the map does not show
+  // first and then make way for it.
+  const videoLoading = video.isPending || (video.isError && video.isFetching);
+  if (!allLoaded([library, instructions]) || videoLoading) {
     return (
       <Screen onBack={() => router.back()}>
-        <LoadState queries={[library, instructions]} />
+        {/* The video while it loads, and when it failed with the others, so that trying again
+            asks for it too; alone, a video that cannot be read is no error, the map shows. */}
+        <LoadState
+          queries={[library, instructions, ...(videoLoading || video.isError ? [video] : [])]}
+        />
       </Screen>
     );
   }
@@ -127,8 +141,11 @@ export function ExerciseScreen({
       // In the top bar, as on the other screens; long names take a second line.
       title={<ScreenTitle title={exercise.name} lines={2} />}
     >
+      {shownVideo && pictures.length === 0 ? (
+        <ExerciseVideo video={shownVideo} onError={onVideoError} />
+      ) : null}
       <View style={[styles.row, { gap: spacing.sm }]}>
-        {pictures.length === 0
+        {pictures.length === 0 && !shownVideo
           ? (['front', 'back'] as const).map((side) => (
               <View key={side} style={[styles.picture, { gap: spacing.xs }]}>
                 <View

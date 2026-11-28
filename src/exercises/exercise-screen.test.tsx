@@ -7,6 +7,7 @@ import { useArchiveExercise, useKindLock } from './custom';
 import { EditExerciseScreen } from './edit-exercise-screen';
 import { ExerciseScreen } from './exercise-screen';
 import { useExerciseDetails, type LibraryExercise } from './library';
+import { useExerciseVideo } from './video';
 
 jest.mock('./photos', () => ({
   usePictureUrls: (paths: string[]) =>
@@ -19,6 +20,18 @@ jest.mock('./library', () => ({
   useExerciseDetails: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('./video', () => ({ useExerciseVideo: jest.fn() }));
+// The player itself is tested in exercise-video.test.tsx; here it only says it is there, and can fail.
+jest.mock('./exercise-video', () => {
+  const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    ExerciseVideo: ({ video, onError }: { video: { video: string }; onError: () => void }) => (
+      <Pressable accessibilityLabel="The video" onPress={onError}>
+        <Text>{video.video}</Text>
+      </Pressable>
+    ),
+  };
+});
 
 const ROW: LibraryExercise = {
   id: 'row',
@@ -54,6 +67,7 @@ const archive = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(useExerciseVideo).mockReturnValue(query(null) as never);
   jest.mocked(useArchiveExercise).mockReturnValue({
     mutateAsync: archive.mockResolvedValue(undefined),
     isPending: false,
@@ -166,6 +180,67 @@ describe('ExerciseScreen', () => {
     mockDetails([ROW], []);
     await render(<ExerciseScreen id="row" />);
     expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
+  });
+  it('shows the video in place of the map, for an exercise that has one', async () => {
+    mockDetails([ROW], ['Sit down.']);
+    jest.mocked(useExerciseVideo).mockReturnValue(
+      query({
+        video: 'https://media.test/row.mp4',
+        poster: 'https://media.test/row.jpg',
+      }) as never,
+    );
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.getByText('https://media.test/row.mp4')).toBeTruthy();
+    expect(screen.queryByText('Front')).toBeNull();
+    expect(screen.getByText('How to do it')).toBeTruthy();
+  });
+
+  it('shows the map when the video fails to play, or cannot be read', async () => {
+    mockDetails([ROW], ['Sit down.']);
+    jest.mocked(useExerciseVideo).mockReturnValue(
+      query({
+        video: 'https://media.test/row.mp4',
+        poster: 'https://media.test/row.jpg',
+      }) as never,
+    );
+    await render(<ExerciseScreen id="row" />);
+    await fireEvent.press(screen.getByLabelText('The video'));
+    expect(screen.getByText('Front')).toBeTruthy();
+
+    jest.mocked(useExerciseVideo).mockReturnValue(query(undefined, { isError: true }) as never);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.getByText('Front')).toBeTruthy();
+    expect(screen.queryByLabelText('The video')).toBeNull();
+  });
+
+  it('waits for the video before it shows anything', async () => {
+    mockDetails([ROW], ['Sit down.']);
+    jest.mocked(useExerciseVideo).mockReturnValue(query(undefined) as never);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByText('Front')).toBeNull();
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+  });
+  it('asks for the video again when trying again after both failed', async () => {
+    jest.mocked(useExerciseDetails).mockReturnValue({
+      library: query(undefined, { isError: true }),
+      instructions: query(['Sit down.']),
+    } as never);
+    const video = query(undefined, { isError: true });
+    jest.mocked(useExerciseVideo).mockReturnValue(video as never);
+    await render(<ExerciseScreen id="row" />);
+    await fireEvent.press(screen.getByText('Try again'));
+    expect(video.refetch).toHaveBeenCalled();
+  });
+  it('waits for the video asked for again, rather than showing the map first', async () => {
+    mockDetails([ROW], ['Sit down.']);
+    jest.mocked(useExerciseVideo).mockReturnValue({
+      ...query(undefined, { isError: true }),
+      isFetching: true,
+    } as never);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByText('Front')).toBeNull();
+    // The error stays, its button loading, until the video is back.
+    expect(screen.getByText("This couldn't load")).toBeTruthy();
   });
 });
 

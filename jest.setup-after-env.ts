@@ -15,6 +15,9 @@ jest.mock('react-native-worklets', () => ({
 // expo-audio has no native module in tests; this stand-in records and plays nothing.
 jest.mock('expo-audio', () => require('./src/test/expo-audio'));
 
+// expo-video has no native module in tests; this stand-in plays nothing.
+jest.mock('expo-video', () => require('./src/test/expo-video'));
+
 // expo-notifications schedules nothing in tests; this stand-in's functions are mocks.
 jest.mock('expo-notifications', () => require('./src/test/expo-notifications'));
 
