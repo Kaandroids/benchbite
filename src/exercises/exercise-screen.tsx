@@ -22,9 +22,8 @@ import { useExerciseVideo } from './video';
 /**
  * How to do an exercise: its video, else the muscles it works on the body from the front and the
  * back, or the start and end photos of the user's own exercise, its equipment and level, and the
- * steps. The
- * user's own exercises are edited and archived from here, but not during a workout, whose screen
- * the editor would leave.
+ * steps. The user's own exercises are edited and archived from here, but not during a workout,
+ * whose screen the editor would leave.
  */
 export function ExerciseScreen({
   id,

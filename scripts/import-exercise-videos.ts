@@ -20,13 +20,13 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { EXERCISE_MEDIA_BUCKET } from '../supabase/functions/_shared/exercise_media.ts';
 import { DB_CONTAINER } from './lib/local-stack.ts';
 import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
 
 const ROOT = join(import.meta.dirname, '..');
 const MANIFEST = join(ROOT, 'supabase', 'exercise-videos.json');
 const SUPABASE = join(ROOT, 'node_modules', '.bin', 'supabase');
-const BUCKET = 'exercise-media';
 const LIST = 'Hareket_Listesi.md';
 
 /** How the app's copy is made; a change here gives every video a new name. */
@@ -169,7 +169,7 @@ function supabase(...command: string[]): string {
 
 /** Uploads every file of the manifest that the bucket does not have yet. */
 function upload(manifest: Manifest) {
-  const listed = supabase('storage', 'ls', '-r', `ss:///${BUCKET}/`);
+  const listed = supabase('storage', 'ls', '-r', `ss:///${EXERCISE_MEDIA_BUCKET}/`);
   const files = Object.values(manifest).flatMap((entry) => [entry.video, entry.poster]);
   const missing = files.filter((file) => !listed.includes(file));
   for (const file of missing) {
@@ -177,7 +177,7 @@ function upload(manifest: Manifest) {
       'storage',
       'cp',
       join(output, file),
-      `ss:///${BUCKET}/${file}`,
+      `ss:///${EXERCISE_MEDIA_BUCKET}/${file}`,
       '--content-type',
       file.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg',
       // Named by their content, the files never change.
