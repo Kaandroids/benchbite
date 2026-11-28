@@ -52,9 +52,12 @@ if (!scene || !SCENES.includes(scene) || !Object.hasOwn(NAMES, language)) {
 }
 const names = NAMES[language];
 
-/** A number as the phone writes it in the language: "82,5" in German and Turkish. */
-const number = (value: number) =>
-  language === 'en' ? String(value) : String(value).replace('.', ',');
+/** A number as the phone writes it in the language (src/sets/set-words.ts): "82,5" in German. */
+const numberFormat = new Intl.NumberFormat(language, {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+});
+const number = (value: number) => numberFormat.format(value);
 
 const now = Date.now();
 const MINUTE = 60_000;
