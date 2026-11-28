@@ -64,6 +64,11 @@
     "video": "Dumbbell_Bench_Press/726ff0e9ccd58f00.mp4",
     "poster": "Dumbbell_Bench_Press/726ff0e9ccd58f00.jpg"
   },
+  "Dumbbell_Floor_Press": {
+    "source": "Dumbbell_Floor_Press.mp4",
+    "video": "Dumbbell_Floor_Press/4df2536c84609c75.mp4",
+    "poster": "Dumbbell_Floor_Press/4df2536c84609c75.jpg"
+  },
   "Dumbbell_Flyes": {
     "source": "Dumbbell_Flyes.mp4",
     "video": "Dumbbell_Flyes/8de563e0b640fe66.mp4",
@@ -98,6 +103,11 @@
     "source": "Front_Squat.mp4",
     "video": "Front_Squat_Clean_Grip/ace14d914e17a731.mp4",
     "poster": "Front_Squat_Clean_Grip/ace14d914e17a731.jpg"
+  },
+  "Goblet_Squat": {
+    "source": "Goblet_Squat.mp4",
+    "video": "Goblet_Squat/d70b7034690c1ba5.mp4",
+    "poster": "Goblet_Squat/d70b7034690c1ba5.jpg"
   },
   "Good_Morning": {
     "source": "Good_Morning.mp4",
@@ -139,10 +149,40 @@
     "video": "Seated_Dumbbell_Curl/2c7b05a5c436d4e6.mp4",
     "poster": "Seated_Dumbbell_Curl/2c7b05a5c436d4e6.jpg"
   },
+  "Side_Lateral_Raise": {
+    "source": "Side_Lateral_Raise.mp4",
+    "video": "Side_Lateral_Raise/cdda478fccc53507.mp4",
+    "poster": "Side_Lateral_Raise/cdda478fccc53507.jpg"
+  },
+  "Split_Squat_with_Dumbbells": {
+    "source": "Split_Squat.mp4",
+    "video": "Split_Squat_with_Dumbbells/617462c73e922e06.mp4",
+    "poster": "Split_Squat_with_Dumbbells/617462c73e922e06.jpg"
+  },
+  "Standing_Dumbbell_Triceps_Extension": {
+    "source": "Standing_Dumbbell_Triceps_Extension.mp4",
+    "video": "Standing_Dumbbell_Triceps_Extension/7c6f7f85812b7e32.mp4",
+    "poster": "Standing_Dumbbell_Triceps_Extension/7c6f7f85812b7e32.jpg"
+  },
+  "Standing_Dumbbell_Upright_Row": {
+    "source": "Standing_Dumbbell_Upright_Row.mp4",
+    "video": "Standing_Dumbbell_Upright_Row/83e3950d86e57a74.mp4",
+    "poster": "Standing_Dumbbell_Upright_Row/83e3950d86e57a74.jpg"
+  },
   "Standing_Military_Press": {
     "source": "Military_Press.mp4",
     "video": "Standing_Military_Press/fd755eb715141a19.mp4",
     "poster": "Standing_Military_Press/fd755eb715141a19.jpg"
+  },
+  "Stiff-Legged_Dumbbell_Deadlift": {
+    "source": "Stiff-Legged_Dumbbell_Deadlift.mp4",
+    "video": "Stiff-Legged_Dumbbell_Deadlift/0ba24f4a0af01864.mp4",
+    "poster": "Stiff-Legged_Dumbbell_Deadlift/0ba24f4a0af01864.jpg"
+  },
+  "Straight-Arm_Dumbbell_Pullover": {
+    "source": "Straight-Arm_Dumbbell_Pullover.mp4",
+    "video": "Straight-Arm_Dumbbell_Pullover/f0878226d50b10f2.mp4",
+    "poster": "Straight-Arm_Dumbbell_Pullover/f0878226d50b10f2.jpg"
   },
   "Sumo_Deadlift": {
     "source": "Sumo_Deadlift.mp4",
@@ -153,5 +193,10 @@
     "source": "T-Bar_Row.mp4",
     "video": "T-Bar_Row_with_Handle/3539bfcb13fa4274.mp4",
     "poster": "T-Bar_Row_with_Handle/3539bfcb13fa4274.jpg"
+  },
+  "Tricep_Dumbbell_Kickback": {
+    "source": "Tricep_Dumbbell_Kickback.mp4",
+    "video": "Tricep_Dumbbell_Kickback/7e75c7846cf1e1ed.mp4",
+    "poster": "Tricep_Dumbbell_Kickback/7e75c7846cf1e1ed.jpg"
   }
 }
