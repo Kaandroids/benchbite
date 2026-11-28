@@ -44,7 +44,7 @@ type Language = keyof typeof NAMES;
 
 const scene = process.argv[2] as Scene | undefined;
 const language = (process.argv[3] ?? 'en') as Language;
-if (!scene || !SCENES.includes(scene) || !(language in NAMES)) {
+if (!scene || !SCENES.includes(scene) || !Object.hasOwn(NAMES, language)) {
   console.error(
     `Usage: node scripts/watch-sample.ts <${SCENES.join('|')}> [${Object.keys(NAMES).join('|')}]`,
   );
