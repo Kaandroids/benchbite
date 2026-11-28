@@ -16,11 +16,10 @@ import type {
   Session,
   SessionType,
 } from '../supabase/functions/_shared/plan/types.ts';
-import { KEY, URL, isLocal } from './lib/local-stack.ts';
+import { DB_CONTAINER, KEY, URL, isLocal } from './lib/local-stack.ts';
 import { sqlString } from './lib/migration.ts';
 
 if (!isLocal) throw new Error(`The demo account is only made on a local stack, not ${URL}.`);
-const DB_CONTAINER = 'supabase_db_benchbite';
 
 const EMAIL = 'kaan.demo@benchbite.local';
 const PASSWORD = 'benchbite-demo';

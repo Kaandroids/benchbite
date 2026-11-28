@@ -86,6 +86,7 @@
     "check:watch": "node scripts/check-watch-protocol.ts",
     "test:watch": "swift test --package-path targets/watch-tests",
     "import:exercises": "node scripts/import-exercises.ts",
+    "import:exercise-videos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-exercise-videos.ts",
     "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "emails": "cd supabase/functions && deno run --allow-write=../templates _shared/auth_templates.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",

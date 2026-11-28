@@ -8,3 +8,6 @@ export const KEY =
 
 /** Whether URL is a stack on this computer. */
 export const isLocal = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(URL);
+
+/** The local stack's database container, which `docker exec` runs psql in. */
+export const DB_CONTAINER = 'supabase_db_benchbite';
