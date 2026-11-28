@@ -59,8 +59,11 @@ export function ExerciseScreen({
   if (!allLoaded([library, instructions]) || video.isPending) {
     return (
       <Screen onBack={() => router.back()}>
-        {/* The video only while it loads: one that cannot be read is no error, the map shows. */}
-        <LoadState queries={[library, instructions, ...(video.isPending ? [video] : [])]} />
+        {/* The video while it loads, and when it failed with the others, so that trying again
+            asks for it too; alone, a video that cannot be read is no error, the map shows. */}
+        <LoadState
+          queries={[library, instructions, ...(video.isPending || video.isError ? [video] : [])]}
+        />
       </Screen>
     );
   }
