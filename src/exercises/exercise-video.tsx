@@ -14,8 +14,8 @@ import type { ExerciseVideo as Video } from './video';
 /**
  * How an exercise goes (ADR 0176): its video, muted and looping, in place of the muscle map. It
  * plays while the screen is in front, again when the app comes back to it, from the phone's cache
- * after the first time, and a tap pauses or plays it. Its poster shows until the first frame, and with Reduce Motion on it waits
- * for a tap. `onError` tells the screen to show the map instead.
+ * after the first time, and a tap pauses or plays it. Its poster shows until the first frame, and
+ * with Reduce Motion on it waits for a tap. `onError` tells the screen to show the map instead.
  */
 export function ExerciseVideo({ video, onError }: { video: Video; onError: () => void }) {
   const { t } = useTranslation();

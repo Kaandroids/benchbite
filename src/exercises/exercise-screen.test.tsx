@@ -249,4 +249,14 @@ describe('EditExerciseScreen', () => {
     await fireEvent.press(screen.getByText('Try again'));
     expect(video.refetch).toHaveBeenCalled();
   });
+  it('waits for the video asked for again, rather than showing the map first', async () => {
+    mockDetails([ROW], ['Sit down.']);
+    jest.mocked(useExerciseVideo).mockReturnValue({
+      ...query(undefined, { isError: true }),
+      isFetching: true,
+    } as never);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByText('Front')).toBeNull();
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+  });
 });

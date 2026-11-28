@@ -54,14 +54,16 @@ export function ExerciseScreen({
   // Inside the tile's border, with room around the figure.
   const mapSize = tileWidth - 2 * BORDER - 2 * spacing.sm;
 
-  // Waits for the video too, so the map does not show first and then make way for it.
-  if (!allLoaded([library, instructions]) || video.isPending) {
+  // Waits for the video too, also when trying again after it failed, so the map does not show
+  // first and then make way for it.
+  const videoLoading = video.isPending || (video.isError && video.isFetching);
+  if (!allLoaded([library, instructions]) || videoLoading) {
     return (
       <Screen onBack={() => router.back()}>
         {/* The video while it loads, and when it failed with the others, so that trying again
             asks for it too; alone, a video that cannot be read is no error, the map shows. */}
         <LoadState
-          queries={[library, instructions, ...(video.isPending || video.isError ? [video] : [])]}
+          queries={[library, instructions, ...(videoLoading || video.isError ? [video] : [])]}
         />
       </Screen>
     );
