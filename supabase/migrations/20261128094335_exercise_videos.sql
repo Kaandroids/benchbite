@@ -1,0 +1,36 @@
+-- Videos of 31 exercises, written by `pnpm exercise-videos` (ADR 0176).
+insert into public.exercise_videos (exercise_id, video_path, poster_path)
+values
+  ('Arnold_Dumbbell_Press', 'Arnold_Dumbbell_Press/58969bf6d50290a5.mp4', 'Arnold_Dumbbell_Press/58969bf6d50290a5.jpg'),
+  ('Barbell_Bench_Press_-_Medium_Grip', 'Barbell_Bench_Press_-_Medium_Grip/6bd38338580fdd68.mp4', 'Barbell_Bench_Press_-_Medium_Grip/6bd38338580fdd68.jpg'),
+  ('Barbell_Curl', 'Barbell_Curl/0804d567b5763a9e.mp4', 'Barbell_Curl/0804d567b5763a9e.jpg'),
+  ('Barbell_Deadlift', 'Barbell_Deadlift/3e044db3d5f11243.mp4', 'Barbell_Deadlift/3e044db3d5f11243.jpg'),
+  ('Barbell_Hip_Thrust', 'Barbell_Hip_Thrust/96a2f8252e7eb7fb.mp4', 'Barbell_Hip_Thrust/96a2f8252e7eb7fb.jpg'),
+  ('Barbell_Incline_Bench_Press_-_Medium_Grip', 'Barbell_Incline_Bench_Press_-_Medium_Grip/218fa8559ea325e6.mp4', 'Barbell_Incline_Bench_Press_-_Medium_Grip/218fa8559ea325e6.jpg'),
+  ('Barbell_Lunge', 'Barbell_Lunge/15ad5da5916aac2d.mp4', 'Barbell_Lunge/15ad5da5916aac2d.jpg'),
+  ('Barbell_Shrug', 'Barbell_Shrug/59976bc29b80f9d8.mp4', 'Barbell_Shrug/59976bc29b80f9d8.jpg'),
+  ('Barbell_Squat', 'Barbell_Squat/4150bd22399f7555.mp4', 'Barbell_Squat/4150bd22399f7555.jpg'),
+  ('Bent_Over_Barbell_Row', 'Bent_Over_Barbell_Row/9868d25c81059d9d.mp4', 'Bent_Over_Barbell_Row/9868d25c81059d9d.jpg'),
+  ('Bent_Over_Two-Dumbbell_Row', 'Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.mp4', 'Bent_Over_Two-Dumbbell_Row/ecf6aa5f136e8ce3.jpg'),
+  ('Concentration_Curls', 'Concentration_Curls/1bb2a83b51dbb8a4.mp4', 'Concentration_Curls/1bb2a83b51dbb8a4.jpg'),
+  ('Dumbbell_Bench_Press', 'Dumbbell_Bench_Press/726ff0e9ccd58f00.mp4', 'Dumbbell_Bench_Press/726ff0e9ccd58f00.jpg'),
+  ('Dumbbell_Flyes', 'Dumbbell_Flyes/8de563e0b640fe66.mp4', 'Dumbbell_Flyes/8de563e0b640fe66.jpg'),
+  ('Dumbbell_Lunges', 'Dumbbell_Lunges/64f697b7413013a8.mp4', 'Dumbbell_Lunges/64f697b7413013a8.jpg'),
+  ('Dumbbell_Shoulder_Press', 'Dumbbell_Shoulder_Press/c666286a51a0183e.mp4', 'Dumbbell_Shoulder_Press/c666286a51a0183e.jpg'),
+  ('Dumbbell_Shrug', 'Dumbbell_Shrug/55f4d6b992ee065b.mp4', 'Dumbbell_Shrug/55f4d6b992ee065b.jpg'),
+  ('Dumbbell_Squat', 'Dumbbell_Squat/7b29f94fd2007377.mp4', 'Dumbbell_Squat/7b29f94fd2007377.jpg'),
+  ('Front_Dumbbell_Raise', 'Front_Dumbbell_Raise/0ea1383c08e2c1ba.mp4', 'Front_Dumbbell_Raise/0ea1383c08e2c1ba.jpg'),
+  ('Front_Squat_Clean_Grip', 'Front_Squat_Clean_Grip/ace14d914e17a731.mp4', 'Front_Squat_Clean_Grip/ace14d914e17a731.jpg'),
+  ('Good_Morning', 'Good_Morning/0ceb1b6372cdb40b.mp4', 'Good_Morning/0ceb1b6372cdb40b.jpg'),
+  ('Hammer_Curls', 'Hammer_Curls/39d4312501dce484.mp4', 'Hammer_Curls/39d4312501dce484.jpg'),
+  ('Incline_Dumbbell_Press', 'Incline_Dumbbell_Press/a8c8a7a747570ce6.mp4', 'Incline_Dumbbell_Press/a8c8a7a747570ce6.jpg'),
+  ('One-Arm_Dumbbell_Row', 'One-Arm_Dumbbell_Row/7d904751d55f8530.mp4', 'One-Arm_Dumbbell_Row/7d904751d55f8530.jpg'),
+  ('Preacher_Curl', 'Preacher_Curl/df2826e8cce8071f.mp4', 'Preacher_Curl/df2826e8cce8071f.jpg'),
+  ('Reverse_Flyes', 'Reverse_Flyes/55136c629b25a3ae.mp4', 'Reverse_Flyes/55136c629b25a3ae.jpg'),
+  ('Romanian_Deadlift', 'Romanian_Deadlift/2d7504ebd8c58acd.mp4', 'Romanian_Deadlift/2d7504ebd8c58acd.jpg'),
+  ('Seated_Dumbbell_Curl', 'Seated_Dumbbell_Curl/2c7b05a5c436d4e6.mp4', 'Seated_Dumbbell_Curl/2c7b05a5c436d4e6.jpg'),
+  ('Standing_Military_Press', 'Standing_Military_Press/fd755eb715141a19.mp4', 'Standing_Military_Press/fd755eb715141a19.jpg'),
+  ('Sumo_Deadlift', 'Sumo_Deadlift/8e0b0f7ffa41d60b.mp4', 'Sumo_Deadlift/8e0b0f7ffa41d60b.jpg'),
+  ('T-Bar_Row_with_Handle', 'T-Bar_Row_with_Handle/3539bfcb13fa4274.mp4', 'T-Bar_Row_with_Handle/3539bfcb13fa4274.jpg')
+on conflict (exercise_id) do update
+  set video_path = excluded.video_path, poster_path = excluded.poster_path;
